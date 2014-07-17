@@ -1,0 +1,44 @@
+#!/bin/bash
+BASE_SPY_DIR="/home/tdeering/android/spy"
+JAVAC_LOG="$BASE_SPY_DIR/javac.txt"
+
+echo "javac $@" >> $JAVAC_LOG
+
+for ARG in "$@"
+do
+    # If arg is a javac argfile
+    if [[ $ARG == @* ]]
+        then
+        #echo "ALL ARGS: $@"
+        #echo "ARG: $ARG"
+        # Find the component name being built
+        COMPONENT=$(echo $ARG | sed 's/.*JAVA_LIBRARIES\///' | sed 's/\/.*//')
+        #echo "COMPONENT: $COMPONENT"
+        
+        # Output organized into folder with same name as component
+        SPYDIR="$BASE_SPY_DIR/$COMPONENT"
+        mkdir $SPYDIR
+        
+        # Strip the @ off of the argfile path
+        ARGFILE_PATH=`echo $ARG | sed 's/@//'`
+        
+        # Copy the argfile int spy dir
+        cp -t $SPYDIR $ARGFILE_PATH
+        
+        # Go through the lines of the argfile
+        cat $ARGFILE_PATH | while read LINE
+        do
+            # If the line is a path to an existing readable file
+            if [[ -r $LINE ]]
+                then
+                # Copy the file into spy dir with the same folder structure
+                cp --parents $LINE $SPYDIR
+            fi 
+        
+        done
+    fi
+done
+
+# Invoke the real javac
+/usr/bin/javac "$@"
+exit $?
