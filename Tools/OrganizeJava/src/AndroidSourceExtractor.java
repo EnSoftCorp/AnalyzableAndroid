@@ -17,7 +17,6 @@ import java.util.List;
  */
 public class AndroidSourceExtractor {
 	public static final String ORGANIZE="-O";
-	public static final String LIST="-L";
 	public static final int ERROR_BAD_ARGS=-1;
 
 	/**
@@ -30,8 +29,6 @@ public class AndroidSourceExtractor {
 	public static void main(String[] args) throws IOException{
 		if(ORGANIZE.equalsIgnoreCase(args[0]) && args.length == 3){
 			organizeSource(args);
-		}else if(LIST.equalsIgnoreCase(args[0]) && args.length == 2){
-			sourceList(args);
 		}else{
 			printUsage(args);
 			System.exit(ERROR_BAD_ARGS);
@@ -39,9 +36,6 @@ public class AndroidSourceExtractor {
 	}
 	
 	private static void printUsage(String[] args){
-		// TODO
-	}
-	private static void sourceList(String[] args){
 		// TODO
 	}
 	
