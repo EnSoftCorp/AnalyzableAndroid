@@ -15,7 +15,7 @@ import java.util.List;
  * @author Tom Deering
  *
  */
-public class AndroidSourceExtractor {
+public class OrganizeJava {
 	public static final String ORGANIZE="-O";
 	public static final int ERROR_BAD_ARGS=-1;
 
@@ -36,7 +36,9 @@ public class AndroidSourceExtractor {
 	}
 	
 	private static void printUsage(String[] args){
-		// TODO
+		String usage = "Organize Java files from srcDir into destDir:\n" +
+				"java OrganizeJava -O srcDir destDir";
+		System.err.println(usage);
 	}
 	
 	private static void organizeSource(String[] args){
