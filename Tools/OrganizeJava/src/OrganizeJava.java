@@ -60,6 +60,14 @@ public class OrganizeJava {
 				newDir.mkdirs();
 				
 				// Copy the file to its new location
+				if (f.getAbsolutePath().contains("libart")){
+					continue;
+				}
+				for (String filePath : newDir.list()){
+					if (f.getAbsolutePath().equals(filePath)){
+							continue;
+					}
+				}
 				copyFile(f, new File(newDir + File.separator + fileName));
 			} catch(Exception e){
 				System.err.println("Failed to organize file: " + f.getAbsolutePath());
