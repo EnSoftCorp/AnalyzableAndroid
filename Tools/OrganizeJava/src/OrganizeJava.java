@@ -82,6 +82,10 @@ public class OrganizeJava {
 	private static String getNewPath(File toCopy, String newFile) throws IOException{
 		File existing = new File(newFile);
 		
+		// Don't copy over a stubbed file!
+		if(toCopy.getAbsolutePath().contains("_stub_")) return null;
+		if(FileUtils.readFileToString(toCopy).contains("RuntimeException(\"Stub!\")")) return null;
+		
 		// If no file is already present, there is nothing to resolve
 		if(!existing.exists()) return newFile;
 		
