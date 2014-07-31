@@ -7,6 +7,8 @@ import java.nio.channels.FileChannel;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
+
 /**
  * A class to crawl over a directory containing disorganized Java source code and organize it correctly
  * into nested folders according to the package. In other words, this organizes source code in a manner
@@ -68,11 +70,37 @@ public class OrganizeJava {
 							continue;
 					}
 				}
-				copyFile(f, new File(newDir + File.separator + fileName));
+				
+				String newLocation = getNewPath(f, newDir + File.separator + fileName );
+				if(newLocation != null) copyFile(f, new File(newLocation));
 			} catch(Exception e){
 				System.err.println("Failed to organize file: " + f.getAbsolutePath());
 			}
 		}
+	}
+	
+	private static String getNewPath(File toCopy, String newFile) throws IOException{
+		File existing = new File(newFile);
+		
+		// If no file is already present, there is nothing to resolve
+		if(!existing.exists()) return newFile;
+		
+		// If the two files are identical, we don't need to overwrite the existing one.
+		if(FileUtils.contentEquals(toCopy, existing)) return null;
+		
+		// The two files are not identical. We need to compute a new name for the new file.
+		String name = existing.getName();
+		String path = newFile.substring(0, newFile.lastIndexOf(name));
+		String[] nameParts = name.split("\\.");
+		String extension = nameParts[nameParts.length - 1];
+		String baseName = name.substring(0, name.lastIndexOf("." + extension));
+		
+		for(int i=1; i<Integer.MAX_VALUE; i++){
+			String proposed = path + baseName + "_" + i + "." + extension;
+			if(!new File(proposed).exists()) return proposed;
+		}
+		
+		return null;
 	}
 	
 	private static boolean shouldIgnore(String pkg, String fileName){
