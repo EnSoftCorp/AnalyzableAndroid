@@ -92,6 +92,20 @@ public class OrganizeJava {
 		// If the two files are identical, we don't need to overwrite the existing one.
 		if(FileUtils.contentEquals(toCopy, existing)) return null;
 		
+		// If one file is much larger than the other (this usually indicates that the other is a stubbed
+		// file or is lacking JavaDocs), keep the larger one
+		long s1 = toCopy.length();
+		long s2 = existing.length();
+		
+		// New file is much bigger. Overwrite.
+		if(s1 * 1.0 / s2 > 3.0){
+			return newFile;
+		}
+		// Old file is much bigger. Keep.
+		else if(s2 * 1.0 / s1 > 3.0){
+			return null;
+		}
+		
 		// The two files are not identical. We need to compute a new name for the new file.
 		String name = existing.getName();
 		String path = newFile.substring(0, newFile.lastIndexOf(name));
