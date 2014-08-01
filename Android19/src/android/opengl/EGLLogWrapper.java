@@ -319,7 +319,7 @@ class EGLLogWrapper implements EGL11 {
     public boolean eglReleaseThread() {
         begin("eglReleaseThread");
         end();
-        boolean result = mEgl10.eglReleaseThread();
+        boolean result = ((EGLLogWrapper) mEgl10).eglReleaseThread();
         returns(result);
         checkError();
         return result;

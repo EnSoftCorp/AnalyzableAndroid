@@ -1917,7 +1917,7 @@ public abstract class HardwareRenderer {
                         sEgl.eglMakeCurrent(sEglDisplay, EGL_NO_SURFACE,
                                 EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
-                        sEgl.eglReleaseThread();
+                        ((EGL14) sEgl).eglReleaseThread();
                         sEgl.eglTerminate(sEglDisplay);
 
                         sEgl = null;

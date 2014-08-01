@@ -19,6 +19,9 @@ public class EventLogTags {
   /** 70150 browser_snap_center */
   public static final int BROWSER_SNAP_CENTER = 70150;
 
+  /** 70151 exp_det_attempt_to_call_object_getclass (app_signature|3) */
+  public static final int EXP_DET_ATTEMPT_TO_CALL_OBJECT_GETCLASS = 70151;
+
   public static void writeBrowserZoomLevelChange(int startLevel, int endLevel, long time) {
     android.util.EventLog.writeEvent(BROWSER_ZOOM_LEVEL_CHANGE, startLevel, endLevel, time);
   }
@@ -29,5 +32,9 @@ public class EventLogTags {
 
   public static void writeBrowserSnapCenter() {
     android.util.EventLog.writeEvent(BROWSER_SNAP_CENTER);
+  }
+
+  public static void writeExpDetAttemptToCallObjectGetclass(String appSignature) {
+    android.util.EventLog.writeEvent(EXP_DET_ATTEMPT_TO_CALL_OBJECT_GETCLASS, appSignature);
   }
 }
