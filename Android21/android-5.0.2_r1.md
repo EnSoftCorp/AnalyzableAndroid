@@ -3,7 +3,7 @@
 For the most part I followed the steps at  [https://source.android.com/source/building.html](https://source.android.com/source/building.html), but the actual steps taken are listed below.
 
 ## 1) Create VM
-1. Create VM with Ubuntu 14.04 64bit, 120 GB HD, 16 GB RAM, 4 processors x 2 cores
+Create VM with Ubuntu 14.04 64bit, 120 GB HD, 16 GB RAM, 4 processors x 2 cores
 
 ## 2) Install Dependencies
 `sudo apt-get update`
