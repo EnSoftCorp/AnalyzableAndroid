@@ -1,7 +1,5 @@
 # Analysis steps for android-5.0.2_r1
 
-For the most part I followed the steps at  [https://source.android.com/source/building.html](https://source.android.com/source/building.html), but the actual steps taken are listed below.
-
 ## 1) Create VM
 Create VM with Ubuntu 14.04 64bit, 120 GB HD, 16 GB RAM, 4 processors x 2 cores
 
