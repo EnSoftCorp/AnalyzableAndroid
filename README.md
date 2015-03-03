@@ -5,7 +5,7 @@ Full source and bytecode Eclipse projects of various Android releases suitable f
 
 Android releases should be referred to by their official branch names.  See [https://source.android.com/source/build-numbers.html](https://source.android.com/source/build-numbers.html). 
 
-## Basic strategy for obtaining Java source project:
+## Basic strategy for obtaining Java source project
 
 0) Set up the build environment according to Google's instructions. 
 
@@ -71,3 +71,5 @@ Use update PScout source at [https://github.com/dweinstein/pscout](https://githu
 PScout wants to run over the `full-eng` build of Android, so you will probably have to `make clean`, `lunch full-eng`, and `make -j24` again before running PScout.
 
 Follow PScout directions at [https://github.com/dweinstein/pscout/blob/master/README.txt](https://github.com/dweinstein/pscout/blob/master/README.txt).
+
+PScout results can be used in the [Android Essentials Toolbox project](https://github.com/EnSoftCorp/android-essentials-toolbox).
