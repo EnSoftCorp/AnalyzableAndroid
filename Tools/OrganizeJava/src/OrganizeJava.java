@@ -211,40 +211,46 @@ public class OrganizeJava {
 	 * @return
 	 */
 	private static boolean shouldIgnore(String pkg, String fileName){
-		// Package prefixes to ignore
-		if(pkg.isEmpty()) return true;
-		if(pkg.startsWith("test")) return true;
-		if(pkg.startsWith("proguard")) return true;
-		if(pkg.startsWith("sample")) return true;
-		if(pkg.startsWith("benchmarks")) return true;
-		if(pkg.startsWith("${package}")) return true;
-		if(pkg.startsWith("util.build")) return true;
-		if(pkg.startsWith("signature")) return true;
-		if(pkg.startsWith("dummy")) return true;
-		if(pkg.startsWith("foo.bar")) return true;
-		if(pkg.startsWith("name.fraser.neil.plaintext")) return true;
-		if(pkg.startsWith("junit")) return true;
-		if(pkg.startsWith("jdiff")) return true;
-		if(pkg.startsWith("dot")) return true;
-		if(pkg.startsWith("org.java")) return true;
-		if(pkg.startsWith("org.mockito")) return true;
-		if(pkg.startsWith("com.xtremelabs.robolectric")) return true;
-		if(pkg.startsWith("javassist")) return true;
-		if(pkg.startsWith("org.w3c")) return true;
-		if(pkg.startsWith("org.eclipse")) return true;
-		if(pkg.startsWith("org.jivesoftware")) return true;
-		if(pkg.startsWith("org.jf")) return true;
-		if(pkg.startsWith("org.chromium")) return true;
-		if(pkg.startsWith("org.antlr")) return true;
+		// WARNING: This function can be very useful, but don't blindly trust it.
+		// It's probably easier not to ignore anything and then manually remove bits
+		// that don't belong rather than removing too much and having to search for 
+		// missing pieces .  Use at your own risk!
 		
-		// Package name contents to ignore
-		if(pkg.contains("test")) return true;
-		if(pkg.contains("junit")) return true;
-		if(pkg.contains("example")) return true;
+//		// Package prefixes to ignore
+//		if(pkg.isEmpty()) return true;
+//		if(pkg.startsWith("test")) return true;
+//		if(pkg.startsWith("proguard")) return true;
+//		if(pkg.startsWith("sample")) return true;
+//		if(pkg.startsWith("benchmarks")) return true;
+//		if(pkg.startsWith("${package}")) return true;
+//		if(pkg.startsWith("util.build")) return true;
+//		if(pkg.startsWith("signature")) return true;
+//		if(pkg.startsWith("dummy")) return true;
+//		if(pkg.startsWith("foo.bar")) return true;
+//		if(pkg.startsWith("name.fraser.neil.plaintext")) return true;
+//		if(pkg.startsWith("junit")) return true;
+//		if(pkg.startsWith("jdiff")) return true;
+//		if(pkg.startsWith("dot")) return true;
+//		if(pkg.startsWith("org.java")) return true;
+//		if(pkg.startsWith("org.mockito")) return true;
+//		if(pkg.startsWith("com.xtremelabs.robolectric")) return true;
+//		if(pkg.startsWith("javassist")) return true;
+//		if(pkg.startsWith("org.w3c")) return true;
+//		if(pkg.startsWith("org.eclipse")) return true;
+//		if(pkg.startsWith("org.jivesoftware")) return true;
+//		if(pkg.startsWith("org.jf")) return true;
+//		if(pkg.startsWith("org.chromium")) return true;
+//		if(pkg.startsWith("org.antlr")) return true;
+//		
+//		// Package name contents to ignore
+//		if(pkg.contains("test")) return true;
+//		if(pkg.contains("junit")) return true;
+//		if(pkg.contains("example")) return true;
+//
+//		// File name contents to ignore
+//		if(fileName.contains("Test")) return true;
 
-		// File name contents to ignore
-		if(fileName.contains("Test")) return true;
-		return false;
+		return false; // default don't ignore file
 	}
 	
 	/**
