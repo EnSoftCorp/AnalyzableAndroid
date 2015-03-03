@@ -1,8 +1,8 @@
 #!/bin/bash
 # A script which finds the JARs that Android built, 
-# converts those JARS from DEX to CLASS bytecode. 
-# You can then add them to the build path of a project
-# and generate Jimple.
+# converts those JARS from DEX to CLASS bytecode
+# extracts the JARS into a unified folder structure
+# combines them into one super jar
 #
 # The goal is to be able to get Jimple from DEX that Android built and installed for the platform.
 
@@ -30,3 +30,16 @@ unzip -p $DEX_JAR "classes.dex" >"$DEX_DIR/$NAME.dex"
 sh $DEX2JAR "$DEX_DIR/$NAME.dex" -f -o "$CLASS_DIR/$NAME.jar"
 
 done
+
+cd $CLASS_DIR
+mkdir tmp
+cd tmp
+
+for CLASS_JAR in `find $CLASS_DIR -type f -name "*.jar"`
+do
+# Extract class files into this directory
+jar -xvf $CLASS_JAR
+done
+
+cd $CLASS_DIR
+jar -cvf combined.jar -C tmp .
