@@ -1,0 +1,899 @@
+public class com.android.server.PackageManagerBackupAgent extends android.app.backup.BackupAgent
+{
+    private static final boolean DEBUG;
+    private static final java.lang.String GLOBAL_METADATA_KEY;
+    private static final java.lang.String TAG;
+    private java.util.List mAllPackages;
+    private final java.util.HashSet mExisting;
+    private boolean mHasMetadata;
+    private android.content.pm.PackageManager mPackageManager;
+    private java.util.HashMap mRestoredSignatures;
+    private java.util.HashMap mStateVersions;
+    private java.lang.String mStoredIncrementalVersion;
+    private int mStoredSdkVersion;
+
+    void <init>(android.content.pm.PackageManager, java.util.List)
+    {
+        java.util.HashSet $r0;
+        com.android.server.PackageManagerBackupAgent r1;
+        android.content.pm.PackageManager r2;
+        java.util.List r3;
+        java.util.HashMap $r4;
+
+        r1 := @this: com.android.server.PackageManagerBackupAgent;
+
+        r2 := @parameter0: android.content.pm.PackageManager;
+
+        r3 := @parameter1: java.util.List;
+
+        specialinvoke r1.<android.app.backup.BackupAgent: void <init>()>();
+
+        $r4 = new java.util.HashMap;
+
+        specialinvoke $r4.<java.util.HashMap: void <init>()>();
+
+        r1.<com.android.server.PackageManagerBackupAgent: java.util.HashMap mStateVersions> = $r4;
+
+        $r0 = new java.util.HashSet;
+
+        specialinvoke $r0.<java.util.HashSet: void <init>()>();
+
+        r1.<com.android.server.PackageManagerBackupAgent: java.util.HashSet mExisting> = $r0;
+
+        r1.<com.android.server.PackageManagerBackupAgent: android.content.pm.PackageManager mPackageManager> = r2;
+
+        r1.<com.android.server.PackageManagerBackupAgent: java.util.List mAllPackages> = r3;
+
+        r1.<com.android.server.PackageManagerBackupAgent: java.util.HashMap mRestoredSignatures> = null;
+
+        r1.<com.android.server.PackageManagerBackupAgent: boolean mHasMetadata> = 0;
+
+        return;
+    }
+
+    private void parseStateFile(android.os.ParcelFileDescriptor)
+    {
+        com.android.server.PackageManagerBackupAgent r0;
+        android.os.ParcelFileDescriptor r1;
+        java.io.DataInputStream r2, $r8;
+        java.io.IOException r3, $r18;
+        java.lang.String r5, $r11, $r13, $r24;
+        int i0, $i2;
+        java.util.HashSet $r6, $r14, $r15;
+        java.util.HashMap $r7, $r16;
+        java.io.FileInputStream $r9;
+        java.io.FileDescriptor $r10;
+        byte[] $r12;
+        boolean $z0;
+        com.android.server.PackageManagerBackupAgent$Metadata $r17;
+        java.lang.StringBuilder $r20, $r21, $r22;
+        java.io.EOFException $r23;
+
+        r0 := @this: com.android.server.PackageManagerBackupAgent;
+
+        r1 := @parameter0: android.os.ParcelFileDescriptor;
+
+        $r6 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashSet mExisting>;
+
+        virtualinvoke $r6.<java.util.HashSet: void clear()>();
+
+        $r7 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashMap mStateVersions>;
+
+        virtualinvoke $r7.<java.util.HashMap: void clear()>();
+
+        r0.<com.android.server.PackageManagerBackupAgent: int mStoredSdkVersion> = 0;
+
+        r0.<com.android.server.PackageManagerBackupAgent: java.lang.String mStoredIncrementalVersion> = null;
+
+        $r8 = new java.io.DataInputStream;
+
+        $r9 = new java.io.FileInputStream;
+
+        $r10 = virtualinvoke r1.<android.os.ParcelFileDescriptor: java.io.FileDescriptor getFileDescriptor()>();
+
+        specialinvoke $r9.<java.io.FileInputStream: void <init>(java.io.FileDescriptor)>($r10);
+
+        specialinvoke $r8.<java.io.DataInputStream: void <init>(java.io.InputStream)>($r9);
+
+        r2 = $r8;
+
+        $r12 = newarray (byte)[256];
+
+     label1:
+        $r11 = virtualinvoke r2.<java.io.DataInputStream: java.lang.String readUTF()>();
+
+        $z0 = virtualinvoke $r11.<java.lang.String: boolean equals(java.lang.Object)>("@meta@");
+
+        if $z0 == 0 goto label4;
+
+        $i2 = virtualinvoke r2.<java.io.DataInputStream: int readInt()>();
+
+        r0.<com.android.server.PackageManagerBackupAgent: int mStoredSdkVersion> = $i2;
+
+        $r13 = virtualinvoke r2.<java.io.DataInputStream: java.lang.String readUTF()>();
+
+        r0.<com.android.server.PackageManagerBackupAgent: java.lang.String mStoredIncrementalVersion> = $r13;
+
+        $r14 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashSet mExisting>;
+
+        virtualinvoke $r14.<java.util.HashSet: boolean add(java.lang.Object)>("@meta@");
+
+     label2:
+        r5 = virtualinvoke r2.<java.io.DataInputStream: java.lang.String readUTF()>();
+
+        i0 = virtualinvoke r2.<java.io.DataInputStream: int readInt()>();
+
+        $r15 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashSet mExisting>;
+
+        virtualinvoke $r15.<java.util.HashSet: boolean add(java.lang.Object)>(r5);
+
+        $r16 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashMap mStateVersions>;
+
+        $r17 = new com.android.server.PackageManagerBackupAgent$Metadata;
+
+        specialinvoke $r17.<com.android.server.PackageManagerBackupAgent$Metadata: void <init>(com.android.server.PackageManagerBackupAgent,int,android.content.pm.Signature[])>(r0, i0, null);
+
+        virtualinvoke $r16.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r5, $r17);
+
+     label3:
+        goto label2;
+
+     label4:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("PMBA", "No global metadata in state file!");
+
+     label5:
+        return;
+
+     label6:
+        $r18 := @caughtexception;
+
+        r3 = $r18;
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        $r20 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to read Package Manager state file: ");
+
+        $r21 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r24 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("PMBA", $r24);
+
+        return;
+
+     label7:
+        $r23 := @caughtexception;
+
+        return;
+
+        catch java.io.EOFException from label1 to label2 with label7;
+        catch java.io.IOException from label1 to label2 with label6;
+        catch java.io.EOFException from label2 to label3 with label7;
+        catch java.io.IOException from label2 to label3 with label6;
+        catch java.io.EOFException from label4 to label5 with label7;
+        catch java.io.IOException from label4 to label5 with label6;
+    }
+
+    private static android.content.pm.Signature[] readSignatureArray(java.io.DataInputStream)
+    {
+        java.io.DataInputStream r0;
+        android.content.pm.Signature[] r3;
+        int i0, i1, $i2;
+        byte[] r4;
+        android.content.pm.Signature $r5;
+        java.lang.IllegalStateException $r6;
+        java.io.EOFException $r7;
+        java.io.IOException $r8;
+
+        r0 := @parameter0: java.io.DataInputStream;
+
+     label01:
+        i0 = virtualinvoke r0.<java.io.DataInputStream: int readInt()>();
+
+     label02:
+        if i0 <= 20 goto label09;
+
+     label03:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("PMBA", "Suspiciously large sig count in restore data; aborting");
+
+        $r6 = new java.lang.IllegalStateException;
+
+        specialinvoke $r6.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Bad restore state");
+
+        throw $r6;
+
+     label04:
+        $r8 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("PMBA", "Unable to read signatures");
+
+        r3 = null;
+
+     label05:
+        return r3;
+
+     label06:
+        $r7 := @caughtexception;
+
+     label07:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("PMBA", "Read empty signature block");
+
+     label08:
+        return null;
+
+     label09:
+        r3 = newarray (android.content.pm.Signature)[i0];
+
+     label10:
+        i1 = 0;
+
+     label11:
+        if i1 >= i0 goto label05;
+
+     label12:
+        $i2 = virtualinvoke r0.<java.io.DataInputStream: int readInt()>();
+
+        r4 = newarray (byte)[$i2];
+
+        virtualinvoke r0.<java.io.DataInputStream: int read(byte[])>(r4);
+
+        $r5 = new android.content.pm.Signature;
+
+        specialinvoke $r5.<android.content.pm.Signature: void <init>(byte[])>(r4);
+
+        r3[i1] = $r5;
+
+     label13:
+        i1 = i1 + 1;
+
+        goto label11;
+
+        catch java.io.EOFException from label01 to label02 with label06;
+        catch java.io.IOException from label01 to label02 with label04;
+        catch java.io.IOException from label03 to label04 with label04;
+        catch java.io.IOException from label07 to label08 with label04;
+        catch java.io.IOException from label09 to label10 with label04;
+        catch java.io.IOException from label12 to label13 with label04;
+    }
+
+    private static void writeEntity(android.app.backup.BackupDataOutput, java.lang.String, byte[]) throws java.io.IOException
+    {
+        android.app.backup.BackupDataOutput r0;
+        java.lang.String r1;
+        byte[] r2;
+        int $i0, $i2;
+
+        r0 := @parameter0: android.app.backup.BackupDataOutput;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: byte[];
+
+        $i0 = lengthof r2;
+
+        virtualinvoke r0.<android.app.backup.BackupDataOutput: int writeEntityHeader(java.lang.String,int)>(r1, $i0);
+
+        $i2 = lengthof r2;
+
+        virtualinvoke r0.<android.app.backup.BackupDataOutput: int writeEntityData(byte[],int)>(r2, $i2);
+
+        return;
+    }
+
+    private static void writeSignatureArray(java.io.DataOutputStream, android.content.pm.Signature[]) throws java.io.IOException
+    {
+        java.io.DataOutputStream r0;
+        android.content.pm.Signature[] r1;
+        int i0, i1, $i2, $i3;
+        byte[] r2;
+        android.content.pm.Signature $r3;
+
+        r0 := @parameter0: java.io.DataOutputStream;
+
+        r1 := @parameter1: android.content.pm.Signature[];
+
+        $i2 = lengthof r1;
+
+        virtualinvoke r0.<java.io.DataOutputStream: void writeInt(int)>($i2);
+
+        i0 = lengthof r1;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $r3 = r1[i1];
+
+        r2 = virtualinvoke $r3.<android.content.pm.Signature: byte[] toByteArray()>();
+
+        $i3 = lengthof r2;
+
+        virtualinvoke r0.<java.io.DataOutputStream: void writeInt(int)>($i3);
+
+        virtualinvoke r0.<java.io.DataOutputStream: void write(byte[])>(r2);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void writeStateFile(java.util.List, android.os.ParcelFileDescriptor)
+    {
+        com.android.server.PackageManagerBackupAgent r0;
+        java.util.List r1;
+        android.os.ParcelFileDescriptor r2;
+        java.io.DataOutputStream r3, $r7;
+        java.util.Iterator r5;
+        android.content.pm.PackageInfo r6;
+        java.io.FileOutputStream $r8;
+        java.io.FileDescriptor $r9;
+        int $i0, $i1;
+        java.lang.String $r10, $r12;
+        boolean $z0;
+        java.lang.Object $r11;
+        java.io.IOException $r13;
+
+        r0 := @this: com.android.server.PackageManagerBackupAgent;
+
+        r1 := @parameter0: java.util.List;
+
+        r2 := @parameter1: android.os.ParcelFileDescriptor;
+
+        $r7 = new java.io.DataOutputStream;
+
+        $r8 = new java.io.FileOutputStream;
+
+        $r9 = virtualinvoke r2.<android.os.ParcelFileDescriptor: java.io.FileDescriptor getFileDescriptor()>();
+
+        specialinvoke $r8.<java.io.FileOutputStream: void <init>(java.io.FileDescriptor)>($r9);
+
+        specialinvoke $r7.<java.io.DataOutputStream: void <init>(java.io.OutputStream)>($r8);
+
+        r3 = $r7;
+
+     label1:
+        virtualinvoke r3.<java.io.DataOutputStream: void writeUTF(java.lang.String)>("@meta@");
+
+        $i0 = <android.os.Build$VERSION: int SDK_INT>;
+
+        virtualinvoke r3.<java.io.DataOutputStream: void writeInt(int)>($i0);
+
+        $r10 = <android.os.Build$VERSION: java.lang.String INCREMENTAL>;
+
+        virtualinvoke r3.<java.io.DataOutputStream: void writeUTF(java.lang.String)>($r10);
+
+        r5 = interfaceinvoke r1.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r5.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label5;
+
+        $r11 = interfaceinvoke r5.<java.util.Iterator: java.lang.Object next()>();
+
+        r6 = (android.content.pm.PackageInfo) $r11;
+
+        $r12 = r6.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        virtualinvoke r3.<java.io.DataOutputStream: void writeUTF(java.lang.String)>($r12);
+
+        $i1 = r6.<android.content.pm.PackageInfo: int versionCode>;
+
+        virtualinvoke r3.<java.io.DataOutputStream: void writeInt(int)>($i1);
+
+     label3:
+        goto label2;
+
+     label4:
+        $r13 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("PMBA", "Unable to write package manager state file!");
+
+     label5:
+        return;
+
+        catch java.io.IOException from label1 to label2 with label4;
+        catch java.io.IOException from label2 to label3 with label4;
+    }
+
+    public com.android.server.PackageManagerBackupAgent$Metadata getRestoredMetadata(java.lang.String)
+    {
+        com.android.server.PackageManagerBackupAgent r0;
+        java.lang.String r1;
+        java.util.HashMap $r2, $r3;
+        java.lang.Object $r4;
+        com.android.server.PackageManagerBackupAgent$Metadata $r5;
+
+        r0 := @this: com.android.server.PackageManagerBackupAgent;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashMap mRestoredSignatures>;
+
+        if $r2 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("PMBA", "getRestoredMetadata() before metadata read!");
+
+        return null;
+
+     label1:
+        $r3 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashMap mRestoredSignatures>;
+
+        $r4 = virtualinvoke $r3.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        $r5 = (com.android.server.PackageManagerBackupAgent$Metadata) $r4;
+
+        return $r5;
+    }
+
+    public java.util.Set getRestoredPackages()
+    {
+        com.android.server.PackageManagerBackupAgent r0;
+        java.util.HashMap $r1, $r2;
+        java.util.Set $r3;
+
+        r0 := @this: com.android.server.PackageManagerBackupAgent;
+
+        $r1 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashMap mRestoredSignatures>;
+
+        if $r1 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("PMBA", "getRestoredPackages() before metadata read!");
+
+        return null;
+
+     label1:
+        $r2 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashMap mRestoredSignatures>;
+
+        $r3 = virtualinvoke $r2.<java.util.HashMap: java.util.Set keySet()>();
+
+        return $r3;
+    }
+
+    public boolean hasMetadata()
+    {
+        com.android.server.PackageManagerBackupAgent r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.PackageManagerBackupAgent;
+
+        $z0 = r0.<com.android.server.PackageManagerBackupAgent: boolean mHasMetadata>;
+
+        return $z0;
+    }
+
+    public void onBackup(android.os.ParcelFileDescriptor, android.app.backup.BackupDataOutput, android.os.ParcelFileDescriptor)
+    {
+        com.android.server.PackageManagerBackupAgent r0;
+        android.os.ParcelFileDescriptor r1, r3;
+        android.app.backup.BackupDataOutput r2;
+        java.io.ByteArrayOutputStream r4, $r13;
+        java.io.DataOutputStream r5, $r16;
+        java.util.Iterator r7, r8;
+        java.lang.String r9, r11, $r15, $r18, $r23, $r26, $r40, $r48, $r54, $r55;
+        boolean z0, $z2, $z3, $z4, $z5, $z8;
+        android.content.pm.PackageInfo r14, $r33;
+        java.lang.StringBuilder $r17, $r19, $r20, $r21, $r22, $r25, $r37, $r38, $r41, $r42;
+        java.util.HashSet $r24, $r27, $r28, $r29, $r35, $r44, $r52;
+        java.util.List $r30, $r31;
+        java.lang.Object $r32, $r34, $r50;
+        android.content.pm.PackageManager $r36;
+        android.content.pm.Signature[] $r39, $r46, $r47;
+        byte[] $r43, $r49;
+        java.util.HashMap $r45;
+        int $i3, $i4, $i5, $i6, $i7;
+        com.android.server.PackageManagerBackupAgent$Metadata $r51;
+        java.io.IOException $r53, $r57;
+        android.content.pm.PackageManager$NameNotFoundException $r56;
+
+        r0 := @this: com.android.server.PackageManagerBackupAgent;
+
+        r1 := @parameter0: android.os.ParcelFileDescriptor;
+
+        r2 := @parameter1: android.app.backup.BackupDataOutput;
+
+        r3 := @parameter2: android.os.ParcelFileDescriptor;
+
+        $r13 = new java.io.ByteArrayOutputStream;
+
+        specialinvoke $r13.<java.io.ByteArrayOutputStream: void <init>()>();
+
+        r4 = $r13;
+
+        $r16 = new java.io.DataOutputStream;
+
+        specialinvoke $r16.<java.io.DataOutputStream: void <init>(java.io.OutputStream)>(r4);
+
+        r5 = $r16;
+
+        specialinvoke r0.<com.android.server.PackageManagerBackupAgent: void parseStateFile(android.os.ParcelFileDescriptor)>(r1);
+
+        $r15 = r0.<com.android.server.PackageManagerBackupAgent: java.lang.String mStoredIncrementalVersion>;
+
+        if $r15 == null goto label01;
+
+        $r54 = r0.<com.android.server.PackageManagerBackupAgent: java.lang.String mStoredIncrementalVersion>;
+
+        $r55 = <android.os.Build$VERSION: java.lang.String INCREMENTAL>;
+
+        $z8 = virtualinvoke $r54.<java.lang.String: boolean equals(java.lang.Object)>($r55);
+
+        if $z8 != 0 goto label02;
+
+     label01:
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        $r19 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Previous metadata ");
+
+        $r18 = r0.<com.android.server.PackageManagerBackupAgent: java.lang.String mStoredIncrementalVersion>;
+
+        $r21 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r18);
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mismatch vs ");
+
+        $r23 = <android.os.Build$VERSION: java.lang.String INCREMENTAL>;
+
+        $r22 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r23);
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" - rewriting");
+
+        $r26 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PMBA", $r26);
+
+        $r24 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashSet mExisting>;
+
+        virtualinvoke $r24.<java.util.HashSet: void clear()>();
+
+     label02:
+        $r28 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashSet mExisting>;
+
+        $z2 = virtualinvoke $r28.<java.util.HashSet: boolean contains(java.lang.Object)>("@meta@");
+
+        if $z2 != 0 goto label12;
+
+        $i5 = <android.os.Build$VERSION: int SDK_INT>;
+
+        virtualinvoke r5.<java.io.DataOutputStream: void writeInt(int)>($i5);
+
+        $r48 = <android.os.Build$VERSION: java.lang.String INCREMENTAL>;
+
+        virtualinvoke r5.<java.io.DataOutputStream: void writeUTF(java.lang.String)>($r48);
+
+        $r49 = virtualinvoke r4.<java.io.ByteArrayOutputStream: byte[] toByteArray()>();
+
+        staticinvoke <com.android.server.PackageManagerBackupAgent: void writeEntity(android.app.backup.BackupDataOutput,java.lang.String,byte[])>(r2, "@meta@", $r49);
+
+     label03:
+        $r30 = r0.<com.android.server.PackageManagerBackupAgent: java.util.List mAllPackages>;
+
+        r7 = interfaceinvoke $r30.<java.util.List: java.util.Iterator iterator()>();
+
+     label04:
+        $z3 = interfaceinvoke r7.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label19;
+
+        $r34 = interfaceinvoke r7.<java.util.Iterator: java.lang.Object next()>();
+
+        $r33 = (android.content.pm.PackageInfo) $r34;
+
+        r11 = $r33.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        z0 = virtualinvoke r11.<java.lang.String: boolean equals(java.lang.Object)>("@meta@");
+
+     label05:
+        if z0 != 0 goto label04;
+
+     label06:
+        $r36 = r0.<com.android.server.PackageManagerBackupAgent: android.content.pm.PackageManager mPackageManager>;
+
+        r14 = virtualinvoke $r36.<android.content.pm.PackageManager: android.content.pm.PackageInfo getPackageInfo(java.lang.String,int)>(r11, 64);
+
+     label07:
+        $r35 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashSet mExisting>;
+
+        $z5 = virtualinvoke $r35.<java.util.HashSet: boolean contains(java.lang.Object)>(r11);
+
+        if $z5 == 0 goto label08;
+
+        $r44 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashSet mExisting>;
+
+        virtualinvoke $r44.<java.util.HashSet: boolean remove(java.lang.Object)>(r11);
+
+        $i6 = r14.<android.content.pm.PackageInfo: int versionCode>;
+
+        $r45 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashMap mStateVersions>;
+
+        $r50 = virtualinvoke $r45.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r11);
+
+        $r51 = (com.android.server.PackageManagerBackupAgent$Metadata) $r50;
+
+        $i7 = $r51.<com.android.server.PackageManagerBackupAgent$Metadata: int versionCode>;
+
+        if $i6 == $i7 goto label04;
+
+     label08:
+        $r39 = r14.<android.content.pm.PackageInfo: android.content.pm.Signature[] signatures>;
+
+        if $r39 == null goto label09;
+
+        $r46 = r14.<android.content.pm.PackageInfo: android.content.pm.Signature[] signatures>;
+
+        $i3 = lengthof $r46;
+
+        if $i3 != 0 goto label17;
+
+     label09:
+        $r38 = new java.lang.StringBuilder;
+
+        specialinvoke $r38.<java.lang.StringBuilder: void <init>()>();
+
+        $r37 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Not backing up package ");
+
+        $r42 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r11);
+
+        $r41 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" since it appears to have no signatures.");
+
+        $r40 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("PMBA", $r40);
+
+     label10:
+        goto label04;
+
+     label11:
+        $r53 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("PMBA", "Unable to write package backup data file!");
+
+        return;
+
+     label12:
+        $r27 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashSet mExisting>;
+
+        virtualinvoke $r27.<java.util.HashSet: boolean remove(java.lang.Object)>("@meta@");
+
+     label13:
+        goto label03;
+
+     label14:
+        $r56 := @caughtexception;
+
+     label15:
+        $r52 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashSet mExisting>;
+
+        virtualinvoke $r52.<java.util.HashSet: boolean add(java.lang.Object)>(r11);
+
+     label16:
+        goto label04;
+
+     label17:
+        virtualinvoke r4.<java.io.ByteArrayOutputStream: void reset()>();
+
+        $i4 = r14.<android.content.pm.PackageInfo: int versionCode>;
+
+        virtualinvoke r5.<java.io.DataOutputStream: void writeInt(int)>($i4);
+
+        $r47 = r14.<android.content.pm.PackageInfo: android.content.pm.Signature[] signatures>;
+
+        staticinvoke <com.android.server.PackageManagerBackupAgent: void writeSignatureArray(java.io.DataOutputStream,android.content.pm.Signature[])>(r5, $r47);
+
+        $r43 = virtualinvoke r4.<java.io.ByteArrayOutputStream: byte[] toByteArray()>();
+
+        staticinvoke <com.android.server.PackageManagerBackupAgent: void writeEntity(android.app.backup.BackupDataOutput,java.lang.String,byte[])>(r2, r11, $r43);
+
+     label18:
+        goto label04;
+
+     label19:
+        $r29 = r0.<com.android.server.PackageManagerBackupAgent: java.util.HashSet mExisting>;
+
+        r8 = virtualinvoke $r29.<java.util.HashSet: java.util.Iterator iterator()>();
+
+     label20:
+        $z4 = interfaceinvoke r8.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label26;
+
+        $r32 = interfaceinvoke r8.<java.util.Iterator: java.lang.Object next()>();
+
+        r9 = (java.lang.String) $r32;
+
+     label21:
+        virtualinvoke r2.<android.app.backup.BackupDataOutput: int writeEntityHeader(java.lang.String,int)>(r9, -1);
+
+     label22:
+        goto label20;
+
+     label23:
+        $r57 := @caughtexception;
+
+     label24:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("PMBA", "Unable to write package deletions!");
+
+     label25:
+        return;
+
+     label26:
+        $r31 = r0.<com.android.server.PackageManagerBackupAgent: java.util.List mAllPackages>;
+
+        specialinvoke r0.<com.android.server.PackageManagerBackupAgent: void writeStateFile(java.util.List,android.os.ParcelFileDescriptor)>($r31, r3);
+
+        return;
+
+        catch java.io.IOException from label02 to label03 with label11;
+        catch java.io.IOException from label03 to label04 with label11;
+        catch java.io.IOException from label04 to label05 with label11;
+        catch android.content.pm.PackageManager$NameNotFoundException from label06 to label07 with label14;
+        catch java.io.IOException from label06 to label07 with label11;
+        catch java.io.IOException from label07 to label08 with label11;
+        catch java.io.IOException from label08 to label09 with label11;
+        catch java.io.IOException from label09 to label10 with label11;
+        catch java.io.IOException from label12 to label13 with label11;
+        catch java.io.IOException from label15 to label16 with label11;
+        catch java.io.IOException from label17 to label18 with label11;
+        catch java.io.IOException from label19 to label20 with label11;
+        catch java.io.IOException from label20 to label21 with label11;
+        catch java.io.IOException from label21 to label22 with label23;
+        catch java.io.IOException from label24 to label25 with label11;
+    }
+
+    public void onRestore(android.app.backup.BackupDataInput, int, android.os.ParcelFileDescriptor) throws java.io.IOException
+    {
+        com.android.server.PackageManagerBackupAgent r0;
+        android.app.backup.BackupDataInput r1;
+        int i0, i1, i2, i3, $i6, $i7;
+        android.os.ParcelFileDescriptor r2;
+        java.util.ArrayList r3, $r11;
+        java.util.HashMap r4, $r10;
+        java.lang.String r5, $r16, $r21;
+        byte[] r6;
+        java.io.DataInputStream r7, $r13;
+        android.content.pm.Signature[] r8;
+        android.content.pm.ApplicationInfo r9, $r20;
+        boolean $z0, $z1;
+        java.io.ByteArrayInputStream $r12;
+        java.lang.StringBuilder $r14, $r15, $r17, $r18;
+        com.android.server.PackageManagerBackupAgent$Metadata $r19;
+
+        r0 := @this: com.android.server.PackageManagerBackupAgent;
+
+        r1 := @parameter0: android.app.backup.BackupDataInput;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: android.os.ParcelFileDescriptor;
+
+        $r11 = new java.util.ArrayList;
+
+        specialinvoke $r11.<java.util.ArrayList: void <init>()>();
+
+        r3 = $r11;
+
+        $r10 = new java.util.HashMap;
+
+        specialinvoke $r10.<java.util.HashMap: void <init>()>();
+
+        r4 = $r10;
+
+     label1:
+        $z0 = virtualinvoke r1.<android.app.backup.BackupDataInput: boolean readNextHeader()>();
+
+        if $z0 == 0 goto label6;
+
+        r5 = virtualinvoke r1.<android.app.backup.BackupDataInput: java.lang.String getKey()>();
+
+        i1 = virtualinvoke r1.<android.app.backup.BackupDataInput: int getDataSize()>();
+
+        r6 = newarray (byte)[i1];
+
+        virtualinvoke r1.<android.app.backup.BackupDataInput: int readEntityData(byte[],int,int)>(r6, 0, i1);
+
+        $r13 = new java.io.DataInputStream;
+
+        $r12 = new java.io.ByteArrayInputStream;
+
+        specialinvoke $r12.<java.io.ByteArrayInputStream: void <init>(byte[])>(r6);
+
+        specialinvoke $r13.<java.io.DataInputStream: void <init>(java.io.InputStream)>($r12);
+
+        r7 = $r13;
+
+        $z1 = virtualinvoke r5.<java.lang.String: boolean equals(java.lang.Object)>("@meta@");
+
+        if $z1 == 0 goto label3;
+
+        i3 = virtualinvoke r7.<java.io.DataInputStream: int readInt()>();
+
+        $i7 = <android.os.Build$VERSION: int SDK_INT>;
+
+        if -1 <= $i7 goto label2;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("PMBA", "Restore set was from a later version of Android; not restoring");
+
+        return;
+
+     label2:
+        r0.<com.android.server.PackageManagerBackupAgent: int mStoredSdkVersion> = i3;
+
+        $r21 = virtualinvoke r7.<java.io.DataInputStream: java.lang.String readUTF()>();
+
+        r0.<com.android.server.PackageManagerBackupAgent: java.lang.String mStoredIncrementalVersion> = $r21;
+
+        r0.<com.android.server.PackageManagerBackupAgent: boolean mHasMetadata> = 1;
+
+        goto label1;
+
+     label3:
+        i2 = virtualinvoke r7.<java.io.DataInputStream: int readInt()>();
+
+        r8 = staticinvoke <com.android.server.PackageManagerBackupAgent: android.content.pm.Signature[] readSignatureArray(java.io.DataInputStream)>(r7);
+
+        if r8 == null goto label4;
+
+        $i6 = lengthof r8;
+
+        if $i6 != 0 goto label5;
+
+     label4:
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r15 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Not restoring package ");
+
+        $r17 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r5);
+
+        $r18 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" since it appears to have no signatures.");
+
+        $r16 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("PMBA", $r16);
+
+        goto label1;
+
+     label5:
+        $r20 = new android.content.pm.ApplicationInfo;
+
+        specialinvoke $r20.<android.content.pm.ApplicationInfo: void <init>()>();
+
+        r9 = $r20;
+
+        r9.<android.content.pm.ApplicationInfo: java.lang.String packageName> = r5;
+
+        interfaceinvoke r3.<java.util.List: boolean add(java.lang.Object)>(r9);
+
+        $r19 = new com.android.server.PackageManagerBackupAgent$Metadata;
+
+        specialinvoke $r19.<com.android.server.PackageManagerBackupAgent$Metadata: void <init>(com.android.server.PackageManagerBackupAgent,int,android.content.pm.Signature[])>(r0, i2, r8);
+
+        virtualinvoke r4.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r5, $r19);
+
+        goto label1;
+
+     label6:
+        r0.<com.android.server.PackageManagerBackupAgent: java.util.HashMap mRestoredSignatures> = r4;
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.PackageManagerBackupAgent: java.lang.String TAG> = "PMBA";
+
+        <com.android.server.PackageManagerBackupAgent: java.lang.String GLOBAL_METADATA_KEY> = "@meta@";
+
+        <com.android.server.PackageManagerBackupAgent: boolean DEBUG> = 0;
+
+        return;
+    }
+}

@@ -1,0 +1,709 @@
+public final class gov.nist.javax.sip.parser.PipelinedMsgParser extends java.lang.Object implements java.lang.Runnable
+{
+    private static int uid;
+    private int maxMessageSize;
+    private java.lang.Thread mythread;
+    private gov.nist.javax.sip.parser.Pipeline rawInputStream;
+    protected gov.nist.javax.sip.parser.SIPMessageListener sipMessageListener;
+    private int sizeCounter;
+
+    static void <clinit>()
+    {
+        <gov.nist.javax.sip.parser.PipelinedMsgParser: int uid> = 0;
+
+        return;
+    }
+
+    protected void <init>()
+    {
+        gov.nist.javax.sip.parser.PipelinedMsgParser r0;
+
+        r0 := @this: gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        return;
+    }
+
+    public void <init>(gov.nist.javax.sip.parser.Pipeline)
+    {
+        gov.nist.javax.sip.parser.PipelinedMsgParser r0;
+        gov.nist.javax.sip.parser.Pipeline r1;
+
+        r0 := @this: gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+        r1 := @parameter0: gov.nist.javax.sip.parser.Pipeline;
+
+        specialinvoke r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: void <init>(gov.nist.javax.sip.parser.SIPMessageListener,gov.nist.javax.sip.parser.Pipeline,boolean,int)>(null, r1, 0, 0);
+
+        return;
+    }
+
+    public void <init>(gov.nist.javax.sip.parser.SIPMessageListener, gov.nist.javax.sip.parser.Pipeline, int)
+    {
+        gov.nist.javax.sip.parser.PipelinedMsgParser r0;
+        gov.nist.javax.sip.parser.SIPMessageListener r1;
+        gov.nist.javax.sip.parser.Pipeline r2;
+        int i0;
+
+        r0 := @this: gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+        r1 := @parameter0: gov.nist.javax.sip.parser.SIPMessageListener;
+
+        r2 := @parameter1: gov.nist.javax.sip.parser.Pipeline;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: void <init>(gov.nist.javax.sip.parser.SIPMessageListener,gov.nist.javax.sip.parser.Pipeline,boolean,int)>(r1, r2, 0, i0);
+
+        return;
+    }
+
+    public void <init>(gov.nist.javax.sip.parser.SIPMessageListener, gov.nist.javax.sip.parser.Pipeline, boolean, int)
+    {
+        gov.nist.javax.sip.parser.PipelinedMsgParser r0;
+        gov.nist.javax.sip.parser.SIPMessageListener r1;
+        gov.nist.javax.sip.parser.Pipeline r2;
+        boolean z0;
+        int i0, $i1;
+        java.lang.Thread $r3, $r5;
+        java.lang.StringBuilder $r4, $r6, $r7;
+        java.lang.String $r8;
+
+        r0 := @this: gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+        r1 := @parameter0: gov.nist.javax.sip.parser.SIPMessageListener;
+
+        r2 := @parameter1: gov.nist.javax.sip.parser.Pipeline;
+
+        z0 := @parameter2: boolean;
+
+        i0 := @parameter3: int;
+
+        specialinvoke r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: void <init>()>();
+
+        r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.SIPMessageListener sipMessageListener> = r1;
+
+        r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream> = r2;
+
+        r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: int maxMessageSize> = i0;
+
+        $r3 = new java.lang.Thread;
+
+        specialinvoke $r3.<java.lang.Thread: void <init>(java.lang.Runnable)>(r0);
+
+        r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: java.lang.Thread mythread> = $r3;
+
+        $r5 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: java.lang.Thread mythread>;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("PipelineThread-");
+
+        $i1 = staticinvoke <gov.nist.javax.sip.parser.PipelinedMsgParser: int getNewUid()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r5.<java.lang.Thread: void setName(java.lang.String)>($r8);
+
+        return;
+    }
+
+    private static int getNewUid()
+    {
+        java.lang.Throwable r0, $r1;
+        int i0, $i1;
+
+        entermonitor class "gov/nist/javax/sip/parser/PipelinedMsgParser";
+
+     label1:
+        i0 = <gov.nist.javax.sip.parser.PipelinedMsgParser: int uid>;
+
+        $i1 = i0 + 1;
+
+        <gov.nist.javax.sip.parser.PipelinedMsgParser: int uid> = $i1;
+
+     label2:
+        exitmonitor class "gov/nist/javax/sip/parser/PipelinedMsgParser";
+
+        return i0;
+
+     label3:
+        $r1 := @caughtexception;
+
+        r0 = $r1;
+
+        exitmonitor class "gov/nist/javax/sip/parser/PipelinedMsgParser";
+
+        throw r0;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    private java.lang.String readLine(java.io.InputStream) throws java.io.IOException
+    {
+        gov.nist.javax.sip.parser.PipelinedMsgParser r0;
+        java.io.InputStream r1;
+        java.lang.StringBuffer r2, $r3;
+        int i0, $i2, $i3, $i4, $i5;
+        char c1;
+        java.lang.String $r4;
+        java.io.IOException $r6, $r7;
+
+        r0 := @this: gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+        r1 := @parameter0: java.io.InputStream;
+
+        $r3 = new java.lang.StringBuffer;
+
+        specialinvoke $r3.<java.lang.StringBuffer: void <init>(java.lang.String)>("");
+
+        r2 = $r3;
+
+     label1:
+        i0 = virtualinvoke r1.<java.io.InputStream: int read()>();
+
+        if i0 != -1 goto label2;
+
+        $r7 = new java.io.IOException;
+
+        specialinvoke $r7.<java.io.IOException: void <init>(java.lang.String)>("End of stream");
+
+        throw $r7;
+
+     label2:
+        c1 = (char) i0;
+
+        $i2 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: int maxMessageSize>;
+
+        if $i2 <= 0 goto label3;
+
+        $i3 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: int sizeCounter>;
+
+        $i4 = -1 + $i3;
+
+        r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: int sizeCounter> = $i4;
+
+        $i5 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: int sizeCounter>;
+
+        if $i5 > 0 goto label3;
+
+        $r6 = new java.io.IOException;
+
+        specialinvoke $r6.<java.io.IOException: void <init>(java.lang.String)>("Max size exceeded!");
+
+        throw $r6;
+
+     label3:
+        if c1 == 13 goto label4;
+
+        virtualinvoke r2.<java.lang.StringBuffer: java.lang.StringBuffer append(char)>(c1);
+
+     label4:
+        if c1 != 10 goto label1;
+
+        $r4 = virtualinvoke r2.<java.lang.StringBuffer: java.lang.String toString()>();
+
+        return $r4;
+    }
+
+    protected java.lang.Object clone()
+    {
+        gov.nist.javax.sip.parser.PipelinedMsgParser r0, r1, $r2;
+        gov.nist.javax.sip.parser.Pipeline $r3;
+        gov.nist.javax.sip.parser.SIPMessageListener $r4;
+        java.lang.Thread $r5;
+
+        r0 := @this: gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+        $r2 = new gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+        specialinvoke $r2.<gov.nist.javax.sip.parser.PipelinedMsgParser: void <init>()>();
+
+        r1 = $r2;
+
+        $r3 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        r1.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream> = $r3;
+
+        $r4 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.SIPMessageListener sipMessageListener>;
+
+        r1.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.SIPMessageListener sipMessageListener> = $r4;
+
+        $r5 = new java.lang.Thread;
+
+        specialinvoke $r5.<java.lang.Thread: void <init>(java.lang.Runnable)>(r1);
+
+        virtualinvoke $r5.<java.lang.Thread: void setName(java.lang.String)>("PipelineThread");
+
+        return r1;
+    }
+
+    public void close()
+    {
+        gov.nist.javax.sip.parser.PipelinedMsgParser r0;
+        gov.nist.javax.sip.parser.Pipeline $r2;
+        java.io.IOException $r3;
+
+        r0 := @this: gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+     label1:
+        $r2 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        virtualinvoke $r2.<gov.nist.javax.sip.parser.Pipeline: void close()>();
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    public void processInput()
+    {
+        gov.nist.javax.sip.parser.PipelinedMsgParser r0;
+        java.lang.Thread $r1;
+
+        r0 := @this: gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+        $r1 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: java.lang.Thread mythread>;
+
+        virtualinvoke $r1.<java.lang.Thread: void start()>();
+
+        return;
+    }
+
+    public void run()
+    {
+        gov.nist.javax.sip.parser.PipelinedMsgParser r0;
+        gov.nist.javax.sip.parser.Pipeline r1, $r22, $r23, $r30, $r33, $r34, $r41, $r43, $r45, $r49, $r52;
+        java.lang.Throwable r2, r18, $r51, $r54;
+        java.io.IOException r3, r5, r6, r8, r17, $r42, $r44, $r48, $r53, $r55, $r56, $r57;
+        java.lang.StringBuffer r4, $r19;
+        java.lang.String r7, r9, $r25, $r26, $r35, $r38, $r47;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6;
+        gov.nist.javax.sip.parser.StringMsgParser r10, $r27;
+        java.text.ParseException r11, $r50;
+        gov.nist.javax.sip.header.ContentLength r12;
+        gov.nist.javax.sip.message.SIPMessage r13;
+        gov.nist.javax.sip.parser.SIPMessageListener r14, $r28, $r31;
+        int i0, i1, i2, $i3, i4, $i5, $i6;
+        byte[] r15;
+        javax.sip.header.ContentLengthHeader $r29;
+        java.lang.StringBuilder $r32, $r36, $r37, $r39, $r40, $r46;
+        java.lang.Exception $r58;
+
+        r0 := @this: gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+        r1 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+     label01:
+        $i3 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: int maxMessageSize>;
+
+        r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: int sizeCounter> = $i3;
+
+        $r19 = new java.lang.StringBuffer;
+
+        specialinvoke $r19.<java.lang.StringBuffer: void <init>()>();
+
+        r4 = $r19;
+
+        $z1 = <gov.nist.core.Debug: boolean parserDebug>;
+
+        if $z1 == 0 goto label02;
+
+        staticinvoke <gov.nist.core.Debug: void println(java.lang.String)>("Starting parse!");
+
+     label02:
+        r7 = specialinvoke r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: java.lang.String readLine(java.io.InputStream)>(r1);
+
+        $z2 = virtualinvoke r7.<java.lang.String: boolean equals(java.lang.Object)>("\n");
+
+        if $z2 == 0 goto label08;
+
+        $z6 = <gov.nist.core.Debug: boolean parserDebug>;
+
+        if $z6 == 0 goto label02;
+
+        staticinvoke <gov.nist.core.Debug: void println(java.lang.String)>("Discarding blank line. ");
+
+     label03:
+        goto label02;
+
+     label04:
+        $r44 := @caughtexception;
+
+        r5 = $r44;
+
+     label05:
+        staticinvoke <gov.nist.core.Debug: void printStackTrace(java.lang.Exception)>(r5);
+
+        $r45 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        virtualinvoke $r45.<gov.nist.javax.sip.parser.Pipeline: void stopTimer()>();
+
+     label06:
+        virtualinvoke r1.<gov.nist.javax.sip.parser.Pipeline: void close()>();
+
+     label07:
+        return;
+
+     label08:
+        virtualinvoke r4.<java.lang.StringBuffer: java.lang.StringBuffer append(java.lang.String)>(r7);
+
+        $r22 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        virtualinvoke $r22.<gov.nist.javax.sip.parser.Pipeline: void startTimer()>();
+
+        staticinvoke <gov.nist.core.Debug: void println(java.lang.String)>("Reading Input Stream");
+
+     label09:
+        r9 = specialinvoke r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: java.lang.String readLine(java.io.InputStream)>(r1);
+
+        virtualinvoke r4.<java.lang.StringBuffer: java.lang.StringBuffer append(java.lang.String)>(r9);
+
+        $r25 = virtualinvoke r9.<java.lang.String: java.lang.String trim()>();
+
+        z0 = virtualinvoke $r25.<java.lang.String: boolean equals(java.lang.Object)>("");
+
+     label10:
+        if z0 == 0 goto label09;
+
+     label11:
+        $r23 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        virtualinvoke $r23.<gov.nist.javax.sip.parser.Pipeline: void stopTimer()>();
+
+        virtualinvoke r4.<java.lang.StringBuffer: java.lang.StringBuffer append(java.lang.String)>(r9);
+
+        $r27 = new gov.nist.javax.sip.parser.StringMsgParser;
+
+        $r28 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.SIPMessageListener sipMessageListener>;
+
+        specialinvoke $r27.<gov.nist.javax.sip.parser.StringMsgParser: void <init>(gov.nist.javax.sip.parser.ParseExceptionListener)>($r28);
+
+        r10 = $r27;
+
+        r10.<gov.nist.javax.sip.parser.StringMsgParser: boolean readBody> = 0;
+
+     label12:
+        $z3 = <gov.nist.core.Debug: boolean debug>;
+
+        if $z3 == 0 goto label13;
+
+        $r40 = new java.lang.StringBuilder;
+
+        specialinvoke $r40.<java.lang.StringBuilder: void <init>()>();
+
+        $r39 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("About to parse : ");
+
+        $r38 = virtualinvoke r4.<java.lang.StringBuffer: java.lang.String toString()>();
+
+        $r46 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r38);
+
+        $r47 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <gov.nist.core.Debug: void println(java.lang.String)>($r47);
+
+     label13:
+        $r26 = virtualinvoke r4.<java.lang.StringBuffer: java.lang.String toString()>();
+
+        r13 = virtualinvoke r10.<gov.nist.javax.sip.parser.StringMsgParser: gov.nist.javax.sip.message.SIPMessage parseSIPMessage(java.lang.String)>($r26);
+
+     label14:
+        if r13 != null goto label29;
+
+     label15:
+        $r41 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        virtualinvoke $r41.<gov.nist.javax.sip.parser.Pipeline: void stopTimer()>();
+
+     label16:
+        goto label01;
+
+     label17:
+        $r50 := @caughtexception;
+
+        r11 = $r50;
+
+     label18:
+        staticinvoke <gov.nist.core.Debug: void logError(java.lang.String,java.lang.Exception)>("Detected a parse error", r11);
+
+     label19:
+        goto label01;
+
+     label20:
+        $r54 := @caughtexception;
+
+        r2 = $r54;
+
+     label21:
+        virtualinvoke r1.<gov.nist.javax.sip.parser.Pipeline: void close()>();
+
+     label22:
+        throw r2;
+
+     label23:
+        $r42 := @caughtexception;
+
+        r8 = $r42;
+
+     label24:
+        $r43 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        virtualinvoke $r43.<gov.nist.javax.sip.parser.Pipeline: void stopTimer()>();
+
+        staticinvoke <gov.nist.core.Debug: void printStackTrace(java.lang.Exception)>(r8);
+
+     label25:
+        virtualinvoke r1.<gov.nist.javax.sip.parser.Pipeline: void close()>();
+
+     label26:
+        return;
+
+     label27:
+        $r55 := @caughtexception;
+
+        r6 = $r55;
+
+     label28:
+        staticinvoke <gov.nist.core.InternalErrorHandler: void handleException(java.lang.Exception)>(r6);
+
+        return;
+
+     label29:
+        $z5 = <gov.nist.core.Debug: boolean debug>;
+
+        if $z5 == 0 goto label30;
+
+        staticinvoke <gov.nist.core.Debug: void println(java.lang.String)>("Completed parsing message");
+
+     label30:
+        $r29 = virtualinvoke r13.<gov.nist.javax.sip.message.SIPMessage: javax.sip.header.ContentLengthHeader getContentLength()>();
+
+        r12 = (gov.nist.javax.sip.header.ContentLength) $r29;
+
+     label31:
+        if r12 == null goto label44;
+
+     label32:
+        i0 = virtualinvoke r12.<gov.nist.javax.sip.header.ContentLength: int getContentLength()>();
+
+     label33:
+        $z4 = <gov.nist.core.Debug: boolean debug>;
+
+        if $z4 == 0 goto label34;
+
+        $r32 = new java.lang.StringBuilder;
+
+        specialinvoke $r32.<java.lang.StringBuilder: void <init>()>();
+
+        $r37 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("contentLength ");
+
+        $r36 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r35 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <gov.nist.core.Debug: void println(java.lang.String)>($r35);
+
+     label34:
+        if i0 != 0 goto label45;
+
+     label35:
+        virtualinvoke r13.<gov.nist.javax.sip.message.SIPMessage: void removeContent()>();
+
+     label36:
+        r14 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.SIPMessageListener sipMessageListener>;
+
+     label37:
+        if r14 == null goto label01;
+
+     label38:
+        $r31 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.SIPMessageListener sipMessageListener>;
+
+        interfaceinvoke $r31.<gov.nist.javax.sip.parser.SIPMessageListener: void processMessage(gov.nist.javax.sip.message.SIPMessage)>(r13);
+
+     label39:
+        goto label01;
+
+     label40:
+        $r58 := @caughtexception;
+
+     label41:
+        virtualinvoke r1.<gov.nist.javax.sip.parser.Pipeline: void close()>();
+
+     label42:
+        return;
+
+     label43:
+        $r48 := @caughtexception;
+
+        r6 = $r48;
+
+        goto label28;
+
+     label44:
+        i0 = 0;
+
+        goto label33;
+
+     label45:
+        $i5 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: int maxMessageSize>;
+
+        if $i5 == 0 goto label46;
+
+        $i6 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: int sizeCounter>;
+
+        if i0 >= $i6 goto label36;
+
+     label46:
+        r15 = newarray (byte)[i0];
+
+     label47:
+        i2 = 0;
+
+     label48:
+        if i2 >= i0 goto label58;
+
+     label49:
+        $r30 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        virtualinvoke $r30.<gov.nist.javax.sip.parser.Pipeline: void startTimer()>();
+
+     label50:
+        i1 = i0 - i2;
+
+     label51:
+        i4 = virtualinvoke r1.<gov.nist.javax.sip.parser.Pipeline: int read(byte[],int,int)>(r15, i2, i1);
+
+     label52:
+        if i4 <= 0 goto label64;
+
+        i2 = i2 + i4;
+
+     label53:
+        $r33 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        virtualinvoke $r33.<gov.nist.javax.sip.parser.Pipeline: void stopTimer()>();
+
+     label54:
+        goto label48;
+
+     label55:
+        $r56 := @caughtexception;
+
+        r17 = $r56;
+
+     label56:
+        staticinvoke <gov.nist.core.Debug: void logError(java.lang.String,java.lang.Exception)>("Exception Reading Content", r17);
+
+     label57:
+        $r49 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        virtualinvoke $r49.<gov.nist.javax.sip.parser.Pipeline: void stopTimer()>();
+
+     label58:
+        virtualinvoke r13.<gov.nist.javax.sip.message.SIPMessage: void setMessageContent(byte[])>(r15);
+
+     label59:
+        goto label36;
+
+     label60:
+        $r51 := @caughtexception;
+
+        r18 = $r51;
+
+     label61:
+        $r52 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        virtualinvoke $r52.<gov.nist.javax.sip.parser.Pipeline: void stopTimer()>();
+
+        throw r18;
+
+     label62:
+        $r57 := @caughtexception;
+
+        r3 = $r57;
+
+        staticinvoke <gov.nist.core.InternalErrorHandler: void handleException(java.lang.Exception)>(r3);
+
+        goto label22;
+
+     label63:
+        $r53 := @caughtexception;
+
+        r6 = $r53;
+
+        goto label28;
+
+     label64:
+        $r34 = r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.Pipeline rawInputStream>;
+
+        virtualinvoke $r34.<gov.nist.javax.sip.parser.Pipeline: void stopTimer()>();
+
+     label65:
+        goto label58;
+
+        catch java.lang.Throwable from label01 to label02 with label20;
+        catch java.io.IOException from label02 to label03 with label04;
+        catch java.lang.Throwable from label02 to label03 with label20;
+        catch java.lang.Throwable from label05 to label06 with label20;
+        catch java.io.IOException from label06 to label07 with label63;
+        catch java.lang.Throwable from label08 to label09 with label20;
+        catch java.io.IOException from label09 to label10 with label23;
+        catch java.lang.Throwable from label09 to label10 with label20;
+        catch java.lang.Throwable from label11 to label12 with label20;
+        catch java.text.ParseException from label12 to label13 with label17;
+        catch java.lang.Throwable from label12 to label13 with label20;
+        catch java.text.ParseException from label13 to label14 with label17;
+        catch java.lang.Throwable from label13 to label14 with label20;
+        catch java.text.ParseException from label15 to label16 with label17;
+        catch java.lang.Throwable from label15 to label16 with label20;
+        catch java.lang.Throwable from label18 to label19 with label20;
+        catch java.io.IOException from label21 to label22 with label62;
+        catch java.lang.Throwable from label24 to label25 with label20;
+        catch java.io.IOException from label25 to label26 with label27;
+        catch java.lang.Throwable from label29 to label30 with label20;
+        catch java.lang.Throwable from label30 to label31 with label20;
+        catch java.lang.Throwable from label32 to label33 with label20;
+        catch java.lang.Throwable from label33 to label34 with label20;
+        catch java.lang.Throwable from label35 to label36 with label20;
+        catch java.lang.Throwable from label36 to label37 with label20;
+        catch java.lang.Exception from label38 to label39 with label40;
+        catch java.lang.Throwable from label38 to label39 with label20;
+        catch java.io.IOException from label41 to label42 with label43;
+        catch java.lang.Throwable from label45 to label46 with label20;
+        catch java.lang.Throwable from label46 to label47 with label20;
+        catch java.lang.Throwable from label49 to label50 with label20;
+        catch java.io.IOException from label51 to label52 with label55;
+        catch java.lang.Throwable from label51 to label52 with label60;
+        catch java.lang.Throwable from label53 to label54 with label20;
+        catch java.lang.Throwable from label56 to label57 with label60;
+        catch java.lang.Throwable from label57 to label58 with label20;
+        catch java.lang.Throwable from label58 to label59 with label20;
+        catch java.lang.Throwable from label61 to label62 with label20;
+        catch java.lang.Throwable from label64 to label65 with label20;
+    }
+
+    public void setMessageListener(gov.nist.javax.sip.parser.SIPMessageListener)
+    {
+        gov.nist.javax.sip.parser.PipelinedMsgParser r0;
+        gov.nist.javax.sip.parser.SIPMessageListener r1;
+
+        r0 := @this: gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+        r1 := @parameter0: gov.nist.javax.sip.parser.SIPMessageListener;
+
+        r0.<gov.nist.javax.sip.parser.PipelinedMsgParser: gov.nist.javax.sip.parser.SIPMessageListener sipMessageListener> = r1;
+
+        return;
+    }
+}

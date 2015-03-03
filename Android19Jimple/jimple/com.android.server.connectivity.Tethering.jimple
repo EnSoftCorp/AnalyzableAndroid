@@ -1,0 +1,2928 @@
+public class com.android.server.connectivity.Tethering extends android.net.INetworkManagementEventObserver$Stub
+{
+    private static final boolean DBG;
+    private static final java.lang.String[] DHCP_DEFAULT_RANGE;
+    private static final java.lang.String DNS_DEFAULT_SERVER1;
+    private static final java.lang.String DNS_DEFAULT_SERVER2;
+    private static final java.lang.Integer DUN_TYPE;
+    private static final java.lang.Integer HIPRI_TYPE;
+    private static final java.lang.Integer MOBILE_TYPE;
+    private static final java.lang.String TAG;
+    private static final java.lang.String USB_NEAR_IFACE_ADDR;
+    private static final int USB_PREFIX_LENGTH;
+    private static final boolean VDBG;
+    private final android.net.IConnectivityManager mConnService;
+    private android.content.Context mContext;
+    private java.lang.String[] mDefaultDnsServers;
+    private java.lang.String[] mDhcpRange;
+    private java.util.HashMap mIfaces;
+    private android.os.Looper mLooper;
+    private final android.os.INetworkManagementService mNMService;
+    private int mPreferredUpstreamMobileApn;
+    private java.lang.Object mPublicSync;
+    private boolean mRndisEnabled;
+    private android.content.BroadcastReceiver mStateReceiver;
+    private final android.net.INetworkStatsService mStatsService;
+    private com.android.internal.util.StateMachine mTetherMasterSM;
+    private java.lang.String[] mTetherableBluetoothRegexs;
+    private java.lang.String[] mTetherableUsbRegexs;
+    private java.lang.String[] mTetherableWifiRegexs;
+    private android.app.Notification mTetheredNotification;
+    private java.util.Collection mUpstreamIfaceTypes;
+    private boolean mUsbTetherRequested;
+
+    static void <clinit>()
+    {
+        java.lang.Integer $r0, $r1, $r2;
+        java.lang.String[] $r3;
+
+        <com.android.server.connectivity.Tethering: int USB_PREFIX_LENGTH> = 24;
+
+        <com.android.server.connectivity.Tethering: java.lang.String USB_NEAR_IFACE_ADDR> = "192.168.42.129";
+
+        <com.android.server.connectivity.Tethering: java.lang.String TAG> = "Tethering";
+
+        <com.android.server.connectivity.Tethering: java.lang.String DNS_DEFAULT_SERVER2> = "8.8.4.4";
+
+        <com.android.server.connectivity.Tethering: java.lang.String DNS_DEFAULT_SERVER1> = "8.8.8.8";
+
+        <com.android.server.connectivity.Tethering: boolean DBG> = 1;
+
+        $r0 = new java.lang.Integer;
+
+        specialinvoke $r0.<java.lang.Integer: void <init>(int)>(0);
+
+        <com.android.server.connectivity.Tethering: java.lang.Integer MOBILE_TYPE> = $r0;
+
+        $r1 = new java.lang.Integer;
+
+        specialinvoke $r1.<java.lang.Integer: void <init>(int)>(5);
+
+        <com.android.server.connectivity.Tethering: java.lang.Integer HIPRI_TYPE> = $r1;
+
+        $r2 = new java.lang.Integer;
+
+        specialinvoke $r2.<java.lang.Integer: void <init>(int)>(4);
+
+        <com.android.server.connectivity.Tethering: java.lang.Integer DUN_TYPE> = $r2;
+
+        $r3 = newarray (java.lang.String)[14];
+
+        $r3[0] = "192.168.42.2";
+
+        $r3[1] = "192.168.42.254";
+
+        $r3[2] = "192.168.43.2";
+
+        $r3[3] = "192.168.43.254";
+
+        $r3[4] = "192.168.44.2";
+
+        $r3[5] = "192.168.44.254";
+
+        $r3[6] = "192.168.45.2";
+
+        $r3[7] = "192.168.45.254";
+
+        $r3[8] = "192.168.46.2";
+
+        $r3[9] = "192.168.46.254";
+
+        $r3[10] = "192.168.47.2";
+
+        $r3[11] = "192.168.47.254";
+
+        $r3[12] = "192.168.48.2";
+
+        $r3[13] = "192.168.48.254";
+
+        <com.android.server.connectivity.Tethering: java.lang.String[] DHCP_DEFAULT_RANGE> = $r3;
+
+        return;
+    }
+
+    public void <init>(android.content.Context, android.os.INetworkManagementService, android.net.INetworkStatsService, android.net.IConnectivityManager, android.os.Looper)
+    {
+        com.android.server.connectivity.Tethering r0;
+        android.content.Context r1, $r17, $r21;
+        android.os.INetworkManagementService r2;
+        android.net.INetworkStatsService r3;
+        android.net.IConnectivityManager r4;
+        android.os.Looper r5, $r11, $r13;
+        android.content.IntentFilter r6, r7, $r15, $r19;
+        java.lang.Object $r8;
+        java.util.HashMap $r9;
+        com.android.server.IoThread $r10;
+        com.android.server.connectivity.Tethering$TetherMasterSM $r12;
+        com.android.internal.util.StateMachine $r14;
+        com.android.server.connectivity.Tethering$StateReceiver $r16;
+        android.content.BroadcastReceiver $r18, $r22;
+        android.content.res.Resources $r23;
+        java.lang.String[] $r25, $r26, $r27, $r28, $r29, $r30, $r31;
+        int $i0, $i1, $i2;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.os.INetworkManagementService;
+
+        r3 := @parameter2: android.net.INetworkStatsService;
+
+        r4 := @parameter3: android.net.IConnectivityManager;
+
+        r5 := @parameter4: android.os.Looper;
+
+        specialinvoke r0.<android.net.INetworkManagementEventObserver$Stub: void <init>()>();
+
+        r0.<com.android.server.connectivity.Tethering: int mPreferredUpstreamMobileApn> = -1;
+
+        r0.<com.android.server.connectivity.Tethering: android.content.Context mContext> = r1;
+
+        r0.<com.android.server.connectivity.Tethering: android.os.INetworkManagementService mNMService> = r2;
+
+        r0.<com.android.server.connectivity.Tethering: android.net.INetworkStatsService mStatsService> = r3;
+
+        r0.<com.android.server.connectivity.Tethering: android.net.IConnectivityManager mConnService> = r4;
+
+        r0.<com.android.server.connectivity.Tethering: android.os.Looper mLooper> = r5;
+
+        $r8 = new java.lang.Object;
+
+        specialinvoke $r8.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync> = $r8;
+
+        $r9 = new java.util.HashMap;
+
+        specialinvoke $r9.<java.util.HashMap: void <init>()>();
+
+        r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces> = $r9;
+
+        $r10 = staticinvoke <com.android.server.IoThread: com.android.server.IoThread get()>();
+
+        $r11 = virtualinvoke $r10.<com.android.server.IoThread: android.os.Looper getLooper()>();
+
+        r0.<com.android.server.connectivity.Tethering: android.os.Looper mLooper> = $r11;
+
+        $r12 = new com.android.server.connectivity.Tethering$TetherMasterSM;
+
+        $r13 = r0.<com.android.server.connectivity.Tethering: android.os.Looper mLooper>;
+
+        specialinvoke $r12.<com.android.server.connectivity.Tethering$TetherMasterSM: void <init>(com.android.server.connectivity.Tethering,java.lang.String,android.os.Looper)>(r0, "TetherMaster", $r13);
+
+        r0.<com.android.server.connectivity.Tethering: com.android.internal.util.StateMachine mTetherMasterSM> = $r12;
+
+        $r14 = r0.<com.android.server.connectivity.Tethering: com.android.internal.util.StateMachine mTetherMasterSM>;
+
+        virtualinvoke $r14.<com.android.internal.util.StateMachine: void start()>();
+
+        $r16 = new com.android.server.connectivity.Tethering$StateReceiver;
+
+        specialinvoke $r16.<com.android.server.connectivity.Tethering$StateReceiver: void <init>(com.android.server.connectivity.Tethering,com.android.server.connectivity.Tethering$1)>(r0, null);
+
+        r0.<com.android.server.connectivity.Tethering: android.content.BroadcastReceiver mStateReceiver> = $r16;
+
+        $r15 = new android.content.IntentFilter;
+
+        specialinvoke $r15.<android.content.IntentFilter: void <init>()>();
+
+        r6 = $r15;
+
+        virtualinvoke r6.<android.content.IntentFilter: void addAction(java.lang.String)>("android.hardware.usb.action.USB_STATE");
+
+        virtualinvoke r6.<android.content.IntentFilter: void addAction(java.lang.String)>("android.net.conn.CONNECTIVITY_CHANGE");
+
+        virtualinvoke r6.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.CONFIGURATION_CHANGED");
+
+        $r17 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r18 = r0.<com.android.server.connectivity.Tethering: android.content.BroadcastReceiver mStateReceiver>;
+
+        virtualinvoke $r17.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r18, r6);
+
+        $r19 = new android.content.IntentFilter;
+
+        specialinvoke $r19.<android.content.IntentFilter: void <init>()>();
+
+        r7 = $r19;
+
+        virtualinvoke r7.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.MEDIA_SHARED");
+
+        virtualinvoke r7.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.MEDIA_UNSHARED");
+
+        virtualinvoke r7.<android.content.IntentFilter: void addDataScheme(java.lang.String)>("file");
+
+        $r21 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r22 = r0.<com.android.server.connectivity.Tethering: android.content.BroadcastReceiver mStateReceiver>;
+
+        virtualinvoke $r21.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r22, r7);
+
+        $r23 = virtualinvoke r1.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $r26 = virtualinvoke $r23.<android.content.res.Resources: java.lang.String[] getStringArray(int)>(17235987);
+
+        r0.<com.android.server.connectivity.Tethering: java.lang.String[] mDhcpRange> = $r26;
+
+        $r25 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mDhcpRange>;
+
+        $i0 = lengthof $r25;
+
+        if $i0 == 0 goto label1;
+
+        $r31 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mDhcpRange>;
+
+        $i1 = lengthof $r31;
+
+        $i2 = $i1 % 2;
+
+        if $i2 != 1 goto label2;
+
+     label1:
+        $r27 = <com.android.server.connectivity.Tethering: java.lang.String[] DHCP_DEFAULT_RANGE>;
+
+        r0.<com.android.server.connectivity.Tethering: java.lang.String[] mDhcpRange> = $r27;
+
+     label2:
+        virtualinvoke r0.<com.android.server.connectivity.Tethering: void updateConfiguration()>();
+
+        $r29 = newarray (java.lang.String)[2];
+
+        r0.<com.android.server.connectivity.Tethering: java.lang.String[] mDefaultDnsServers> = $r29;
+
+        $r28 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mDefaultDnsServers>;
+
+        $r28[0] = "8.8.8.8";
+
+        $r30 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mDefaultDnsServers>;
+
+        $r30[1] = "8.8.4.4";
+
+        return;
+    }
+
+    static java.lang.Object access$100(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        return $r1;
+    }
+
+    static boolean access$200(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        $z0 = r0.<com.android.server.connectivity.Tethering: boolean mRndisEnabled>;
+
+        return $z0;
+    }
+
+    static boolean access$202(com.android.server.connectivity.Tethering, boolean)
+    {
+        com.android.server.connectivity.Tethering r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.connectivity.Tethering: boolean mRndisEnabled> = z0;
+
+        return z0;
+    }
+
+    static android.os.INetworkManagementService access$2100(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+        android.os.INetworkManagementService $r1;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: android.os.INetworkManagementService mNMService>;
+
+        return $r1;
+    }
+
+    static android.net.INetworkStatsService access$2300(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+        android.net.INetworkStatsService $r1;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: android.net.INetworkStatsService mStatsService>;
+
+        return $r1;
+    }
+
+    static boolean access$300(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        $z0 = r0.<com.android.server.connectivity.Tethering: boolean mUsbTetherRequested>;
+
+        return $z0;
+    }
+
+    static android.net.IConnectivityManager access$3000(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+        android.net.IConnectivityManager $r1;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: android.net.IConnectivityManager mConnService>;
+
+        return $r1;
+    }
+
+    static boolean access$302(com.android.server.connectivity.Tethering, boolean)
+    {
+        com.android.server.connectivity.Tethering r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.connectivity.Tethering: boolean mUsbTetherRequested> = z0;
+
+        return z0;
+    }
+
+    static java.lang.String[] access$3400(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String[] $r1;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mDhcpRange>;
+
+        return $r1;
+    }
+
+    static java.lang.String[] access$3700(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String[] $r1;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mDefaultDnsServers>;
+
+        return $r1;
+    }
+
+    static void access$400(com.android.server.connectivity.Tethering, boolean)
+    {
+        com.android.server.connectivity.Tethering r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.connectivity.Tethering: void tetherUsb(boolean)>(z0);
+
+        return;
+    }
+
+    static java.util.Collection access$4600(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.util.Collection $r1;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        return $r1;
+    }
+
+    static int access$4700(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        $i0 = r0.<com.android.server.connectivity.Tethering: int mPreferredUpstreamMobileApn>;
+
+        return $i0;
+    }
+
+    static com.android.internal.util.StateMachine access$500(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+        com.android.internal.util.StateMachine $r1;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: com.android.internal.util.StateMachine mTetherMasterSM>;
+
+        return $r1;
+    }
+
+    static boolean access$600(com.android.server.connectivity.Tethering, boolean)
+    {
+        com.android.server.connectivity.Tethering r0;
+        boolean z0, $z1;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        z0 := @parameter1: boolean;
+
+        $z1 = specialinvoke r0.<com.android.server.connectivity.Tethering: boolean configureUsbIface(boolean)>(z0);
+
+        return $z1;
+    }
+
+    static void access$900(com.android.server.connectivity.Tethering)
+    {
+        com.android.server.connectivity.Tethering r0;
+
+        r0 := @parameter0: com.android.server.connectivity.Tethering;
+
+        specialinvoke r0.<com.android.server.connectivity.Tethering: void sendTetherStateChangedBroadcast()>();
+
+        return;
+    }
+
+    private void clearTetheredNotification()
+    {
+        com.android.server.connectivity.Tethering r0;
+        android.app.NotificationManager r1;
+        android.content.Context $r2;
+        java.lang.Object $r3;
+        android.app.Notification $r4, $r5;
+        android.os.UserHandle $r6;
+        int $i0;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        $r2 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("notification");
+
+        r1 = (android.app.NotificationManager) $r3;
+
+        if r1 == null goto label1;
+
+        $r4 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        if $r4 == null goto label1;
+
+        $r5 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        $i0 = $r5.<android.app.Notification: int icon>;
+
+        $r6 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke r1.<android.app.NotificationManager: void cancelAsUser(java.lang.String,int,android.os.UserHandle)>(null, $i0, $r6);
+
+        r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification> = null;
+
+     label1:
+        return;
+    }
+
+    private boolean configureUsbIface(boolean)
+    {
+        com.android.server.connectivity.Tethering r0;
+        boolean z0, $z1;
+        java.lang.Exception r1, r4, $r11, $r17;
+        java.lang.String[] r2, $r6;
+        int i0, i1;
+        java.lang.String r3, $r16;
+        android.net.InterfaceConfiguration r5;
+        android.os.INetworkManagementService $r7, $r8, $r12;
+        java.net.InetAddress $r9;
+        android.net.LinkAddress $r10;
+        java.lang.StringBuilder $r13, $r14, $r15;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        z0 := @parameter0: boolean;
+
+        $r6 = newarray (java.lang.String)[0];
+
+     label01:
+        $r7 = r0.<com.android.server.connectivity.Tethering: android.os.INetworkManagementService mNMService>;
+
+        r2 = interfaceinvoke $r7.<android.os.INetworkManagementService: java.lang.String[] listInterfaces()>();
+
+     label02:
+        i0 = lengthof r2;
+
+        i1 = 0;
+
+     label03:
+        if i1 >= i0 goto label15;
+
+        r3 = r2[i1];
+
+        $z1 = specialinvoke r0.<com.android.server.connectivity.Tethering: boolean isUsb(java.lang.String)>(r3);
+
+        if $z1 == 0 goto label10;
+
+     label04:
+        $r8 = r0.<com.android.server.connectivity.Tethering: android.os.INetworkManagementService mNMService>;
+
+        r5 = interfaceinvoke $r8.<android.os.INetworkManagementService: android.net.InterfaceConfiguration getInterfaceConfig(java.lang.String)>(r3);
+
+     label05:
+        if r5 == null goto label10;
+
+     label06:
+        $r10 = new android.net.LinkAddress;
+
+        $r9 = staticinvoke <android.net.NetworkUtils: java.net.InetAddress numericToInetAddress(java.lang.String)>("192.168.42.129");
+
+        specialinvoke $r10.<android.net.LinkAddress: void <init>(java.net.InetAddress,int)>($r9, 24);
+
+        virtualinvoke r5.<android.net.InterfaceConfiguration: void setLinkAddress(android.net.LinkAddress)>($r10);
+
+     label07:
+        if z0 == 0 goto label12;
+
+     label08:
+        virtualinvoke r5.<android.net.InterfaceConfiguration: void setInterfaceUp()>();
+
+     label09:
+        virtualinvoke r5.<android.net.InterfaceConfiguration: void clearFlag(java.lang.String)>("running");
+
+        $r12 = r0.<com.android.server.connectivity.Tethering: android.os.INetworkManagementService mNMService>;
+
+        interfaceinvoke $r12.<android.os.INetworkManagementService: void setInterfaceConfig(java.lang.String,android.net.InterfaceConfiguration)>(r3, r5);
+
+     label10:
+        i1 = i1 + 1;
+
+        goto label03;
+
+     label11:
+        $r17 := @caughtexception;
+
+        r1 = $r17;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Tethering", "Error listing Interfaces", r1);
+
+        return 0;
+
+     label12:
+        virtualinvoke r5.<android.net.InterfaceConfiguration: void setInterfaceDown()>();
+
+     label13:
+        goto label09;
+
+     label14:
+        $r11 := @caughtexception;
+
+        r4 = $r11;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error configuring interface ");
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Tethering", $r16, r4);
+
+        return 0;
+
+     label15:
+        return 1;
+
+        catch java.lang.Exception from label01 to label02 with label11;
+        catch java.lang.Exception from label04 to label05 with label14;
+        catch java.lang.Exception from label06 to label07 with label14;
+        catch java.lang.Exception from label08 to label09 with label14;
+        catch java.lang.Exception from label09 to label10 with label14;
+        catch java.lang.Exception from label12 to label13 with label14;
+    }
+
+    private boolean isUsb(java.lang.String)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1, $r5;
+        java.lang.Object r2;
+        java.lang.Throwable r3, $r6;
+        java.lang.String[] r4;
+        int i0, i1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label01:
+        r4 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mTetherableUsbRegexs>;
+
+        i0 = lengthof r4;
+
+     label02:
+        i1 = 0;
+
+     label03:
+        if i1 >= i0 goto label06;
+
+     label04:
+        $r5 = r4[i1];
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean matches(java.lang.String)>($r5);
+
+        if $z0 == 0 goto label11;
+
+        exitmonitor r2;
+
+     label05:
+        return 1;
+
+     label06:
+        exitmonitor r2;
+
+     label07:
+        return 0;
+
+     label08:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+     label09:
+        exitmonitor r2;
+
+     label10:
+        throw r3;
+
+     label11:
+        i1 = i1 + 1;
+
+        goto label03;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    private void sendTetherStateChangedBroadcast()
+    {
+        com.android.server.connectivity.Tethering r0;
+        boolean z0, z1, z2, z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10;
+        java.util.ArrayList r2, r3, r4, $r12, $r13, $r14;
+        java.lang.Object r5, r10, $r32;
+        java.lang.Throwable r6, $r38;
+        java.util.Iterator r7;
+        android.content.Intent r8, $r17;
+        com.android.server.connectivity.Tethering$TetherInterfaceSM r9;
+        android.net.IConnectivityManager $r11;
+        java.util.Set $r15;
+        java.util.HashMap $r16, $r33;
+        java.lang.StringBuilder $r22, $r25, $r26, $r27, $r28, $r29, $r31;
+        android.os.UserHandle $r23;
+        android.content.Context $r24;
+        int $i0, $i1, $i2;
+        java.lang.String $r30, $r34, $r35, $r36, $r37, $r40, $r41;
+        android.os.RemoteException $r39;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+     label01:
+        $r11 = r0.<com.android.server.connectivity.Tethering: android.net.IConnectivityManager mConnService>;
+
+        z0 = interfaceinvoke $r11.<android.net.IConnectivityManager: boolean isTetheringSupported()>();
+
+     label02:
+        if z0 != 0 goto label04;
+
+        return;
+
+     label03:
+        $r39 := @caughtexception;
+
+        return;
+
+     label04:
+        $r13 = new java.util.ArrayList;
+
+        specialinvoke $r13.<java.util.ArrayList: void <init>()>();
+
+        r2 = $r13;
+
+        $r12 = new java.util.ArrayList;
+
+        specialinvoke $r12.<java.util.ArrayList: void <init>()>();
+
+        r3 = $r12;
+
+        $r14 = new java.util.ArrayList;
+
+        specialinvoke $r14.<java.util.ArrayList: void <init>()>();
+
+        r4 = $r14;
+
+        z1 = 0;
+
+        z2 = 0;
+
+        z3 = 0;
+
+        r5 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r5;
+
+     label05:
+        $r16 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r15 = virtualinvoke $r16.<java.util.HashMap: java.util.Set keySet()>();
+
+        r7 = interfaceinvoke $r15.<java.util.Set: java.util.Iterator iterator()>();
+
+     label06:
+        $z4 = interfaceinvoke r7.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label23;
+
+        r10 = interfaceinvoke r7.<java.util.Iterator: java.lang.Object next()>();
+
+        $r33 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r32 = virtualinvoke $r33.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r10);
+
+        r9 = (com.android.server.connectivity.Tethering$TetherInterfaceSM) $r32;
+
+     label07:
+        if r9 == null goto label06;
+
+     label08:
+        $z6 = virtualinvoke r9.<com.android.server.connectivity.Tethering$TetherInterfaceSM: boolean isErrored()>();
+
+        if $z6 == 0 goto label13;
+
+        $r41 = (java.lang.String) r10;
+
+        virtualinvoke r4.<java.util.ArrayList: boolean add(java.lang.Object)>($r41);
+
+     label09:
+        goto label06;
+
+     label10:
+        $r38 := @caughtexception;
+
+        r6 = $r38;
+
+     label11:
+        exitmonitor r5;
+
+     label12:
+        throw r6;
+
+     label13:
+        $z5 = virtualinvoke r9.<com.android.server.connectivity.Tethering$TetherInterfaceSM: boolean isAvailable()>();
+
+        if $z5 == 0 goto label15;
+
+        $r40 = (java.lang.String) r10;
+
+        virtualinvoke r2.<java.util.ArrayList: boolean add(java.lang.Object)>($r40);
+
+     label14:
+        goto label06;
+
+     label15:
+        $z8 = virtualinvoke r9.<com.android.server.connectivity.Tethering$TetherInterfaceSM: boolean isTethered()>();
+
+        if $z8 == 0 goto label06;
+
+        $r35 = (java.lang.String) r10;
+
+        $z7 = specialinvoke r0.<com.android.server.connectivity.Tethering: boolean isUsb(java.lang.String)>($r35);
+
+        if $z7 == 0 goto label19;
+
+     label16:
+        z2 = 1;
+
+     label17:
+        $r36 = (java.lang.String) r10;
+
+        virtualinvoke r3.<java.util.ArrayList: boolean add(java.lang.Object)>($r36);
+
+     label18:
+        goto label06;
+
+     label19:
+        $r34 = (java.lang.String) r10;
+
+        $z10 = virtualinvoke r0.<com.android.server.connectivity.Tethering: boolean isWifi(java.lang.String)>($r34);
+
+        if $z10 == 0 goto label21;
+
+     label20:
+        z1 = 1;
+
+        goto label17;
+
+     label21:
+        $r37 = (java.lang.String) r10;
+
+        $z9 = virtualinvoke r0.<com.android.server.connectivity.Tethering: boolean isBluetooth(java.lang.String)>($r37);
+
+        if $z9 == 0 goto label17;
+
+     label22:
+        z3 = 1;
+
+        goto label17;
+
+     label23:
+        exitmonitor r5;
+
+     label24:
+        $r17 = new android.content.Intent;
+
+        specialinvoke $r17.<android.content.Intent: void <init>(java.lang.String)>("android.net.conn.TETHER_STATE_CHANGED");
+
+        r8 = $r17;
+
+        virtualinvoke r8.<android.content.Intent: android.content.Intent addFlags(int)>(603979776);
+
+        virtualinvoke r8.<android.content.Intent: android.content.Intent putStringArrayListExtra(java.lang.String,java.util.ArrayList)>("availableArray", r2);
+
+        virtualinvoke r8.<android.content.Intent: android.content.Intent putStringArrayListExtra(java.lang.String,java.util.ArrayList)>("activeArray", r3);
+
+        virtualinvoke r8.<android.content.Intent: android.content.Intent putStringArrayListExtra(java.lang.String,java.util.ArrayList)>("erroredArray", r4);
+
+        $r24 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r23 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r24.<android.content.Context: void sendStickyBroadcastAsUser(android.content.Intent,android.os.UserHandle)>(r8, $r23);
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        $r27 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sendTetherStateChangedBroadcast ");
+
+        $i0 = virtualinvoke r2.<java.util.ArrayList: int size()>();
+
+        $r25 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r26 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        $i2 = virtualinvoke r3.<java.util.ArrayList: int size()>();
+
+        $r29 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r28 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        $i1 = virtualinvoke r4.<java.util.ArrayList: int size()>();
+
+        $r31 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r30 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("Tethering", $r30);
+
+        if z2 == 0 goto label27;
+
+        if z1 != 0 goto label25;
+
+        if z3 == 0 goto label26;
+
+     label25:
+        specialinvoke r0.<com.android.server.connectivity.Tethering: void showTetheredNotification(int)>(17302989);
+
+        return;
+
+     label26:
+        specialinvoke r0.<com.android.server.connectivity.Tethering: void showTetheredNotification(int)>(17302990);
+
+        return;
+
+     label27:
+        if z1 == 0 goto label29;
+
+        if z3 == 0 goto label28;
+
+        specialinvoke r0.<com.android.server.connectivity.Tethering: void showTetheredNotification(int)>(17302989);
+
+        return;
+
+     label28:
+        specialinvoke r0.<com.android.server.connectivity.Tethering: void showTetheredNotification(int)>(17302991);
+
+        return;
+
+     label29:
+        if z3 == 0 goto label30;
+
+        specialinvoke r0.<com.android.server.connectivity.Tethering: void showTetheredNotification(int)>(17302988);
+
+        return;
+
+     label30:
+        specialinvoke r0.<com.android.server.connectivity.Tethering: void clearTetheredNotification()>();
+
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label03;
+        catch java.lang.Throwable from label05 to label06 with label10;
+        catch java.lang.Throwable from label06 to label07 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+        catch java.lang.Throwable from label13 to label14 with label10;
+        catch java.lang.Throwable from label15 to label16 with label10;
+        catch java.lang.Throwable from label17 to label18 with label10;
+        catch java.lang.Throwable from label19 to label20 with label10;
+        catch java.lang.Throwable from label21 to label22 with label10;
+        catch java.lang.Throwable from label23 to label24 with label10;
+    }
+
+    private void showTetheredNotification(int)
+    {
+        com.android.server.connectivity.Tethering r0;
+        int i0, $i1, $i2, $i3, $i4, $i5;
+        android.app.NotificationManager r1;
+        android.content.Intent r2, $r11;
+        android.app.PendingIntent r3;
+        android.content.res.Resources r4;
+        java.lang.CharSequence r5, r6;
+        android.app.Notification r7, $r10, $r16, $r17, $r18, $r20, $r21, $r22, $r23, $r25, $r26, $r27, $r28;
+        android.content.Context $r8, $r15, $r19;
+        java.lang.Object $r9;
+        android.os.UserHandle $r13, $r24, $r29;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        i0 := @parameter0: int;
+
+        $r8 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r9 = virtualinvoke $r8.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("notification");
+
+        r1 = (android.app.NotificationManager) $r9;
+
+        if r1 != null goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r10 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        if $r10 == null goto label3;
+
+        $r28 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        $i4 = $r28.<android.app.Notification: int icon>;
+
+        if $i4 == i0 goto label1;
+
+        $r26 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        $i5 = $r26.<android.app.Notification: int icon>;
+
+        $r29 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke r1.<android.app.NotificationManager: void cancelAsUser(java.lang.String,int,android.os.UserHandle)>(null, $i5, $r29);
+
+     label3:
+        $r11 = new android.content.Intent;
+
+        specialinvoke $r11.<android.content.Intent: void <init>()>();
+
+        r2 = $r11;
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent setClassName(java.lang.String,java.lang.String)>("com.android.settings", "com.android.settings.TetherSettings");
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent setFlags(int)>(1073741824);
+
+        $r15 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r13 = <android.os.UserHandle: android.os.UserHandle CURRENT>;
+
+        r3 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getActivityAsUser(android.content.Context,int,android.content.Intent,int,android.os.Bundle,android.os.UserHandle)>($r15, 0, r2, 0, null, $r13);
+
+        r4 = staticinvoke <android.content.res.Resources: android.content.res.Resources getSystem()>();
+
+        r5 = virtualinvoke r4.<android.content.res.Resources: java.lang.CharSequence getText(int)>(17040580);
+
+        r6 = virtualinvoke r4.<android.content.res.Resources: java.lang.CharSequence getText(int)>(17040581);
+
+        $r16 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        if $r16 != null goto label4;
+
+        $r23 = new android.app.Notification;
+
+        specialinvoke $r23.<android.app.Notification: void <init>()>();
+
+        r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification> = $r23;
+
+        $r27 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        $r27.<android.app.Notification: long when> = 0L;
+
+     label4:
+        $r17 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        $r17.<android.app.Notification: int icon> = i0;
+
+        r7 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        $i1 = r7.<android.app.Notification: int defaults>;
+
+        $i2 = -2 & $i1;
+
+        r7.<android.app.Notification: int defaults> = $i2;
+
+        $r18 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        $r18.<android.app.Notification: int flags> = 2;
+
+        $r20 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        $r20.<android.app.Notification: java.lang.CharSequence tickerText> = r5;
+
+        $r22 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        $r19 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        virtualinvoke $r22.<android.app.Notification: void setLatestEventInfo(android.content.Context,java.lang.CharSequence,java.lang.CharSequence,android.app.PendingIntent)>($r19, r5, r6, r3);
+
+        $r21 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        $i3 = $r21.<android.app.Notification: int icon>;
+
+        $r25 = r0.<com.android.server.connectivity.Tethering: android.app.Notification mTetheredNotification>;
+
+        $r24 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke r1.<android.app.NotificationManager: void notifyAsUser(java.lang.String,int,android.app.Notification,android.os.UserHandle)>(null, $i3, $r25, $r24);
+
+        return;
+    }
+
+    private void tetherUsb(boolean)
+    {
+        com.android.server.connectivity.Tethering r0;
+        boolean z0, $z1;
+        java.lang.Exception r1, $r6;
+        java.lang.String[] r2, $r4;
+        int i0, i1, i2;
+        java.lang.String r3;
+        android.os.INetworkManagementService $r5;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        z0 := @parameter0: boolean;
+
+        $r4 = newarray (java.lang.String)[0];
+
+     label1:
+        $r5 = r0.<com.android.server.connectivity.Tethering: android.os.INetworkManagementService mNMService>;
+
+        r2 = interfaceinvoke $r5.<android.os.INetworkManagementService: java.lang.String[] listInterfaces()>();
+
+     label2:
+        i0 = lengthof r2;
+
+        i1 = 0;
+
+     label3:
+        if i1 >= i0 goto label8;
+
+        r3 = r2[i1];
+
+        $z1 = specialinvoke r0.<com.android.server.connectivity.Tethering: boolean isUsb(java.lang.String)>(r3);
+
+        if $z1 == 0 goto label7;
+
+        if z0 == 0 goto label6;
+
+        i2 = virtualinvoke r0.<com.android.server.connectivity.Tethering: int tether(java.lang.String)>(r3);
+
+     label4:
+        if i2 != 0 goto label7;
+
+        return;
+
+     label5:
+        $r6 := @caughtexception;
+
+        r1 = $r6;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Tethering", "Error listing Interfaces", r1);
+
+        return;
+
+     label6:
+        i2 = virtualinvoke r0.<com.android.server.connectivity.Tethering: int untether(java.lang.String)>(r3);
+
+        goto label4;
+
+     label7:
+        i1 = i1 + 1;
+
+        goto label3;
+
+     label8:
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Tethering", "unable start or stop USB tethering");
+
+        return;
+
+        catch java.lang.Exception from label1 to label2 with label5;
+    }
+
+    public void addressRemoved(java.lang.String, java.lang.String, int, int)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1, r2;
+        int i0, i1;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        return;
+    }
+
+    public void addressUpdated(java.lang.String, java.lang.String, int, int)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1, r2;
+        int i0, i1;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        return;
+    }
+
+    public void checkDunRequired()
+    {
+        com.android.server.connectivity.Tethering r0;
+        byte b0;
+        int i1;
+        java.lang.Object r1;
+        java.lang.Throwable r2, $r31;
+        android.content.Context $r3;
+        android.content.ContentResolver $r4;
+        java.lang.Integer $r5, $r7, $r10, $r11, $r14, $r15, $r18, $r19, $r20, $r24, $r25, $r26, $r28;
+        java.util.Collection $r6, $r8, $r9, $r12, $r13, $r16, $r17, $r21, $r22, $r23, $r27, $r29, $r30;
+        boolean $z0, $z1, $z2, $z3, $z7, $z8, $z9;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        b0 = 5;
+
+        $r3 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        i1 = staticinvoke <android.provider.Settings$Global: int getInt(android.content.ContentResolver,java.lang.String,int)>($r4, "tether_dun_required", 2);
+
+        r1 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r1;
+
+        if i1 == 2 goto label10;
+
+        if i1 != 1 goto label01;
+
+        b0 = 4;
+
+     label01:
+        if b0 != 4 goto label13;
+
+     label02:
+        $r22 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r19 = <com.android.server.connectivity.Tethering: java.lang.Integer MOBILE_TYPE>;
+
+        $z7 = interfaceinvoke $r22.<java.util.Collection: boolean contains(java.lang.Object)>($r19);
+
+        if $z7 == 0 goto label07;
+
+        $r29 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r28 = <com.android.server.connectivity.Tethering: java.lang.Integer MOBILE_TYPE>;
+
+        interfaceinvoke $r29.<java.util.Collection: boolean remove(java.lang.Object)>($r28);
+
+     label03:
+        goto label02;
+
+     label04:
+        $r31 := @caughtexception;
+
+        r2 = $r31;
+
+     label05:
+        exitmonitor r1;
+
+     label06:
+        throw r2;
+
+     label07:
+        $r21 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r20 = <com.android.server.connectivity.Tethering: java.lang.Integer HIPRI_TYPE>;
+
+        $z9 = interfaceinvoke $r21.<java.util.Collection: boolean contains(java.lang.Object)>($r20);
+
+        if $z9 == 0 goto label09;
+
+        $r30 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r25 = <com.android.server.connectivity.Tethering: java.lang.Integer HIPRI_TYPE>;
+
+        interfaceinvoke $r30.<java.util.Collection: boolean remove(java.lang.Object)>($r25);
+
+     label08:
+        goto label07;
+
+     label09:
+        $r23 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r24 = <com.android.server.connectivity.Tethering: java.lang.Integer DUN_TYPE>;
+
+        $z8 = interfaceinvoke $r23.<java.util.Collection: boolean contains(java.lang.Object)>($r24);
+
+        if $z8 != 0 goto label10;
+
+        $r27 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r26 = <com.android.server.connectivity.Tethering: java.lang.Integer DUN_TYPE>;
+
+        interfaceinvoke $r27.<java.util.Collection: boolean add(java.lang.Object)>($r26);
+
+     label10:
+        $r6 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r5 = <com.android.server.connectivity.Tethering: java.lang.Integer DUN_TYPE>;
+
+        $z0 = interfaceinvoke $r6.<java.util.Collection: boolean contains(java.lang.Object)>($r5);
+
+        if $z0 == 0 goto label18;
+
+        r0.<com.android.server.connectivity.Tethering: int mPreferredUpstreamMobileApn> = 4;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        return;
+
+     label13:
+        $r8 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r7 = <com.android.server.connectivity.Tethering: java.lang.Integer DUN_TYPE>;
+
+        $z1 = interfaceinvoke $r8.<java.util.Collection: boolean contains(java.lang.Object)>($r7);
+
+        if $z1 == 0 goto label15;
+
+        $r17 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r18 = <com.android.server.connectivity.Tethering: java.lang.Integer DUN_TYPE>;
+
+        interfaceinvoke $r17.<java.util.Collection: boolean remove(java.lang.Object)>($r18);
+
+     label14:
+        goto label13;
+
+     label15:
+        $r9 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r10 = <com.android.server.connectivity.Tethering: java.lang.Integer MOBILE_TYPE>;
+
+        $z2 = interfaceinvoke $r9.<java.util.Collection: boolean contains(java.lang.Object)>($r10);
+
+        if $z2 != 0 goto label16;
+
+        $r16 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r15 = <com.android.server.connectivity.Tethering: java.lang.Integer MOBILE_TYPE>;
+
+        interfaceinvoke $r16.<java.util.Collection: boolean add(java.lang.Object)>($r15);
+
+     label16:
+        $r12 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r11 = <com.android.server.connectivity.Tethering: java.lang.Integer HIPRI_TYPE>;
+
+        $z3 = interfaceinvoke $r12.<java.util.Collection: boolean contains(java.lang.Object)>($r11);
+
+        if $z3 != 0 goto label10;
+
+        $r13 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $r14 = <com.android.server.connectivity.Tethering: java.lang.Integer HIPRI_TYPE>;
+
+        interfaceinvoke $r13.<java.util.Collection: boolean add(java.lang.Object)>($r14);
+
+     label17:
+        goto label10;
+
+     label18:
+        r0.<com.android.server.connectivity.Tethering: int mPreferredUpstreamMobileApn> = 5;
+
+     label19:
+        goto label11;
+
+        catch java.lang.Throwable from label02 to label03 with label04;
+        catch java.lang.Throwable from label05 to label06 with label04;
+        catch java.lang.Throwable from label07 to label08 with label04;
+        catch java.lang.Throwable from label09 to label10 with label04;
+        catch java.lang.Throwable from label10 to label11 with label04;
+        catch java.lang.Throwable from label11 to label12 with label04;
+        catch java.lang.Throwable from label13 to label14 with label04;
+        catch java.lang.Throwable from label15 to label16 with label04;
+        catch java.lang.Throwable from label16 to label17 with label04;
+        catch java.lang.Throwable from label18 to label19 with label04;
+    }
+
+    public void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        java.lang.Object r4, $r14, $r20;
+        java.lang.Throwable r5, $r29;
+        java.util.Iterator r6, r7;
+        com.android.server.connectivity.Tethering$TetherInterfaceSM r8;
+        java.lang.Integer r9;
+        android.content.Context $r10;
+        int $i0, $i1, $i2;
+        java.util.Collection $r11, $r12;
+        boolean $z0, $z1;
+        java.util.HashMap $r13;
+        java.lang.StringBuilder $r15, $r16, $r18, $r19, $r21, $r22, $r23, $r25, $r26, $r27, $r30;
+        java.lang.String $r17, $r24, $r28;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        $r10 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $i0 = virtualinvoke $r10.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.DUMP");
+
+        if $i0 == 0 goto label01;
+
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        $r27 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Permission Denial: can\'t dump ConnectivityService.Tether from from pid=");
+
+        $i1 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        $r25 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r26 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", uid=");
+
+        $i2 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $r30 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r28 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r28);
+
+        return;
+
+     label01:
+        r4 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r4;
+
+     label02:
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("mUpstreamIfaceTypes: ");
+
+        $r11 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        r6 = interfaceinvoke $r11.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label03:
+        $z0 = interfaceinvoke r6.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label08;
+
+        $r20 = interfaceinvoke r6.<java.util.Iterator: java.lang.Object next()>();
+
+        r9 = (java.lang.Integer) $r20;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r22 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r21 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r9);
+
+        $r24 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r24);
+
+     label04:
+        goto label03;
+
+     label05:
+        $r29 := @caughtexception;
+
+        r5 = $r29;
+
+     label06:
+        exitmonitor r4;
+
+     label07:
+        throw r5;
+
+     label08:
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("Tether state:");
+
+        $r13 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r12 = virtualinvoke $r13.<java.util.HashMap: java.util.Collection values()>();
+
+        r7 = interfaceinvoke $r12.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label09:
+        $z1 = interfaceinvoke r7.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label11;
+
+        $r14 = interfaceinvoke r7.<java.util.Iterator: java.lang.Object next()>();
+
+        r8 = (com.android.server.connectivity.Tethering$TetherInterfaceSM) $r14;
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r8);
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r17);
+
+     label10:
+        goto label09;
+
+     label11:
+        exitmonitor r4;
+
+     label12:
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+        return;
+
+        catch java.lang.Throwable from label02 to label03 with label05;
+        catch java.lang.Throwable from label03 to label04 with label05;
+        catch java.lang.Throwable from label06 to label07 with label05;
+        catch java.lang.Throwable from label08 to label09 with label05;
+        catch java.lang.Throwable from label09 to label10 with label05;
+        catch java.lang.Throwable from label11 to label12 with label05;
+    }
+
+    public java.lang.String[] getErroredIfaces()
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.util.ArrayList r1, $r7;
+        java.lang.Object r2, r6, $r10, $r12;
+        java.lang.Throwable r3, $r16;
+        java.util.Iterator r4;
+        java.lang.String[] r5;
+        int i0, $i1, $i2;
+        java.util.HashMap $r8, $r13;
+        java.util.Set $r9;
+        boolean $z0, $z1;
+        java.lang.String $r11, $r15;
+        com.android.server.connectivity.Tethering$TetherInterfaceSM $r14;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        $r7 = new java.util.ArrayList;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r7;
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label01:
+        $r8 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r9 = virtualinvoke $r8.<java.util.HashMap: java.util.Set keySet()>();
+
+        r4 = interfaceinvoke $r9.<java.util.Set: java.util.Iterator iterator()>();
+
+     label02:
+        $z0 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label07;
+
+        r6 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        $r13 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r12 = virtualinvoke $r13.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r6);
+
+        $r14 = (com.android.server.connectivity.Tethering$TetherInterfaceSM) $r12;
+
+        $z1 = virtualinvoke $r14.<com.android.server.connectivity.Tethering$TetherInterfaceSM: boolean isErrored()>();
+
+        if $z1 == 0 goto label02;
+
+        $r15 = (java.lang.String) r6;
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>($r15);
+
+     label03:
+        goto label02;
+
+     label04:
+        $r16 := @caughtexception;
+
+        r3 = $r16;
+
+     label05:
+        exitmonitor r2;
+
+     label06:
+        throw r3;
+
+     label07:
+        exitmonitor r2;
+
+     label08:
+        $i1 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        r5 = newarray (java.lang.String)[$i1];
+
+        i0 = 0;
+
+     label09:
+        $i2 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        if i0 >= $i2 goto label10;
+
+        $r10 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        $r11 = (java.lang.String) $r10;
+
+        r5[i0] = $r11;
+
+        i0 = i0 + 1;
+
+        goto label09;
+
+     label10:
+        return r5;
+
+        catch java.lang.Throwable from label01 to label02 with label04;
+        catch java.lang.Throwable from label02 to label03 with label04;
+        catch java.lang.Throwable from label05 to label06 with label04;
+        catch java.lang.Throwable from label07 to label08 with label04;
+    }
+
+    public int getLastTetherError(java.lang.String)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1, $r10;
+        java.lang.Object r2, $r6;
+        java.lang.Throwable r3, $r12;
+        com.android.server.connectivity.Tethering$TetherInterfaceSM r4;
+        int i0;
+        java.util.HashMap $r5;
+        java.lang.StringBuilder $r7, $r8, $r9, $r11;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label1:
+        $r5 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r6 = virtualinvoke $r5.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r4 = (com.android.server.connectivity.Tethering$TetherInterfaceSM) $r6;
+
+     label2:
+        if r4 != null goto label5;
+
+     label3:
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Tried to getLastTetherError on an unknown iface :");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ignoring");
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Tethering", $r10);
+
+        exitmonitor r2;
+
+     label4:
+        return 1;
+
+     label5:
+        i0 = virtualinvoke r4.<com.android.server.connectivity.Tethering$TetherInterfaceSM: int getLastError()>();
+
+        exitmonitor r2;
+
+     label6:
+        return i0;
+
+     label7:
+        $r12 := @caughtexception;
+
+        r3 = $r12;
+
+     label8:
+        exitmonitor r2;
+
+     label9:
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public java.lang.String[] getTetherableBluetoothRegexs()
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String[] $r1;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mTetherableBluetoothRegexs>;
+
+        return $r1;
+    }
+
+    public java.lang.String[] getTetherableIfaces()
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.util.ArrayList r1, $r7;
+        java.lang.Object r2, r6, $r10, $r12;
+        java.lang.Throwable r3, $r16;
+        java.util.Iterator r4;
+        java.lang.String[] r5;
+        int i0, $i1, $i2;
+        java.util.HashMap $r8, $r13;
+        java.util.Set $r9;
+        boolean $z0, $z1;
+        java.lang.String $r11, $r15;
+        com.android.server.connectivity.Tethering$TetherInterfaceSM $r14;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        $r7 = new java.util.ArrayList;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r7;
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label01:
+        $r8 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r9 = virtualinvoke $r8.<java.util.HashMap: java.util.Set keySet()>();
+
+        r4 = interfaceinvoke $r9.<java.util.Set: java.util.Iterator iterator()>();
+
+     label02:
+        $z0 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label07;
+
+        r6 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        $r13 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r12 = virtualinvoke $r13.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r6);
+
+        $r14 = (com.android.server.connectivity.Tethering$TetherInterfaceSM) $r12;
+
+        $z1 = virtualinvoke $r14.<com.android.server.connectivity.Tethering$TetherInterfaceSM: boolean isAvailable()>();
+
+        if $z1 == 0 goto label02;
+
+        $r15 = (java.lang.String) r6;
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>($r15);
+
+     label03:
+        goto label02;
+
+     label04:
+        $r16 := @caughtexception;
+
+        r3 = $r16;
+
+     label05:
+        exitmonitor r2;
+
+     label06:
+        throw r3;
+
+     label07:
+        exitmonitor r2;
+
+     label08:
+        $i1 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        r5 = newarray (java.lang.String)[$i1];
+
+        i0 = 0;
+
+     label09:
+        $i2 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        if i0 >= $i2 goto label10;
+
+        $r10 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        $r11 = (java.lang.String) $r10;
+
+        r5[i0] = $r11;
+
+        i0 = i0 + 1;
+
+        goto label09;
+
+     label10:
+        return r5;
+
+        catch java.lang.Throwable from label01 to label02 with label04;
+        catch java.lang.Throwable from label02 to label03 with label04;
+        catch java.lang.Throwable from label05 to label06 with label04;
+        catch java.lang.Throwable from label07 to label08 with label04;
+    }
+
+    public java.lang.String[] getTetherableUsbRegexs()
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String[] $r1;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mTetherableUsbRegexs>;
+
+        return $r1;
+    }
+
+    public java.lang.String[] getTetherableWifiRegexs()
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String[] $r1;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mTetherableWifiRegexs>;
+
+        return $r1;
+    }
+
+    public java.lang.String[] getTetheredIfaces()
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.util.ArrayList r1, $r7;
+        java.lang.Object r2, r6, $r10, $r12;
+        java.lang.Throwable r3, $r16;
+        java.util.Iterator r4;
+        java.lang.String[] r5;
+        int i0, $i1, $i2;
+        java.util.HashMap $r8, $r13;
+        java.util.Set $r9;
+        boolean $z0, $z1;
+        java.lang.String $r11, $r15;
+        com.android.server.connectivity.Tethering$TetherInterfaceSM $r14;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        $r7 = new java.util.ArrayList;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r7;
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label01:
+        $r8 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r9 = virtualinvoke $r8.<java.util.HashMap: java.util.Set keySet()>();
+
+        r4 = interfaceinvoke $r9.<java.util.Set: java.util.Iterator iterator()>();
+
+     label02:
+        $z0 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label07;
+
+        r6 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        $r13 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r12 = virtualinvoke $r13.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r6);
+
+        $r14 = (com.android.server.connectivity.Tethering$TetherInterfaceSM) $r12;
+
+        $z1 = virtualinvoke $r14.<com.android.server.connectivity.Tethering$TetherInterfaceSM: boolean isTethered()>();
+
+        if $z1 == 0 goto label02;
+
+        $r15 = (java.lang.String) r6;
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>($r15);
+
+     label03:
+        goto label02;
+
+     label04:
+        $r16 := @caughtexception;
+
+        r3 = $r16;
+
+     label05:
+        exitmonitor r2;
+
+     label06:
+        throw r3;
+
+     label07:
+        exitmonitor r2;
+
+     label08:
+        $i1 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        r5 = newarray (java.lang.String)[$i1];
+
+        i0 = 0;
+
+     label09:
+        $i2 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        if i0 >= $i2 goto label10;
+
+        $r10 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        $r11 = (java.lang.String) $r10;
+
+        r5[i0] = $r11;
+
+        i0 = i0 + 1;
+
+        goto label09;
+
+     label10:
+        return r5;
+
+        catch java.lang.Throwable from label01 to label02 with label04;
+        catch java.lang.Throwable from label02 to label03 with label04;
+        catch java.lang.Throwable from label05 to label06 with label04;
+        catch java.lang.Throwable from label07 to label08 with label04;
+    }
+
+    public int[] getUpstreamIfaceTypes()
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.Object r1, $r8;
+        java.lang.Throwable r2, $r10;
+        int[] r3;
+        java.util.Iterator r4;
+        int i0, $i1, $i2, $i3;
+        java.util.Collection $r5, $r6, $r7;
+        java.lang.Integer $r9;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r1;
+
+     label1:
+        virtualinvoke r0.<com.android.server.connectivity.Tethering: void updateConfiguration()>();
+
+        $r5 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $i1 = interfaceinvoke $r5.<java.util.Collection: int size()>();
+
+        r3 = newarray (int)[$i1];
+
+        $r6 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        r4 = interfaceinvoke $r6.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label2:
+        i0 = 0;
+
+     label3:
+        $r7 = r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes>;
+
+        $i2 = interfaceinvoke $r7.<java.util.Collection: int size()>();
+
+        if i0 >= $i2 goto label5;
+
+        $r8 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        $r9 = (java.lang.Integer) $r8;
+
+        $i3 = virtualinvoke $r9.<java.lang.Integer: int intValue()>();
+
+        r3[i0] = $i3;
+
+     label4:
+        i0 = i0 + 1;
+
+        goto label3;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return r3;
+
+     label7:
+        $r10 := @caughtexception;
+
+        r2 = $r10;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public void handleTetherIfaceChange()
+    {
+        com.android.server.connectivity.Tethering r0;
+        com.android.internal.util.StateMachine $r1;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        $r1 = r0.<com.android.server.connectivity.Tethering: com.android.internal.util.StateMachine mTetherMasterSM>;
+
+        virtualinvoke $r1.<com.android.internal.util.StateMachine: void sendMessage(int)>(3);
+
+        return;
+    }
+
+    public void interfaceAdded(java.lang.String)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1;
+        java.lang.Object r2, $r6;
+        java.lang.Throwable r3, $r12;
+        boolean z0, z1, z2, z3, $z4;
+        com.android.server.connectivity.Tethering$TetherInterfaceSM r4, $r7, $r9;
+        java.util.HashMap $r5, $r11;
+        android.os.Looper $r8;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label01:
+        z0 = virtualinvoke r0.<com.android.server.connectivity.Tethering: boolean isWifi(java.lang.String)>(r1);
+
+     label02:
+        z1 = 0;
+
+        if z0 == 0 goto label03;
+
+        z1 = 1;
+
+     label03:
+        z2 = specialinvoke r0.<com.android.server.connectivity.Tethering: boolean isUsb(java.lang.String)>(r1);
+
+     label04:
+        z3 = 0;
+
+        if z2 == 0 goto label05;
+
+        z1 = 1;
+
+        z3 = 1;
+
+     label05:
+        $z4 = virtualinvoke r0.<com.android.server.connectivity.Tethering: boolean isBluetooth(java.lang.String)>(r1);
+
+        if $z4 == 0 goto label07;
+
+     label06:
+        z1 = 1;
+
+     label07:
+        if z1 != 0 goto label10;
+
+     label08:
+        exitmonitor r2;
+
+     label09:
+        return;
+
+     label10:
+        $r5 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r6 = virtualinvoke $r5.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        $r7 = (com.android.server.connectivity.Tethering$TetherInterfaceSM) $r6;
+
+        if $r7 == null goto label15;
+
+        exitmonitor r2;
+
+     label11:
+        return;
+
+     label12:
+        $r12 := @caughtexception;
+
+        r3 = $r12;
+
+     label13:
+        exitmonitor r2;
+
+     label14:
+        throw r3;
+
+     label15:
+        $r9 = new com.android.server.connectivity.Tethering$TetherInterfaceSM;
+
+        $r8 = r0.<com.android.server.connectivity.Tethering: android.os.Looper mLooper>;
+
+        specialinvoke $r9.<com.android.server.connectivity.Tethering$TetherInterfaceSM: void <init>(com.android.server.connectivity.Tethering,java.lang.String,android.os.Looper,boolean)>(r0, r1, $r8, z3);
+
+        r4 = $r9;
+
+        $r11 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        virtualinvoke $r11.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, r4);
+
+        virtualinvoke r4.<com.android.server.connectivity.Tethering$TetherInterfaceSM: void start()>();
+
+        exitmonitor r2;
+
+     label16:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label12;
+        catch java.lang.Throwable from label03 to label04 with label12;
+        catch java.lang.Throwable from label05 to label06 with label12;
+        catch java.lang.Throwable from label08 to label09 with label12;
+        catch java.lang.Throwable from label10 to label11 with label12;
+        catch java.lang.Throwable from label13 to label14 with label12;
+        catch java.lang.Throwable from label15 to label16 with label12;
+    }
+
+    public void interfaceClassDataActivityChanged(java.lang.String, boolean)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1;
+        boolean z0;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        return;
+    }
+
+    public void interfaceLinkStateChanged(java.lang.String, boolean)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1;
+        boolean z0;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        virtualinvoke r0.<com.android.server.connectivity.Tethering: void interfaceStatusChanged(java.lang.String,boolean)>(r1, z0);
+
+        return;
+    }
+
+    public void interfaceRemoved(java.lang.String)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1;
+        java.lang.Object r2, $r6;
+        java.lang.Throwable r3, $r9;
+        com.android.server.connectivity.Tethering$TetherInterfaceSM r4;
+        java.util.HashMap $r5, $r7;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label1:
+        $r5 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r6 = virtualinvoke $r5.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r4 = (com.android.server.connectivity.Tethering$TetherInterfaceSM) $r6;
+
+     label2:
+        if r4 != null goto label5;
+
+     label3:
+        exitmonitor r2;
+
+     label4:
+        return;
+
+     label5:
+        virtualinvoke r4.<com.android.server.connectivity.Tethering$TetherInterfaceSM: void sendMessage(int)>(4);
+
+        $r7 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        virtualinvoke $r7.<java.util.HashMap: java.lang.Object remove(java.lang.Object)>(r1);
+
+        exitmonitor r2;
+
+     label6:
+        return;
+
+     label7:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+     label8:
+        exitmonitor r2;
+
+     label9:
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public void interfaceStatusChanged(java.lang.String, boolean)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1;
+        boolean z0, z1, z2, z3, $z4, $z5, $z6;
+        java.lang.Object r2, $r6;
+        java.lang.Throwable r3, $r14;
+        com.android.server.connectivity.Tethering$TetherInterfaceSM r4, r5, $r11;
+        java.util.HashMap $r7, $r9, $r13;
+        android.os.Looper $r10;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        z1 = 0;
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label01:
+        $z4 = virtualinvoke r0.<com.android.server.connectivity.Tethering: boolean isWifi(java.lang.String)>(r1);
+
+        if $z4 == 0 goto label06;
+
+     label02:
+        z2 = 1;
+
+     label03:
+        if z2 != 0 goto label10;
+
+     label04:
+        exitmonitor r2;
+
+     label05:
+        return;
+
+     label06:
+        $z5 = specialinvoke r0.<com.android.server.connectivity.Tethering: boolean isUsb(java.lang.String)>(r1);
+
+        if $z5 == 0 goto label08;
+
+     label07:
+        z2 = 1;
+
+        z1 = 1;
+
+        goto label03;
+
+     label08:
+        z3 = virtualinvoke r0.<com.android.server.connectivity.Tethering: boolean isBluetooth(java.lang.String)>(r1);
+
+     label09:
+        z2 = 0;
+
+        z1 = 0;
+
+        if z3 == 0 goto label03;
+
+        z2 = 1;
+
+        z1 = 0;
+
+        goto label03;
+
+     label10:
+        $r7 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r6 = virtualinvoke $r7.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r4 = (com.android.server.connectivity.Tethering$TetherInterfaceSM) $r6;
+
+     label11:
+        if z0 == 0 goto label18;
+
+        if r4 != null goto label13;
+
+     label12:
+        $r11 = new com.android.server.connectivity.Tethering$TetherInterfaceSM;
+
+        $r10 = r0.<com.android.server.connectivity.Tethering: android.os.Looper mLooper>;
+
+        specialinvoke $r11.<com.android.server.connectivity.Tethering$TetherInterfaceSM: void <init>(com.android.server.connectivity.Tethering,java.lang.String,android.os.Looper,boolean)>(r0, r1, $r10, z1);
+
+        r5 = $r11;
+
+        $r13 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        virtualinvoke $r13.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, r5);
+
+        virtualinvoke r5.<com.android.server.connectivity.Tethering$TetherInterfaceSM: void start()>();
+
+     label13:
+        exitmonitor r2;
+
+     label14:
+        return;
+
+     label15:
+        $r14 := @caughtexception;
+
+        r3 = $r14;
+
+     label16:
+        exitmonitor r2;
+
+     label17:
+        throw r3;
+
+     label18:
+        $z6 = specialinvoke r0.<com.android.server.connectivity.Tethering: boolean isUsb(java.lang.String)>(r1);
+
+        if $z6 != 0 goto label13;
+
+     label19:
+        if r4 == null goto label13;
+
+     label20:
+        virtualinvoke r4.<com.android.server.connectivity.Tethering$TetherInterfaceSM: void sendMessage(int)>(4);
+
+        $r9 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        virtualinvoke $r9.<java.util.HashMap: java.lang.Object remove(java.lang.Object)>(r1);
+
+     label21:
+        goto label13;
+
+        catch java.lang.Throwable from label01 to label02 with label15;
+        catch java.lang.Throwable from label04 to label05 with label15;
+        catch java.lang.Throwable from label06 to label07 with label15;
+        catch java.lang.Throwable from label08 to label09 with label15;
+        catch java.lang.Throwable from label10 to label11 with label15;
+        catch java.lang.Throwable from label12 to label13 with label15;
+        catch java.lang.Throwable from label13 to label14 with label15;
+        catch java.lang.Throwable from label16 to label17 with label15;
+        catch java.lang.Throwable from label18 to label19 with label15;
+        catch java.lang.Throwable from label20 to label21 with label15;
+    }
+
+    public boolean isBluetooth(java.lang.String)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1, $r5;
+        java.lang.Object r2;
+        java.lang.Throwable r3, $r6;
+        java.lang.String[] r4;
+        int i0, i1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label01:
+        r4 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mTetherableBluetoothRegexs>;
+
+        i0 = lengthof r4;
+
+     label02:
+        i1 = 0;
+
+     label03:
+        if i1 >= i0 goto label06;
+
+     label04:
+        $r5 = r4[i1];
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean matches(java.lang.String)>($r5);
+
+        if $z0 == 0 goto label11;
+
+        exitmonitor r2;
+
+     label05:
+        return 1;
+
+     label06:
+        exitmonitor r2;
+
+     label07:
+        return 0;
+
+     label08:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+     label09:
+        exitmonitor r2;
+
+     label10:
+        throw r3;
+
+     label11:
+        i1 = i1 + 1;
+
+        goto label03;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public boolean isWifi(java.lang.String)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1, $r5;
+        java.lang.Object r2;
+        java.lang.Throwable r3, $r6;
+        java.lang.String[] r4;
+        int i0, i1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label01:
+        r4 = r0.<com.android.server.connectivity.Tethering: java.lang.String[] mTetherableWifiRegexs>;
+
+        i0 = lengthof r4;
+
+     label02:
+        i1 = 0;
+
+     label03:
+        if i1 >= i0 goto label06;
+
+     label04:
+        $r5 = r4[i1];
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean matches(java.lang.String)>($r5);
+
+        if $z0 == 0 goto label11;
+
+        exitmonitor r2;
+
+     label05:
+        return 1;
+
+     label06:
+        exitmonitor r2;
+
+     label07:
+        return 0;
+
+     label08:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+     label09:
+        exitmonitor r2;
+
+     label10:
+        throw r3;
+
+     label11:
+        i1 = i1 + 1;
+
+        goto label03;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public void limitReached(java.lang.String, java.lang.String)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1, r2;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        return;
+    }
+
+    public int setUsbTethering(boolean)
+    {
+        com.android.server.connectivity.Tethering r0;
+        boolean z0, $z1, $z2;
+        android.hardware.usb.UsbManager r1;
+        java.lang.Object r2, $r5;
+        java.lang.Throwable r3, $r6;
+        android.content.Context $r4;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        z0 := @parameter0: boolean;
+
+        $r4 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("usb");
+
+        r1 = (android.hardware.usb.UsbManager) $r5;
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+        if z0 == 0 goto label09;
+
+     label01:
+        $z2 = r0.<com.android.server.connectivity.Tethering: boolean mRndisEnabled>;
+
+        if $z2 == 0 goto label04;
+
+        specialinvoke r0.<com.android.server.connectivity.Tethering: void tetherUsb(boolean)>(1);
+
+     label02:
+        exitmonitor r2;
+
+     label03:
+        return 0;
+
+     label04:
+        r0.<com.android.server.connectivity.Tethering: boolean mUsbTetherRequested> = 1;
+
+        virtualinvoke r1.<android.hardware.usb.UsbManager: void setCurrentFunction(java.lang.String,boolean)>("rndis", 0);
+
+     label05:
+        goto label02;
+
+     label06:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+     label07:
+        exitmonitor r2;
+
+     label08:
+        throw r3;
+
+     label09:
+        specialinvoke r0.<com.android.server.connectivity.Tethering: void tetherUsb(boolean)>(0);
+
+        $z1 = r0.<com.android.server.connectivity.Tethering: boolean mRndisEnabled>;
+
+        if $z1 == 0 goto label10;
+
+        virtualinvoke r1.<android.hardware.usb.UsbManager: void setCurrentFunction(java.lang.String,boolean)>(null, 0);
+
+     label10:
+        r0.<com.android.server.connectivity.Tethering: boolean mUsbTetherRequested> = 0;
+
+     label11:
+        goto label02;
+
+        catch java.lang.Throwable from label01 to label02 with label06;
+        catch java.lang.Throwable from label02 to label03 with label06;
+        catch java.lang.Throwable from label04 to label05 with label06;
+        catch java.lang.Throwable from label07 to label08 with label06;
+        catch java.lang.Throwable from label09 to label10 with label06;
+        catch java.lang.Throwable from label10 to label11 with label06;
+    }
+
+    public int tether(java.lang.String)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1, $r8, $r14, $r20;
+        java.lang.Object r2, $r10;
+        java.lang.Throwable r3, $r21;
+        com.android.server.connectivity.Tethering$TetherInterfaceSM r4;
+        java.lang.StringBuilder $r5, $r6, $r7, $r11, $r12, $r13, $r15, $r16, $r17, $r18, $r19;
+        java.util.HashMap $r9;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Tethering ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("Tethering", $r8);
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label1:
+        $r9 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r10 = virtualinvoke $r9.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r4 = (com.android.server.connectivity.Tethering$TetherInterfaceSM) $r10;
+
+        exitmonitor r2;
+
+     label2:
+        if r4 != null goto label6;
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        $r17 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Tried to Tether an unknown iface :");
+
+        $r19 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ignoring");
+
+        $r20 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Tethering", $r20);
+
+        return 1;
+
+     label3:
+        $r21 := @caughtexception;
+
+        r3 = $r21;
+
+     label4:
+        exitmonitor r2;
+
+     label5:
+        throw r3;
+
+     label6:
+        $z1 = virtualinvoke r4.<com.android.server.connectivity.Tethering$TetherInterfaceSM: boolean isAvailable()>();
+
+        if $z1 != 0 goto label7;
+
+        $z0 = virtualinvoke r4.<com.android.server.connectivity.Tethering$TetherInterfaceSM: boolean isErrored()>();
+
+        if $z0 != 0 goto label7;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Tried to Tether an unavailable iface :");
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r15 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ignoring");
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Tethering", $r14);
+
+        return 4;
+
+     label7:
+        virtualinvoke r4.<com.android.server.connectivity.Tethering$TetherInterfaceSM: void sendMessage(int)>(2);
+
+        return 0;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public int untether(java.lang.String)
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String r1, $r8, $r15, $r19;
+        java.lang.Object r2, $r10;
+        java.lang.Throwable r3, $r21;
+        com.android.server.connectivity.Tethering$TetherInterfaceSM r4;
+        java.lang.StringBuilder $r5, $r6, $r7, $r11, $r12, $r13, $r14, $r16, $r17, $r18, $r20;
+        java.util.HashMap $r9;
+        boolean $z0;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Untethering ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("Tethering", $r8);
+
+        r2 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r2;
+
+     label1:
+        $r9 = r0.<com.android.server.connectivity.Tethering: java.util.HashMap mIfaces>;
+
+        $r10 = virtualinvoke $r9.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r4 = (com.android.server.connectivity.Tethering$TetherInterfaceSM) $r10;
+
+        exitmonitor r2;
+
+     label2:
+        if r4 != null goto label6;
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Tried to Untether an unknown iface :");
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r20 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ignoring");
+
+        $r19 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Tethering", $r19);
+
+        return 1;
+
+     label3:
+        $r21 := @caughtexception;
+
+        r3 = $r21;
+
+     label4:
+        exitmonitor r2;
+
+     label5:
+        throw r3;
+
+     label6:
+        $z0 = virtualinvoke r4.<com.android.server.connectivity.Tethering$TetherInterfaceSM: boolean isErrored()>();
+
+        if $z0 == 0 goto label7;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Tried to Untethered an errored iface :");
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ignoring");
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Tethering", $r15);
+
+        return 4;
+
+     label7:
+        virtualinvoke r4.<com.android.server.connectivity.Tethering$TetherInterfaceSM: void sendMessage(int)>(3);
+
+        return 0;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    void updateConfiguration()
+    {
+        com.android.server.connectivity.Tethering r0;
+        java.lang.String[] r1, r2, r3;
+        int[] r4;
+        java.util.ArrayList r5, $r16;
+        int i0, i1, $i2;
+        java.lang.Object r6;
+        java.lang.Throwable r7, $r18;
+        android.content.Context $r8, $r10, $r13, $r14;
+        android.content.res.Resources $r9, $r11, $r12, $r15;
+        java.lang.Integer $r17;
+
+        r0 := @this: com.android.server.connectivity.Tethering;
+
+        $r8 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r9 = virtualinvoke $r8.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r1 = virtualinvoke $r9.<android.content.res.Resources: java.lang.String[] getStringArray(int)>(17235983);
+
+        $r10 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r11 = virtualinvoke $r10.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r2 = virtualinvoke $r11.<android.content.res.Resources: java.lang.String[] getStringArray(int)>(17235984);
+
+        $r13 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r12 = virtualinvoke $r13.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r3 = virtualinvoke $r12.<android.content.res.Resources: java.lang.String[] getStringArray(int)>(17235986);
+
+        $r14 = r0.<com.android.server.connectivity.Tethering: android.content.Context mContext>;
+
+        $r15 = virtualinvoke $r14.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r4 = virtualinvoke $r15.<android.content.res.Resources: int[] getIntArray(int)>(17235989);
+
+        $r16 = new java.util.ArrayList;
+
+        specialinvoke $r16.<java.util.ArrayList: void <init>()>();
+
+        r5 = $r16;
+
+        i0 = lengthof r4;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $r17 = new java.lang.Integer;
+
+        $i2 = r4[i1];
+
+        specialinvoke $r17.<java.lang.Integer: void <init>(int)>($i2);
+
+        interfaceinvoke r5.<java.util.Collection: boolean add(java.lang.Object)>($r17);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        r6 = r0.<com.android.server.connectivity.Tethering: java.lang.Object mPublicSync>;
+
+        entermonitor r6;
+
+     label3:
+        r0.<com.android.server.connectivity.Tethering: java.lang.String[] mTetherableUsbRegexs> = r1;
+
+        r0.<com.android.server.connectivity.Tethering: java.lang.String[] mTetherableWifiRegexs> = r2;
+
+        r0.<com.android.server.connectivity.Tethering: java.lang.String[] mTetherableBluetoothRegexs> = r3;
+
+        r0.<com.android.server.connectivity.Tethering: java.util.Collection mUpstreamIfaceTypes> = r5;
+
+        exitmonitor r6;
+
+     label4:
+        virtualinvoke r0.<com.android.server.connectivity.Tethering: void checkDunRequired()>();
+
+        return;
+
+     label5:
+        $r18 := @caughtexception;
+
+        r7 = $r18;
+
+     label6:
+        exitmonitor r6;
+
+     label7:
+        throw r7;
+
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+}

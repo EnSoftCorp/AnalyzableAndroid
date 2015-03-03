@@ -1,0 +1,645 @@
+public class com.android.internal.os.storage.ExternalStorageFormatter extends android.app.Service implements android.content.DialogInterface$OnCancelListener
+{
+    public static final android.content.ComponentName COMPONENT_NAME;
+    public static final java.lang.String EXTRA_ALWAYS_RESET;
+    public static final java.lang.String FORMAT_AND_FACTORY_RESET;
+    public static final java.lang.String FORMAT_ONLY;
+    static final java.lang.String TAG;
+    private boolean mAlwaysReset;
+    private boolean mFactoryReset;
+    private android.os.storage.IMountService mMountService;
+    private android.app.ProgressDialog mProgressDialog;
+    android.os.storage.StorageEventListener mStorageListener;
+    private android.os.storage.StorageManager mStorageManager;
+    private android.os.storage.StorageVolume mStorageVolume;
+    private android.os.PowerManager$WakeLock mWakeLock;
+
+    static void <clinit>()
+    {
+        android.content.ComponentName $r0;
+        java.lang.Class $r1;
+        java.lang.String $r2;
+
+        <com.android.internal.os.storage.ExternalStorageFormatter: java.lang.String TAG> = "ExternalStorageFormatter";
+
+        <com.android.internal.os.storage.ExternalStorageFormatter: java.lang.String FORMAT_ONLY> = "com.android.internal.os.storage.FORMAT_ONLY";
+
+        <com.android.internal.os.storage.ExternalStorageFormatter: java.lang.String FORMAT_AND_FACTORY_RESET> = "com.android.internal.os.storage.FORMAT_AND_FACTORY_RESET";
+
+        <com.android.internal.os.storage.ExternalStorageFormatter: java.lang.String EXTRA_ALWAYS_RESET> = "always_reset";
+
+        $r0 = new android.content.ComponentName;
+
+        $r1 = class "com/android/internal/os/storage/ExternalStorageFormatter";
+
+        $r2 = virtualinvoke $r1.<java.lang.Class: java.lang.String getName()>();
+
+        specialinvoke $r0.<android.content.ComponentName: void <init>(java.lang.String,java.lang.String)>("android", $r2);
+
+        <com.android.internal.os.storage.ExternalStorageFormatter: android.content.ComponentName COMPONENT_NAME> = $r0;
+
+        return;
+    }
+
+    public void <init>()
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        com.android.internal.os.storage.ExternalStorageFormatter$1 $r1;
+
+        r0 := @this: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        specialinvoke r0.<android.app.Service: void <init>()>();
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.IMountService mMountService> = null;
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageManager mStorageManager> = null;
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog> = null;
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: boolean mFactoryReset> = 0;
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: boolean mAlwaysReset> = 0;
+
+        $r1 = new com.android.internal.os.storage.ExternalStorageFormatter$1;
+
+        specialinvoke $r1.<com.android.internal.os.storage.ExternalStorageFormatter$1: void <init>(com.android.internal.os.storage.ExternalStorageFormatter)>(r0);
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageEventListener mStorageListener> = $r1;
+
+        return;
+    }
+
+    static boolean access$000(com.android.internal.os.storage.ExternalStorageFormatter)
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        $z0 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: boolean mFactoryReset>;
+
+        return $z0;
+    }
+
+    static boolean access$100(com.android.internal.os.storage.ExternalStorageFormatter)
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        $z0 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: boolean mAlwaysReset>;
+
+        return $z0;
+    }
+
+    void fail(int)
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        int i0;
+        android.widget.Toast $r1;
+        boolean $z0;
+        android.content.Intent $r2;
+
+        r0 := @this: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        i0 := @parameter0: int;
+
+        $r1 = staticinvoke <android.widget.Toast: android.widget.Toast makeText(android.content.Context,int,int)>(r0, i0, 1);
+
+        virtualinvoke $r1.<android.widget.Toast: void show()>();
+
+        $z0 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: boolean mAlwaysReset>;
+
+        if $z0 == 0 goto label1;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.MASTER_CLEAR");
+
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void sendBroadcast(android.content.Intent)>($r2);
+
+     label1:
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void stopSelf()>();
+
+        return;
+    }
+
+    android.os.storage.IMountService getMountService()
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        android.os.IBinder r1;
+        android.os.storage.IMountService $r2, $r3, $r4;
+
+        r0 := @this: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        $r2 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.IMountService mMountService>;
+
+        if $r2 != null goto label1;
+
+        r1 = staticinvoke <android.os.ServiceManager: android.os.IBinder getService(java.lang.String)>("mount");
+
+        if r1 == null goto label2;
+
+        $r4 = staticinvoke <android.os.storage.IMountService$Stub: android.os.storage.IMountService asInterface(android.os.IBinder)>(r1);
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.IMountService mMountService> = $r4;
+
+     label1:
+        $r3 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.IMountService mMountService>;
+
+        return $r3;
+
+     label2:
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("ExternalStorageFormatter", "Can\'t get mount service");
+
+        goto label1;
+    }
+
+    public android.os.IBinder onBind(android.content.Intent)
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        android.content.Intent r1;
+
+        r0 := @this: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        r1 := @parameter0: android.content.Intent;
+
+        return null;
+    }
+
+    public void onCancel(android.content.DialogInterface)
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        android.content.DialogInterface r1;
+        android.os.storage.IMountService r2;
+        java.lang.String r3;
+        android.os.RemoteException r4, $r8;
+        android.os.storage.StorageVolume $r5, $r6;
+        java.io.File $r7;
+
+        r0 := @this: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        r1 := @parameter0: android.content.DialogInterface;
+
+        r2 = virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.IMountService getMountService()>();
+
+        $r5 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageVolume mStorageVolume>;
+
+        if $r5 != null goto label3;
+
+        $r7 = staticinvoke <android.os.Environment: java.io.File getLegacyExternalStorageDirectory()>();
+
+        r3 = virtualinvoke $r7.<java.io.File: java.lang.String toString()>();
+
+     label1:
+        interfaceinvoke r2.<android.os.storage.IMountService: int mountVolume(java.lang.String)>(r3);
+
+     label2:
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void stopSelf()>();
+
+        return;
+
+     label3:
+        $r6 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageVolume mStorageVolume>;
+
+        r3 = virtualinvoke $r6.<android.os.storage.StorageVolume: java.lang.String getPath()>();
+
+        goto label1;
+
+     label4:
+        $r8 := @caughtexception;
+
+        r4 = $r8;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("ExternalStorageFormatter", "Failed talking with mount service", r4);
+
+        goto label2;
+
+        catch android.os.RemoteException from label1 to label2 with label4;
+    }
+
+    public void onCreate()
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        android.os.storage.StorageManager $r1, $r7, $r9;
+        java.lang.Object $r2, $r6;
+        android.os.PowerManager $r3;
+        android.os.PowerManager$WakeLock $r4, $r5;
+        android.os.storage.StorageEventListener $r8;
+
+        r0 := @this: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        specialinvoke r0.<android.app.Service: void onCreate()>();
+
+        $r1 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageManager mStorageManager>;
+
+        if $r1 != null goto label1;
+
+        $r6 = virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: java.lang.Object getSystemService(java.lang.String)>("storage");
+
+        $r7 = (android.os.storage.StorageManager) $r6;
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageManager mStorageManager> = $r7;
+
+        $r9 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageManager mStorageManager>;
+
+        $r8 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageEventListener mStorageListener>;
+
+        virtualinvoke $r9.<android.os.storage.StorageManager: void registerListener(android.os.storage.StorageEventListener)>($r8);
+
+     label1:
+        $r2 = virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r3 = (android.os.PowerManager) $r2;
+
+        $r4 = virtualinvoke $r3.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, "ExternalStorageFormatter");
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.PowerManager$WakeLock mWakeLock> = $r4;
+
+        $r5 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r5.<android.os.PowerManager$WakeLock: void acquire()>();
+
+        return;
+    }
+
+    public void onDestroy()
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        android.os.storage.StorageManager $r1, $r6;
+        android.app.ProgressDialog $r2, $r4;
+        android.os.PowerManager$WakeLock $r3;
+        android.os.storage.StorageEventListener $r5;
+
+        r0 := @this: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        $r1 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageManager mStorageManager>;
+
+        if $r1 == null goto label1;
+
+        $r6 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageManager mStorageManager>;
+
+        $r5 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageEventListener mStorageListener>;
+
+        virtualinvoke $r6.<android.os.storage.StorageManager: void unregisterListener(android.os.storage.StorageEventListener)>($r5);
+
+     label1:
+        $r2 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        if $r2 == null goto label2;
+
+        $r4 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        virtualinvoke $r4.<android.app.ProgressDialog: void dismiss()>();
+
+     label2:
+        $r3 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r3.<android.os.PowerManager$WakeLock: void release()>();
+
+        specialinvoke r0.<android.app.Service: void onDestroy()>();
+
+        return;
+    }
+
+    public int onStartCommand(android.content.Intent, int, int)
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        android.content.Intent r1;
+        int i0, i1;
+        java.lang.String $r2, $r3;
+        boolean $z0, $z1, $z2;
+        android.os.Parcelable $r4;
+        android.os.storage.StorageVolume $r5;
+        android.app.ProgressDialog $r6, $r7, $r8, $r9, $r10, $r12, $r13;
+        android.view.Window $r11;
+
+        r0 := @this: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        r1 := @parameter0: android.content.Intent;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $r2 = "com.android.internal.os.storage.FORMAT_AND_FACTORY_RESET";
+
+        $r3 = virtualinvoke r1.<android.content.Intent: java.lang.String getAction()>();
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>($r3);
+
+        if $z0 == 0 goto label1;
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: boolean mFactoryReset> = 1;
+
+     label1:
+        $z1 = virtualinvoke r1.<android.content.Intent: boolean getBooleanExtra(java.lang.String,boolean)>("always_reset", 0);
+
+        if $z1 == 0 goto label2;
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: boolean mAlwaysReset> = 1;
+
+     label2:
+        $r4 = virtualinvoke r1.<android.content.Intent: android.os.Parcelable getParcelableExtra(java.lang.String)>("storage_volume");
+
+        $r5 = (android.os.storage.StorageVolume) $r4;
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageVolume mStorageVolume> = $r5;
+
+        $r6 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        if $r6 != null goto label4;
+
+        $r7 = new android.app.ProgressDialog;
+
+        specialinvoke $r7.<android.app.ProgressDialog: void <init>(android.content.Context)>(r0);
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog> = $r7;
+
+        $r8 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        virtualinvoke $r8.<android.app.ProgressDialog: void setIndeterminate(boolean)>(1);
+
+        $r9 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        virtualinvoke $r9.<android.app.ProgressDialog: void setCancelable(boolean)>(1);
+
+        $r10 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        $r11 = virtualinvoke $r10.<android.app.ProgressDialog: android.view.Window getWindow()>();
+
+        virtualinvoke $r11.<android.view.Window: void setType(int)>(2003);
+
+        $z2 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: boolean mAlwaysReset>;
+
+        if $z2 != 0 goto label3;
+
+        $r13 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        virtualinvoke $r13.<android.app.ProgressDialog: void setOnCancelListener(android.content.DialogInterface$OnCancelListener)>(r0);
+
+     label3:
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void updateProgressState()>();
+
+        $r12 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        virtualinvoke $r12.<android.app.ProgressDialog: void show()>();
+
+     label4:
+        return 3;
+    }
+
+    public void updateProgressDialog(int)
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        int i0;
+        android.app.ProgressDialog $r1, $r2, $r4, $r5, $r6, $r7, $r9;
+        java.lang.CharSequence $r3;
+        android.view.Window $r8;
+
+        r0 := @this: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        if $r1 != null goto label1;
+
+        $r4 = new android.app.ProgressDialog;
+
+        specialinvoke $r4.<android.app.ProgressDialog: void <init>(android.content.Context)>(r0);
+
+        r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog> = $r4;
+
+        $r5 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        virtualinvoke $r5.<android.app.ProgressDialog: void setIndeterminate(boolean)>(1);
+
+        $r6 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        virtualinvoke $r6.<android.app.ProgressDialog: void setCancelable(boolean)>(0);
+
+        $r7 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        $r8 = virtualinvoke $r7.<android.app.ProgressDialog: android.view.Window getWindow()>();
+
+        virtualinvoke $r8.<android.view.Window: void setType(int)>(2003);
+
+        $r9 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        virtualinvoke $r9.<android.app.ProgressDialog: void show()>();
+
+     label1:
+        $r2 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.app.ProgressDialog mProgressDialog>;
+
+        $r3 = virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: java.lang.CharSequence getText(int)>(i0);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setMessage(java.lang.CharSequence)>($r3);
+
+        return;
+    }
+
+    void updateProgressState()
+    {
+        com.android.internal.os.storage.ExternalStorageFormatter r0;
+        java.lang.String r1, r3, r6, $r10, $r11, $r15, $r16, $r20, $r22, $r23, $r24, $r25, $r27, $r28;
+        android.os.storage.IMountService r2, r5;
+        android.os.RemoteException r4, $r31;
+        android.os.storage.StorageVolume $r7, $r8, $r12, $r13, $r17, $r18;
+        android.os.storage.StorageManager $r9;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9;
+        java.io.File $r14, $r21;
+        com.android.internal.os.storage.ExternalStorageFormatter$2 $r19;
+        java.lang.StringBuilder $r26, $r29, $r30;
+
+        r0 := @this: com.android.internal.os.storage.ExternalStorageFormatter;
+
+        $r7 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageVolume mStorageVolume>;
+
+        if $r7 != null goto label05;
+
+        r1 = staticinvoke <android.os.Environment: java.lang.String getExternalStorageState()>();
+
+     label01:
+        $r11 = "mounted";
+
+        $z0 = virtualinvoke $r11.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z0 != 0 goto label02;
+
+        $r15 = "mounted_ro";
+
+        $z2 = virtualinvoke $r15.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z2 == 0 goto label08;
+
+     label02:
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void updateProgressDialog(int)>(17040592);
+
+        r2 = virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.IMountService getMountService()>();
+
+        $r13 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageVolume mStorageVolume>;
+
+        if $r13 != null goto label06;
+
+        $r14 = staticinvoke <android.os.Environment: java.io.File getLegacyExternalStorageDirectory()>();
+
+        r3 = virtualinvoke $r14.<java.io.File: java.lang.String toString()>();
+
+     label03:
+        $z1 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: boolean mFactoryReset>;
+
+        interfaceinvoke r2.<android.os.storage.IMountService: void unmountVolume(java.lang.String,boolean,boolean)>(r3, 1, $z1);
+
+     label04:
+        return;
+
+     label05:
+        $r9 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageManager mStorageManager>;
+
+        $r8 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageVolume mStorageVolume>;
+
+        $r10 = virtualinvoke $r8.<android.os.storage.StorageVolume: java.lang.String getPath()>();
+
+        r1 = virtualinvoke $r9.<android.os.storage.StorageManager: java.lang.String getVolumeState(java.lang.String)>($r10);
+
+        goto label01;
+
+     label06:
+        $r12 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageVolume mStorageVolume>;
+
+        r3 = virtualinvoke $r12.<android.os.storage.StorageVolume: java.lang.String getPath()>();
+
+        goto label03;
+
+     label07:
+        $r31 := @caughtexception;
+
+        r4 = $r31;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("ExternalStorageFormatter", "Failed talking with mount service", r4);
+
+        return;
+
+     label08:
+        $r16 = "nofs";
+
+        $z3 = virtualinvoke $r16.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z3 != 0 goto label09;
+
+        $r20 = "unmounted";
+
+        $z4 = virtualinvoke $r20.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z4 != 0 goto label09;
+
+        $r23 = "unmountable";
+
+        $z6 = virtualinvoke $r23.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z6 == 0 goto label13;
+
+     label09:
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void updateProgressDialog(int)>(17040593);
+
+        r5 = virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.IMountService getMountService()>();
+
+        $r17 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageVolume mStorageVolume>;
+
+        if $r17 != null goto label11;
+
+        $r21 = staticinvoke <android.os.Environment: java.io.File getLegacyExternalStorageDirectory()>();
+
+        r6 = virtualinvoke $r21.<java.io.File: java.lang.String toString()>();
+
+     label10:
+        if r5 == null goto label12;
+
+        $r19 = new com.android.internal.os.storage.ExternalStorageFormatter$2;
+
+        specialinvoke $r19.<com.android.internal.os.storage.ExternalStorageFormatter$2: void <init>(com.android.internal.os.storage.ExternalStorageFormatter,android.os.storage.IMountService,java.lang.String)>(r0, r5, r6);
+
+        virtualinvoke $r19.<com.android.internal.os.storage.ExternalStorageFormatter$2: void start()>();
+
+        return;
+
+     label11:
+        $r18 = r0.<com.android.internal.os.storage.ExternalStorageFormatter: android.os.storage.StorageVolume mStorageVolume>;
+
+        r6 = virtualinvoke $r18.<android.os.storage.StorageVolume: java.lang.String getPath()>();
+
+        goto label10;
+
+     label12:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExternalStorageFormatter", "Unable to locate IMountService");
+
+        return;
+
+     label13:
+        $r22 = "bad_removal";
+
+        $z5 = virtualinvoke $r22.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z5 == 0 goto label14;
+
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void fail(int)>(17040595);
+
+        return;
+
+     label14:
+        $r25 = "checking";
+
+        $z8 = virtualinvoke $r25.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z8 == 0 goto label15;
+
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void fail(int)>(17040596);
+
+        return;
+
+     label15:
+        $r24 = "removed";
+
+        $z7 = virtualinvoke $r24.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z7 == 0 goto label16;
+
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void fail(int)>(17040597);
+
+        return;
+
+     label16:
+        $r27 = "shared";
+
+        $z9 = virtualinvoke $r27.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z9 == 0 goto label17;
+
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void fail(int)>(17040598);
+
+        return;
+
+     label17:
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void fail(int)>(17040599);
+
+        $r26 = new java.lang.StringBuilder;
+
+        specialinvoke $r26.<java.lang.StringBuilder: void <init>()>();
+
+        $r30 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown storage state: ");
+
+        $r29 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r28 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExternalStorageFormatter", $r28);
+
+        virtualinvoke r0.<com.android.internal.os.storage.ExternalStorageFormatter: void stopSelf()>();
+
+        return;
+
+        catch android.os.RemoteException from label03 to label04 with label07;
+    }
+}

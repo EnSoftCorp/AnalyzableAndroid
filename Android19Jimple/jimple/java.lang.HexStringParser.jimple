@@ -1,0 +1,878 @@
+final class java.lang.HexStringParser extends java.lang.Object
+{
+    private static final java.lang.String BINARY_EXPONENT;
+    private static final int DOUBLE_EXPONENT_WIDTH;
+    private static final int DOUBLE_MANTISSA_WIDTH;
+    private static final int FLOAT_EXPONENT_WIDTH;
+    private static final int FLOAT_MANTISSA_WIDTH;
+    private static final java.lang.String FLOAT_TYPE_SUFFIX;
+    private static final java.lang.String HEX_PATTERN;
+    private static final int HEX_RADIX;
+    private static final java.lang.String HEX_SIGNIFICANT;
+    private static final int MAX_SIGNIFICANT_LENGTH;
+    private static final java.util.regex.Pattern PATTERN;
+    private final long EXPONENT_BASE;
+    private final int EXPONENT_WIDTH;
+    private final long MANTISSA_MASK;
+    private final int MANTISSA_WIDTH;
+    private final long MAX_EXPONENT;
+    private final long MIN_EXPONENT;
+    private java.lang.String abandonedNumber;
+    private long exponent;
+    private long mantissa;
+    private long sign;
+
+    static void <clinit>()
+    {
+        java.util.regex.Pattern $r0;
+
+        <java.lang.HexStringParser: int MAX_SIGNIFICANT_LENGTH> = 15;
+
+        <java.lang.HexStringParser: java.lang.String HEX_SIGNIFICANT> = "0[xX](\\p{XDigit}+\\.?|\\p{XDigit}*\\.\\p{XDigit}+)";
+
+        <java.lang.HexStringParser: int HEX_RADIX> = 16;
+
+        <java.lang.HexStringParser: java.lang.String HEX_PATTERN> = "[\\x00-\\x20]*([+-]?)0[xX](\\p{XDigit}+\\.?|\\p{XDigit}*\\.\\p{XDigit}+)[pP]([+-]?\\d+)[fFdD]?[\\x00-\\x20]*";
+
+        <java.lang.HexStringParser: java.lang.String FLOAT_TYPE_SUFFIX> = "[fFdD]?";
+
+        <java.lang.HexStringParser: int FLOAT_MANTISSA_WIDTH> = 23;
+
+        <java.lang.HexStringParser: int FLOAT_EXPONENT_WIDTH> = 8;
+
+        <java.lang.HexStringParser: int DOUBLE_MANTISSA_WIDTH> = 52;
+
+        <java.lang.HexStringParser: int DOUBLE_EXPONENT_WIDTH> = 11;
+
+        <java.lang.HexStringParser: java.lang.String BINARY_EXPONENT> = "[pP]([+-]?\\d+)";
+
+        $r0 = staticinvoke <java.util.regex.Pattern: java.util.regex.Pattern compile(java.lang.String)>("[\\x00-\\x20]*([+-]?)0[xX](\\p{XDigit}+\\.?|\\p{XDigit}*\\.\\p{XDigit}+)[pP]([+-]?\\d+)[fFdD]?[\\x00-\\x20]*");
+
+        <java.lang.HexStringParser: java.util.regex.Pattern PATTERN> = $r0;
+
+        return;
+    }
+
+    public void <init>(int, int)
+    {
+        java.lang.HexStringParser r0;
+        int i0, i1, $i2, $i7, $i8, $i9;
+        long $l3, $l4, $l5, $l6, $l10, $l11, $l12;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<java.lang.HexStringParser: java.lang.String abandonedNumber> = "";
+
+        r0.<java.lang.HexStringParser: int EXPONENT_WIDTH> = i0;
+
+        r0.<java.lang.HexStringParser: int MANTISSA_WIDTH> = i1;
+
+        $i2 = i0 - 1;
+
+        $l3 = -1L << $i2;
+
+        $l4 = -1L ^ $l3;
+
+        r0.<java.lang.HexStringParser: long EXPONENT_BASE> = $l4;
+
+        $l5 = -1L << i0;
+
+        $l6 = -1L ^ $l5;
+
+        r0.<java.lang.HexStringParser: long MAX_EXPONENT> = $l6;
+
+        $i7 = r0.<java.lang.HexStringParser: int MANTISSA_WIDTH>;
+
+        $i8 = 1 + $i7;
+
+        $i9 = neg $i8;
+
+        $l10 = (long) $i9;
+
+        r0.<java.lang.HexStringParser: long MIN_EXPONENT> = $l10;
+
+        $l11 = -1L << i1;
+
+        $l12 = -1L ^ $l11;
+
+        r0.<java.lang.HexStringParser: long MANTISSA_MASK> = $l12;
+
+        return;
+    }
+
+    private void checkedAddExponent(long)
+    {
+        java.lang.HexStringParser r0;
+        long l0, l1, $l3, $l4, $l9, $l10;
+        int i2, $i5, $i6, $i7, $i8;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        l0 := @parameter0: long;
+
+        $l3 = r0.<java.lang.HexStringParser: long exponent>;
+
+        l1 = l0 + $l3;
+
+        $l4 = r0.<java.lang.HexStringParser: long exponent>;
+
+        i2 = staticinvoke <java.lang.Long: int signum(long)>($l4);
+
+        $i5 = staticinvoke <java.lang.Long: int signum(long)>(l0);
+
+        $i6 = i2 * $i5;
+
+        if $i6 <= 0 goto label1;
+
+        $i7 = staticinvoke <java.lang.Long: int signum(long)>(l1);
+
+        $i8 = i2 * $i7;
+
+        if $i8 >= 0 goto label1;
+
+        $l9 = (long) i2;
+
+        $l10 = 9223372036854775807L * $l9;
+
+        r0.<java.lang.HexStringParser: long exponent> = $l10;
+
+        return;
+
+     label1:
+        r0.<java.lang.HexStringParser: long exponent> = l1;
+
+        return;
+    }
+
+    private int countBitsLength(long)
+    {
+        java.lang.HexStringParser r0;
+        long l0;
+        int $i1, $i2;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        l0 := @parameter0: long;
+
+        $i1 = staticinvoke <java.lang.Long: int numberOfLeadingZeros(long)>(l0);
+
+        $i2 = 64 - $i1;
+
+        return $i2;
+    }
+
+    private void discardTrailingBits(long)
+    {
+        java.lang.HexStringParser r0;
+        long l0, l1, $l3, $l4, $l5, $l7, $l8;
+        int $i2, $i6;
+        java.lang.StringBuilder $r1, $r3, $r4;
+        java.lang.String $r2, $r5;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        l0 := @parameter0: long;
+
+        $i2 = (int) l0;
+
+        $l3 = -1L << $i2;
+
+        l1 = -1L ^ $l3;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = r0.<java.lang.HexStringParser: java.lang.String abandonedNumber>;
+
+        $r3 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r2);
+
+        $l4 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        $l5 = l1 & $l4;
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l5);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r0.<java.lang.HexStringParser: java.lang.String abandonedNumber> = $r5;
+
+        $l7 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        $i6 = (int) l0;
+
+        $l8 = $l7 >> $i6;
+
+        r0.<java.lang.HexStringParser: long mantissa> = $l8;
+
+        return;
+    }
+
+    private void fitMantissaInDesiredWidth(int)
+    {
+        java.lang.HexStringParser r0;
+        int i0, i1, $i3, $i6;
+        long $l2, $l4, $l5, $l7;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        i0 := @parameter0: int;
+
+        $l2 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        i1 = specialinvoke r0.<java.lang.HexStringParser: int countBitsLength(long)>($l2);
+
+        if i1 <= i0 goto label1;
+
+        $i6 = i1 - i0;
+
+        $l7 = (long) $i6;
+
+        specialinvoke r0.<java.lang.HexStringParser: void discardTrailingBits(long)>($l7);
+
+        return;
+
+     label1:
+        $l4 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        $i3 = i0 - i1;
+
+        $l5 = $l4 << $i3;
+
+        r0.<java.lang.HexStringParser: long mantissa> = $l5;
+
+        return;
+    }
+
+    private java.lang.String getNormalizedSignificand(java.lang.String, java.lang.String)
+    {
+        java.lang.HexStringParser r0;
+        java.lang.String r1, r2, r3, $r7;
+        java.lang.StringBuilder $r4, $r5, $r6;
+        int $i0;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r3 = virtualinvoke $r7.<java.lang.String: java.lang.String replaceFirst(java.lang.String,java.lang.String)>("^0+", "");
+
+        $i0 = virtualinvoke r3.<java.lang.String: int length()>();
+
+        if $i0 != 0 goto label1;
+
+        r3 = "0";
+
+     label1:
+        return r3;
+    }
+
+    private int getOffset(java.lang.String, java.lang.String)
+    {
+        java.lang.HexStringParser r0;
+        java.lang.String r1, r2, r3, r4, r5;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7, $i9, $i10, $i11, $i13, $i14, $i15, $i17, $i18, $i19;
+        long $l8, $l16;
+        char $c12;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 = virtualinvoke r1.<java.lang.String: java.lang.String replaceFirst(java.lang.String,java.lang.String)>("^0+", "");
+
+        $i3 = virtualinvoke r3.<java.lang.String: int length()>();
+
+        if $i3 == 0 goto label2;
+
+        r5 = virtualinvoke r3.<java.lang.String: java.lang.String substring(int,int)>(0, 1);
+
+        $i15 = virtualinvoke r3.<java.lang.String: int length()>();
+
+        $i14 = -1 + $i15;
+
+        $i17 = 4 * $i14;
+
+        $l16 = staticinvoke <java.lang.Long: long parseLong(java.lang.String,int)>(r5, 16);
+
+        $i18 = specialinvoke r0.<java.lang.HexStringParser: int countBitsLength(long)>($l16);
+
+        $i19 = $i17 + $i18;
+
+        i2 = -1 + $i19;
+
+     label1:
+        return i2;
+
+     label2:
+        i0 = 0;
+
+     label3:
+        $i4 = virtualinvoke r2.<java.lang.String: int length()>();
+
+        if i0 >= $i4 goto label4;
+
+        $c12 = virtualinvoke r2.<java.lang.String: char charAt(int)>(i0);
+
+        if $c12 != 48 goto label4;
+
+        i0 = i0 + 1;
+
+        goto label3;
+
+     label4:
+        i1 = virtualinvoke r2.<java.lang.String: int length()>();
+
+        i2 = 0;
+
+        if i0 == i1 goto label1;
+
+        $i5 = i0 + 1;
+
+        r4 = virtualinvoke r2.<java.lang.String: java.lang.String substring(int,int)>(i0, $i5);
+
+        $i6 = neg i0;
+
+        $i7 = -1 + $i6;
+
+        $i9 = 4 * $i7;
+
+        $l8 = staticinvoke <java.lang.Long: long parseLong(java.lang.String,int)>(r4, 16);
+
+        $i11 = specialinvoke r0.<java.lang.HexStringParser: int countBitsLength(long)>($l8);
+
+        $i10 = $i9 + $i11;
+
+        $i13 = -1 + $i10;
+
+        return $i13;
+    }
+
+    private long parse(java.lang.String, boolean)
+    {
+        java.lang.HexStringParser r0;
+        java.lang.String r1, r3, r4, r5, r7, $r12;
+        boolean z0, $z1;
+        java.util.regex.Matcher r2;
+        java.lang.StringBuilder r6, $r9, $r10, $r13, $r14;
+        java.util.regex.Pattern $r8;
+        int $i0, $i1, $i2, $i6;
+        long $l3, $l4, $l5, $l7, $l8, $l9, $l10, $l11, $l12;
+        java.lang.NumberFormatException $r11;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        $r8 = <java.lang.HexStringParser: java.util.regex.Pattern PATTERN>;
+
+        r2 = virtualinvoke $r8.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>(r1);
+
+        $z1 = virtualinvoke r2.<java.util.regex.Matcher: boolean matches()>();
+
+        if $z1 != 0 goto label3;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        r6 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid hex ");
+
+        if z0 == 0 goto label2;
+
+        r7 = "double";
+
+     label1:
+        $r11 = new java.lang.NumberFormatException;
+
+        $r10 = virtualinvoke r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r7);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        $r14 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r12 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r11.<java.lang.NumberFormatException: void <init>(java.lang.String)>($r12);
+
+        throw $r11;
+
+     label2:
+        r7 = "float";
+
+        goto label1;
+
+     label3:
+        r3 = virtualinvoke r2.<java.util.regex.Matcher: java.lang.String group(int)>(1);
+
+        r4 = virtualinvoke r2.<java.util.regex.Matcher: java.lang.String group(int)>(2);
+
+        r5 = virtualinvoke r2.<java.util.regex.Matcher: java.lang.String group(int)>(3);
+
+        specialinvoke r0.<java.lang.HexStringParser: void parseHexSign(java.lang.String)>(r3);
+
+        specialinvoke r0.<java.lang.HexStringParser: void parseExponent(java.lang.String)>(r5);
+
+        specialinvoke r0.<java.lang.HexStringParser: void parseMantissa(java.lang.String)>(r4);
+
+        $l4 = r0.<java.lang.HexStringParser: long sign>;
+
+        $i2 = r0.<java.lang.HexStringParser: int MANTISSA_WIDTH>;
+
+        $i0 = r0.<java.lang.HexStringParser: int EXPONENT_WIDTH>;
+
+        $i1 = $i2 + $i0;
+
+        $l3 = $l4 << $i1;
+
+        r0.<java.lang.HexStringParser: long sign> = $l3;
+
+        $l5 = r0.<java.lang.HexStringParser: long exponent>;
+
+        $i6 = r0.<java.lang.HexStringParser: int MANTISSA_WIDTH>;
+
+        $l8 = $l5 << $i6;
+
+        r0.<java.lang.HexStringParser: long exponent> = $l8;
+
+        $l10 = r0.<java.lang.HexStringParser: long sign>;
+
+        $l7 = r0.<java.lang.HexStringParser: long exponent>;
+
+        $l12 = $l10 | $l7;
+
+        $l9 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        $l11 = $l12 | $l9;
+
+        return $l11;
+    }
+
+    public static double parseDouble(java.lang.String)
+    {
+        java.lang.String r0;
+        java.lang.HexStringParser $r1;
+        long $l0;
+        double $d0;
+
+        r0 := @parameter0: java.lang.String;
+
+        $r1 = new java.lang.HexStringParser;
+
+        specialinvoke $r1.<java.lang.HexStringParser: void <init>(int,int)>(11, 52);
+
+        $l0 = specialinvoke $r1.<java.lang.HexStringParser: long parse(java.lang.String,boolean)>(r0, 1);
+
+        $d0 = staticinvoke <java.lang.Double: double longBitsToDouble(long)>($l0);
+
+        return $d0;
+    }
+
+    private void parseExponent(java.lang.String)
+    {
+        java.lang.HexStringParser r0;
+        java.lang.String r1;
+        char c0;
+        byte b1;
+        long l2, $l3, $l4, $l5, $l6, $l7;
+        boolean $z0;
+        java.lang.NumberFormatException $r3;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        r1 := @parameter0: java.lang.String;
+
+        c0 = virtualinvoke r1.<java.lang.String: char charAt(int)>(0);
+
+        if c0 != 45 goto label5;
+
+        b1 = -1;
+
+     label1:
+        $z0 = staticinvoke <java.lang.Character: boolean isDigit(char)>(c0);
+
+        if $z0 != 0 goto label2;
+
+        r1 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int)>(1);
+
+     label2:
+        l2 = (long) b1;
+
+     label3:
+        $l3 = staticinvoke <java.lang.Long: long parseLong(java.lang.String)>(r1);
+
+        $l4 = l2 * $l3;
+
+        r0.<java.lang.HexStringParser: long exponent> = $l4;
+
+        $l5 = r0.<java.lang.HexStringParser: long EXPONENT_BASE>;
+
+        specialinvoke r0.<java.lang.HexStringParser: void checkedAddExponent(long)>($l5);
+
+     label4:
+        return;
+
+     label5:
+        b1 = 1;
+
+        goto label1;
+
+     label6:
+        $r3 := @caughtexception;
+
+        $l6 = (long) b1;
+
+        $l7 = 9223372036854775807L * $l6;
+
+        r0.<java.lang.HexStringParser: long exponent> = $l7;
+
+        return;
+
+        catch java.lang.NumberFormatException from label3 to label4 with label6;
+    }
+
+    public static float parseFloat(java.lang.String)
+    {
+        java.lang.String r0;
+        java.lang.HexStringParser $r1;
+        long $l0;
+        int $i1;
+        float $f0;
+
+        r0 := @parameter0: java.lang.String;
+
+        $r1 = new java.lang.HexStringParser;
+
+        specialinvoke $r1.<java.lang.HexStringParser: void <init>(int,int)>(8, 23);
+
+        $l0 = specialinvoke $r1.<java.lang.HexStringParser: long parse(java.lang.String,boolean)>(r0, 0);
+
+        $i1 = (int) $l0;
+
+        $f0 = staticinvoke <java.lang.Float: float intBitsToFloat(int)>($i1);
+
+        return $f0;
+    }
+
+    private void parseHexSign(java.lang.String)
+    {
+        java.lang.HexStringParser r0;
+        java.lang.String r1;
+        long l0;
+        boolean $z0;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        r1 := @parameter0: java.lang.String;
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>("-");
+
+        if $z0 == 0 goto label2;
+
+        l0 = 1L;
+
+     label1:
+        r0.<java.lang.HexStringParser: long sign> = l0;
+
+        return;
+
+     label2:
+        l0 = 0L;
+
+        goto label1;
+    }
+
+    private void parseMantissa(java.lang.String)
+    {
+        java.lang.HexStringParser r0;
+        java.lang.String r1, r3, r4, r5, $r6;
+        java.lang.String[] r2;
+        int $i0, $i1, $i10;
+        boolean $z0;
+        long $l2, $l3, $l4, $l6, $l8, $l9, $l12;
+        byte $b5, $b7, $b11;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = virtualinvoke r1.<java.lang.String: java.lang.String[] split(java.lang.String)>("\\.");
+
+        r3 = r2[0];
+
+        $i0 = lengthof r2;
+
+        if $i0 <= 1 goto label2;
+
+        r4 = r2[1];
+
+     label1:
+        r5 = specialinvoke r0.<java.lang.HexStringParser: java.lang.String getNormalizedSignificand(java.lang.String,java.lang.String)>(r3, r4);
+
+        $z0 = virtualinvoke r5.<java.lang.String: boolean equals(java.lang.Object)>("0");
+
+        if $z0 == 0 goto label3;
+
+        specialinvoke r0.<java.lang.HexStringParser: void setZero()>();
+
+        return;
+
+     label2:
+        r4 = "";
+
+        goto label1;
+
+     label3:
+        $i1 = specialinvoke r0.<java.lang.HexStringParser: int getOffset(java.lang.String,java.lang.String)>(r3, r4);
+
+        $l2 = (long) $i1;
+
+        specialinvoke r0.<java.lang.HexStringParser: void checkedAddExponent(long)>($l2);
+
+        $l4 = r0.<java.lang.HexStringParser: long exponent>;
+
+        $l3 = r0.<java.lang.HexStringParser: long MAX_EXPONENT>;
+
+        $b5 = $l4 cmp $l3;
+
+        if $b5 < 0 goto label4;
+
+        specialinvoke r0.<java.lang.HexStringParser: void setInfinite()>();
+
+        return;
+
+     label4:
+        $l8 = r0.<java.lang.HexStringParser: long exponent>;
+
+        $l6 = r0.<java.lang.HexStringParser: long MIN_EXPONENT>;
+
+        $b7 = $l8 cmp $l6;
+
+        if $b7 > 0 goto label5;
+
+        specialinvoke r0.<java.lang.HexStringParser: void setZero()>();
+
+        return;
+
+     label5:
+        $i10 = virtualinvoke r5.<java.lang.String: int length()>();
+
+        if $i10 <= 15 goto label6;
+
+        $r6 = virtualinvoke r5.<java.lang.String: java.lang.String substring(int)>(15);
+
+        r0.<java.lang.HexStringParser: java.lang.String abandonedNumber> = $r6;
+
+        r5 = virtualinvoke r5.<java.lang.String: java.lang.String substring(int,int)>(0, 15);
+
+     label6:
+        $l9 = staticinvoke <java.lang.Long: long parseLong(java.lang.String,int)>(r5, 16);
+
+        r0.<java.lang.HexStringParser: long mantissa> = $l9;
+
+        $l12 = r0.<java.lang.HexStringParser: long exponent>;
+
+        $b11 = $l12 cmp 1L;
+
+        if $b11 < 0 goto label7;
+
+        specialinvoke r0.<java.lang.HexStringParser: void processNormalNumber()>();
+
+        return;
+
+     label7:
+        specialinvoke r0.<java.lang.HexStringParser: void processSubNormalNumber()>();
+
+        return;
+    }
+
+    private void processNormalNumber()
+    {
+        java.lang.HexStringParser r0;
+        int $i0, $i1;
+        long $l2, $l3, $l4;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        $i0 = r0.<java.lang.HexStringParser: int MANTISSA_WIDTH>;
+
+        $i1 = 2 + $i0;
+
+        specialinvoke r0.<java.lang.HexStringParser: void fitMantissaInDesiredWidth(int)>($i1);
+
+        specialinvoke r0.<java.lang.HexStringParser: void round()>();
+
+        $l3 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        $l2 = r0.<java.lang.HexStringParser: long MANTISSA_MASK>;
+
+        $l4 = $l3 & $l2;
+
+        r0.<java.lang.HexStringParser: long mantissa> = $l4;
+
+        return;
+    }
+
+    private void processSubNormalNumber()
+    {
+        java.lang.HexStringParser r0;
+        int i0, $i1, $i3, $i4;
+        long $l2, $l5, $l6, $l7;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        $i1 = r0.<java.lang.HexStringParser: int MANTISSA_WIDTH>;
+
+        $i4 = 1 + $i1;
+
+        $l2 = r0.<java.lang.HexStringParser: long exponent>;
+
+        $i3 = (int) $l2;
+
+        i0 = $i4 + $i3;
+
+        r0.<java.lang.HexStringParser: long exponent> = 0L;
+
+        specialinvoke r0.<java.lang.HexStringParser: void fitMantissaInDesiredWidth(int)>(i0);
+
+        specialinvoke r0.<java.lang.HexStringParser: void round()>();
+
+        $l6 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        $l5 = r0.<java.lang.HexStringParser: long MANTISSA_MASK>;
+
+        $l7 = $l6 & $l5;
+
+        r0.<java.lang.HexStringParser: long mantissa> = $l7;
+
+        return;
+    }
+
+    private void round()
+    {
+        java.lang.HexStringParser r0;
+        boolean z0;
+        int i0, i1, i2, i3, $i4, $i15;
+        java.lang.String $r1, $r2;
+        long $l5, $l6, $l7, $l8, $l9, $l10, $l11, $l12, $l13, $l14;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        $r1 = r0.<java.lang.HexStringParser: java.lang.String abandonedNumber>;
+
+        $r2 = virtualinvoke $r1.<java.lang.String: java.lang.String replaceAll(java.lang.String,java.lang.String)>("0+", "");
+
+        $i4 = virtualinvoke $r2.<java.lang.String: int length()>();
+
+        if $i4 <= 0 goto label4;
+
+        z0 = 1;
+
+     label1:
+        $l5 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        $l6 = 1L & $l5;
+
+        i0 = (int) $l6;
+
+        $l7 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        $l8 = $l7 >> 1;
+
+        r0.<java.lang.HexStringParser: long mantissa> = $l8;
+
+        $l9 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        $l10 = 1L & $l9;
+
+        i1 = (int) $l10;
+
+        if i0 != 1 goto label3;
+
+        if z0 != 0 goto label2;
+
+        if i1 != 1 goto label3;
+
+     label2:
+        $l11 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        i2 = specialinvoke r0.<java.lang.HexStringParser: int countBitsLength(long)>($l11);
+
+        $l12 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        $l14 = 1L + $l12;
+
+        r0.<java.lang.HexStringParser: long mantissa> = $l14;
+
+        $l13 = r0.<java.lang.HexStringParser: long mantissa>;
+
+        i3 = specialinvoke r0.<java.lang.HexStringParser: int countBitsLength(long)>($l13);
+
+        $i15 = r0.<java.lang.HexStringParser: int MANTISSA_WIDTH>;
+
+        if i2 < $i15 goto label3;
+
+        if i3 <= i2 goto label3;
+
+        specialinvoke r0.<java.lang.HexStringParser: void checkedAddExponent(long)>(1L);
+
+     label3:
+        return;
+
+     label4:
+        z0 = 0;
+
+        goto label1;
+    }
+
+    private void setInfinite()
+    {
+        java.lang.HexStringParser r0;
+        long $l0;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        $l0 = r0.<java.lang.HexStringParser: long MAX_EXPONENT>;
+
+        r0.<java.lang.HexStringParser: long exponent> = $l0;
+
+        r0.<java.lang.HexStringParser: long mantissa> = 0L;
+
+        return;
+    }
+
+    private void setZero()
+    {
+        java.lang.HexStringParser r0;
+
+        r0 := @this: java.lang.HexStringParser;
+
+        r0.<java.lang.HexStringParser: long exponent> = 0L;
+
+        r0.<java.lang.HexStringParser: long mantissa> = 0L;
+
+        return;
+    }
+}

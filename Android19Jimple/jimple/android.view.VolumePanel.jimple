@@ -1,0 +1,3070 @@
+public class android.view.VolumePanel extends android.os.Handler implements android.widget.SeekBar$OnSeekBarChangeListener, android.view.View$OnClickListener, android.media.VolumeController
+{
+    private static final int BEEP_DURATION;
+    private static final int FREE_DELAY;
+    private static boolean LOGD;
+    private static final int MAX_VOLUME;
+    private static final int MSG_DISPLAY_SAFE_VOLUME_WARNING;
+    private static final int MSG_FREE_RESOURCES;
+    private static final int MSG_MUTE_CHANGED;
+    private static final int MSG_PLAY_SOUND;
+    private static final int MSG_REMOTE_VOLUME_CHANGED;
+    private static final int MSG_REMOTE_VOLUME_UPDATE_IF_SHOWN;
+    private static final int MSG_RINGER_MODE_CHANGED;
+    private static final int MSG_SLIDER_VISIBILITY_CHANGED;
+    private static final int MSG_STOP_SOUNDS;
+    private static final int MSG_TIMEOUT;
+    private static final int MSG_VIBRATE;
+    private static final int MSG_VOLUME_CHANGED;
+    public static final int PLAY_SOUND_DELAY;
+    private static final android.view.VolumePanel$StreamResources[] STREAMS;
+    private static final int STREAM_MASTER;
+    private static final java.lang.String TAG;
+    private static final int TIMEOUT_DELAY;
+    public static final int VIBRATE_DELAY;
+    private static final int VIBRATE_DURATION;
+    private static android.app.AlertDialog sConfirmSafeVolumeDialog;
+    private static java.lang.Object sConfirmSafeVolumeLock;
+    private int mActiveStreamType;
+    private android.media.AudioManager mAudioManager;
+    protected android.media.AudioService mAudioService;
+    protected android.content.Context mContext;
+    private final android.app.Dialog mDialog;
+    private final android.view.View mDivider;
+    private final android.view.View mMoreButton;
+    private final android.view.ViewGroup mPanel;
+    private final boolean mPlayMasterStreamTones;
+    private boolean mRingIsSilent;
+    private boolean mShowCombinedVolumes;
+    private final android.view.ViewGroup mSliderGroup;
+    private java.util.HashMap mStreamControls;
+    private android.media.ToneGenerator[] mToneGenerators;
+    private android.os.Vibrator mVibrator;
+    private final android.view.View mView;
+    private boolean mVoiceCapable;
+
+    static void <clinit>()
+    {
+        android.view.VolumePanel$StreamResources[] r0;
+        android.view.VolumePanel$StreamResources $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8;
+        java.lang.Object $r9;
+
+        <android.view.VolumePanel: int VIBRATE_DURATION> = 300;
+
+        <android.view.VolumePanel: int VIBRATE_DELAY> = 300;
+
+        <android.view.VolumePanel: int TIMEOUT_DELAY> = 3000;
+
+        <android.view.VolumePanel: java.lang.String TAG> = "VolumePanel";
+
+        <android.view.VolumePanel: int STREAM_MASTER> = -100;
+
+        <android.view.VolumePanel: int PLAY_SOUND_DELAY> = 300;
+
+        <android.view.VolumePanel: int MSG_VOLUME_CHANGED> = 0;
+
+        <android.view.VolumePanel: int MSG_VIBRATE> = 4;
+
+        <android.view.VolumePanel: int MSG_TIMEOUT> = 5;
+
+        <android.view.VolumePanel: int MSG_STOP_SOUNDS> = 3;
+
+        <android.view.VolumePanel: int MSG_SLIDER_VISIBILITY_CHANGED> = 10;
+
+        <android.view.VolumePanel: int MSG_RINGER_MODE_CHANGED> = 6;
+
+        <android.view.VolumePanel: int MSG_REMOTE_VOLUME_UPDATE_IF_SHOWN> = 9;
+
+        <android.view.VolumePanel: int MSG_REMOTE_VOLUME_CHANGED> = 8;
+
+        <android.view.VolumePanel: int MSG_PLAY_SOUND> = 2;
+
+        <android.view.VolumePanel: int MSG_MUTE_CHANGED> = 7;
+
+        <android.view.VolumePanel: int MSG_FREE_RESOURCES> = 1;
+
+        <android.view.VolumePanel: int MSG_DISPLAY_SAFE_VOLUME_WARNING> = 11;
+
+        <android.view.VolumePanel: int MAX_VOLUME> = 100;
+
+        <android.view.VolumePanel: int FREE_DELAY> = 10000;
+
+        <android.view.VolumePanel: int BEEP_DURATION> = 150;
+
+        <android.view.VolumePanel: boolean LOGD> = 0;
+
+        r0 = newarray (android.view.VolumePanel$StreamResources)[8];
+
+        $r1 = <android.view.VolumePanel$StreamResources: android.view.VolumePanel$StreamResources BluetoothSCOStream>;
+
+        r0[0] = $r1;
+
+        $r2 = <android.view.VolumePanel$StreamResources: android.view.VolumePanel$StreamResources RingerStream>;
+
+        r0[1] = $r2;
+
+        $r3 = <android.view.VolumePanel$StreamResources: android.view.VolumePanel$StreamResources VoiceStream>;
+
+        r0[2] = $r3;
+
+        $r4 = <android.view.VolumePanel$StreamResources: android.view.VolumePanel$StreamResources MediaStream>;
+
+        r0[3] = $r4;
+
+        $r5 = <android.view.VolumePanel$StreamResources: android.view.VolumePanel$StreamResources NotificationStream>;
+
+        r0[4] = $r5;
+
+        $r6 = <android.view.VolumePanel$StreamResources: android.view.VolumePanel$StreamResources AlarmStream>;
+
+        r0[5] = $r6;
+
+        $r7 = <android.view.VolumePanel$StreamResources: android.view.VolumePanel$StreamResources MasterStream>;
+
+        r0[6] = $r7;
+
+        $r8 = <android.view.VolumePanel$StreamResources: android.view.VolumePanel$StreamResources RemoteStream>;
+
+        r0[7] = $r8;
+
+        <android.view.VolumePanel: android.view.VolumePanel$StreamResources[] STREAMS> = r0;
+
+        $r9 = new java.lang.Object;
+
+        specialinvoke $r9.<java.lang.Object: void <init>()>();
+
+        <android.view.VolumePanel: java.lang.Object sConfirmSafeVolumeLock> = $r9;
+
+        return;
+    }
+
+    public void <init>(android.content.Context, android.media.AudioService)
+    {
+        android.view.VolumePanel r0;
+        android.content.Context r1, $r32, $r42;
+        android.media.AudioService r2;
+        boolean z0, z1, z2, z3, z4, z5, $z6, $z7, $z8;
+        android.view.Window r3;
+        android.view.WindowManager$LayoutParams r4;
+        int i0, $i1, $i2, $i3, $i4;
+        android.view.VolumePanel$StreamResources r5;
+        java.lang.Object $r6, $r9, $r38;
+        android.media.AudioManager $r7;
+        android.content.res.Resources $r8, $r35, $r36, $r39, $r41;
+        android.view.View $r10, $r12, $r14, $r15, $r16, $r19, $r20, $r21, $r22, $r26, $r30, $r40, $r44, $r45;
+        android.view.LayoutInflater $r11;
+        android.view.VolumePanel$1 $r13;
+        android.view.ViewGroup $r17, $r18;
+        android.widget.ImageView $r23, $r27;
+        android.view.VolumePanel$2 $r24;
+        android.app.Dialog $r25, $r29, $r31, $r33;
+        android.view.VolumePanel$3 $r28;
+        android.media.ToneGenerator[] $r34;
+        android.os.Vibrator $r37;
+        android.view.VolumePanel$StreamResources[] $r43, $r46;
+
+        r0 := @this: android.view.VolumePanel;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.media.AudioService;
+
+        specialinvoke r0.<android.os.Handler: void <init>()>();
+
+        r0.<android.view.VolumePanel: int mActiveStreamType> = -1;
+
+        r0.<android.view.VolumePanel: android.content.Context mContext> = r1;
+
+        $r6 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("audio");
+
+        $r7 = (android.media.AudioManager) $r6;
+
+        r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager> = $r7;
+
+        r0.<android.view.VolumePanel: android.media.AudioService mAudioService> = r2;
+
+        $r8 = virtualinvoke r1.<android.content.Context: android.content.res.Resources getResources()>();
+
+        z0 = virtualinvoke $r8.<android.content.res.Resources: boolean getBoolean(int)>(17891344);
+
+        if z0 == 0 goto label04;
+
+        i0 = 0;
+
+     label01:
+        $r43 = <android.view.VolumePanel: android.view.VolumePanel$StreamResources[] STREAMS>;
+
+        $i3 = lengthof $r43;
+
+        if i0 >= $i3 goto label04;
+
+        $r46 = <android.view.VolumePanel: android.view.VolumePanel$StreamResources[] STREAMS>;
+
+        r5 = $r46[i0];
+
+        $i4 = r5.<android.view.VolumePanel$StreamResources: int streamType>;
+
+        if $i4 != -100 goto label03;
+
+        z5 = 1;
+
+     label02:
+        r5.<android.view.VolumePanel$StreamResources: boolean show> = z5;
+
+        i0 = i0 + 1;
+
+        goto label01;
+
+     label03:
+        z5 = 0;
+
+        goto label02;
+
+     label04:
+        $r9 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("layout_inflater");
+
+        $r11 = (android.view.LayoutInflater) $r9;
+
+        $r10 = virtualinvoke $r11.<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup)>(17367225, null);
+
+        r0.<android.view.VolumePanel: android.view.View mView> = $r10;
+
+        $r12 = r0.<android.view.VolumePanel: android.view.View mView>;
+
+        $r13 = new android.view.VolumePanel$1;
+
+        specialinvoke $r13.<android.view.VolumePanel$1: void <init>(android.view.VolumePanel)>(r0);
+
+        virtualinvoke $r12.<android.view.View: void setOnTouchListener(android.view.View$OnTouchListener)>($r13);
+
+        $r15 = r0.<android.view.VolumePanel: android.view.View mView>;
+
+        $r14 = virtualinvoke $r15.<android.view.View: android.view.View findViewById(int)>(16909149);
+
+        $r17 = (android.view.ViewGroup) $r14;
+
+        r0.<android.view.VolumePanel: android.view.ViewGroup mPanel> = $r17;
+
+        $r16 = r0.<android.view.VolumePanel: android.view.View mView>;
+
+        $r19 = virtualinvoke $r16.<android.view.View: android.view.View findViewById(int)>(16909150);
+
+        $r18 = (android.view.ViewGroup) $r19;
+
+        r0.<android.view.VolumePanel: android.view.ViewGroup mSliderGroup> = $r18;
+
+        $r21 = r0.<android.view.VolumePanel: android.view.View mView>;
+
+        $r20 = virtualinvoke $r21.<android.view.View: android.view.View findViewById(int)>(16909152);
+
+        $r23 = (android.widget.ImageView) $r20;
+
+        r0.<android.view.VolumePanel: android.view.View mMoreButton> = $r23;
+
+        $r22 = r0.<android.view.VolumePanel: android.view.View mView>;
+
+        $r26 = virtualinvoke $r22.<android.view.View: android.view.View findViewById(int)>(16909151);
+
+        $r27 = (android.widget.ImageView) $r26;
+
+        r0.<android.view.VolumePanel: android.view.View mDivider> = $r27;
+
+        $r24 = new android.view.VolumePanel$2;
+
+        specialinvoke $r24.<android.view.VolumePanel$2: void <init>(android.view.VolumePanel,android.content.Context,int)>(r0, r1, 16974602);
+
+        r0.<android.view.VolumePanel: android.app.Dialog mDialog> = $r24;
+
+        $r25 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        virtualinvoke $r25.<android.app.Dialog: void setTitle(java.lang.CharSequence)>("Volume control");
+
+        $r31 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        $r30 = r0.<android.view.VolumePanel: android.view.View mView>;
+
+        virtualinvoke $r31.<android.app.Dialog: void setContentView(android.view.View)>($r30);
+
+        $r29 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        $r28 = new android.view.VolumePanel$3;
+
+        specialinvoke $r28.<android.view.VolumePanel$3: void <init>(android.view.VolumePanel)>(r0);
+
+        virtualinvoke $r29.<android.app.Dialog: void setOnDismissListener(android.content.DialogInterface$OnDismissListener)>($r28);
+
+        $r33 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        r3 = virtualinvoke $r33.<android.app.Dialog: android.view.Window getWindow()>();
+
+        virtualinvoke r3.<android.view.Window: void setGravity(int)>(48);
+
+        r4 = virtualinvoke r3.<android.view.Window: android.view.WindowManager$LayoutParams getAttributes()>();
+
+        r4.<android.view.WindowManager$LayoutParams: android.os.IBinder token> = null;
+
+        $r32 = r0.<android.view.VolumePanel: android.content.Context mContext>;
+
+        $r35 = virtualinvoke $r32.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i2 = virtualinvoke $r35.<android.content.res.Resources: int getDimensionPixelOffset(int)>(17104975);
+
+        r4.<android.view.WindowManager$LayoutParams: int y> = $i2;
+
+        r4.<android.view.WindowManager$LayoutParams: int type> = 2020;
+
+        r4.<android.view.WindowManager$LayoutParams: int width> = -2;
+
+        r4.<android.view.WindowManager$LayoutParams: int height> = -2;
+
+        virtualinvoke r3.<android.view.Window: void setAttributes(android.view.WindowManager$LayoutParams)>(r4);
+
+        virtualinvoke r3.<android.view.Window: void addFlags(int)>(262184);
+
+        $i1 = staticinvoke <android.media.AudioSystem: int getNumStreamTypes()>();
+
+        $r34 = newarray (android.media.ToneGenerator)[$i1];
+
+        r0.<android.view.VolumePanel: android.media.ToneGenerator[] mToneGenerators> = $r34;
+
+        $r38 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("vibrator");
+
+        $r37 = (android.os.Vibrator) $r38;
+
+        r0.<android.view.VolumePanel: android.os.Vibrator mVibrator> = $r37;
+
+        $r36 = virtualinvoke r1.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $z6 = virtualinvoke $r36.<android.content.res.Resources: boolean getBoolean(int)>(17891384);
+
+        r0.<android.view.VolumePanel: boolean mVoiceCapable> = $z6;
+
+        $z8 = r0.<android.view.VolumePanel: boolean mVoiceCapable>;
+
+        if $z8 != 0 goto label08;
+
+        if z0 != 0 goto label08;
+
+        z1 = 1;
+
+     label05:
+        r0.<android.view.VolumePanel: boolean mShowCombinedVolumes> = z1;
+
+        $z7 = r0.<android.view.VolumePanel: boolean mShowCombinedVolumes>;
+
+        if $z7 != 0 goto label09;
+
+        $r45 = r0.<android.view.VolumePanel: android.view.View mMoreButton>;
+
+        virtualinvoke $r45.<android.view.View: void setVisibility(int)>(8);
+
+        $r44 = r0.<android.view.VolumePanel: android.view.View mDivider>;
+
+        virtualinvoke $r44.<android.view.View: void setVisibility(int)>(8);
+
+     label06:
+        $r39 = virtualinvoke r1.<android.content.Context: android.content.res.Resources getResources()>();
+
+        z2 = virtualinvoke $r39.<android.content.res.Resources: boolean getBoolean(int)>(17891344);
+
+        $r42 = r0.<android.view.VolumePanel: android.content.Context mContext>;
+
+        $r41 = virtualinvoke $r42.<android.content.Context: android.content.res.Resources getResources()>();
+
+        z3 = virtualinvoke $r41.<android.content.res.Resources: boolean getBoolean(int)>(17891345);
+
+        if z2 == 0 goto label10;
+
+        if z3 == 0 goto label10;
+
+        z4 = 1;
+
+     label07:
+        r0.<android.view.VolumePanel: boolean mPlayMasterStreamTones> = z4;
+
+        specialinvoke r0.<android.view.VolumePanel: void listenToRingerMode()>();
+
+        return;
+
+     label08:
+        z1 = 0;
+
+        goto label05;
+
+     label09:
+        $r40 = r0.<android.view.VolumePanel: android.view.View mMoreButton>;
+
+        virtualinvoke $r40.<android.view.View: void setOnClickListener(android.view.View$OnClickListener)>(r0);
+
+        goto label06;
+
+     label10:
+        z4 = 0;
+
+        goto label07;
+    }
+
+    static java.lang.Object access$000()
+    {
+        java.lang.Object $r0;
+
+        $r0 = <android.view.VolumePanel: java.lang.Object sConfirmSafeVolumeLock>;
+
+        return $r0;
+    }
+
+    static android.app.AlertDialog access$100()
+    {
+        android.app.AlertDialog $r0;
+
+        $r0 = <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog>;
+
+        return $r0;
+    }
+
+    static android.app.AlertDialog access$102(android.app.AlertDialog)
+    {
+        android.app.AlertDialog r0;
+
+        r0 := @parameter0: android.app.AlertDialog;
+
+        <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog> = r0;
+
+        return r0;
+    }
+
+    static void access$200(android.view.VolumePanel)
+    {
+        android.view.VolumePanel r0;
+
+        r0 := @parameter0: android.view.VolumePanel;
+
+        specialinvoke r0.<android.view.VolumePanel: void forceTimeout()>();
+
+        return;
+    }
+
+    static void access$300(android.view.VolumePanel)
+    {
+        android.view.VolumePanel r0;
+
+        r0 := @parameter0: android.view.VolumePanel;
+
+        specialinvoke r0.<android.view.VolumePanel: void resetTimeout()>();
+
+        return;
+    }
+
+    static int access$400(android.view.VolumePanel)
+    {
+        android.view.VolumePanel r0;
+        int $i0;
+
+        r0 := @parameter0: android.view.VolumePanel;
+
+        $i0 = r0.<android.view.VolumePanel: int mActiveStreamType>;
+
+        return $i0;
+    }
+
+    static int access$402(android.view.VolumePanel, int)
+    {
+        android.view.VolumePanel r0;
+        int i0;
+
+        r0 := @parameter0: android.view.VolumePanel;
+
+        i0 := @parameter1: int;
+
+        r0.<android.view.VolumePanel: int mActiveStreamType> = i0;
+
+        return i0;
+    }
+
+    static android.media.AudioManager access$500(android.view.VolumePanel)
+    {
+        android.view.VolumePanel r0;
+        android.media.AudioManager $r1;
+
+        r0 := @parameter0: android.view.VolumePanel;
+
+        $r1 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        return $r1;
+    }
+
+    private void addOtherVolumes()
+    {
+        android.view.VolumePanel r0;
+        int i0, i1, $i2, $i3;
+        android.view.VolumePanel$StreamControl r1;
+        boolean $z0, $z1;
+        android.view.VolumePanel$StreamResources[] $r2, $r3, $r5;
+        android.view.VolumePanel$StreamResources $r4, $r6;
+        java.util.HashMap $r7;
+        java.lang.Integer $r8;
+        java.lang.Object $r9;
+        android.view.ViewGroup $r10, $r11;
+
+        r0 := @this: android.view.VolumePanel;
+
+        $z0 = r0.<android.view.VolumePanel: boolean mShowCombinedVolumes>;
+
+        if $z0 != 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        i0 = 0;
+
+     label3:
+        $r2 = <android.view.VolumePanel: android.view.VolumePanel$StreamResources[] STREAMS>;
+
+        $i2 = lengthof $r2;
+
+        if i0 >= $i2 goto label1;
+
+        $r3 = <android.view.VolumePanel: android.view.VolumePanel$StreamResources[] STREAMS>;
+
+        $r4 = $r3[i0];
+
+        i1 = $r4.<android.view.VolumePanel$StreamResources: int streamType>;
+
+        $r5 = <android.view.VolumePanel: android.view.VolumePanel$StreamResources[] STREAMS>;
+
+        $r6 = $r5[i0];
+
+        $z1 = $r6.<android.view.VolumePanel$StreamResources: boolean show>;
+
+        if $z1 == 0 goto label4;
+
+        $i3 = r0.<android.view.VolumePanel: int mActiveStreamType>;
+
+        if i1 != $i3 goto label5;
+
+     label4:
+        i0 = i0 + 1;
+
+        goto label3;
+
+     label5:
+        $r7 = r0.<android.view.VolumePanel: java.util.HashMap mStreamControls>;
+
+        $r8 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        $r9 = virtualinvoke $r7.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r8);
+
+        r1 = (android.view.VolumePanel$StreamControl) $r9;
+
+        $r10 = r0.<android.view.VolumePanel: android.view.ViewGroup mSliderGroup>;
+
+        $r11 = r1.<android.view.VolumePanel$StreamControl: android.view.ViewGroup group>;
+
+        virtualinvoke $r10.<android.view.ViewGroup: void addView(android.view.View)>($r11);
+
+        specialinvoke r0.<android.view.VolumePanel: void updateSlider(android.view.VolumePanel$StreamControl)>(r1);
+
+        goto label4;
+    }
+
+    private void collapse()
+    {
+        android.view.VolumePanel r0;
+        int i0, i1;
+        android.view.View $r1, $r2, $r5;
+        android.view.ViewGroup $r3, $r4;
+
+        r0 := @this: android.view.VolumePanel;
+
+        $r1 = r0.<android.view.VolumePanel: android.view.View mMoreButton>;
+
+        virtualinvoke $r1.<android.view.View: void setVisibility(int)>(0);
+
+        $r2 = r0.<android.view.VolumePanel: android.view.View mDivider>;
+
+        virtualinvoke $r2.<android.view.View: void setVisibility(int)>(0);
+
+        $r3 = r0.<android.view.VolumePanel: android.view.ViewGroup mSliderGroup>;
+
+        i0 = virtualinvoke $r3.<android.view.ViewGroup: int getChildCount()>();
+
+        i1 = 1;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $r4 = r0.<android.view.VolumePanel: android.view.ViewGroup mSliderGroup>;
+
+        $r5 = virtualinvoke $r4.<android.view.ViewGroup: android.view.View getChildAt(int)>(i1);
+
+        virtualinvoke $r5.<android.view.View: void setVisibility(int)>(8);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void createSliders()
+    {
+        android.view.VolumePanel r0;
+        android.view.LayoutInflater r1;
+        android.content.res.Resources r2;
+        int i0, i1, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10;
+        android.view.VolumePanel$StreamResources r3, $r32;
+        android.view.VolumePanel$StreamControl r4, $r12;
+        byte b2;
+        android.content.Context $r5, $r9;
+        java.lang.Object $r6;
+        java.util.HashMap $r7, $r27;
+        android.view.VolumePanel$StreamResources[] $r8, $r10, $r11;
+        boolean $z0;
+        android.view.ViewGroup $r13, $r15, $r16, $r22;
+        android.view.View $r14, $r18, $r23;
+        android.widget.ImageView $r17, $r19, $r21, $r24;
+        java.lang.String $r20;
+        android.widget.SeekBar $r25, $r26, $r29, $r30;
+        java.lang.Integer $r28;
+
+        r0 := @this: android.view.VolumePanel;
+
+        $r5 = r0.<android.view.VolumePanel: android.content.Context mContext>;
+
+        $r6 = virtualinvoke $r5.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("layout_inflater");
+
+        r1 = (android.view.LayoutInflater) $r6;
+
+        $r7 = new java.util.HashMap;
+
+        $r8 = <android.view.VolumePanel: android.view.VolumePanel$StreamResources[] STREAMS>;
+
+        $i3 = lengthof $r8;
+
+        specialinvoke $r7.<java.util.HashMap: void <init>(int)>($i3);
+
+        r0.<android.view.VolumePanel: java.util.HashMap mStreamControls> = $r7;
+
+        $r9 = r0.<android.view.VolumePanel: android.content.Context mContext>;
+
+        r2 = virtualinvoke $r9.<android.content.Context: android.content.res.Resources getResources()>();
+
+        i0 = 0;
+
+     label1:
+        $r10 = <android.view.VolumePanel: android.view.VolumePanel$StreamResources[] STREAMS>;
+
+        $i4 = lengthof $r10;
+
+        if i0 >= $i4 goto label6;
+
+        $r11 = <android.view.VolumePanel: android.view.VolumePanel$StreamResources[] STREAMS>;
+
+        r3 = $r11[i0];
+
+        i1 = r3.<android.view.VolumePanel$StreamResources: int streamType>;
+
+        $z0 = r0.<android.view.VolumePanel: boolean mVoiceCapable>;
+
+        if $z0 == 0 goto label2;
+
+        $r32 = <android.view.VolumePanel$StreamResources: android.view.VolumePanel$StreamResources NotificationStream>;
+
+        if r3 != $r32 goto label2;
+
+        r3 = <android.view.VolumePanel$StreamResources: android.view.VolumePanel$StreamResources RingerStream>;
+
+     label2:
+        $r12 = new android.view.VolumePanel$StreamControl;
+
+        specialinvoke $r12.<android.view.VolumePanel$StreamControl: void <init>(android.view.VolumePanel,android.view.VolumePanel$1)>(r0, null);
+
+        r4 = $r12;
+
+        r4.<android.view.VolumePanel$StreamControl: int streamType> = i1;
+
+        $r14 = virtualinvoke r1.<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup)>(17367226, null);
+
+        $r13 = (android.view.ViewGroup) $r14;
+
+        r4.<android.view.VolumePanel$StreamControl: android.view.ViewGroup group> = $r13;
+
+        $r16 = r4.<android.view.VolumePanel$StreamControl: android.view.ViewGroup group>;
+
+        virtualinvoke $r16.<android.view.ViewGroup: void setTag(java.lang.Object)>(r4);
+
+        $r15 = r4.<android.view.VolumePanel$StreamControl: android.view.ViewGroup group>;
+
+        $r18 = virtualinvoke $r15.<android.view.ViewGroup: android.view.View findViewById(int)>(16909153);
+
+        $r17 = (android.widget.ImageView) $r18;
+
+        r4.<android.view.VolumePanel$StreamControl: android.widget.ImageView icon> = $r17;
+
+        $r19 = r4.<android.view.VolumePanel$StreamControl: android.widget.ImageView icon>;
+
+        virtualinvoke $r19.<android.widget.ImageView: void setTag(java.lang.Object)>(r4);
+
+        $r21 = r4.<android.view.VolumePanel$StreamControl: android.widget.ImageView icon>;
+
+        $i5 = r3.<android.view.VolumePanel$StreamResources: int descRes>;
+
+        $r20 = virtualinvoke r2.<android.content.res.Resources: java.lang.String getString(int)>($i5);
+
+        virtualinvoke $r21.<android.widget.ImageView: void setContentDescription(java.lang.CharSequence)>($r20);
+
+        $i7 = r3.<android.view.VolumePanel$StreamResources: int iconRes>;
+
+        r4.<android.view.VolumePanel$StreamControl: int iconRes> = $i7;
+
+        $i6 = r3.<android.view.VolumePanel$StreamResources: int iconMuteRes>;
+
+        r4.<android.view.VolumePanel$StreamControl: int iconMuteRes> = $i6;
+
+        $r24 = r4.<android.view.VolumePanel$StreamControl: android.widget.ImageView icon>;
+
+        $i8 = r4.<android.view.VolumePanel$StreamControl: int iconRes>;
+
+        virtualinvoke $r24.<android.widget.ImageView: void setImageResource(int)>($i8);
+
+        $r22 = r4.<android.view.VolumePanel$StreamControl: android.view.ViewGroup group>;
+
+        $r23 = virtualinvoke $r22.<android.view.ViewGroup: android.view.View findViewById(int)>(16909050);
+
+        $r25 = (android.widget.SeekBar) $r23;
+
+        r4.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView> = $r25;
+
+        if i1 == 6 goto label3;
+
+        if i1 != 0 goto label5;
+
+     label3:
+        b2 = 1;
+
+     label4:
+        $r26 = r4.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        $i9 = specialinvoke r0.<android.view.VolumePanel: int getStreamMaxVolume(int)>(i1);
+
+        $i10 = b2 + $i9;
+
+        virtualinvoke $r26.<android.widget.SeekBar: void setMax(int)>($i10);
+
+        $r29 = r4.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        virtualinvoke $r29.<android.widget.SeekBar: void setOnSeekBarChangeListener(android.widget.SeekBar$OnSeekBarChangeListener)>(r0);
+
+        $r30 = r4.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        virtualinvoke $r30.<android.widget.SeekBar: void setTag(java.lang.Object)>(r4);
+
+        $r27 = r0.<android.view.VolumePanel: java.util.HashMap mStreamControls>;
+
+        $r28 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        virtualinvoke $r27.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r28, r4);
+
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label5:
+        b2 = 0;
+
+        goto label4;
+
+     label6:
+        return;
+    }
+
+    private void expand()
+    {
+        android.view.VolumePanel r0;
+        int i0, i1;
+        android.view.ViewGroup $r1, $r4;
+        android.view.View $r2, $r3, $r5;
+
+        r0 := @this: android.view.VolumePanel;
+
+        $r1 = r0.<android.view.VolumePanel: android.view.ViewGroup mSliderGroup>;
+
+        i0 = virtualinvoke $r1.<android.view.ViewGroup: int getChildCount()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $r4 = r0.<android.view.VolumePanel: android.view.ViewGroup mSliderGroup>;
+
+        $r5 = virtualinvoke $r4.<android.view.ViewGroup: android.view.View getChildAt(int)>(i1);
+
+        virtualinvoke $r5.<android.view.View: void setVisibility(int)>(0);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        $r2 = r0.<android.view.VolumePanel: android.view.View mMoreButton>;
+
+        virtualinvoke $r2.<android.view.View: void setVisibility(int)>(4);
+
+        $r3 = r0.<android.view.VolumePanel: android.view.View mDivider>;
+
+        virtualinvoke $r3.<android.view.View: void setVisibility(int)>(4);
+
+        return;
+    }
+
+    private void forceTimeout()
+    {
+        android.view.VolumePanel r0;
+        android.os.Message $r1;
+
+        r0 := @this: android.view.VolumePanel;
+
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(5);
+
+        $r1 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int)>(5);
+
+        virtualinvoke r0.<android.view.VolumePanel: boolean sendMessage(android.os.Message)>($r1);
+
+        return;
+    }
+
+    private android.media.ToneGenerator getOrCreateToneGenerator(int)
+    {
+        android.view.VolumePanel r0;
+        int i0;
+        java.lang.Throwable r1, $r9;
+        android.media.ToneGenerator r2, r3, $r7;
+        java.lang.RuntimeException r4, $r10;
+        android.media.ToneGenerator[] $r5, $r6, $r8;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r11, $r12, $r14;
+        java.lang.String $r13;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        if i0 != -100 goto label01;
+
+        $z0 = r0.<android.view.VolumePanel: boolean mPlayMasterStreamTones>;
+
+        if $z0 == 0 goto label13;
+
+        i0 = 1;
+
+     label01:
+        entermonitor r0;
+
+     label02:
+        $r5 = r0.<android.view.VolumePanel: android.media.ToneGenerator[] mToneGenerators>;
+
+        r2 = $r5[i0];
+
+     label03:
+        if r2 != null goto label05;
+
+     label04:
+        $r8 = r0.<android.view.VolumePanel: android.media.ToneGenerator[] mToneGenerators>;
+
+        $r7 = new android.media.ToneGenerator;
+
+        specialinvoke $r7.<android.media.ToneGenerator: void <init>(int,int)>(i0, 100);
+
+        $r8[i0] = $r7;
+
+     label05:
+        $r6 = r0.<android.view.VolumePanel: android.media.ToneGenerator[] mToneGenerators>;
+
+        r3 = $r6[i0];
+
+        exitmonitor r0;
+
+     label06:
+        return r3;
+
+     label07:
+        $r10 := @caughtexception;
+
+        r4 = $r10;
+
+     label08:
+        $z1 = <android.view.VolumePanel: boolean LOGD>;
+
+        if $z1 == 0 goto label05;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ToneGenerator constructor failed with RuntimeException: ");
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r4);
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("VolumePanel", $r13);
+
+     label09:
+        goto label05;
+
+     label10:
+        $r9 := @caughtexception;
+
+        r1 = $r9;
+
+     label11:
+        exitmonitor r0;
+
+     label12:
+        throw r1;
+
+     label13:
+        return null;
+
+        catch java.lang.Throwable from label02 to label03 with label10;
+        catch java.lang.RuntimeException from label04 to label05 with label07;
+        catch java.lang.Throwable from label04 to label05 with label10;
+        catch java.lang.Throwable from label05 to label06 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+    }
+
+    private int getStreamMaxVolume(int)
+    {
+        android.view.VolumePanel r0;
+        int i0, $i1, $i2, $i3;
+        android.media.AudioManager $r1, $r3;
+        android.media.AudioService $r2;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        if i0 != -100 goto label1;
+
+        $r3 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $i3 = virtualinvoke $r3.<android.media.AudioManager: int getMasterMaxVolume()>();
+
+        return $i3;
+
+     label1:
+        if i0 != -200 goto label2;
+
+        $r2 = r0.<android.view.VolumePanel: android.media.AudioService mAudioService>;
+
+        $i2 = virtualinvoke $r2.<android.media.AudioService: int getRemoteStreamMaxVolume()>();
+
+        return $i2;
+
+     label2:
+        $r1 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $i1 = virtualinvoke $r1.<android.media.AudioManager: int getStreamMaxVolume(int)>(i0);
+
+        return $i1;
+    }
+
+    private int getStreamVolume(int)
+    {
+        android.view.VolumePanel r0;
+        int i0, $i1, $i2, $i3;
+        android.media.AudioManager $r1, $r3;
+        android.media.AudioService $r2;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        if i0 != -100 goto label1;
+
+        $r3 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $i3 = virtualinvoke $r3.<android.media.AudioManager: int getMasterVolume()>();
+
+        return $i3;
+
+     label1:
+        if i0 != -200 goto label2;
+
+        $r2 = r0.<android.view.VolumePanel: android.media.AudioService mAudioService>;
+
+        $i2 = virtualinvoke $r2.<android.media.AudioService: int getRemoteStreamVolume()>();
+
+        return $i2;
+
+     label2:
+        $r1 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $i1 = virtualinvoke $r1.<android.media.AudioManager: int getStreamVolume(int)>(i0);
+
+        return $i1;
+    }
+
+    private boolean isExpanded()
+    {
+        android.view.VolumePanel r0;
+        android.view.View $r1;
+        int $i0;
+
+        r0 := @this: android.view.VolumePanel;
+
+        $r1 = r0.<android.view.VolumePanel: android.view.View mMoreButton>;
+
+        $i0 = virtualinvoke $r1.<android.view.View: int getVisibility()>();
+
+        if $i0 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private boolean isMuted(int)
+    {
+        android.view.VolumePanel r0;
+        int i0, $i1;
+        android.media.AudioManager $r1, $r3;
+        boolean $z0, $z1;
+        android.media.AudioService $r2;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        if i0 != -100 goto label1;
+
+        $r3 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $z1 = virtualinvoke $r3.<android.media.AudioManager: boolean isMasterMute()>();
+
+        return $z1;
+
+     label1:
+        if i0 != -200 goto label3;
+
+        $r2 = r0.<android.view.VolumePanel: android.media.AudioService mAudioService>;
+
+        $i1 = virtualinvoke $r2.<android.media.AudioService: int getRemoteStreamVolume()>();
+
+        if $i1 > 0 goto label2;
+
+        return 1;
+
+     label2:
+        return 0;
+
+     label3:
+        $r1 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $z0 = virtualinvoke $r1.<android.media.AudioManager: boolean isStreamMute(int)>(i0);
+
+        return $z0;
+    }
+
+    private void listenToRingerMode()
+    {
+        android.view.VolumePanel r0;
+        android.content.IntentFilter r1, $r2;
+        android.view.VolumePanel$4 $r3;
+        android.content.Context $r4;
+
+        r0 := @this: android.view.VolumePanel;
+
+        $r2 = new android.content.IntentFilter;
+
+        specialinvoke $r2.<android.content.IntentFilter: void <init>()>();
+
+        r1 = $r2;
+
+        virtualinvoke r1.<android.content.IntentFilter: void addAction(java.lang.String)>("android.media.RINGER_MODE_CHANGED");
+
+        $r4 = r0.<android.view.VolumePanel: android.content.Context mContext>;
+
+        $r3 = new android.view.VolumePanel$4;
+
+        specialinvoke $r3.<android.view.VolumePanel$4: void <init>(android.view.VolumePanel)>(r0);
+
+        virtualinvoke $r4.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r3, r1);
+
+        return;
+    }
+
+    private void reorderSliders(int)
+    {
+        android.view.VolumePanel r0;
+        int i0;
+        android.view.VolumePanel$StreamControl r1;
+        android.view.ViewGroup $r2, $r6, $r7, $r8;
+        java.util.HashMap $r3;
+        java.lang.Integer $r4;
+        java.lang.Object $r5;
+        java.lang.StringBuilder $r9, $r10, $r11;
+        java.lang.String $r12;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<android.view.VolumePanel: android.view.ViewGroup mSliderGroup>;
+
+        virtualinvoke $r2.<android.view.ViewGroup: void removeAllViews()>();
+
+        $r3 = r0.<android.view.VolumePanel: java.util.HashMap mStreamControls>;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r5 = virtualinvoke $r3.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r4);
+
+        r1 = (android.view.VolumePanel$StreamControl) $r5;
+
+        if r1 != null goto label2;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Missing stream type! - ");
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("VolumePanel", $r12);
+
+        r0.<android.view.VolumePanel: int mActiveStreamType> = -1;
+
+     label1:
+        specialinvoke r0.<android.view.VolumePanel: void addOtherVolumes()>();
+
+        return;
+
+     label2:
+        $r7 = r0.<android.view.VolumePanel: android.view.ViewGroup mSliderGroup>;
+
+        $r6 = r1.<android.view.VolumePanel$StreamControl: android.view.ViewGroup group>;
+
+        virtualinvoke $r7.<android.view.ViewGroup: void addView(android.view.View)>($r6);
+
+        r0.<android.view.VolumePanel: int mActiveStreamType> = i0;
+
+        $r8 = r1.<android.view.VolumePanel$StreamControl: android.view.ViewGroup group>;
+
+        virtualinvoke $r8.<android.view.ViewGroup: void setVisibility(int)>(0);
+
+        specialinvoke r0.<android.view.VolumePanel: void updateSlider(android.view.VolumePanel$StreamControl)>(r1);
+
+        goto label1;
+    }
+
+    private void resetTimeout()
+    {
+        android.view.VolumePanel r0;
+        android.os.Message $r1;
+
+        r0 := @this: android.view.VolumePanel;
+
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(5);
+
+        $r1 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int)>(5);
+
+        virtualinvoke r0.<android.view.VolumePanel: boolean sendMessageDelayed(android.os.Message,long)>($r1, 3000L);
+
+        return;
+    }
+
+    private void setMusicIcon(int, int)
+    {
+        android.view.VolumePanel r0;
+        int i0, i1, i2, $i3;
+        android.view.VolumePanel$StreamControl r1;
+        android.widget.ImageView r2;
+        java.util.HashMap $r3;
+        java.lang.Integer $r4;
+        java.lang.Object $r5;
+        boolean $z0;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $r3 = r0.<android.view.VolumePanel: java.util.HashMap mStreamControls>;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(3);
+
+        $r5 = virtualinvoke $r3.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r4);
+
+        r1 = (android.view.VolumePanel$StreamControl) $r5;
+
+        if r1 == null goto label2;
+
+        r1.<android.view.VolumePanel$StreamControl: int iconRes> = i0;
+
+        r1.<android.view.VolumePanel$StreamControl: int iconMuteRes> = i1;
+
+        r2 = r1.<android.view.VolumePanel$StreamControl: android.widget.ImageView icon>;
+
+        $i3 = r1.<android.view.VolumePanel$StreamControl: int streamType>;
+
+        $z0 = specialinvoke r0.<android.view.VolumePanel: boolean isMuted(int)>($i3);
+
+        if $z0 == 0 goto label3;
+
+        i2 = r1.<android.view.VolumePanel$StreamControl: int iconMuteRes>;
+
+     label1:
+        virtualinvoke r2.<android.widget.ImageView: void setImageResource(int)>(i2);
+
+     label2:
+        return;
+
+     label3:
+        i2 = r1.<android.view.VolumePanel$StreamControl: int iconRes>;
+
+        goto label1;
+    }
+
+    private void setStreamVolume(int, int, int)
+    {
+        android.view.VolumePanel r0;
+        int i0, i1, i2;
+        android.media.AudioManager $r1, $r3;
+        android.media.AudioService $r2;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        if i0 != -100 goto label1;
+
+        $r3 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        virtualinvoke $r3.<android.media.AudioManager: void setMasterVolume(int,int)>(i1, i2);
+
+        return;
+
+     label1:
+        if i0 != -200 goto label2;
+
+        $r2 = r0.<android.view.VolumePanel: android.media.AudioService mAudioService>;
+
+        virtualinvoke $r2.<android.media.AudioService: void setRemoteStreamVolume(int)>(i1);
+
+        return;
+
+     label2:
+        $r1 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        virtualinvoke $r1.<android.media.AudioManager: void setStreamVolume(int,int,int)>(i0, i1, i2);
+
+        return;
+    }
+
+    private void updateSlider(android.view.VolumePanel$StreamControl)
+    {
+        android.view.VolumePanel r0;
+        android.view.VolumePanel$StreamControl r1;
+        boolean z0;
+        android.widget.ImageView r2, $r4, $r11;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9;
+        android.widget.SeekBar $r3, $r7, $r9, $r10;
+        android.media.AudioManager $r5, $r6;
+        android.app.AlertDialog $r8;
+
+        r0 := @this: android.view.VolumePanel;
+
+        r1 := @parameter0: android.view.VolumePanel$StreamControl;
+
+        $r3 = r1.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        $i1 = r1.<android.view.VolumePanel$StreamControl: int streamType>;
+
+        $i2 = specialinvoke r0.<android.view.VolumePanel: int getStreamVolume(int)>($i1);
+
+        virtualinvoke $r3.<android.widget.SeekBar: void setProgress(int)>($i2);
+
+        $i3 = r1.<android.view.VolumePanel$StreamControl: int streamType>;
+
+        z0 = specialinvoke r0.<android.view.VolumePanel: boolean isMuted(int)>($i3);
+
+        $r4 = r1.<android.view.VolumePanel$StreamControl: android.widget.ImageView icon>;
+
+        virtualinvoke $r4.<android.widget.ImageView: void setImageDrawable(android.graphics.drawable.Drawable)>(null);
+
+        r2 = r1.<android.view.VolumePanel$StreamControl: android.widget.ImageView icon>;
+
+        if z0 == 0 goto label4;
+
+        i0 = r1.<android.view.VolumePanel$StreamControl: int iconMuteRes>;
+
+     label1:
+        virtualinvoke r2.<android.widget.ImageView: void setImageResource(int)>(i0);
+
+        $i4 = r1.<android.view.VolumePanel$StreamControl: int streamType>;
+
+        if $i4 == 2 goto label2;
+
+        $i9 = r1.<android.view.VolumePanel$StreamControl: int streamType>;
+
+        if $i9 != 5 goto label3;
+
+     label2:
+        $r5 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $i5 = virtualinvoke $r5.<android.media.AudioManager: int getRingerMode()>();
+
+        if $i5 != 1 goto label3;
+
+        $r11 = r1.<android.view.VolumePanel$StreamControl: android.widget.ImageView icon>;
+
+        virtualinvoke $r11.<android.widget.ImageView: void setImageResource(int)>(17302186);
+
+     label3:
+        $i6 = r1.<android.view.VolumePanel$StreamControl: int streamType>;
+
+        if $i6 != -200 goto label5;
+
+        $r9 = r1.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        virtualinvoke $r9.<android.widget.SeekBar: void setEnabled(boolean)>(1);
+
+        return;
+
+     label4:
+        i0 = r1.<android.view.VolumePanel$StreamControl: int iconRes>;
+
+        goto label1;
+
+     label5:
+        $i8 = r1.<android.view.VolumePanel$StreamControl: int streamType>;
+
+        $r6 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $i7 = virtualinvoke $r6.<android.media.AudioManager: int getMasterStreamType()>();
+
+        if $i8 == $i7 goto label6;
+
+        if z0 != 0 goto label7;
+
+     label6:
+        $r8 = <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog>;
+
+        if $r8 == null goto label8;
+
+     label7:
+        $r10 = r1.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        virtualinvoke $r10.<android.widget.SeekBar: void setEnabled(boolean)>(0);
+
+        return;
+
+     label8:
+        $r7 = r1.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        virtualinvoke $r7.<android.widget.SeekBar: void setEnabled(boolean)>(1);
+
+        return;
+    }
+
+    public void handleMessage(android.os.Message)
+    {
+        android.view.VolumePanel r0;
+        android.os.Message r1;
+        java.lang.Object r2;
+        java.lang.Throwable r3, $r9;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11;
+        android.app.Dialog $r4, $r5, $r8;
+        boolean $z0, $z1;
+        android.app.AlertDialog $r6, $r7;
+
+        r0 := @this: android.view.VolumePanel;
+
+        r1 := @parameter0: android.os.Message;
+
+        $i0 = r1.<android.os.Message: int what>;
+
+        tableswitch($i0)
+        {
+            case 0: goto label02;
+            case 1: goto label04;
+            case 2: goto label06;
+            case 3: goto label05;
+            case 4: goto label07;
+            case 5: goto label08;
+            case 6: goto label16;
+            case 7: goto label03;
+            case 8: goto label17;
+            case 9: goto label18;
+            case 10: goto label19;
+            case 11: goto label20;
+            default: goto label01;
+        };
+
+     label01:
+        return;
+
+     label02:
+        $i11 = r1.<android.os.Message: int arg1>;
+
+        $i9 = r1.<android.os.Message: int arg2>;
+
+        virtualinvoke r0.<android.view.VolumePanel: void onVolumeChanged(int,int)>($i11, $i9);
+
+        return;
+
+     label03:
+        $i7 = r1.<android.os.Message: int arg1>;
+
+        $i6 = r1.<android.os.Message: int arg2>;
+
+        virtualinvoke r0.<android.view.VolumePanel: void onMuteChanged(int,int)>($i7, $i6);
+
+        return;
+
+     label04:
+        virtualinvoke r0.<android.view.VolumePanel: void onFreeResources()>();
+
+        return;
+
+     label05:
+        virtualinvoke r0.<android.view.VolumePanel: void onStopSounds()>();
+
+        return;
+
+     label06:
+        $i10 = r1.<android.os.Message: int arg1>;
+
+        $i8 = r1.<android.os.Message: int arg2>;
+
+        virtualinvoke r0.<android.view.VolumePanel: void onPlaySound(int,int)>($i10, $i8);
+
+        return;
+
+     label07:
+        virtualinvoke r0.<android.view.VolumePanel: void onVibrate()>();
+
+        return;
+
+     label08:
+        $r5 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        $z1 = virtualinvoke $r5.<android.app.Dialog: boolean isShowing()>();
+
+        if $z1 == 0 goto label09;
+
+        $r8 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        virtualinvoke $r8.<android.app.Dialog: void dismiss()>();
+
+        r0.<android.view.VolumePanel: int mActiveStreamType> = -1;
+
+     label09:
+        r2 = <android.view.VolumePanel: java.lang.Object sConfirmSafeVolumeLock>;
+
+        entermonitor r2;
+
+     label10:
+        $r6 = <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog>;
+
+        if $r6 == null goto label11;
+
+        $r7 = <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog>;
+
+        virtualinvoke $r7.<android.app.AlertDialog: void dismiss()>();
+
+     label11:
+        exitmonitor r2;
+
+     label12:
+        return;
+
+     label13:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+     label14:
+        exitmonitor r2;
+
+     label15:
+        throw r3;
+
+     label16:
+        $r4 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        $z0 = virtualinvoke $r4.<android.app.Dialog: boolean isShowing()>();
+
+        if $z0 == 0 goto label01;
+
+        virtualinvoke r0.<android.view.VolumePanel: void updateStates()>();
+
+        return;
+
+     label17:
+        $i5 = r1.<android.os.Message: int arg1>;
+
+        $i4 = r1.<android.os.Message: int arg2>;
+
+        virtualinvoke r0.<android.view.VolumePanel: void onRemoteVolumeChanged(int,int)>($i5, $i4);
+
+        return;
+
+     label18:
+        virtualinvoke r0.<android.view.VolumePanel: void onRemoteVolumeUpdateIfShown()>();
+
+        return;
+
+     label19:
+        $i3 = r1.<android.os.Message: int arg1>;
+
+        $i2 = r1.<android.os.Message: int arg2>;
+
+        virtualinvoke r0.<android.view.VolumePanel: void onSliderVisibilityChanged(int,int)>($i3, $i2);
+
+        return;
+
+     label20:
+        $i1 = r1.<android.os.Message: int arg1>;
+
+        virtualinvoke r0.<android.view.VolumePanel: void onDisplaySafeVolumeWarning(int)>($i1);
+
+        return;
+
+        catch java.lang.Throwable from label10 to label11 with label13;
+        catch java.lang.Throwable from label11 to label12 with label13;
+        catch java.lang.Throwable from label14 to label15 with label13;
+    }
+
+    public void onClick(android.view.View)
+    {
+        android.view.VolumePanel r0;
+        android.view.View r1, $r2;
+
+        r0 := @this: android.view.VolumePanel;
+
+        r1 := @parameter0: android.view.View;
+
+        $r2 = r0.<android.view.VolumePanel: android.view.View mMoreButton>;
+
+        if r1 != $r2 goto label1;
+
+        specialinvoke r0.<android.view.VolumePanel: void expand()>();
+
+     label1:
+        specialinvoke r0.<android.view.VolumePanel: void resetTimeout()>();
+
+        return;
+    }
+
+    protected void onDisplaySafeVolumeWarning(int)
+    {
+        android.view.VolumePanel r0;
+        int i0, $i1;
+        java.lang.Object r1;
+        java.lang.Throwable r2, $r21;
+        android.view.VolumePanel$WarningDialogReceiver r3, $r12;
+        android.app.AlertDialog $r4, $r13, $r15, $r16, $r17, $r18;
+        android.app.AlertDialog$Builder $r5, $r7, $r9, $r10, $r11;
+        android.content.Context $r6, $r14;
+        android.view.VolumePanel$5 $r8;
+        android.view.Window $r19;
+        boolean $z0;
+        android.app.Dialog $r20;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        $i1 = i0 & 1;
+
+        if $i1 != 0 goto label1;
+
+        $r20 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        $z0 = virtualinvoke $r20.<android.app.Dialog: boolean isShowing()>();
+
+        if $z0 == 0 goto label6;
+
+     label1:
+        r1 = <android.view.VolumePanel: java.lang.Object sConfirmSafeVolumeLock>;
+
+        entermonitor r1;
+
+     label2:
+        $r4 = <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog>;
+
+        if $r4 == null goto label4;
+
+        exitmonitor r1;
+
+     label3:
+        return;
+
+     label4:
+        $r5 = new android.app.AlertDialog$Builder;
+
+        $r6 = r0.<android.view.VolumePanel: android.content.Context mContext>;
+
+        specialinvoke $r5.<android.app.AlertDialog$Builder: void <init>(android.content.Context)>($r6);
+
+        $r7 = virtualinvoke $r5.<android.app.AlertDialog$Builder: android.app.AlertDialog$Builder setMessage(int)>(17040767);
+
+        $r8 = new android.view.VolumePanel$5;
+
+        specialinvoke $r8.<android.view.VolumePanel$5: void <init>(android.view.VolumePanel)>(r0);
+
+        $r9 = virtualinvoke $r7.<android.app.AlertDialog$Builder: android.app.AlertDialog$Builder setPositiveButton(int,android.content.DialogInterface$OnClickListener)>(17039379, $r8);
+
+        $r10 = virtualinvoke $r9.<android.app.AlertDialog$Builder: android.app.AlertDialog$Builder setNegativeButton(int,android.content.DialogInterface$OnClickListener)>(17039369, null);
+
+        $r11 = virtualinvoke $r10.<android.app.AlertDialog$Builder: android.app.AlertDialog$Builder setIconAttribute(int)>(16843605);
+
+        $r13 = virtualinvoke $r11.<android.app.AlertDialog$Builder: android.app.AlertDialog create()>();
+
+        <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog> = $r13;
+
+        $r12 = new android.view.VolumePanel$WarningDialogReceiver;
+
+        $r14 = r0.<android.view.VolumePanel: android.content.Context mContext>;
+
+        $r15 = <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog>;
+
+        specialinvoke $r12.<android.view.VolumePanel$WarningDialogReceiver: void <init>(android.content.Context,android.app.Dialog,android.view.VolumePanel)>($r14, $r15, r0);
+
+        r3 = $r12;
+
+        $r17 = <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog>;
+
+        virtualinvoke $r17.<android.app.AlertDialog: void setOnDismissListener(android.content.DialogInterface$OnDismissListener)>(r3);
+
+        $r16 = <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog>;
+
+        $r19 = virtualinvoke $r16.<android.app.AlertDialog: android.view.Window getWindow()>();
+
+        virtualinvoke $r19.<android.view.Window: void setType(int)>(2009);
+
+        $r18 = <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog>;
+
+        virtualinvoke $r18.<android.app.AlertDialog: void show()>();
+
+        exitmonitor r1;
+
+     label5:
+        virtualinvoke r0.<android.view.VolumePanel: void updateStates()>();
+
+     label6:
+        specialinvoke r0.<android.view.VolumePanel: void resetTimeout()>();
+
+        return;
+
+     label7:
+        $r21 := @caughtexception;
+
+        r2 = $r21;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw r2;
+
+        catch java.lang.Throwable from label2 to label3 with label7;
+        catch java.lang.Throwable from label4 to label5 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    protected void onFreeResources()
+    {
+        android.view.VolumePanel r0;
+        java.lang.Throwable r1, $r8;
+        int i0, $i1;
+        android.media.ToneGenerator[] $r2, $r3, $r5, $r6;
+        android.media.ToneGenerator $r4, $r7;
+
+        r0 := @this: android.view.VolumePanel;
+
+        entermonitor r0;
+
+     label01:
+        $r2 = r0.<android.view.VolumePanel: android.media.ToneGenerator[] mToneGenerators>;
+
+        $i1 = lengthof $r2;
+
+        i0 = -1 + $i1;
+
+     label02:
+        if i0 < 0 goto label06;
+
+     label03:
+        $r3 = r0.<android.view.VolumePanel: android.media.ToneGenerator[] mToneGenerators>;
+
+        $r4 = $r3[i0];
+
+        if $r4 == null goto label04;
+
+        $r6 = r0.<android.view.VolumePanel: android.media.ToneGenerator[] mToneGenerators>;
+
+        $r7 = $r6[i0];
+
+        virtualinvoke $r7.<android.media.ToneGenerator: void release()>();
+
+     label04:
+        $r5 = r0.<android.view.VolumePanel: android.media.ToneGenerator[] mToneGenerators>;
+
+        $r5[i0] = null;
+
+     label05:
+        i0 = i0 + -1;
+
+        goto label02;
+
+     label06:
+        exitmonitor r0;
+
+     label07:
+        return;
+
+     label08:
+        $r8 := @caughtexception;
+
+        r1 = $r8;
+
+     label09:
+        exitmonitor r0;
+
+     label10:
+        throw r1;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    protected void onMuteChanged(int, int)
+    {
+        android.view.VolumePanel r0;
+        int i0, i1, i2, $i3;
+        android.view.VolumePanel$StreamControl r1;
+        android.widget.ImageView r2;
+        boolean $z0, $z1;
+        java.util.HashMap $r3;
+        java.lang.Integer $r4;
+        java.lang.Object $r5;
+        java.lang.StringBuilder $r6, $r7, $r8, $r9, $r10, $r12;
+        java.lang.String $r11;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $z0 = <android.view.VolumePanel: boolean LOGD>;
+
+        if $z0 == 0 goto label1;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onMuteChanged(streamType: ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", flags: ");
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r12 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("VolumePanel", $r11);
+
+     label1:
+        $r3 = r0.<android.view.VolumePanel: java.util.HashMap mStreamControls>;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r5 = virtualinvoke $r3.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r4);
+
+        r1 = (android.view.VolumePanel$StreamControl) $r5;
+
+        if r1 == null goto label3;
+
+        r2 = r1.<android.view.VolumePanel$StreamControl: android.widget.ImageView icon>;
+
+        $i3 = r1.<android.view.VolumePanel$StreamControl: int streamType>;
+
+        $z1 = specialinvoke r0.<android.view.VolumePanel: boolean isMuted(int)>($i3);
+
+        if $z1 == 0 goto label4;
+
+        i2 = r1.<android.view.VolumePanel$StreamControl: int iconMuteRes>;
+
+     label2:
+        virtualinvoke r2.<android.widget.ImageView: void setImageResource(int)>(i2);
+
+     label3:
+        virtualinvoke r0.<android.view.VolumePanel: void onVolumeChanged(int,int)>(i0, i1);
+
+        return;
+
+     label4:
+        i2 = r1.<android.view.VolumePanel$StreamControl: int iconRes>;
+
+        goto label2;
+    }
+
+    protected void onPlaySound(int, int)
+    {
+        android.view.VolumePanel r0;
+        int i0, i1;
+        java.lang.Throwable r1, $r4;
+        android.media.ToneGenerator r2;
+        boolean $z0;
+        android.os.Message $r3;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $z0 = virtualinvoke r0.<android.view.VolumePanel: boolean hasMessages(int)>(3);
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(3);
+
+        virtualinvoke r0.<android.view.VolumePanel: void onStopSounds()>();
+
+     label1:
+        entermonitor r0;
+
+     label2:
+        r2 = specialinvoke r0.<android.view.VolumePanel: android.media.ToneGenerator getOrCreateToneGenerator(int)>(i0);
+
+     label3:
+        if r2 == null goto label5;
+
+     label4:
+        virtualinvoke r2.<android.media.ToneGenerator: boolean startTone(int)>(24);
+
+        $r3 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int)>(3);
+
+        virtualinvoke r0.<android.view.VolumePanel: boolean sendMessageDelayed(android.os.Message,long)>($r3, 150L);
+
+     label5:
+        exitmonitor r0;
+
+     label6:
+        return;
+
+     label7:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+     label8:
+        exitmonitor r0;
+
+     label9:
+        throw r1;
+
+        catch java.lang.Throwable from label2 to label3 with label7;
+        catch java.lang.Throwable from label4 to label5 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public void onProgressChanged(android.widget.SeekBar, int, boolean)
+    {
+        android.view.VolumePanel r0;
+        android.widget.SeekBar r1;
+        int i0, $i1, $i2, $i3;
+        boolean z0, $z1;
+        java.lang.Object r2;
+        android.view.VolumePanel$StreamControl r3;
+
+        r0 := @this: android.view.VolumePanel;
+
+        r1 := @parameter0: android.widget.SeekBar;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        r2 = virtualinvoke r1.<android.widget.SeekBar: java.lang.Object getTag()>();
+
+        if z0 == 0 goto label1;
+
+        $z1 = r2 instanceof android.view.VolumePanel$StreamControl;
+
+        if $z1 == 0 goto label1;
+
+        r3 = (android.view.VolumePanel$StreamControl) r2;
+
+        $i1 = r3.<android.view.VolumePanel$StreamControl: int streamType>;
+
+        $i2 = specialinvoke r0.<android.view.VolumePanel: int getStreamVolume(int)>($i1);
+
+        if $i2 == i0 goto label1;
+
+        $i3 = r3.<android.view.VolumePanel$StreamControl: int streamType>;
+
+        specialinvoke r0.<android.view.VolumePanel: void setStreamVolume(int,int,int)>($i3, i0, 0);
+
+     label1:
+        specialinvoke r0.<android.view.VolumePanel: void resetTimeout()>();
+
+        return;
+    }
+
+    protected void onRemoteVolumeChanged(int, int)
+    {
+        android.view.VolumePanel r0;
+        int i0, i1, $i2, $i3, $i4, $i5;
+        java.lang.Throwable r1, $r12;
+        boolean $z0, $z2, $z4, $z5;
+        android.os.Message $r2, $r3;
+        android.app.Dialog $r4;
+        java.lang.StringBuilder $r5, $r6, $r7, $r8, $r9, $r11;
+        java.lang.String $r10;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $z0 = <android.view.VolumePanel: boolean LOGD>;
+
+        if $z0 == 0 goto label01;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onRemoteVolumeChanged(stream:");
+
+        $r6 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", flags: ");
+
+        $r8 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r11 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("VolumePanel", $r10);
+
+     label01:
+        $i2 = i1 & 1;
+
+        if $i2 != 0 goto label02;
+
+        $r4 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        $z4 = virtualinvoke $r4.<android.app.Dialog: boolean isShowing()>();
+
+        if $z4 == 0 goto label11;
+
+     label02:
+        entermonitor r0;
+
+     label03:
+        $i3 = r0.<android.view.VolumePanel: int mActiveStreamType>;
+
+        if $i3 == -200 goto label04;
+
+        specialinvoke r0.<android.view.VolumePanel: void reorderSliders(int)>(-200);
+
+     label04:
+        virtualinvoke r0.<android.view.VolumePanel: void onShowVolumeChanged(int,int)>(-200, i1);
+
+        exitmonitor r0;
+
+     label05:
+        $i4 = i1 & 4;
+
+        if $i4 == 0 goto label06;
+
+        $z2 = r0.<android.view.VolumePanel: boolean mRingIsSilent>;
+
+        if $z2 != 0 goto label06;
+
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(2);
+
+        $r3 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int,int,int)>(2, i0, i1);
+
+        virtualinvoke r0.<android.view.VolumePanel: boolean sendMessageDelayed(android.os.Message,long)>($r3, 300L);
+
+     label06:
+        $i5 = i1 & 8;
+
+        if $i5 == 0 goto label07;
+
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(2);
+
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(4);
+
+        virtualinvoke r0.<android.view.VolumePanel: void onStopSounds()>();
+
+     label07:
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(1);
+
+        $r2 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int)>(1);
+
+        virtualinvoke r0.<android.view.VolumePanel: boolean sendMessageDelayed(android.os.Message,long)>($r2, 10000L);
+
+        specialinvoke r0.<android.view.VolumePanel: void resetTimeout()>();
+
+        return;
+
+     label08:
+        $r12 := @caughtexception;
+
+        r1 = $r12;
+
+     label09:
+        exitmonitor r0;
+
+     label10:
+        throw r1;
+
+     label11:
+        $z5 = <android.view.VolumePanel: boolean LOGD>;
+
+        if $z5 == 0 goto label05;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("VolumePanel", "not calling onShowVolumeChanged(), no FLAG_SHOW_UI or no UI");
+
+        goto label05;
+
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    protected void onRemoteVolumeUpdateIfShown()
+    {
+        android.view.VolumePanel r0;
+        boolean $z0, $z1;
+        android.app.Dialog $r1;
+        int $i0;
+        java.util.HashMap $r2;
+
+        r0 := @this: android.view.VolumePanel;
+
+        $z0 = <android.view.VolumePanel: boolean LOGD>;
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("VolumePanel", "onRemoteVolumeUpdateIfShown()");
+
+     label1:
+        $r1 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        $z1 = virtualinvoke $r1.<android.app.Dialog: boolean isShowing()>();
+
+        if $z1 == 0 goto label2;
+
+        $i0 = r0.<android.view.VolumePanel: int mActiveStreamType>;
+
+        if $i0 != -200 goto label2;
+
+        $r2 = r0.<android.view.VolumePanel: java.util.HashMap mStreamControls>;
+
+        if $r2 == null goto label2;
+
+        virtualinvoke r0.<android.view.VolumePanel: void onShowVolumeChanged(int,int)>(-200, 0);
+
+     label2:
+        return;
+    }
+
+    protected void onShowVolumeChanged(int, int)
+    {
+        android.view.VolumePanel r0;
+        int i0, i1, i2, i3, i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11;
+        android.view.VolumePanel$StreamControl r1;
+        boolean $z0, $z1, $z2, $z4, $z5, $z6;
+        java.util.HashMap $r2;
+        java.lang.Integer $r3;
+        java.lang.Object $r4;
+        android.app.Dialog $r5, $r11, $r13;
+        android.media.AudioService $r6;
+        android.media.AudioManager $r7, $r10, $r15, $r20;
+        android.os.Message $r8;
+        android.view.View $r9;
+        android.widget.SeekBar $r12, $r14, $r16, $r17, $r19;
+        android.app.AlertDialog $r18;
+        android.content.Context $r21, $r23;
+        android.net.Uri $r22, $r24;
+        java.lang.StringBuilder $r25, $r26, $r28, $r29, $r30, $r31, $r32, $r33, $r34, $r35, $r36, $r37;
+        java.lang.String $r27, $r38;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 = specialinvoke r0.<android.view.VolumePanel: int getStreamVolume(int)>(i0);
+
+        r0.<android.view.VolumePanel: boolean mRingIsSilent> = 0;
+
+        $z0 = <android.view.VolumePanel: boolean LOGD>;
+
+        if $z0 == 0 goto label01;
+
+        $r32 = new java.lang.StringBuilder;
+
+        specialinvoke $r32.<java.lang.StringBuilder: void <init>()>();
+
+        $r31 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onShowVolumeChanged(streamType: ");
+
+        $r36 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r35 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", flags: ");
+
+        $r34 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r33 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("), index: ");
+
+        $r37 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r38 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("VolumePanel", $r38);
+
+     label01:
+        i3 = specialinvoke r0.<android.view.VolumePanel: int getStreamMaxVolume(int)>(i0);
+
+        lookupswitch(i0)
+        {
+            case -200: goto label17;
+            case 0: goto label14;
+            case 2: goto label11;
+            case 3: goto label12;
+            case 4: goto label02;
+            case 5: goto label15;
+            case 6: goto label16;
+            default: goto label02;
+        };
+
+     label02:
+        $r2 = r0.<android.view.VolumePanel: java.util.HashMap mStreamControls>;
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r4 = virtualinvoke $r2.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r3);
+
+        r1 = (android.view.VolumePanel$StreamControl) $r4;
+
+        if r1 == null goto label06;
+
+        $r12 = r1.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        $i7 = virtualinvoke $r12.<android.widget.SeekBar: int getMax()>();
+
+        if $i7 == i3 goto label03;
+
+        $r17 = r1.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        virtualinvoke $r17.<android.widget.SeekBar: void setMax(int)>(i3);
+
+     label03:
+        $r14 = r1.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        virtualinvoke $r14.<android.widget.SeekBar: void setProgress(int)>(i2);
+
+        $i9 = i1 & 32;
+
+        if $i9 != 0 goto label05;
+
+        $r15 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $i8 = virtualinvoke $r15.<android.media.AudioManager: int getMasterStreamType()>();
+
+        if i0 == $i8 goto label04;
+
+        if i0 == -200 goto label04;
+
+        $z5 = specialinvoke r0.<android.view.VolumePanel: boolean isMuted(int)>(i0);
+
+        if $z5 != 0 goto label05;
+
+     label04:
+        $r18 = <android.view.VolumePanel: android.app.AlertDialog sConfirmSafeVolumeDialog>;
+
+        if $r18 == null goto label18;
+
+     label05:
+        $r16 = r1.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        virtualinvoke $r16.<android.widget.SeekBar: void setEnabled(boolean)>(0);
+
+     label06:
+        $r5 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        $z1 = virtualinvoke $r5.<android.app.Dialog: boolean isShowing()>();
+
+        if $z1 != 0 goto label09;
+
+        if i0 != -200 goto label19;
+
+        i4 = -1;
+
+     label07:
+        $r10 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        virtualinvoke $r10.<android.media.AudioManager: void forceVolumeControlStream(int)>(i4);
+
+        $r11 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        $r9 = r0.<android.view.VolumePanel: android.view.View mView>;
+
+        virtualinvoke $r11.<android.app.Dialog: void setContentView(android.view.View)>($r9);
+
+        $z4 = r0.<android.view.VolumePanel: boolean mShowCombinedVolumes>;
+
+        if $z4 == 0 goto label08;
+
+        specialinvoke r0.<android.view.VolumePanel: void collapse()>();
+
+     label08:
+        $r13 = r0.<android.view.VolumePanel: android.app.Dialog mDialog>;
+
+        virtualinvoke $r13.<android.app.Dialog: void show()>();
+
+     label09:
+        if i0 == -200 goto label10;
+
+        $i5 = i1 & 16;
+
+        if $i5 == 0 goto label10;
+
+        $r6 = r0.<android.view.VolumePanel: android.media.AudioService mAudioService>;
+
+        $z2 = virtualinvoke $r6.<android.media.AudioService: boolean isStreamAffectedByRingerMode(int)>(i0);
+
+        if $z2 == 0 goto label10;
+
+        $r7 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $i6 = virtualinvoke $r7.<android.media.AudioManager: int getRingerMode()>();
+
+        if $i6 != 1 goto label10;
+
+        $r8 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int)>(4);
+
+        virtualinvoke r0.<android.view.VolumePanel: boolean sendMessageDelayed(android.os.Message,long)>($r8, 300L);
+
+     label10:
+        return;
+
+     label11:
+        $r23 = r0.<android.view.VolumePanel: android.content.Context mContext>;
+
+        $r24 = staticinvoke <android.media.RingtoneManager: android.net.Uri getActualDefaultRingtoneUri(android.content.Context,int)>($r23, 1);
+
+        if $r24 != null goto label02;
+
+        r0.<android.view.VolumePanel: boolean mRingIsSilent> = 1;
+
+        goto label02;
+
+     label12:
+        $r20 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $i10 = virtualinvoke $r20.<android.media.AudioManager: int getDevicesForStream(int)>(3);
+
+        $i11 = 896 & $i10;
+
+        if $i11 == 0 goto label13;
+
+        specialinvoke r0.<android.view.VolumePanel: void setMusicIcon(int,int)>(17302174, 17302175);
+
+        goto label02;
+
+     label13:
+        specialinvoke r0.<android.view.VolumePanel: void setMusicIcon(int,int)>(17302188, 17302190);
+
+        goto label02;
+
+     label14:
+        i2 = i2 + 1;
+
+        i3 = i3 + 1;
+
+        goto label02;
+
+     label15:
+        $r21 = r0.<android.view.VolumePanel: android.content.Context mContext>;
+
+        $r22 = staticinvoke <android.media.RingtoneManager: android.net.Uri getActualDefaultRingtoneUri(android.content.Context,int)>($r21, 2);
+
+        if $r22 != null goto label02;
+
+        r0.<android.view.VolumePanel: boolean mRingIsSilent> = 1;
+
+        goto label02;
+
+     label16:
+        i2 = i2 + 1;
+
+        i3 = i3 + 1;
+
+        goto label02;
+
+     label17:
+        $z6 = <android.view.VolumePanel: boolean LOGD>;
+
+        if $z6 == 0 goto label02;
+
+        $r26 = new java.lang.StringBuilder;
+
+        specialinvoke $r26.<java.lang.StringBuilder: void <init>()>();
+
+        $r25 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("showing remote volume ");
+
+        $r30 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r29 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" over ");
+
+        $r28 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i3);
+
+        $r27 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("VolumePanel", $r27);
+
+        goto label02;
+
+     label18:
+        $r19 = r1.<android.view.VolumePanel$StreamControl: android.widget.SeekBar seekbarView>;
+
+        virtualinvoke $r19.<android.widget.SeekBar: void setEnabled(boolean)>(1);
+
+        goto label06;
+
+     label19:
+        i4 = i0;
+
+        goto label07;
+    }
+
+    protected void onSliderVisibilityChanged(int, int)
+    {
+        android.view.VolumePanel r0;
+        int i0, i1, i2, $i3, $i4, $i5, i7;
+        boolean z0, $z1;
+        java.lang.Throwable r1, $r12;
+        android.view.VolumePanel$StreamResources r2;
+        android.view.VolumePanel$StreamResources[] $r3, $r4;
+        java.lang.StringBuilder $r5, $r6, $r7, $r8, $r9, $r10;
+        java.lang.String $r11;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        z0 = 1;
+
+        entermonitor r0;
+
+     label01:
+        $z1 = <android.view.VolumePanel: boolean LOGD>;
+
+        if $z1 == 0 goto label12;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onSliderVisibilityChanged(stream=");
+
+        $r8 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r7 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", visi=");
+
+        $r10 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("VolumePanel", $r11);
+
+     label02:
+        goto label12;
+
+     label03:
+        $r3 = <android.view.VolumePanel: android.view.VolumePanel$StreamResources[] STREAMS>;
+
+        $i3 = lengthof $r3;
+
+        i2 = -1 + $i3;
+
+     label04:
+        if i2 < 0 goto label08;
+
+     label05:
+        $r4 = <android.view.VolumePanel: android.view.VolumePanel$StreamResources[] STREAMS>;
+
+        r2 = $r4[i2];
+
+        $i4 = r2.<android.view.VolumePanel$StreamResources: int streamType>;
+
+        if $i4 != i0 goto label10;
+
+        r2.<android.view.VolumePanel$StreamResources: boolean show> = z0;
+
+     label06:
+        if z0 != 0 goto label08;
+
+     label07:
+        $i5 = r0.<android.view.VolumePanel: int mActiveStreamType>;
+
+        if $i5 != i0 goto label08;
+
+        r0.<android.view.VolumePanel: int mActiveStreamType> = -1;
+
+     label08:
+        exitmonitor r0;
+
+        return;
+
+     label09:
+        z0 = 0;
+
+        goto label03;
+
+     label10:
+        i2 = i2 + -1;
+
+        goto label04;
+
+     label11:
+        $r12 := @caughtexception;
+
+        r1 = $r12;
+
+        exitmonitor r0;
+
+        throw r1;
+
+     label12:
+        i7 = (int) 1;
+
+        if i1 != i7 goto label09;
+
+        goto label03;
+
+        catch java.lang.Throwable from label01 to label02 with label11;
+        catch java.lang.Throwable from label03 to label04 with label11;
+        catch java.lang.Throwable from label05 to label06 with label11;
+        catch java.lang.Throwable from label07 to label08 with label11;
+    }
+
+    public void onStartTrackingTouch(android.widget.SeekBar)
+    {
+        android.view.VolumePanel r0;
+        android.widget.SeekBar r1;
+
+        r0 := @this: android.view.VolumePanel;
+
+        r1 := @parameter0: android.widget.SeekBar;
+
+        return;
+    }
+
+    protected void onStopSounds()
+    {
+        android.view.VolumePanel r0;
+        java.lang.Throwable r1, $r4;
+        int i0, $i1;
+        android.media.ToneGenerator r2;
+        android.media.ToneGenerator[] $r3;
+
+        r0 := @this: android.view.VolumePanel;
+
+        entermonitor r0;
+
+     label01:
+        $i1 = staticinvoke <android.media.AudioSystem: int getNumStreamTypes()>();
+
+        i0 = -1 + $i1;
+
+     label02:
+        if i0 < 0 goto label07;
+
+     label03:
+        $r3 = r0.<android.view.VolumePanel: android.media.ToneGenerator[] mToneGenerators>;
+
+        r2 = $r3[i0];
+
+     label04:
+        if r2 == null goto label12;
+
+     label05:
+        virtualinvoke r2.<android.media.ToneGenerator: void stopTone()>();
+
+     label06:
+        goto label12;
+
+     label07:
+        exitmonitor r0;
+
+     label08:
+        return;
+
+     label09:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+     label10:
+        exitmonitor r0;
+
+     label11:
+        throw r1;
+
+     label12:
+        i0 = i0 + -1;
+
+        goto label02;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label05 to label06 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    public void onStopTrackingTouch(android.widget.SeekBar)
+    {
+        android.view.VolumePanel r0;
+        android.widget.SeekBar r1;
+        java.lang.Object r2;
+        boolean $z0;
+        android.view.VolumePanel$StreamControl $r3;
+        int $i0, $i1;
+
+        r0 := @this: android.view.VolumePanel;
+
+        r1 := @parameter0: android.widget.SeekBar;
+
+        r2 = virtualinvoke r1.<android.widget.SeekBar: java.lang.Object getTag()>();
+
+        $z0 = r2 instanceof android.view.VolumePanel$StreamControl;
+
+        if $z0 == 0 goto label1;
+
+        $r3 = (android.view.VolumePanel$StreamControl) r2;
+
+        $i0 = $r3.<android.view.VolumePanel$StreamControl: int streamType>;
+
+        if $i0 != -200 goto label1;
+
+        $i1 = specialinvoke r0.<android.view.VolumePanel: int getStreamVolume(int)>(-200);
+
+        virtualinvoke r1.<android.widget.SeekBar: void setProgress(int)>($i1);
+
+     label1:
+        return;
+    }
+
+    protected void onVibrate()
+    {
+        android.view.VolumePanel r0;
+        android.media.AudioManager $r1;
+        int $i0;
+        android.os.Vibrator $r2;
+
+        r0 := @this: android.view.VolumePanel;
+
+        $r1 = r0.<android.view.VolumePanel: android.media.AudioManager mAudioManager>;
+
+        $i0 = virtualinvoke $r1.<android.media.AudioManager: int getRingerMode()>();
+
+        if $i0 == 1 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<android.view.VolumePanel: android.os.Vibrator mVibrator>;
+
+        virtualinvoke $r2.<android.os.Vibrator: void vibrate(long)>(300L);
+
+        return;
+    }
+
+    protected void onVolumeChanged(int, int)
+    {
+        android.view.VolumePanel r0;
+        int i0, i1, $i2, $i3, $i4, $i5;
+        java.lang.Throwable r1, $r11;
+        boolean $z0, $z2;
+        android.os.Message $r2, $r3;
+        java.lang.StringBuilder $r4, $r5, $r6, $r7, $r8, $r10;
+        java.lang.String $r9;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $z0 = <android.view.VolumePanel: boolean LOGD>;
+
+        if $z0 == 0 goto label1;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onVolumeChanged(streamType: ");
+
+        $r5 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", flags: ");
+
+        $r7 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r10 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("VolumePanel", $r9);
+
+     label1:
+        $i2 = i1 & 1;
+
+        if $i2 == 0 goto label4;
+
+        entermonitor r0;
+
+     label2:
+        $i5 = r0.<android.view.VolumePanel: int mActiveStreamType>;
+
+        if $i5 == i0 goto label3;
+
+        specialinvoke r0.<android.view.VolumePanel: void reorderSliders(int)>(i0);
+
+     label3:
+        virtualinvoke r0.<android.view.VolumePanel: void onShowVolumeChanged(int,int)>(i0, i1);
+
+        exitmonitor r0;
+
+     label4:
+        $i3 = i1 & 4;
+
+        if $i3 == 0 goto label5;
+
+        $z2 = r0.<android.view.VolumePanel: boolean mRingIsSilent>;
+
+        if $z2 != 0 goto label5;
+
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(2);
+
+        $r3 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int,int,int)>(2, i0, i1);
+
+        virtualinvoke r0.<android.view.VolumePanel: boolean sendMessageDelayed(android.os.Message,long)>($r3, 300L);
+
+     label5:
+        $i4 = i1 & 8;
+
+        if $i4 == 0 goto label6;
+
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(2);
+
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(4);
+
+        virtualinvoke r0.<android.view.VolumePanel: void onStopSounds()>();
+
+     label6:
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(1);
+
+        $r2 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int)>(1);
+
+        virtualinvoke r0.<android.view.VolumePanel: boolean sendMessageDelayed(android.os.Message,long)>($r2, 10000L);
+
+        specialinvoke r0.<android.view.VolumePanel: void resetTimeout()>();
+
+        return;
+
+     label7:
+        $r11 := @caughtexception;
+
+        r1 = $r11;
+
+     label8:
+        exitmonitor r0;
+
+     label9:
+        throw r1;
+
+        catch java.lang.Throwable from label2 to label3 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public void postDisplaySafeVolumeWarning(int)
+    {
+        android.view.VolumePanel r0;
+        int i0;
+        boolean $z0;
+        android.os.Message $r1;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        $z0 = virtualinvoke r0.<android.view.VolumePanel: boolean hasMessages(int)>(11);
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int,int,int)>(11, i0, 0);
+
+        virtualinvoke $r1.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void postHasNewRemotePlaybackInfo()
+    {
+        android.view.VolumePanel r0;
+        boolean $z0;
+        android.os.Message $r1;
+
+        r0 := @this: android.view.VolumePanel;
+
+        $z0 = virtualinvoke r0.<android.view.VolumePanel: boolean hasMessages(int)>(9);
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int)>(9);
+
+        virtualinvoke $r1.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void postMasterMuteChanged(int)
+    {
+        android.view.VolumePanel r0;
+        int i0;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        virtualinvoke r0.<android.view.VolumePanel: void postMuteChanged(int,int)>(-100, i0);
+
+        return;
+    }
+
+    public void postMasterVolumeChanged(int)
+    {
+        android.view.VolumePanel r0;
+        int i0;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        virtualinvoke r0.<android.view.VolumePanel: void postVolumeChanged(int,int)>(-100, i0);
+
+        return;
+    }
+
+    public void postMuteChanged(int, int)
+    {
+        android.view.VolumePanel r0;
+        int i0, i1;
+        java.lang.Throwable r1, $r4;
+        boolean $z0;
+        java.util.HashMap $r2;
+        android.os.Message $r3;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $z0 = virtualinvoke r0.<android.view.VolumePanel: boolean hasMessages(int)>(0);
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        entermonitor r0;
+
+     label2:
+        $r2 = r0.<android.view.VolumePanel: java.util.HashMap mStreamControls>;
+
+        if $r2 != null goto label3;
+
+        specialinvoke r0.<android.view.VolumePanel: void createSliders()>();
+
+     label3:
+        exitmonitor r0;
+
+     label4:
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(1);
+
+        $r3 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int,int,int)>(7, i0, i1);
+
+        virtualinvoke $r3.<android.os.Message: void sendToTarget()>();
+
+        return;
+
+     label5:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+     label6:
+        exitmonitor r0;
+
+     label7:
+        throw r1;
+
+        catch java.lang.Throwable from label2 to label3 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public void postRemoteSliderVisibility(boolean)
+    {
+        android.view.VolumePanel r0;
+        boolean z0;
+        byte b0;
+        android.os.Message $r1;
+
+        r0 := @this: android.view.VolumePanel;
+
+        z0 := @parameter0: boolean;
+
+        if z0 == 0 goto label2;
+
+        b0 = 1;
+
+     label1:
+        $r1 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int,int,int)>(10, -200, b0);
+
+        virtualinvoke $r1.<android.os.Message: void sendToTarget()>();
+
+        return;
+
+     label2:
+        b0 = 0;
+
+        goto label1;
+    }
+
+    public void postRemoteVolumeChanged(int, int)
+    {
+        android.view.VolumePanel r0;
+        int i0, i1;
+        java.lang.Throwable r1, $r4;
+        boolean $z0;
+        java.util.HashMap $r2;
+        android.os.Message $r3;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $z0 = virtualinvoke r0.<android.view.VolumePanel: boolean hasMessages(int)>(8);
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        entermonitor r0;
+
+     label2:
+        $r2 = r0.<android.view.VolumePanel: java.util.HashMap mStreamControls>;
+
+        if $r2 != null goto label3;
+
+        specialinvoke r0.<android.view.VolumePanel: void createSliders()>();
+
+     label3:
+        exitmonitor r0;
+
+     label4:
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(1);
+
+        $r3 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int,int,int)>(8, i0, i1);
+
+        virtualinvoke $r3.<android.os.Message: void sendToTarget()>();
+
+        return;
+
+     label5:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+     label6:
+        exitmonitor r0;
+
+     label7:
+        throw r1;
+
+        catch java.lang.Throwable from label2 to label3 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public void postVolumeChanged(int, int)
+    {
+        android.view.VolumePanel r0;
+        int i0, i1;
+        java.lang.Throwable r1, $r4;
+        boolean $z0;
+        java.util.HashMap $r2;
+        android.os.Message $r3;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $z0 = virtualinvoke r0.<android.view.VolumePanel: boolean hasMessages(int)>(0);
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        entermonitor r0;
+
+     label2:
+        $r2 = r0.<android.view.VolumePanel: java.util.HashMap mStreamControls>;
+
+        if $r2 != null goto label3;
+
+        specialinvoke r0.<android.view.VolumePanel: void createSliders()>();
+
+     label3:
+        exitmonitor r0;
+
+     label4:
+        virtualinvoke r0.<android.view.VolumePanel: void removeMessages(int)>(1);
+
+        $r3 = virtualinvoke r0.<android.view.VolumePanel: android.os.Message obtainMessage(int,int,int)>(0, i0, i1);
+
+        virtualinvoke $r3.<android.os.Message: void sendToTarget()>();
+
+        return;
+
+     label5:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+     label6:
+        exitmonitor r0;
+
+     label7:
+        throw r1;
+
+        catch java.lang.Throwable from label2 to label3 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public void setLayoutDirection(int)
+    {
+        android.view.VolumePanel r0;
+        int i0;
+        android.view.ViewGroup $r1;
+
+        r0 := @this: android.view.VolumePanel;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<android.view.VolumePanel: android.view.ViewGroup mPanel>;
+
+        virtualinvoke $r1.<android.view.ViewGroup: void setLayoutDirection(int)>(i0);
+
+        virtualinvoke r0.<android.view.VolumePanel: void updateStates()>();
+
+        return;
+    }
+
+    public void updateStates()
+    {
+        android.view.VolumePanel r0;
+        int i0, i1;
+        android.view.ViewGroup $r1, $r2;
+        android.view.View $r3;
+        java.lang.Object $r4;
+        android.view.VolumePanel$StreamControl $r5;
+
+        r0 := @this: android.view.VolumePanel;
+
+        $r1 = r0.<android.view.VolumePanel: android.view.ViewGroup mSliderGroup>;
+
+        i0 = virtualinvoke $r1.<android.view.ViewGroup: int getChildCount()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $r2 = r0.<android.view.VolumePanel: android.view.ViewGroup mSliderGroup>;
+
+        $r3 = virtualinvoke $r2.<android.view.ViewGroup: android.view.View getChildAt(int)>(i1);
+
+        $r4 = virtualinvoke $r3.<android.view.View: java.lang.Object getTag()>();
+
+        $r5 = (android.view.VolumePanel$StreamControl) $r4;
+
+        specialinvoke r0.<android.view.VolumePanel: void updateSlider(android.view.VolumePanel$StreamControl)>($r5);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+}

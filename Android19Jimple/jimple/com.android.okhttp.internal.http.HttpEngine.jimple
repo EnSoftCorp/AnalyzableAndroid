@@ -1,0 +1,1833 @@
+public class com.android.okhttp.internal.http.HttpEngine extends java.lang.Object
+{
+    private static final java.net.CacheResponse GATEWAY_TIMEOUT_RESPONSE;
+    public static final int HTTP_CONTINUE;
+    private boolean automaticallyReleaseConnectionToPool;
+    private java.net.CacheRequest cacheRequest;
+    private java.net.CacheResponse cacheResponse;
+    private java.io.InputStream cachedResponseBody;
+    private com.android.okhttp.internal.http.ResponseHeaders cachedResponseHeaders;
+    protected final com.android.okhttp.OkHttpClient client;
+    boolean connected;
+    protected com.android.okhttp.Connection connection;
+    private boolean connectionReleased;
+    protected final java.lang.String method;
+    protected final com.android.okhttp.internal.http.Policy policy;
+    private java.io.OutputStream requestBodyOut;
+    final com.android.okhttp.internal.http.RequestHeaders requestHeaders;
+    private java.io.InputStream responseBodyIn;
+    com.android.okhttp.internal.http.ResponseHeaders responseHeaders;
+    private com.android.okhttp.ResponseSource responseSource;
+    private java.io.InputStream responseTransferIn;
+    protected com.android.okhttp.internal.http.RouteSelector routeSelector;
+    long sentRequestMillis;
+    private boolean transparentGzip;
+    private com.android.okhttp.internal.http.Transport transport;
+    final java.net.URI uri;
+
+    static void <clinit>()
+    {
+        com.android.okhttp.internal.http.HttpEngine$1 $r0;
+
+        <com.android.okhttp.internal.http.HttpEngine: int HTTP_CONTINUE> = 100;
+
+        $r0 = new com.android.okhttp.internal.http.HttpEngine$1;
+
+        specialinvoke $r0.<com.android.okhttp.internal.http.HttpEngine$1: void <init>()>();
+
+        <com.android.okhttp.internal.http.HttpEngine: java.net.CacheResponse GATEWAY_TIMEOUT_RESPONSE> = $r0;
+
+        return;
+    }
+
+    public void <init>(com.android.okhttp.OkHttpClient, com.android.okhttp.internal.http.Policy, java.lang.String, com.android.okhttp.internal.http.RawHeaders, com.android.okhttp.Connection, com.android.okhttp.internal.http.RetryableOutputStream) throws java.io.IOException
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.OkHttpClient r1;
+        com.android.okhttp.internal.http.Policy r2;
+        java.lang.String r3, $r16;
+        com.android.okhttp.internal.http.RawHeaders r4, $r12;
+        com.android.okhttp.Connection r5;
+        com.android.okhttp.internal.http.RetryableOutputStream r6;
+        java.net.URISyntaxException r7, $r14;
+        com.android.okhttp.internal.Platform $r8;
+        java.net.URL $r9;
+        java.net.URI $r10, $r13;
+        com.android.okhttp.internal.http.RequestHeaders $r11;
+        java.io.IOException $r15;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        r1 := @parameter0: com.android.okhttp.OkHttpClient;
+
+        r2 := @parameter1: com.android.okhttp.internal.http.Policy;
+
+        r3 := @parameter2: java.lang.String;
+
+        r4 := @parameter3: com.android.okhttp.internal.http.RawHeaders;
+
+        r5 := @parameter4: com.android.okhttp.Connection;
+
+        r6 := @parameter5: com.android.okhttp.internal.http.RetryableOutputStream;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: long sentRequestMillis> = -1L;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client> = r1;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Policy policy> = r2;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.lang.String method> = r3;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection> = r5;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.io.OutputStream requestBodyOut> = r6;
+
+     label1:
+        $r8 = staticinvoke <com.android.okhttp.internal.Platform: com.android.okhttp.internal.Platform get()>();
+
+        $r9 = interfaceinvoke r2.<com.android.okhttp.internal.http.Policy: java.net.URL getURL()>();
+
+        $r10 = virtualinvoke $r8.<com.android.okhttp.internal.Platform: java.net.URI toUriLenient(java.net.URL)>($r9);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri> = $r10;
+
+     label2:
+        $r11 = new com.android.okhttp.internal.http.RequestHeaders;
+
+        $r13 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        $r12 = new com.android.okhttp.internal.http.RawHeaders;
+
+        specialinvoke $r12.<com.android.okhttp.internal.http.RawHeaders: void <init>(com.android.okhttp.internal.http.RawHeaders)>(r4);
+
+        specialinvoke $r11.<com.android.okhttp.internal.http.RequestHeaders: void <init>(java.net.URI,com.android.okhttp.internal.http.RawHeaders)>($r13, $r12);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders> = $r11;
+
+        return;
+
+     label3:
+        $r14 := @caughtexception;
+
+        r7 = $r14;
+
+        $r15 = new java.io.IOException;
+
+        $r16 = virtualinvoke r7.<java.net.URISyntaxException: java.lang.String getMessage()>();
+
+        specialinvoke $r15.<java.io.IOException: void <init>(java.lang.String)>($r16);
+
+        throw $r15;
+
+        catch java.net.URISyntaxException from label1 to label2 with label3;
+    }
+
+    public static java.lang.String getDefaultUserAgent()
+    {
+        java.lang.String r0, $r3, $r5;
+        java.lang.StringBuilder $r1, $r2, $r4;
+
+        r0 = staticinvoke <java.lang.System: java.lang.String getProperty(java.lang.String)>("http.agent");
+
+        if r0 == null goto label1;
+
+        return r0;
+
+     label1:
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Java");
+
+        $r3 = staticinvoke <java.lang.System: java.lang.String getProperty(java.lang.String)>("java.version");
+
+        $r4 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r3);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r5;
+    }
+
+    public static java.lang.String getOriginAddress(java.net.URL)
+    {
+        java.net.URL r0;
+        int i0, $i1;
+        java.lang.String r1, $r2;
+        java.lang.StringBuilder $r3, $r4, $r5, $r6;
+
+        r0 := @parameter0: java.net.URL;
+
+        i0 = virtualinvoke r0.<java.net.URL: int getPort()>();
+
+        r1 = virtualinvoke r0.<java.net.URL: java.lang.String getHost()>();
+
+        if i0 <= 0 goto label1;
+
+        $r2 = virtualinvoke r0.<java.net.URL: java.lang.String getProtocol()>();
+
+        $i1 = staticinvoke <com.android.okhttp.internal.Util: int getDefaultPort(java.lang.String)>($r2);
+
+        if i0 == $i1 goto label1;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        r1 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label1:
+        return r1;
+    }
+
+    private void initContentStream(java.io.InputStream) throws java.io.IOException
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        java.io.InputStream r1;
+        boolean $z0, $z1;
+        com.android.okhttp.internal.http.ResponseHeaders $r2, $r3, $r4;
+        java.util.zip.GZIPInputStream $r5;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        r1 := @parameter0: java.io.InputStream;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream responseTransferIn> = r1;
+
+        $z0 = r0.<com.android.okhttp.internal.http.HttpEngine: boolean transparentGzip>;
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        $z1 = virtualinvoke $r2.<com.android.okhttp.internal.http.ResponseHeaders: boolean isContentEncodingGzip()>();
+
+        if $z1 == 0 goto label1;
+
+        $r3 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        virtualinvoke $r3.<com.android.okhttp.internal.http.ResponseHeaders: void stripContentEncoding()>();
+
+        $r4 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        virtualinvoke $r4.<com.android.okhttp.internal.http.ResponseHeaders: void stripContentLength()>();
+
+        $r5 = new java.util.zip.GZIPInputStream;
+
+        specialinvoke $r5.<java.util.zip.GZIPInputStream: void <init>(java.io.InputStream)>(r1);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream responseBodyIn> = $r5;
+
+        return;
+
+     label1:
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream responseBodyIn> = r1;
+
+        return;
+    }
+
+    private void initResponseSource() throws java.io.IOException
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.OkResponseCache r1;
+        java.net.CacheResponse r2;
+        java.util.Map r3, $r12;
+        com.android.okhttp.internal.http.RawHeaders r4, $r11;
+        long l0;
+        com.android.okhttp.ResponseSource $r5, $r19, $r21, $r22, $r23, $r24, $r25, $r26;
+        com.android.okhttp.internal.http.Policy $r6;
+        boolean $z0, $z1;
+        com.android.okhttp.OkHttpClient $r7;
+        com.android.okhttp.internal.http.RequestHeaders $r8, $r18;
+        java.net.URI $r9, $r16;
+        java.lang.String $r10;
+        java.io.InputStream $r13, $r14, $r15, $r27, $r30;
+        com.android.okhttp.internal.http.ResponseHeaders $r17, $r20, $r28;
+        java.lang.AssertionError $r29;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r5 = <com.android.okhttp.ResponseSource: com.android.okhttp.ResponseSource NETWORK>;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource> = $r5;
+
+        $r6 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Policy policy>;
+
+        $z0 = interfaceinvoke $r6.<com.android.okhttp.internal.http.Policy: boolean getUseCaches()>();
+
+        if $z0 != 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r7 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        r1 = virtualinvoke $r7.<com.android.okhttp.OkHttpClient: com.android.okhttp.OkResponseCache getOkResponseCache()>();
+
+        if r1 == null goto label1;
+
+        $r9 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        $r10 = r0.<com.android.okhttp.internal.http.HttpEngine: java.lang.String method>;
+
+        $r8 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r11 = virtualinvoke $r8.<com.android.okhttp.internal.http.RequestHeaders: com.android.okhttp.internal.http.RawHeaders getHeaders()>();
+
+        $r12 = virtualinvoke $r11.<com.android.okhttp.internal.http.RawHeaders: java.util.Map toMultimap(boolean)>(0);
+
+        r2 = interfaceinvoke r1.<com.android.okhttp.OkResponseCache: java.net.CacheResponse get(java.net.URI,java.lang.String,java.util.Map)>($r9, $r10, $r12);
+
+        if r2 == null goto label1;
+
+        r3 = virtualinvoke r2.<java.net.CacheResponse: java.util.Map getHeaders()>();
+
+        $r13 = virtualinvoke r2.<java.net.CacheResponse: java.io.InputStream getBody()>();
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream cachedResponseBody> = $r13;
+
+        $z1 = virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: boolean acceptCacheResponseType(java.net.CacheResponse)>(r2);
+
+        if $z1 == 0 goto label3;
+
+        if r3 == null goto label3;
+
+        $r15 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream cachedResponseBody>;
+
+        if $r15 != null goto label4;
+
+     label3:
+        $r14 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream cachedResponseBody>;
+
+        staticinvoke <com.android.okhttp.internal.Util: void closeQuietly(java.io.Closeable)>($r14);
+
+        return;
+
+     label4:
+        r4 = staticinvoke <com.android.okhttp.internal.http.RawHeaders: com.android.okhttp.internal.http.RawHeaders fromMultimap(java.util.Map,boolean)>(r3, 1);
+
+        $r17 = new com.android.okhttp.internal.http.ResponseHeaders;
+
+        $r16 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        specialinvoke $r17.<com.android.okhttp.internal.http.ResponseHeaders: void <init>(java.net.URI,com.android.okhttp.internal.http.RawHeaders)>($r16, r4);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders cachedResponseHeaders> = $r17;
+
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r20 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders cachedResponseHeaders>;
+
+        $r18 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r19 = virtualinvoke $r20.<com.android.okhttp.internal.http.ResponseHeaders: com.android.okhttp.ResponseSource chooseResponseSource(long,com.android.okhttp.internal.http.RequestHeaders)>(l0, $r18);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource> = $r19;
+
+        $r21 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        $r22 = <com.android.okhttp.ResponseSource: com.android.okhttp.ResponseSource CACHE>;
+
+        if $r21 != $r22 goto label5;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.net.CacheResponse cacheResponse> = r2;
+
+        $r28 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders cachedResponseHeaders>;
+
+        $r27 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream cachedResponseBody>;
+
+        specialinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void setResponse(com.android.okhttp.internal.http.ResponseHeaders,java.io.InputStream)>($r28, $r27);
+
+        return;
+
+     label5:
+        $r26 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        $r25 = <com.android.okhttp.ResponseSource: com.android.okhttp.ResponseSource CONDITIONAL_CACHE>;
+
+        if $r26 != $r25 goto label6;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.net.CacheResponse cacheResponse> = r2;
+
+        return;
+
+     label6:
+        $r24 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        $r23 = <com.android.okhttp.ResponseSource: com.android.okhttp.ResponseSource NETWORK>;
+
+        if $r24 != $r23 goto label7;
+
+        $r30 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream cachedResponseBody>;
+
+        staticinvoke <com.android.okhttp.internal.Util: void closeQuietly(java.io.Closeable)>($r30);
+
+        return;
+
+     label7:
+        $r29 = new java.lang.AssertionError;
+
+        specialinvoke $r29.<java.lang.AssertionError: void <init>()>();
+
+        throw $r29;
+    }
+
+    private void maybeCache() throws java.io.IOException
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.OkResponseCache r1;
+        java.net.HttpURLConnection r2;
+        com.android.okhttp.internal.http.Policy $r3, $r5;
+        boolean $z0, $z1;
+        com.android.okhttp.OkHttpClient $r4;
+        com.android.okhttp.internal.http.RequestHeaders $r6;
+        com.android.okhttp.internal.http.ResponseHeaders $r7;
+        java.net.URI $r8, $r11;
+        java.net.CacheRequest $r9;
+        java.lang.String $r10;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r3 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Policy policy>;
+
+        $z0 = interfaceinvoke $r3.<com.android.okhttp.internal.http.Policy: boolean getUseCaches()>();
+
+        if $z0 != 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r4 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        r1 = virtualinvoke $r4.<com.android.okhttp.OkHttpClient: com.android.okhttp.OkResponseCache getOkResponseCache()>();
+
+        if r1 == null goto label1;
+
+        $r5 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Policy policy>;
+
+        r2 = interfaceinvoke $r5.<com.android.okhttp.internal.http.Policy: java.net.HttpURLConnection getHttpConnectionToCache()>();
+
+        $r7 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        $r6 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $z1 = virtualinvoke $r7.<com.android.okhttp.internal.http.ResponseHeaders: boolean isCacheable(com.android.okhttp.internal.http.RequestHeaders)>($r6);
+
+        if $z1 != 0 goto label3;
+
+        $r10 = virtualinvoke r2.<java.net.HttpURLConnection: java.lang.String getRequestMethod()>();
+
+        $r11 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        interfaceinvoke r1.<com.android.okhttp.OkResponseCache: void maybeRemove(java.lang.String,java.net.URI)>($r10, $r11);
+
+        return;
+
+     label3:
+        $r8 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        $r9 = interfaceinvoke r1.<com.android.okhttp.OkResponseCache: java.net.CacheRequest put(java.net.URI,java.net.URLConnection)>($r8, r2);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.net.CacheRequest cacheRequest> = $r9;
+
+        return;
+    }
+
+    private void prepareRawRequestHeaders() throws java.io.IOException
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        long l0;
+        java.net.CookieHandler r1;
+        com.android.okhttp.internal.http.RequestHeaders $r2, $r5, $r7, $r10, $r12, $r16, $r17, $r22, $r25, $r26, $r28, $r29, $r30, $r35;
+        com.android.okhttp.internal.http.RawHeaders $r3, $r18;
+        java.lang.String $r4, $r6, $r8, $r11, $r13, $r24, $r33, $r34;
+        com.android.okhttp.Connection $r9, $r27;
+        com.android.okhttp.internal.http.Policy $r14, $r32;
+        boolean $z0;
+        byte $b1;
+        com.android.okhttp.OkHttpClient $r15;
+        java.net.URI $r19;
+        java.util.Map $r20, $r21;
+        java.util.Date $r23;
+        java.net.URL $r31;
+        int $i2;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r3 = virtualinvoke $r2.<com.android.okhttp.internal.http.RequestHeaders: com.android.okhttp.internal.http.RawHeaders getHeaders()>();
+
+        $r4 = virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: java.lang.String getRequestLine()>();
+
+        virtualinvoke $r3.<com.android.okhttp.internal.http.RawHeaders: void setRequestLine(java.lang.String)>($r4);
+
+        $r5 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r6 = virtualinvoke $r5.<com.android.okhttp.internal.http.RequestHeaders: java.lang.String getUserAgent()>();
+
+        if $r6 != null goto label1;
+
+        $r35 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r33 = staticinvoke <com.android.okhttp.internal.http.HttpEngine: java.lang.String getDefaultUserAgent()>();
+
+        virtualinvoke $r35.<com.android.okhttp.internal.http.RequestHeaders: void setUserAgent(java.lang.String)>($r33);
+
+     label1:
+        $r7 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r8 = virtualinvoke $r7.<com.android.okhttp.internal.http.RequestHeaders: java.lang.String getHost()>();
+
+        if $r8 != null goto label2;
+
+        $r30 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r32 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Policy policy>;
+
+        $r31 = interfaceinvoke $r32.<com.android.okhttp.internal.http.Policy: java.net.URL getURL()>();
+
+        $r34 = staticinvoke <com.android.okhttp.internal.http.HttpEngine: java.lang.String getOriginAddress(java.net.URL)>($r31);
+
+        virtualinvoke $r30.<com.android.okhttp.internal.http.RequestHeaders: void setHost(java.lang.String)>($r34);
+
+     label2:
+        $r9 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        if $r9 == null goto label3;
+
+        $r27 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        $i2 = virtualinvoke $r27.<com.android.okhttp.Connection: int getHttpMinorVersion()>();
+
+        if $i2 == 0 goto label4;
+
+     label3:
+        $r10 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r11 = virtualinvoke $r10.<com.android.okhttp.internal.http.RequestHeaders: java.lang.String getConnection()>();
+
+        if $r11 != null goto label4;
+
+        $r26 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        virtualinvoke $r26.<com.android.okhttp.internal.http.RequestHeaders: void setConnection(java.lang.String)>("Keep-Alive");
+
+     label4:
+        $r12 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r13 = virtualinvoke $r12.<com.android.okhttp.internal.http.RequestHeaders: java.lang.String getAcceptEncoding()>();
+
+        if $r13 != null goto label5;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: boolean transparentGzip> = 1;
+
+        $r29 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        virtualinvoke $r29.<com.android.okhttp.internal.http.RequestHeaders: void setAcceptEncoding(java.lang.String)>("gzip");
+
+     label5:
+        $z0 = virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: boolean hasRequestBody()>();
+
+        if $z0 == 0 goto label6;
+
+        $r25 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r24 = virtualinvoke $r25.<com.android.okhttp.internal.http.RequestHeaders: java.lang.String getContentType()>();
+
+        if $r24 != null goto label6;
+
+        $r28 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        virtualinvoke $r28.<com.android.okhttp.internal.http.RequestHeaders: void setContentType(java.lang.String)>("application/x-www-form-urlencoded");
+
+     label6:
+        $r14 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Policy policy>;
+
+        l0 = interfaceinvoke $r14.<com.android.okhttp.internal.http.Policy: long getIfModifiedSince()>();
+
+        $b1 = l0 cmp 0L;
+
+        if $b1 == 0 goto label7;
+
+        $r22 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r23 = new java.util.Date;
+
+        specialinvoke $r23.<java.util.Date: void <init>(long)>(l0);
+
+        virtualinvoke $r22.<com.android.okhttp.internal.http.RequestHeaders: void setIfModifiedSince(java.util.Date)>($r23);
+
+     label7:
+        $r15 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        r1 = virtualinvoke $r15.<com.android.okhttp.OkHttpClient: java.net.CookieHandler getCookieHandler()>();
+
+        if r1 == null goto label8;
+
+        $r16 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r19 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        $r17 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r18 = virtualinvoke $r17.<com.android.okhttp.internal.http.RequestHeaders: com.android.okhttp.internal.http.RawHeaders getHeaders()>();
+
+        $r21 = virtualinvoke $r18.<com.android.okhttp.internal.http.RawHeaders: java.util.Map toMultimap(boolean)>(0);
+
+        $r20 = virtualinvoke r1.<java.net.CookieHandler: java.util.Map get(java.net.URI,java.util.Map)>($r19, $r21);
+
+        virtualinvoke $r16.<com.android.okhttp.internal.http.RequestHeaders: void addCookies(java.util.Map)>($r20);
+
+     label8:
+        return;
+    }
+
+    public static java.lang.String requestPath(java.net.URL)
+    {
+        java.net.URL r0;
+        java.lang.String r1, $r5;
+        boolean $z0;
+        java.lang.StringBuilder $r2, $r3, $r4;
+
+        r0 := @parameter0: java.net.URL;
+
+        r1 = virtualinvoke r0.<java.net.URL: java.lang.String getFile()>();
+
+        if r1 != null goto label2;
+
+        r1 = "/";
+
+     label1:
+        return r1;
+
+     label2:
+        $z0 = virtualinvoke r1.<java.lang.String: boolean startsWith(java.lang.String)>("/");
+
+        if $z0 != 0 goto label1;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r5;
+    }
+
+    private java.lang.String requestString()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        java.net.URL r1;
+        com.android.okhttp.internal.http.Policy $r2;
+        boolean $z0;
+        java.lang.String $r3, $r4;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Policy policy>;
+
+        r1 = interfaceinvoke $r2.<com.android.okhttp.internal.http.Policy: java.net.URL getURL()>();
+
+        $z0 = virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: boolean includeAuthorityInRequestLine()>();
+
+        if $z0 == 0 goto label1;
+
+        $r4 = virtualinvoke r1.<java.net.URL: java.lang.String toString()>();
+
+        return $r4;
+
+     label1:
+        $r3 = staticinvoke <com.android.okhttp.internal.http.HttpEngine: java.lang.String requestPath(java.net.URL)>(r1);
+
+        return $r3;
+    }
+
+    private void sendSocketRequest() throws java.io.IOException
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.Connection $r1, $r3;
+        com.android.okhttp.internal.http.Transport $r2, $r5, $r7;
+        java.lang.Object $r4;
+        boolean $z0;
+        java.io.OutputStream $r6, $r8;
+        java.lang.IllegalStateException $r9;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        if $r1 != null goto label1;
+
+        virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void connect()>();
+
+     label1:
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Transport transport>;
+
+        if $r2 == null goto label2;
+
+        $r9 = new java.lang.IllegalStateException;
+
+        specialinvoke $r9.<java.lang.IllegalStateException: void <init>()>();
+
+        throw $r9;
+
+     label2:
+        $r3 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        $r4 = virtualinvoke $r3.<com.android.okhttp.Connection: java.lang.Object newTransport(com.android.okhttp.internal.http.HttpEngine)>(r0);
+
+        $r5 = (com.android.okhttp.internal.http.Transport) $r4;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Transport transport> = $r5;
+
+        $z0 = virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: boolean hasRequestBody()>();
+
+        if $z0 == 0 goto label3;
+
+        $r6 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.OutputStream requestBodyOut>;
+
+        if $r6 != null goto label3;
+
+        $r7 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Transport transport>;
+
+        $r8 = interfaceinvoke $r7.<com.android.okhttp.internal.http.Transport: java.io.OutputStream createRequestBody()>();
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.io.OutputStream requestBodyOut> = $r8;
+
+     label3:
+        return;
+    }
+
+    private void setResponse(com.android.okhttp.internal.http.ResponseHeaders, java.io.InputStream) throws java.io.IOException
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.internal.http.ResponseHeaders r1;
+        java.io.InputStream r2, $r3;
+        java.lang.IllegalStateException $r4;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        r1 := @parameter0: com.android.okhttp.internal.http.ResponseHeaders;
+
+        r2 := @parameter1: java.io.InputStream;
+
+        $r3 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream responseBodyIn>;
+
+        if $r3 == null goto label1;
+
+        $r4 = new java.lang.IllegalStateException;
+
+        specialinvoke $r4.<java.lang.IllegalStateException: void <init>()>();
+
+        throw $r4;
+
+     label1:
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders> = r1;
+
+        if r2 == null goto label2;
+
+        specialinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void initContentStream(java.io.InputStream)>(r2);
+
+     label2:
+        return;
+    }
+
+    protected boolean acceptCacheResponseType(java.net.CacheResponse)
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        java.net.CacheResponse r1;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        r1 := @parameter0: java.net.CacheResponse;
+
+        return 1;
+    }
+
+    public final void automaticallyReleaseConnectionToPool()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.Connection $r1, $r4;
+        boolean $z0;
+        com.android.okhttp.OkHttpClient $r2;
+        com.android.okhttp.ConnectionPool $r3;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: boolean automaticallyReleaseConnectionToPool> = 1;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        if $r1 == null goto label1;
+
+        $z0 = r0.<com.android.okhttp.internal.http.HttpEngine: boolean connectionReleased>;
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r3 = virtualinvoke $r2.<com.android.okhttp.OkHttpClient: com.android.okhttp.ConnectionPool getConnectionPool()>();
+
+        $r4 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        virtualinvoke $r3.<com.android.okhttp.ConnectionPool: void recycle(com.android.okhttp.Connection)>($r4);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection> = null;
+
+     label1:
+        return;
+    }
+
+    protected final void connect() throws java.io.IOException
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        java.lang.String r1, $r6, $r19, $r36, $r56;
+        boolean z0, $z1;
+        javax.net.ssl.SSLSocketFactory r2;
+        javax.net.ssl.HostnameVerifier r3;
+        com.android.okhttp.Connection $r4, $r8, $r9, $r11, $r12, $r14, $r21, $r28, $r29;
+        com.android.okhttp.internal.http.RouteSelector $r5, $r7, $r34;
+        com.android.okhttp.OkHttpClient $r10, $r15, $r22, $r23, $r26, $r30, $r37, $r41, $r43, $r44, $r47, $r50, $r52, $r53;
+        int $i0, $i1, $i2, $i3;
+        com.android.okhttp.Route $r13, $r32;
+        java.net.Proxy $r16, $r18, $r42;
+        com.android.okhttp.internal.http.RequestHeaders $r17;
+        com.android.okhttp.internal.http.RawHeaders $r20;
+        com.android.okhttp.TunnelRequest $r24;
+        com.android.okhttp.ConnectionPool $r25, $r51;
+        com.android.okhttp.RouteDatabase $r27, $r48;
+        java.net.URI $r31, $r33, $r39, $r46, $r55;
+        com.android.okhttp.Address $r35;
+        com.android.okhttp.OkAuthenticator $r38;
+        java.util.List $r40;
+        java.net.ProxySelector $r45;
+        com.android.okhttp.internal.Dns $r49;
+        java.net.UnknownHostException $r54;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r4 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        if $r4 == null goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r5 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RouteSelector routeSelector>;
+
+        if $r5 != null goto label5;
+
+        $r33 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        r1 = virtualinvoke $r33.<java.net.URI: java.lang.String getHost()>();
+
+        if r1 != null goto label3;
+
+        $r54 = new java.net.UnknownHostException;
+
+        $r55 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        $r56 = virtualinvoke $r55.<java.net.URI: java.lang.String toString()>();
+
+        specialinvoke $r54.<java.net.UnknownHostException: void <init>(java.lang.String)>($r56);
+
+        throw $r54;
+
+     label3:
+        $r31 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        $r36 = virtualinvoke $r31.<java.net.URI: java.lang.String getScheme()>();
+
+        z0 = virtualinvoke $r36.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("https");
+
+        r2 = null;
+
+        r3 = null;
+
+        if z0 == 0 goto label4;
+
+        $r53 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        r2 = virtualinvoke $r53.<com.android.okhttp.OkHttpClient: javax.net.ssl.SSLSocketFactory getSslSocketFactory()>();
+
+        $r52 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        r3 = virtualinvoke $r52.<com.android.okhttp.OkHttpClient: javax.net.ssl.HostnameVerifier getHostnameVerifier()>();
+
+     label4:
+        $r34 = new com.android.okhttp.internal.http.RouteSelector;
+
+        $r35 = new com.android.okhttp.Address;
+
+        $r39 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        $i3 = staticinvoke <com.android.okhttp.internal.Util: int getEffectivePort(java.net.URI)>($r39);
+
+        $r37 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r38 = virtualinvoke $r37.<com.android.okhttp.OkHttpClient: com.android.okhttp.OkAuthenticator getAuthenticator()>();
+
+        $r43 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r42 = virtualinvoke $r43.<com.android.okhttp.OkHttpClient: java.net.Proxy getProxy()>();
+
+        $r41 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r40 = virtualinvoke $r41.<com.android.okhttp.OkHttpClient: java.util.List getTransports()>();
+
+        specialinvoke $r35.<com.android.okhttp.Address: void <init>(java.lang.String,int,javax.net.ssl.SSLSocketFactory,javax.net.ssl.HostnameVerifier,com.android.okhttp.OkAuthenticator,java.net.Proxy,java.util.List)>(r1, $i3, r2, r3, $r38, $r42, $r40);
+
+        $r46 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        $r47 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r45 = virtualinvoke $r47.<com.android.okhttp.OkHttpClient: java.net.ProxySelector getProxySelector()>();
+
+        $r44 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r51 = virtualinvoke $r44.<com.android.okhttp.OkHttpClient: com.android.okhttp.ConnectionPool getConnectionPool()>();
+
+        $r49 = <com.android.okhttp.internal.Dns: com.android.okhttp.internal.Dns DEFAULT>;
+
+        $r50 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r48 = virtualinvoke $r50.<com.android.okhttp.OkHttpClient: com.android.okhttp.RouteDatabase getRoutesDatabase()>();
+
+        specialinvoke $r34.<com.android.okhttp.internal.http.RouteSelector: void <init>(com.android.okhttp.Address,java.net.URI,java.net.ProxySelector,com.android.okhttp.ConnectionPool,com.android.okhttp.internal.Dns,com.android.okhttp.RouteDatabase)>($r35, $r46, $r45, $r51, $r49, $r48);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RouteSelector routeSelector> = $r34;
+
+     label5:
+        $r7 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RouteSelector routeSelector>;
+
+        $r6 = r0.<com.android.okhttp.internal.http.HttpEngine: java.lang.String method>;
+
+        $r8 = virtualinvoke $r7.<com.android.okhttp.internal.http.RouteSelector: com.android.okhttp.Connection next(java.lang.String)>($r6);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection> = $r8;
+
+        $r9 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        $z1 = virtualinvoke $r9.<com.android.okhttp.Connection: boolean isConnected()>();
+
+        if $z1 != 0 goto label7;
+
+        $r21 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        $r22 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $i1 = virtualinvoke $r22.<com.android.okhttp.OkHttpClient: int getConnectTimeout()>();
+
+        $r23 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $i2 = virtualinvoke $r23.<com.android.okhttp.OkHttpClient: int getReadTimeout()>();
+
+        $r24 = virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.TunnelRequest getTunnelConfig()>();
+
+        virtualinvoke $r21.<com.android.okhttp.Connection: void connect(int,int,com.android.okhttp.TunnelRequest)>($i1, $i2, $r24);
+
+        $r26 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r25 = virtualinvoke $r26.<com.android.okhttp.OkHttpClient: com.android.okhttp.ConnectionPool getConnectionPool()>();
+
+        $r29 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        virtualinvoke $r25.<com.android.okhttp.ConnectionPool: void maybeShare(com.android.okhttp.Connection)>($r29);
+
+        $r30 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r27 = virtualinvoke $r30.<com.android.okhttp.OkHttpClient: com.android.okhttp.RouteDatabase getRoutesDatabase()>();
+
+        $r28 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        $r32 = virtualinvoke $r28.<com.android.okhttp.Connection: com.android.okhttp.Route getRoute()>();
+
+        virtualinvoke $r27.<com.android.okhttp.RouteDatabase: void connected(com.android.okhttp.Route)>($r32);
+
+     label6:
+        $r12 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void connected(com.android.okhttp.Connection)>($r12);
+
+        $r14 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        $r13 = virtualinvoke $r14.<com.android.okhttp.Connection: com.android.okhttp.Route getRoute()>();
+
+        $r16 = virtualinvoke $r13.<com.android.okhttp.Route: java.net.Proxy getProxy()>();
+
+        $r15 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r18 = virtualinvoke $r15.<com.android.okhttp.OkHttpClient: java.net.Proxy getProxy()>();
+
+        if $r16 == $r18 goto label1;
+
+        $r17 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $r20 = virtualinvoke $r17.<com.android.okhttp.internal.http.RequestHeaders: com.android.okhttp.internal.http.RawHeaders getHeaders()>();
+
+        $r19 = virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: java.lang.String getRequestLine()>();
+
+        virtualinvoke $r20.<com.android.okhttp.internal.http.RawHeaders: void setRequestLine(java.lang.String)>($r19);
+
+        return;
+
+     label7:
+        $r11 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        $r10 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $i0 = virtualinvoke $r10.<com.android.okhttp.OkHttpClient: int getReadTimeout()>();
+
+        virtualinvoke $r11.<com.android.okhttp.Connection: void updateReadTimeout(int)>($i0);
+
+        goto label6;
+    }
+
+    protected void connected(com.android.okhttp.Connection)
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.Connection r1;
+        com.android.okhttp.internal.http.Policy $r2;
+        com.android.okhttp.Route $r3;
+        java.net.Proxy $r4;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        r1 := @parameter0: com.android.okhttp.Connection;
+
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Policy policy>;
+
+        $r3 = virtualinvoke r1.<com.android.okhttp.Connection: com.android.okhttp.Route getRoute()>();
+
+        $r4 = virtualinvoke $r3.<com.android.okhttp.Route: java.net.Proxy getProxy()>();
+
+        interfaceinvoke $r2.<com.android.okhttp.internal.http.Policy: void setSelectedProxy(java.net.Proxy)>($r4);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: boolean connected> = 1;
+
+        return;
+    }
+
+    public final java.net.CacheResponse getCacheResponse()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        java.net.CacheResponse $r1;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.CacheResponse cacheResponse>;
+
+        return $r1;
+    }
+
+    public final com.android.okhttp.Connection getConnection()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.Connection $r1;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        return $r1;
+    }
+
+    public final java.io.OutputStream getRequestBody()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.ResponseSource $r1;
+        java.io.OutputStream $r2;
+        java.lang.IllegalStateException $r3;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        if $r1 != null goto label1;
+
+        $r3 = new java.lang.IllegalStateException;
+
+        specialinvoke $r3.<java.lang.IllegalStateException: void <init>()>();
+
+        throw $r3;
+
+     label1:
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.OutputStream requestBodyOut>;
+
+        return $r2;
+    }
+
+    public final com.android.okhttp.internal.http.RequestHeaders getRequestHeaders()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.internal.http.RequestHeaders $r1;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        return $r1;
+    }
+
+    java.lang.String getRequestLine()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        java.lang.String r1, $r4, $r7, $r11;
+        com.android.okhttp.Connection $r2, $r12;
+        java.lang.StringBuilder $r3, $r5, $r6, $r8, $r9, $r10;
+        int $i0;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        if $r2 == null goto label1;
+
+        $r12 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        $i0 = virtualinvoke $r12.<com.android.okhttp.Connection: int getHttpMinorVersion()>();
+
+        if $i0 == 0 goto label3;
+
+     label1:
+        r1 = "HTTP/1.1";
+
+     label2:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = r0.<com.android.okhttp.internal.http.HttpEngine: java.lang.String method>;
+
+        $r5 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r4);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r7 = specialinvoke r0.<com.android.okhttp.internal.http.HttpEngine: java.lang.String requestString()>();
+
+        $r8 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r11;
+
+     label3:
+        r1 = "HTTP/1.0";
+
+        goto label2;
+    }
+
+    public final java.io.InputStream getResponseBody()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.internal.http.ResponseHeaders $r1;
+        java.io.InputStream $r2;
+        java.lang.IllegalStateException $r3;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        if $r1 != null goto label1;
+
+        $r3 = new java.lang.IllegalStateException;
+
+        specialinvoke $r3.<java.lang.IllegalStateException: void <init>()>();
+
+        throw $r3;
+
+     label1:
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream responseBodyIn>;
+
+        return $r2;
+    }
+
+    public final int getResponseCode()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.internal.http.ResponseHeaders $r1, $r2;
+        com.android.okhttp.internal.http.RawHeaders $r3;
+        int $i0;
+        java.lang.IllegalStateException $r4;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        if $r1 != null goto label1;
+
+        $r4 = new java.lang.IllegalStateException;
+
+        specialinvoke $r4.<java.lang.IllegalStateException: void <init>()>();
+
+        throw $r4;
+
+     label1:
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        $r3 = virtualinvoke $r2.<com.android.okhttp.internal.http.ResponseHeaders: com.android.okhttp.internal.http.RawHeaders getHeaders()>();
+
+        $i0 = virtualinvoke $r3.<com.android.okhttp.internal.http.RawHeaders: int getResponseCode()>();
+
+        return $i0;
+    }
+
+    public final com.android.okhttp.internal.http.ResponseHeaders getResponseHeaders()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.internal.http.ResponseHeaders $r1, $r2;
+        java.lang.IllegalStateException $r3;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        if $r1 != null goto label1;
+
+        $r3 = new java.lang.IllegalStateException;
+
+        specialinvoke $r3.<java.lang.IllegalStateException: void <init>()>();
+
+        throw $r3;
+
+     label1:
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        return $r2;
+    }
+
+    protected com.android.okhttp.TunnelRequest getTunnelConfig()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        return null;
+    }
+
+    public java.net.URI getUri()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        java.net.URI $r1;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        return $r1;
+    }
+
+    boolean hasRequestBody()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        java.lang.String $r1, $r2;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: java.lang.String method>;
+
+        $z0 = virtualinvoke $r1.<java.lang.String: boolean equals(java.lang.Object)>("POST");
+
+        if $z0 != 0 goto label1;
+
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: java.lang.String method>;
+
+        $z1 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>("PUT");
+
+        if $z1 == 0 goto label2;
+
+     label1:
+        return 1;
+
+     label2:
+        return 0;
+    }
+
+    public final boolean hasResponse()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.internal.http.ResponseHeaders $r1;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        if $r1 == null goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    public final boolean hasResponseBody()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        int i0, $i1;
+        com.android.okhttp.internal.http.ResponseHeaders $r1, $r4, $r5;
+        com.android.okhttp.internal.http.RawHeaders $r2;
+        java.lang.String $r3;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        $r2 = virtualinvoke $r1.<com.android.okhttp.internal.http.ResponseHeaders: com.android.okhttp.internal.http.RawHeaders getHeaders()>();
+
+        i0 = virtualinvoke $r2.<com.android.okhttp.internal.http.RawHeaders: int getResponseCode()>();
+
+        $r3 = r0.<com.android.okhttp.internal.http.HttpEngine: java.lang.String method>;
+
+        $z0 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>("HEAD");
+
+        if $z0 == 0 goto label2;
+
+     label1:
+        return 0;
+
+     label2:
+        if i0 < 100 goto label3;
+
+        if i0 < 200 goto label4;
+
+     label3:
+        if i0 == 204 goto label4;
+
+        if i0 == 304 goto label4;
+
+        return 1;
+
+     label4:
+        $r4 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        $i1 = virtualinvoke $r4.<com.android.okhttp.internal.http.ResponseHeaders: int getContentLength()>();
+
+        if $i1 != -1 goto label5;
+
+        $r5 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        $z1 = virtualinvoke $r5.<com.android.okhttp.internal.http.ResponseHeaders: boolean isChunked()>();
+
+        if $z1 == 0 goto label1;
+
+     label5:
+        return 1;
+    }
+
+    protected boolean includeAuthorityInRequestLine()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.Connection $r1, $r2;
+        com.android.okhttp.Route $r3;
+        java.net.Proxy $r4;
+        java.net.Proxy$Type $r5, $r6;
+        com.android.okhttp.internal.http.Policy $r7;
+        boolean $z0;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        if $r1 != null goto label1;
+
+        $r7 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Policy policy>;
+
+        $z0 = interfaceinvoke $r7.<com.android.okhttp.internal.http.Policy: boolean usingProxy()>();
+
+        return $z0;
+
+     label1:
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        $r3 = virtualinvoke $r2.<com.android.okhttp.Connection: com.android.okhttp.Route getRoute()>();
+
+        $r4 = virtualinvoke $r3.<com.android.okhttp.Route: java.net.Proxy getProxy()>();
+
+        $r5 = virtualinvoke $r4.<java.net.Proxy: java.net.Proxy$Type type()>();
+
+        $r6 = <java.net.Proxy$Type: java.net.Proxy$Type HTTP>;
+
+        if $r5 != $r6 goto label2;
+
+        return 1;
+
+     label2:
+        return 0;
+    }
+
+    public final void readResponse() throws java.io.IOException
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.OkResponseCache r1;
+        int i0;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        com.android.okhttp.ResponseSource $r2, $r3, $r10, $r11, $r12, $r39;
+        long $l1, $l3, $l4, $l5;
+        byte $b2;
+        java.io.OutputStream $r4, $r26, $r28, $r30, $r31, $r33;
+        com.android.okhttp.internal.http.Transport $r5, $r6, $r15, $r29, $r35;
+        com.android.okhttp.internal.http.ResponseHeaders $r7, $r8, $r9, $r16, $r17, $r19, $r20, $r22, $r38;
+        java.net.CacheRequest $r13;
+        java.io.InputStream $r14, $r18, $r21;
+        com.android.okhttp.internal.http.Policy $r23;
+        java.net.CacheResponse $r24;
+        com.android.okhttp.OkHttpClient $r25;
+        java.net.HttpURLConnection $r27;
+        com.android.okhttp.internal.http.RetryableOutputStream $r32, $r34;
+        java.lang.IllegalStateException $r36;
+        com.android.okhttp.internal.http.RequestHeaders $r37;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $z0 = virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: boolean hasResponse()>();
+
+        if $z0 == 0 goto label2;
+
+        $r38 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        $r39 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        virtualinvoke $r38.<com.android.okhttp.internal.http.ResponseHeaders: void setResponseSource(com.android.okhttp.ResponseSource)>($r39);
+
+     label1:
+        return;
+
+     label2:
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        if $r2 != null goto label3;
+
+        $r36 = new java.lang.IllegalStateException;
+
+        specialinvoke $r36.<java.lang.IllegalStateException: void <init>(java.lang.String)>("readResponse() without sendRequest()");
+
+        throw $r36;
+
+     label3:
+        $r3 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        $z1 = virtualinvoke $r3.<com.android.okhttp.ResponseSource: boolean requiresConnection()>();
+
+        if $z1 == 0 goto label1;
+
+        $l1 = r0.<com.android.okhttp.internal.http.HttpEngine: long sentRequestMillis>;
+
+        $b2 = $l1 cmp -1L;
+
+        if $b2 != 0 goto label5;
+
+        $r30 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.OutputStream requestBodyOut>;
+
+        $z5 = $r30 instanceof com.android.okhttp.internal.http.RetryableOutputStream;
+
+        if $z5 == 0 goto label4;
+
+        $r33 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.OutputStream requestBodyOut>;
+
+        $r34 = (com.android.okhttp.internal.http.RetryableOutputStream) $r33;
+
+        i0 = virtualinvoke $r34.<com.android.okhttp.internal.http.RetryableOutputStream: int contentLength()>();
+
+        $r37 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $l5 = (long) i0;
+
+        virtualinvoke $r37.<com.android.okhttp.internal.http.RequestHeaders: void setContentLength(long)>($l5);
+
+     label4:
+        $r35 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Transport transport>;
+
+        interfaceinvoke $r35.<com.android.okhttp.internal.http.Transport: void writeRequestHeaders()>();
+
+     label5:
+        $r4 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.OutputStream requestBodyOut>;
+
+        if $r4 == null goto label6;
+
+        $r28 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.OutputStream requestBodyOut>;
+
+        virtualinvoke $r28.<java.io.OutputStream: void close()>();
+
+        $r26 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.OutputStream requestBodyOut>;
+
+        $z4 = $r26 instanceof com.android.okhttp.internal.http.RetryableOutputStream;
+
+        if $z4 == 0 goto label6;
+
+        $r29 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Transport transport>;
+
+        $r31 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.OutputStream requestBodyOut>;
+
+        $r32 = (com.android.okhttp.internal.http.RetryableOutputStream) $r31;
+
+        interfaceinvoke $r29.<com.android.okhttp.internal.http.Transport: void writeRequestBody(com.android.okhttp.internal.http.RetryableOutputStream)>($r32);
+
+     label6:
+        $r5 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Transport transport>;
+
+        interfaceinvoke $r5.<com.android.okhttp.internal.http.Transport: void flushRequest()>();
+
+        $r6 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Transport transport>;
+
+        $r7 = interfaceinvoke $r6.<com.android.okhttp.internal.http.Transport: com.android.okhttp.internal.http.ResponseHeaders readResponseHeaders()>();
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders> = $r7;
+
+        $r8 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        $l3 = r0.<com.android.okhttp.internal.http.HttpEngine: long sentRequestMillis>;
+
+        $l4 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        virtualinvoke $r8.<com.android.okhttp.internal.http.ResponseHeaders: void setLocalTimestamps(long,long)>($l3, $l4);
+
+        $r9 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        $r10 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        virtualinvoke $r9.<com.android.okhttp.internal.http.ResponseHeaders: void setResponseSource(com.android.okhttp.ResponseSource)>($r10);
+
+        $r11 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        $r12 = <com.android.okhttp.ResponseSource: com.android.okhttp.ResponseSource CONDITIONAL_CACHE>;
+
+        if $r11 != $r12 goto label8;
+
+        $r16 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders cachedResponseHeaders>;
+
+        $r17 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        $z3 = virtualinvoke $r16.<com.android.okhttp.internal.http.ResponseHeaders: boolean validate(com.android.okhttp.internal.http.ResponseHeaders)>($r17);
+
+        if $z3 == 0 goto label7;
+
+        virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void release(boolean)>(0);
+
+        $r19 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders cachedResponseHeaders>;
+
+        $r20 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.ResponseHeaders responseHeaders>;
+
+        $r22 = virtualinvoke $r19.<com.android.okhttp.internal.http.ResponseHeaders: com.android.okhttp.internal.http.ResponseHeaders combine(com.android.okhttp.internal.http.ResponseHeaders)>($r20);
+
+        $r21 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream cachedResponseBody>;
+
+        specialinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void setResponse(com.android.okhttp.internal.http.ResponseHeaders,java.io.InputStream)>($r22, $r21);
+
+        $r25 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        r1 = virtualinvoke $r25.<com.android.okhttp.OkHttpClient: com.android.okhttp.OkResponseCache getOkResponseCache()>();
+
+        interfaceinvoke r1.<com.android.okhttp.OkResponseCache: void trackConditionalCacheHit()>();
+
+        $r24 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.CacheResponse cacheResponse>;
+
+        $r23 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Policy policy>;
+
+        $r27 = interfaceinvoke $r23.<com.android.okhttp.internal.http.Policy: java.net.HttpURLConnection getHttpConnectionToCache()>();
+
+        interfaceinvoke r1.<com.android.okhttp.OkResponseCache: void update(java.net.CacheResponse,java.net.HttpURLConnection)>($r24, $r27);
+
+        return;
+
+     label7:
+        $r18 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream cachedResponseBody>;
+
+        staticinvoke <com.android.okhttp.internal.Util: void closeQuietly(java.io.Closeable)>($r18);
+
+     label8:
+        $z2 = virtualinvoke r0.<com.android.okhttp.internal.http.HttpEngine: boolean hasResponseBody()>();
+
+        if $z2 == 0 goto label9;
+
+        specialinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void maybeCache()>();
+
+     label9:
+        $r15 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Transport transport>;
+
+        $r13 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.CacheRequest cacheRequest>;
+
+        $r14 = interfaceinvoke $r15.<com.android.okhttp.internal.http.Transport: java.io.InputStream getTransferStream(java.net.CacheRequest)>($r13);
+
+        specialinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void initContentStream(java.io.InputStream)>($r14);
+
+        return;
+    }
+
+    public void receiveHeaders(com.android.okhttp.internal.http.RawHeaders) throws java.io.IOException
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.internal.http.RawHeaders r1;
+        java.net.CookieHandler r2;
+        com.android.okhttp.OkHttpClient $r3;
+        java.net.URI $r4;
+        java.util.Map $r5;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        r1 := @parameter0: com.android.okhttp.internal.http.RawHeaders;
+
+        $r3 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        r2 = virtualinvoke $r3.<com.android.okhttp.OkHttpClient: java.net.CookieHandler getCookieHandler()>();
+
+        if r2 == null goto label1;
+
+        $r4 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        $r5 = virtualinvoke r1.<com.android.okhttp.internal.http.RawHeaders: java.util.Map toMultimap(boolean)>(1);
+
+        virtualinvoke r2.<java.net.CookieHandler: void put(java.net.URI,java.util.Map)>($r4, $r5);
+
+     label1:
+        return;
+    }
+
+    public final void release(boolean)
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        boolean z0, $z1, $z2, $z3;
+        java.io.InputStream $r1, $r2, $r6, $r12;
+        com.android.okhttp.Connection $r3, $r5, $r11;
+        com.android.okhttp.internal.http.Transport $r4, $r8;
+        java.io.OutputStream $r7;
+        com.android.okhttp.OkHttpClient $r9;
+        com.android.okhttp.ConnectionPool $r10;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        z0 := @parameter0: boolean;
+
+        $r2 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream responseBodyIn>;
+
+        $r1 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream cachedResponseBody>;
+
+        if $r2 != $r1 goto label1;
+
+        $r12 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream responseBodyIn>;
+
+        staticinvoke <com.android.okhttp.internal.Util: void closeQuietly(java.io.Closeable)>($r12);
+
+     label1:
+        $z1 = r0.<com.android.okhttp.internal.http.HttpEngine: boolean connectionReleased>;
+
+        if $z1 != 0 goto label3;
+
+        $r3 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        if $r3 == null goto label3;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: boolean connectionReleased> = 1;
+
+        $r4 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Transport transport>;
+
+        if $r4 == null goto label2;
+
+        $r8 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.Transport transport>;
+
+        $r7 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.OutputStream requestBodyOut>;
+
+        $r6 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream responseTransferIn>;
+
+        $z2 = interfaceinvoke $r8.<com.android.okhttp.internal.http.Transport: boolean makeReusable(boolean,java.io.OutputStream,java.io.InputStream)>(z0, $r7, $r6);
+
+        if $z2 != 0 goto label4;
+
+     label2:
+        $r5 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        staticinvoke <com.android.okhttp.internal.Util: void closeQuietly(java.io.Closeable)>($r5);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection> = null;
+
+     label3:
+        return;
+
+     label4:
+        $z3 = r0.<com.android.okhttp.internal.http.HttpEngine: boolean automaticallyReleaseConnectionToPool>;
+
+        if $z3 == 0 goto label3;
+
+        $r9 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r10 = virtualinvoke $r9.<com.android.okhttp.OkHttpClient: com.android.okhttp.ConnectionPool getConnectionPool()>();
+
+        $r11 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        virtualinvoke $r10.<com.android.okhttp.ConnectionPool: void recycle(com.android.okhttp.Connection)>($r11);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection> = null;
+
+        return;
+    }
+
+    public final void sendRequest() throws java.io.IOException
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        com.android.okhttp.OkResponseCache r1;
+        com.android.okhttp.internal.http.RawHeaders r2;
+        com.android.okhttp.ResponseSource $r3, $r6, $r11, $r12, $r13, $r15, $r23;
+        com.android.okhttp.OkHttpClient $r4, $r8;
+        com.android.okhttp.internal.http.RequestHeaders $r5;
+        boolean $z0, $z1, $z2;
+        com.android.okhttp.Connection $r7, $r10;
+        com.android.okhttp.ConnectionPool $r9;
+        java.net.CacheResponse $r14, $r17, $r19;
+        java.util.Map $r16;
+        com.android.okhttp.internal.http.ResponseHeaders $r18;
+        java.net.URI $r20;
+        java.io.InputStream $r21, $r22;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $r3 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        if $r3 == null goto label2;
+
+     label1:
+        return;
+
+     label2:
+        specialinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void prepareRawRequestHeaders()>();
+
+        specialinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void initResponseSource()>();
+
+        $r4 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        r1 = virtualinvoke $r4.<com.android.okhttp.OkHttpClient: com.android.okhttp.OkResponseCache getOkResponseCache()>();
+
+        if r1 == null goto label3;
+
+        $r23 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        interfaceinvoke r1.<com.android.okhttp.OkResponseCache: void trackResponse(com.android.okhttp.ResponseSource)>($r23);
+
+     label3:
+        $r5 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.internal.http.RequestHeaders requestHeaders>;
+
+        $z0 = virtualinvoke $r5.<com.android.okhttp.internal.http.RequestHeaders: boolean isOnlyIfCached()>();
+
+        if $z0 == 0 goto label5;
+
+        $r11 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        $z2 = virtualinvoke $r11.<com.android.okhttp.ResponseSource: boolean requiresConnection()>();
+
+        if $z2 == 0 goto label5;
+
+        $r12 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        $r13 = <com.android.okhttp.ResponseSource: com.android.okhttp.ResponseSource CONDITIONAL_CACHE>;
+
+        if $r12 != $r13 goto label4;
+
+        $r21 = r0.<com.android.okhttp.internal.http.HttpEngine: java.io.InputStream cachedResponseBody>;
+
+        staticinvoke <com.android.okhttp.internal.Util: void closeQuietly(java.io.Closeable)>($r21);
+
+     label4:
+        $r15 = <com.android.okhttp.ResponseSource: com.android.okhttp.ResponseSource CACHE>;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource> = $r15;
+
+        $r14 = <com.android.okhttp.internal.http.HttpEngine: java.net.CacheResponse GATEWAY_TIMEOUT_RESPONSE>;
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: java.net.CacheResponse cacheResponse> = $r14;
+
+        $r17 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.CacheResponse cacheResponse>;
+
+        $r16 = virtualinvoke $r17.<java.net.CacheResponse: java.util.Map getHeaders()>();
+
+        r2 = staticinvoke <com.android.okhttp.internal.http.RawHeaders: com.android.okhttp.internal.http.RawHeaders fromMultimap(java.util.Map,boolean)>($r16, 1);
+
+        $r18 = new com.android.okhttp.internal.http.ResponseHeaders;
+
+        $r20 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.URI uri>;
+
+        specialinvoke $r18.<com.android.okhttp.internal.http.ResponseHeaders: void <init>(java.net.URI,com.android.okhttp.internal.http.RawHeaders)>($r20, r2);
+
+        $r19 = r0.<com.android.okhttp.internal.http.HttpEngine: java.net.CacheResponse cacheResponse>;
+
+        $r22 = virtualinvoke $r19.<java.net.CacheResponse: java.io.InputStream getBody()>();
+
+        specialinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void setResponse(com.android.okhttp.internal.http.ResponseHeaders,java.io.InputStream)>($r18, $r22);
+
+     label5:
+        $r6 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.ResponseSource responseSource>;
+
+        $z1 = virtualinvoke $r6.<com.android.okhttp.ResponseSource: boolean requiresConnection()>();
+
+        if $z1 == 0 goto label6;
+
+        specialinvoke r0.<com.android.okhttp.internal.http.HttpEngine: void sendSocketRequest()>();
+
+        return;
+
+     label6:
+        $r7 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        if $r7 == null goto label1;
+
+        $r8 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.OkHttpClient client>;
+
+        $r9 = virtualinvoke $r8.<com.android.okhttp.OkHttpClient: com.android.okhttp.ConnectionPool getConnectionPool()>();
+
+        $r10 = r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection>;
+
+        virtualinvoke $r9.<com.android.okhttp.ConnectionPool: void recycle(com.android.okhttp.Connection)>($r10);
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: com.android.okhttp.Connection connection> = null;
+
+        return;
+    }
+
+    public void writingRequestHeaders()
+    {
+        com.android.okhttp.internal.http.HttpEngine r0;
+        long $l0, $l2;
+        byte $b1;
+        java.lang.IllegalStateException $r1;
+
+        r0 := @this: com.android.okhttp.internal.http.HttpEngine;
+
+        $l0 = r0.<com.android.okhttp.internal.http.HttpEngine: long sentRequestMillis>;
+
+        $b1 = $l0 cmp -1L;
+
+        if $b1 == 0 goto label1;
+
+        $r1 = new java.lang.IllegalStateException;
+
+        specialinvoke $r1.<java.lang.IllegalStateException: void <init>()>();
+
+        throw $r1;
+
+     label1:
+        $l2 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        r0.<com.android.okhttp.internal.http.HttpEngine: long sentRequestMillis> = $l2;
+
+        return;
+    }
+}

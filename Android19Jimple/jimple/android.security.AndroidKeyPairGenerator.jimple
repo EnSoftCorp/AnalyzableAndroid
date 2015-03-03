@@ -1,0 +1,518 @@
+public class android.security.AndroidKeyPairGenerator extends java.security.KeyPairGeneratorSpi
+{
+    private android.security.KeyStore mKeyStore;
+    private android.security.KeyPairGeneratorSpec mSpec;
+
+    public void <init>()
+    {
+        android.security.AndroidKeyPairGenerator r0;
+
+        r0 := @this: android.security.AndroidKeyPairGenerator;
+
+        specialinvoke r0.<java.security.KeyPairGeneratorSpi: void <init>()>();
+
+        return;
+    }
+
+    private static byte[][] getArgsForKeyType(int, java.security.spec.AlgorithmParameterSpec)
+    {
+        int i0;
+        java.security.spec.AlgorithmParameterSpec r0;
+        java.security.spec.DSAParameterSpec r1;
+        byte[][] r2, r4, $r5;
+        java.security.spec.RSAKeyGenParameterSpec r3;
+        boolean $z0, $z1;
+        java.math.BigInteger $r6, $r8, $r10, $r12;
+        byte[] $r7, $r9, $r11, $r13;
+
+        i0 := @parameter0: int;
+
+        r0 := @parameter1: java.security.spec.AlgorithmParameterSpec;
+
+        lookupswitch(i0)
+        {
+            case 6: goto label2;
+            case 116: goto label3;
+            default: goto label1;
+        };
+
+     label1:
+        $r5 = (byte[][]) null;
+
+        return $r5;
+
+     label2:
+        $z1 = r0 instanceof java.security.spec.RSAKeyGenParameterSpec;
+
+        if $z1 == 0 goto label1;
+
+        r3 = (java.security.spec.RSAKeyGenParameterSpec) r0;
+
+        r4 = newarray (byte[])[1];
+
+        $r12 = virtualinvoke r3.<java.security.spec.RSAKeyGenParameterSpec: java.math.BigInteger getPublicExponent()>();
+
+        $r13 = virtualinvoke $r12.<java.math.BigInteger: byte[] toByteArray()>();
+
+        r4[0] = $r13;
+
+        return r4;
+
+     label3:
+        $z0 = r0 instanceof java.security.spec.DSAParameterSpec;
+
+        if $z0 == 0 goto label1;
+
+        r1 = (java.security.spec.DSAParameterSpec) r0;
+
+        r2 = newarray (byte[])[3];
+
+        $r6 = virtualinvoke r1.<java.security.spec.DSAParameterSpec: java.math.BigInteger getG()>();
+
+        $r7 = virtualinvoke $r6.<java.math.BigInteger: byte[] toByteArray()>();
+
+        r2[0] = $r7;
+
+        $r8 = virtualinvoke r1.<java.security.spec.DSAParameterSpec: java.math.BigInteger getP()>();
+
+        $r9 = virtualinvoke $r8.<java.math.BigInteger: byte[] toByteArray()>();
+
+        r2[1] = $r9;
+
+        $r10 = virtualinvoke r1.<java.security.spec.DSAParameterSpec: java.math.BigInteger getQ()>();
+
+        $r11 = virtualinvoke $r10.<java.math.BigInteger: byte[] toByteArray()>();
+
+        r2[2] = $r11;
+
+        return r2;
+    }
+
+    private static java.lang.String getDefaultSignatureAlgorithmForKeyType(java.lang.String)
+    {
+        java.lang.String r0, $r1, $r2, $r3, $r8;
+        boolean $z0, $z1, $z2;
+        java.lang.IllegalArgumentException $r4;
+        java.lang.StringBuilder $r5, $r6, $r7;
+
+        r0 := @parameter0: java.lang.String;
+
+        $r1 = "RSA";
+
+        $z0 = virtualinvoke $r1.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>(r0);
+
+        if $z0 == 0 goto label1;
+
+        return "sha256WithRSA";
+
+     label1:
+        $r2 = "DSA";
+
+        $z1 = virtualinvoke $r2.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>(r0);
+
+        if $z1 == 0 goto label2;
+
+        return "sha1WithDSA";
+
+     label2:
+        $r3 = "EC";
+
+        $z2 = virtualinvoke $r3.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>(r0);
+
+        if $z2 == 0 goto label3;
+
+        return "sha256WithECDSA";
+
+     label3:
+        $r4 = new java.lang.IllegalArgumentException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unsupported key type ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r8);
+
+        throw $r4;
+    }
+
+    public java.security.KeyPair generateKeyPair()
+    {
+        android.security.AndroidKeyPairGenerator r0;
+        java.lang.String r1, r3, $r25, $r35, $r45, $r46, $r52;
+        int i0, $i1, $i2, $i3, $i4, $i5;
+        byte[][] r2;
+        com.android.org.conscrypt.OpenSSLEngine r4;
+        java.security.InvalidKeyException r5, $r70;
+        java.security.PrivateKey r6;
+        byte[] r7, r15;
+        java.security.spec.InvalidKeySpecException r8, $r72;
+        java.security.NoSuchAlgorithmException r9, $r67;
+        java.security.PublicKey r10;
+        com.android.org.bouncycastle.x509.X509V3CertificateGenerator r11, $r39;
+        java.lang.Exception r12, $r75;
+        java.security.cert.CertificateEncodingException r13, $r62;
+        java.security.cert.X509Certificate r14;
+        java.lang.IllegalStateException $r16, $r57, $r59, $r63, $r68, $r69, $r71, $r74;
+        android.security.KeyStore $r17, $r21, $r29, $r32, $r55, $r58, $r60, $r64, $r73;
+        android.security.KeyPairGeneratorSpec $r18, $r19, $r20, $r22, $r23, $r30, $r31, $r36, $r38, $r41, $r43, $r44, $r47, $r49, $r53;
+        java.security.spec.AlgorithmParameterSpec $r24;
+        java.lang.StringBuilder $r26, $r27, $r28, $r51, $r54, $r56;
+        boolean $z1, $z3;
+        java.security.spec.X509EncodedKeySpec $r33;
+        java.security.KeyFactory $r34;
+        java.math.BigInteger $r37;
+        javax.security.auth.x500.X500Principal $r40, $r42;
+        java.util.Date $r48, $r50;
+        java.security.KeyPair $r61;
+        android.security.KeyStore$State $r65, $r66;
+        java.lang.RuntimeException $r76;
+
+        r0 := @this: android.security.AndroidKeyPairGenerator;
+
+        $r17 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyStore mKeyStore>;
+
+        if $r17 == null goto label01;
+
+        $r19 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        if $r19 != null goto label02;
+
+     label01:
+        $r16 = new java.lang.IllegalStateException;
+
+        specialinvoke $r16.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Must call initialize with an android.security.KeyPairGeneratorSpec first");
+
+        throw $r16;
+
+     label02:
+        $r18 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $i1 = virtualinvoke $r18.<android.security.KeyPairGeneratorSpec: int getFlags()>();
+
+        $i2 = 1 & $i1;
+
+        if $i2 == 0 goto label03;
+
+        $r58 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyStore mKeyStore>;
+
+        $r66 = virtualinvoke $r58.<android.security.KeyStore: android.security.KeyStore$State state()>();
+
+        $r65 = <android.security.KeyStore$State: android.security.KeyStore$State UNLOCKED>;
+
+        if $r66 == $r65 goto label03;
+
+        $r68 = new java.lang.IllegalStateException;
+
+        specialinvoke $r68.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Android keystore must be in initialized and unlocked state if encryption is required");
+
+        throw $r68;
+
+     label03:
+        $r20 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        r1 = virtualinvoke $r20.<android.security.KeyPairGeneratorSpec: java.lang.String getKeystoreAlias()>();
+
+        $r21 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyStore mKeyStore>;
+
+        staticinvoke <android.security.Credentials: boolean deleteAllTypesForAlias(android.security.KeyStore,java.lang.String)>($r21, r1);
+
+        $r22 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $r25 = virtualinvoke $r22.<android.security.KeyPairGeneratorSpec: java.lang.String getKeyType()>();
+
+        i0 = staticinvoke <android.security.KeyStore: int getKeyTypeForAlgorithm(java.lang.String)>($r25);
+
+        $r23 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $r24 = virtualinvoke $r23.<android.security.KeyPairGeneratorSpec: java.security.spec.AlgorithmParameterSpec getAlgorithmParameterSpec()>();
+
+        r2 = staticinvoke <android.security.AndroidKeyPairGenerator: byte[][] getArgsForKeyType(int,java.security.spec.AlgorithmParameterSpec)>(i0, $r24);
+
+        $r28 = new java.lang.StringBuilder;
+
+        specialinvoke $r28.<java.lang.StringBuilder: void <init>()>();
+
+        $r26 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("USRPKEY_");
+
+        $r27 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        r3 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r29 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyStore mKeyStore>;
+
+        $r30 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $i4 = virtualinvoke $r30.<android.security.KeyPairGeneratorSpec: int getKeySize()>();
+
+        $r31 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $i3 = virtualinvoke $r31.<android.security.KeyPairGeneratorSpec: int getFlags()>();
+
+        $z1 = virtualinvoke $r29.<android.security.KeyStore: boolean generate(java.lang.String,int,int,int,int,byte[][])>(r3, -1, i0, $i4, $i3, r2);
+
+        if $z1 != 0 goto label04;
+
+        $r59 = new java.lang.IllegalStateException;
+
+        specialinvoke $r59.<java.lang.IllegalStateException: void <init>(java.lang.String)>("could not generate key in keystore");
+
+        throw $r59;
+
+     label04:
+        r4 = staticinvoke <com.android.org.conscrypt.OpenSSLEngine: com.android.org.conscrypt.OpenSSLEngine getInstance(java.lang.String)>("keystore");
+
+     label05:
+        r6 = virtualinvoke r4.<com.android.org.conscrypt.OpenSSLEngine: java.security.PrivateKey getPrivateKeyById(java.lang.String)>(r3);
+
+     label06:
+        $r32 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyStore mKeyStore>;
+
+        r7 = virtualinvoke $r32.<android.security.KeyStore: byte[] getPubkey(java.lang.String)>(r3);
+
+     label07:
+        $r36 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $r35 = virtualinvoke $r36.<android.security.KeyPairGeneratorSpec: java.lang.String getKeyType()>();
+
+        $r34 = staticinvoke <java.security.KeyFactory: java.security.KeyFactory getInstance(java.lang.String)>($r35);
+
+        $r33 = new java.security.spec.X509EncodedKeySpec;
+
+        specialinvoke $r33.<java.security.spec.X509EncodedKeySpec: void <init>(byte[])>(r7);
+
+        r10 = virtualinvoke $r34.<java.security.KeyFactory: java.security.PublicKey generatePublic(java.security.spec.KeySpec)>($r33);
+
+     label08:
+        $r39 = new com.android.org.bouncycastle.x509.X509V3CertificateGenerator;
+
+        specialinvoke $r39.<com.android.org.bouncycastle.x509.X509V3CertificateGenerator: void <init>()>();
+
+        r11 = $r39;
+
+        virtualinvoke r11.<com.android.org.bouncycastle.x509.X509V3CertificateGenerator: void setPublicKey(java.security.PublicKey)>(r10);
+
+        $r38 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $r37 = virtualinvoke $r38.<android.security.KeyPairGeneratorSpec: java.math.BigInteger getSerialNumber()>();
+
+        virtualinvoke r11.<com.android.org.bouncycastle.x509.X509V3CertificateGenerator: void setSerialNumber(java.math.BigInteger)>($r37);
+
+        $r43 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $r42 = virtualinvoke $r43.<android.security.KeyPairGeneratorSpec: javax.security.auth.x500.X500Principal getSubjectDN()>();
+
+        virtualinvoke r11.<com.android.org.bouncycastle.x509.X509V3CertificateGenerator: void setSubjectDN(javax.security.auth.x500.X500Principal)>($r42);
+
+        $r41 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $r40 = virtualinvoke $r41.<android.security.KeyPairGeneratorSpec: javax.security.auth.x500.X500Principal getSubjectDN()>();
+
+        virtualinvoke r11.<com.android.org.bouncycastle.x509.X509V3CertificateGenerator: void setIssuerDN(javax.security.auth.x500.X500Principal)>($r40);
+
+        $r47 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $r48 = virtualinvoke $r47.<android.security.KeyPairGeneratorSpec: java.util.Date getStartDate()>();
+
+        virtualinvoke r11.<com.android.org.bouncycastle.x509.X509V3CertificateGenerator: void setNotBefore(java.util.Date)>($r48);
+
+        $r49 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $r50 = virtualinvoke $r49.<android.security.KeyPairGeneratorSpec: java.util.Date getEndDate()>();
+
+        virtualinvoke r11.<com.android.org.bouncycastle.x509.X509V3CertificateGenerator: void setNotAfter(java.util.Date)>($r50);
+
+        $r44 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $r45 = virtualinvoke $r44.<android.security.KeyPairGeneratorSpec: java.lang.String getKeyType()>();
+
+        $r46 = staticinvoke <android.security.AndroidKeyPairGenerator: java.lang.String getDefaultSignatureAlgorithmForKeyType(java.lang.String)>($r45);
+
+        virtualinvoke r11.<com.android.org.bouncycastle.x509.X509V3CertificateGenerator: void setSignatureAlgorithm(java.lang.String)>($r46);
+
+     label09:
+        r14 = virtualinvoke r11.<com.android.org.bouncycastle.x509.X509V3CertificateGenerator: java.security.cert.X509Certificate generate(java.security.PrivateKey)>(r6);
+
+     label10:
+        r15 = virtualinvoke r14.<java.security.cert.X509Certificate: byte[] getEncoded()>();
+
+     label11:
+        $r55 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyStore mKeyStore>;
+
+        $r54 = new java.lang.StringBuilder;
+
+        specialinvoke $r54.<java.lang.StringBuilder: void <init>()>();
+
+        $r56 = virtualinvoke $r54.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("USRCERT_");
+
+        $r51 = virtualinvoke $r56.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r52 = virtualinvoke $r51.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r53 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec>;
+
+        $i5 = virtualinvoke $r53.<android.security.KeyPairGeneratorSpec: int getFlags()>();
+
+        $z3 = virtualinvoke $r55.<android.security.KeyStore: boolean put(java.lang.String,byte[],int,int)>($r52, r15, -1, $i5);
+
+        if $z3 != 0 goto label17;
+
+        $r60 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyStore mKeyStore>;
+
+        staticinvoke <android.security.Credentials: boolean deleteAllTypesForAlias(android.security.KeyStore,java.lang.String)>($r60, r1);
+
+        $r57 = new java.lang.IllegalStateException;
+
+        specialinvoke $r57.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Can\'t store certificate in AndroidKeyStore");
+
+        throw $r57;
+
+     label12:
+        $r70 := @caughtexception;
+
+        r5 = $r70;
+
+        $r76 = new java.lang.RuntimeException;
+
+        specialinvoke $r76.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>("Can\'t get key", r5);
+
+        throw $r76;
+
+     label13:
+        $r67 := @caughtexception;
+
+        r9 = $r67;
+
+        $r63 = new java.lang.IllegalStateException;
+
+        specialinvoke $r63.<java.lang.IllegalStateException: void <init>(java.lang.String,java.lang.Throwable)>("Can\'t instantiate key generator", r9);
+
+        throw $r63;
+
+     label14:
+        $r72 := @caughtexception;
+
+        r8 = $r72;
+
+        $r69 = new java.lang.IllegalStateException;
+
+        specialinvoke $r69.<java.lang.IllegalStateException: void <init>(java.lang.String,java.lang.Throwable)>("keystore returned invalid key encoding", r8);
+
+        throw $r69;
+
+     label15:
+        $r75 := @caughtexception;
+
+        r12 = $r75;
+
+        $r73 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyStore mKeyStore>;
+
+        staticinvoke <android.security.Credentials: boolean deleteAllTypesForAlias(android.security.KeyStore,java.lang.String)>($r73, r1);
+
+        $r71 = new java.lang.IllegalStateException;
+
+        specialinvoke $r71.<java.lang.IllegalStateException: void <init>(java.lang.String,java.lang.Throwable)>("Can\'t generate certificate", r12);
+
+        throw $r71;
+
+     label16:
+        $r62 := @caughtexception;
+
+        r13 = $r62;
+
+        $r64 = r0.<android.security.AndroidKeyPairGenerator: android.security.KeyStore mKeyStore>;
+
+        staticinvoke <android.security.Credentials: boolean deleteAllTypesForAlias(android.security.KeyStore,java.lang.String)>($r64, r1);
+
+        $r74 = new java.lang.IllegalStateException;
+
+        specialinvoke $r74.<java.lang.IllegalStateException: void <init>(java.lang.String,java.lang.Throwable)>("Can\'t get encoding of certificate", r13);
+
+        throw $r74;
+
+     label17:
+        $r61 = new java.security.KeyPair;
+
+        specialinvoke $r61.<java.security.KeyPair: void <init>(java.security.PublicKey,java.security.PrivateKey)>(r10, r6);
+
+        return $r61;
+
+        catch java.security.InvalidKeyException from label05 to label06 with label12;
+        catch java.security.NoSuchAlgorithmException from label07 to label08 with label13;
+        catch java.security.spec.InvalidKeySpecException from label07 to label08 with label14;
+        catch java.lang.Exception from label09 to label10 with label15;
+        catch java.security.cert.CertificateEncodingException from label10 to label11 with label16;
+    }
+
+    public void initialize(int, java.security.SecureRandom)
+    {
+        android.security.AndroidKeyPairGenerator r0;
+        int i0;
+        java.security.SecureRandom r1;
+        java.lang.IllegalArgumentException $r2;
+
+        r0 := @this: android.security.AndroidKeyPairGenerator;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.security.SecureRandom;
+
+        $r2 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r2.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("cannot specify keysize with AndroidKeyPairGenerator");
+
+        throw $r2;
+    }
+
+    public void initialize(java.security.spec.AlgorithmParameterSpec, java.security.SecureRandom) throws java.security.InvalidAlgorithmParameterException
+    {
+        android.security.AndroidKeyPairGenerator r0;
+        java.security.spec.AlgorithmParameterSpec r1;
+        java.security.SecureRandom r2;
+        boolean $z0;
+        android.security.KeyPairGeneratorSpec $r3;
+        android.security.KeyStore $r4;
+        java.security.InvalidAlgorithmParameterException $r5, $r6;
+
+        r0 := @this: android.security.AndroidKeyPairGenerator;
+
+        r1 := @parameter0: java.security.spec.AlgorithmParameterSpec;
+
+        r2 := @parameter1: java.security.SecureRandom;
+
+        if r1 != null goto label1;
+
+        $r6 = new java.security.InvalidAlgorithmParameterException;
+
+        specialinvoke $r6.<java.security.InvalidAlgorithmParameterException: void <init>(java.lang.String)>("must supply params of type android.security.KeyPairGeneratorSpec");
+
+        throw $r6;
+
+     label1:
+        $z0 = r1 instanceof android.security.KeyPairGeneratorSpec;
+
+        if $z0 != 0 goto label2;
+
+        $r5 = new java.security.InvalidAlgorithmParameterException;
+
+        specialinvoke $r5.<java.security.InvalidAlgorithmParameterException: void <init>(java.lang.String)>("params must be of type android.security.KeyPairGeneratorSpec");
+
+        throw $r5;
+
+     label2:
+        $r3 = (android.security.KeyPairGeneratorSpec) r1;
+
+        r0.<android.security.AndroidKeyPairGenerator: android.security.KeyPairGeneratorSpec mSpec> = $r3;
+
+        $r4 = staticinvoke <android.security.KeyStore: android.security.KeyStore getInstance()>();
+
+        r0.<android.security.AndroidKeyPairGenerator: android.security.KeyStore mKeyStore> = $r4;
+
+        return;
+    }
+}

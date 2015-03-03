@@ -1,0 +1,1555 @@
+public class com.android.internal.os.ZygoteInit extends java.lang.Object
+{
+    private static final java.lang.String ANDROID_SOCKET_ENV;
+    static final int GC_LOOP_COUNT;
+    private static final int LOG_BOOT_PROGRESS_PRELOAD_END;
+    private static final int LOG_BOOT_PROGRESS_PRELOAD_START;
+    private static final java.lang.String PRELOADED_CLASSES;
+    private static final int PRELOAD_GC_THRESHOLD;
+    private static final boolean PRELOAD_RESOURCES;
+    private static final java.lang.String PROPERTY_DISABLE_OPENGL_PRELOADING;
+    private static final int ROOT_GID;
+    private static final int ROOT_UID;
+    private static final java.lang.String TAG;
+    private static final int UNPRIVILEGED_GID;
+    private static final int UNPRIVILEGED_UID;
+    public static final java.lang.String USAGE_STRING;
+    private static android.content.res.Resources mResources;
+    private static android.net.LocalServerSocket sServerSocket;
+
+    private void <init>()
+    {
+        com.android.internal.os.ZygoteInit r0;
+
+        r0 := @this: com.android.internal.os.ZygoteInit;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        return;
+    }
+
+    private static com.android.internal.os.ZygoteConnection acceptCommandPeer()
+    {
+        com.android.internal.os.ZygoteConnection r0, $r2;
+        java.io.IOException r1, $r5;
+        android.net.LocalServerSocket $r3;
+        android.net.LocalSocket $r4;
+        java.lang.RuntimeException $r6;
+
+     label1:
+        $r2 = new com.android.internal.os.ZygoteConnection;
+
+        $r3 = <com.android.internal.os.ZygoteInit: android.net.LocalServerSocket sServerSocket>;
+
+        $r4 = virtualinvoke $r3.<android.net.LocalServerSocket: android.net.LocalSocket accept()>();
+
+        specialinvoke $r2.<com.android.internal.os.ZygoteConnection: void <init>(android.net.LocalSocket)>($r4);
+
+        r0 = $r2;
+
+     label2:
+        return r0;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r1 = $r5;
+
+        $r6 = new java.lang.RuntimeException;
+
+        specialinvoke $r6.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>("IOException during accept()", r1);
+
+        throw $r6;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    static native long capgetPermitted(int) throws java.io.IOException;
+
+    static void closeServerSocket()
+    {
+        libcore.io.ErrnoException r0, $r7;
+        java.io.IOException r1, $r8;
+        java.io.FileDescriptor r2;
+        android.net.LocalServerSocket $r3, $r4, $r5;
+        libcore.io.Os $r6;
+
+     label1:
+        $r3 = <com.android.internal.os.ZygoteInit: android.net.LocalServerSocket sServerSocket>;
+
+        if $r3 == null goto label4;
+
+        $r4 = <com.android.internal.os.ZygoteInit: android.net.LocalServerSocket sServerSocket>;
+
+        r2 = virtualinvoke $r4.<android.net.LocalServerSocket: java.io.FileDescriptor getFileDescriptor()>();
+
+        $r5 = <com.android.internal.os.ZygoteInit: android.net.LocalServerSocket sServerSocket>;
+
+        virtualinvoke $r5.<android.net.LocalServerSocket: void close()>();
+
+     label2:
+        if r2 == null goto label4;
+
+     label3:
+        $r6 = <libcore.io.Libcore: libcore.io.Os os>;
+
+        interfaceinvoke $r6.<libcore.io.Os: void close(java.io.FileDescriptor)>(r2);
+
+     label4:
+        <com.android.internal.os.ZygoteInit: android.net.LocalServerSocket sServerSocket> = null;
+
+        return;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r1 = $r8;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", "Zygote:  error closing sockets", r1);
+
+        goto label4;
+
+     label6:
+        $r7 := @caughtexception;
+
+        r0 = $r7;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", "Zygote:  error closing descriptor", r0);
+
+        goto label4;
+
+        catch java.io.IOException from label1 to label2 with label5;
+        catch libcore.io.ErrnoException from label1 to label2 with label6;
+        catch java.io.IOException from label3 to label4 with label5;
+        catch libcore.io.ErrnoException from label3 to label4 with label6;
+    }
+
+    static native java.io.FileDescriptor createFileDescriptor(int) throws java.io.IOException;
+
+    static void gc()
+    {
+        dalvik.system.VMRuntime r0;
+
+        r0 = staticinvoke <dalvik.system.VMRuntime: dalvik.system.VMRuntime getRuntime()>();
+
+        staticinvoke <java.lang.System: void gc()>();
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: void runFinalizationSync()>();
+
+        staticinvoke <java.lang.System: void gc()>();
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: void runFinalizationSync()>();
+
+        staticinvoke <java.lang.System: void gc()>();
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: void runFinalizationSync()>();
+
+        return;
+    }
+
+    static native int getpgid(int) throws java.io.IOException;
+
+    private static void handleSystemServerProcess(com.android.internal.os.ZygoteConnection$Arguments) throws com.android.internal.os.ZygoteInit$MethodAndArgsCaller
+    {
+        com.android.internal.os.ZygoteConnection$Arguments r0;
+        int $i0, $i1, $i2, $i4, $i5;
+        libcore.io.Os $r1;
+        java.lang.String $r2, $r3, $r6, $r7, $r8;
+        java.lang.String[] $r4, $r5;
+
+        r0 := @parameter0: com.android.internal.os.ZygoteConnection$Arguments;
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void closeServerSocket()>();
+
+        $r1 = <libcore.io.Libcore: libcore.io.Os os>;
+
+        $i1 = <libcore.io.OsConstants: int S_IRWXG>;
+
+        $i0 = <libcore.io.OsConstants: int S_IRWXO>;
+
+        $i2 = $i1 | $i0;
+
+        interfaceinvoke $r1.<libcore.io.Os: int umask(int)>($i2);
+
+        $r2 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String niceName>;
+
+        if $r2 == null goto label1;
+
+        $r8 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String niceName>;
+
+        staticinvoke <android.os.Process: void setArgV0(java.lang.String)>($r8);
+
+     label1:
+        $r3 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+        if $r3 == null goto label2;
+
+        $r7 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+        $r6 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String niceName>;
+
+        $i5 = r0.<com.android.internal.os.ZygoteConnection$Arguments: int targetSdkVersion>;
+
+        $r5 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String[] remainingArgs>;
+
+        staticinvoke <com.android.internal.os.WrapperInit: void execApplication(java.lang.String,java.lang.String,int,java.io.FileDescriptor,java.lang.String[])>($r7, $r6, $i5, null, $r5);
+
+        return;
+
+     label2:
+        $i4 = r0.<com.android.internal.os.ZygoteConnection$Arguments: int targetSdkVersion>;
+
+        $r4 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String[] remainingArgs>;
+
+        staticinvoke <com.android.internal.os.RuntimeInit: void zygoteInit(int,java.lang.String[])>($i4, $r4);
+
+        return;
+    }
+
+    static void invokeStaticMain(java.lang.ClassLoader, java.lang.String, java.lang.String[]) throws com.android.internal.os.ZygoteInit$MethodAndArgsCaller
+    {
+        java.lang.ClassLoader r0;
+        java.lang.String r1, $r13, $r21, $r28, $r30;
+        java.lang.String[] r2;
+        java.lang.ClassNotFoundException r3, $r29;
+        java.lang.Class r4;
+        java.lang.SecurityException r5, $r20;
+        java.lang.NoSuchMethodException r6, $r14;
+        java.lang.reflect.Method r7;
+        int i0;
+        java.lang.Class[] $r8;
+        boolean $z0, $z1;
+        java.lang.RuntimeException $r9, $r17, $r23, $r26;
+        java.lang.StringBuilder $r10, $r11, $r12, $r16, $r18, $r19, $r22, $r24, $r25, $r27, $r31, $r32;
+        com.android.internal.os.ZygoteInit$MethodAndArgsCaller $r15;
+
+        r0 := @parameter0: java.lang.ClassLoader;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String[];
+
+     label1:
+        r4 = virtualinvoke r0.<java.lang.ClassLoader: java.lang.Class loadClass(java.lang.String)>(r1);
+
+     label2:
+        $r8 = newarray (java.lang.Class)[1];
+
+        $r8[0] = class "[Ljava/lang/String;";
+
+        r7 = virtualinvoke r4.<java.lang.Class: java.lang.reflect.Method getMethod(java.lang.String,java.lang.Class[])>("main", $r8);
+
+     label3:
+        i0 = virtualinvoke r7.<java.lang.reflect.Method: int getModifiers()>();
+
+        $z0 = staticinvoke <java.lang.reflect.Modifier: boolean isStatic(int)>(i0);
+
+        if $z0 == 0 goto label4;
+
+        $z1 = staticinvoke <java.lang.reflect.Modifier: boolean isPublic(int)>(i0);
+
+        if $z1 != 0 goto label8;
+
+     label4:
+        $r9 = new java.lang.RuntimeException;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Main method is not public and static on ");
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r9.<java.lang.RuntimeException: void <init>(java.lang.String)>($r13);
+
+        throw $r9;
+
+     label5:
+        $r29 := @caughtexception;
+
+        r3 = $r29;
+
+        $r26 = new java.lang.RuntimeException;
+
+        $r27 = new java.lang.StringBuilder;
+
+        specialinvoke $r27.<java.lang.StringBuilder: void <init>()>();
+
+        $r31 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Missing class when invoking static main ");
+
+        $r32 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r30 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r26.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>($r30, r3);
+
+        throw $r26;
+
+     label6:
+        $r14 := @caughtexception;
+
+        r6 = $r14;
+
+        $r17 = new java.lang.RuntimeException;
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        $r19 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Missing static main on ");
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r21 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r17.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>($r21, r6);
+
+        throw $r17;
+
+     label7:
+        $r20 := @caughtexception;
+
+        r5 = $r20;
+
+        $r23 = new java.lang.RuntimeException;
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Problem getting static main on ");
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r28 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r23.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>($r28, r5);
+
+        throw $r23;
+
+     label8:
+        $r15 = new com.android.internal.os.ZygoteInit$MethodAndArgsCaller;
+
+        specialinvoke $r15.<com.android.internal.os.ZygoteInit$MethodAndArgsCaller: void <init>(java.lang.reflect.Method,java.lang.String[])>(r7, r2);
+
+        throw $r15;
+
+        catch java.lang.ClassNotFoundException from label1 to label2 with label5;
+        catch java.lang.NoSuchMethodException from label2 to label3 with label6;
+        catch java.lang.SecurityException from label2 to label3 with label7;
+    }
+
+    public static void main(java.lang.String[])
+    {
+        java.lang.String[] r0;
+        java.lang.RuntimeException r1, $r6, $r11, $r18;
+        com.android.internal.os.ZygoteInit$MethodAndArgsCaller r2, $r16;
+        long $l0, $l2;
+        int $i4;
+        java.lang.String $r3, $r4, $r8, $r9, $r12, $r17;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r5, $r7, $r10, $r13, $r14, $r15;
+
+        r0 := @parameter0: java.lang.String[];
+
+     label1:
+        staticinvoke <com.android.internal.os.SamplingProfilerIntegration: void start()>();
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void registerZygoteSocket()>();
+
+        $l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,long)>(3020, $l0);
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void preload()>();
+
+        $l2 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,long)>(3030, $l2);
+
+        staticinvoke <com.android.internal.os.SamplingProfilerIntegration: void writeZygoteSnapshot()>();
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void gc()>();
+
+        staticinvoke <android.os.Trace: void setTracingEnabled(boolean)>(0);
+
+        $i4 = lengthof r0;
+
+        if $i4 == 2 goto label3;
+
+        $r11 = new java.lang.RuntimeException;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = r0[0];
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" <\"start-system-server\"|\"\" for startSystemServer>");
+
+        $r17 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r11.<java.lang.RuntimeException: void <init>(java.lang.String)>($r17);
+
+        throw $r11;
+
+     label2:
+        $r16 := @caughtexception;
+
+        r2 = $r16;
+
+        virtualinvoke r2.<com.android.internal.os.ZygoteInit$MethodAndArgsCaller: void run()>();
+
+        return;
+
+     label3:
+        $r3 = r0[1];
+
+        $z0 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>("start-system-server");
+
+        if $z0 == 0 goto label7;
+
+        staticinvoke <com.android.internal.os.ZygoteInit: boolean startSystemServer()>();
+
+     label4:
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("Zygote", "Accepting command socket connections");
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void runSelectLoop()>();
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void closeServerSocket()>();
+
+     label5:
+        return;
+
+     label6:
+        $r18 := @caughtexception;
+
+        r1 = $r18;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", "Zygote died with exception", r1);
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void closeServerSocket()>();
+
+        throw r1;
+
+     label7:
+        $r4 = r0[1];
+
+        $z1 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>("");
+
+        if $z1 != 0 goto label4;
+
+        $r6 = new java.lang.RuntimeException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = r0[0];
+
+        $r7 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        $r10 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" <\"start-system-server\"|\"\" for startSystemServer>");
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r6.<java.lang.RuntimeException: void <init>(java.lang.String)>($r9);
+
+     label8:
+        throw $r6;
+
+        catch com.android.internal.os.ZygoteInit$MethodAndArgsCaller from label1 to label2 with label2;
+        catch java.lang.RuntimeException from label1 to label2 with label6;
+        catch com.android.internal.os.ZygoteInit$MethodAndArgsCaller from label3 to label4 with label2;
+        catch java.lang.RuntimeException from label3 to label4 with label6;
+        catch com.android.internal.os.ZygoteInit$MethodAndArgsCaller from label4 to label5 with label2;
+        catch java.lang.RuntimeException from label4 to label5 with label6;
+        catch com.android.internal.os.ZygoteInit$MethodAndArgsCaller from label7 to label8 with label2;
+        catch java.lang.RuntimeException from label7 to label8 with label6;
+    }
+
+    private static transient long posixCapabilitiesAsBits(int[])
+    {
+        int[] r0;
+        long l0, $l5;
+        int i1, i2, i3, $i4;
+        java.lang.IllegalArgumentException $r1;
+        java.lang.String $r2;
+
+        r0 := @parameter0: int[];
+
+        l0 = 0L;
+
+        i1 = lengthof r0;
+
+        i2 = 0;
+
+     label1:
+        if i2 >= i1 goto label4;
+
+        i3 = r0[i2];
+
+        if i3 < 0 goto label2;
+
+        $i4 = <libcore.io.OsConstants: int CAP_LAST_CAP>;
+
+        if i3 <= $i4 goto label3;
+
+     label2:
+        $r1 = new java.lang.IllegalArgumentException;
+
+        $r2 = staticinvoke <java.lang.String: java.lang.String valueOf(int)>(i3);
+
+        specialinvoke $r1.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r2);
+
+        throw $r1;
+
+     label3:
+        $l5 = 1L << i3;
+
+        l0 = l0 | $l5;
+
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label4:
+        return l0;
+    }
+
+    static void preload()
+    {
+        staticinvoke <com.android.internal.os.ZygoteInit: void preloadClasses()>();
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void preloadResources()>();
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void preloadOpenGL()>();
+
+        return;
+    }
+
+    private static void preloadClasses()
+    {
+        dalvik.system.VMRuntime r0;
+        java.io.InputStream r1;
+        long l0, $l3, $l4;
+        float f0;
+        java.io.BufferedReader r2, $r11;
+        int i1, $i7;
+        java.lang.Throwable r3, r7, $r22, $r39;
+        java.io.IOException r4, $r27;
+        java.lang.String r5, r6, $r19, $r26, $r33, $r43;
+        boolean z0, $z1, $z2, $z3;
+        java.lang.UnsatisfiedLinkError r8, $r40;
+        java.lang.ClassLoader $r10;
+        java.io.InputStreamReader $r12;
+        java.lang.StringBuilder $r13, $r14, $r15, $r16, $r17, $r18, $r21, $r23, $r24, $r25, $r31, $r32, $r35, $r36, $r37, $r38, $r41, $r42;
+        java.lang.Error $r28;
+        java.lang.RuntimeException $r29, $r30;
+        java.lang.ClassNotFoundException $r34;
+
+        r0 = staticinvoke <dalvik.system.VMRuntime: dalvik.system.VMRuntime getRuntime()>();
+
+        $r10 = staticinvoke <java.lang.ClassLoader: java.lang.ClassLoader getSystemClassLoader()>();
+
+        r1 = virtualinvoke $r10.<java.lang.ClassLoader: java.io.InputStream getResourceAsStream(java.lang.String)>("preloaded-classes");
+
+        if r1 != null goto label01;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Zygote", "Couldn\'t find preloaded-classes.");
+
+        return;
+
+     label01:
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("Zygote", "Preloading classes...");
+
+        l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void setEffectiveGroup(int)>(9999);
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void setEffectiveUser(int)>(9999);
+
+        f0 = virtualinvoke r0.<dalvik.system.VMRuntime: float getTargetHeapUtilization()>();
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: float setTargetHeapUtilization(float)>(0.8F);
+
+        staticinvoke <java.lang.System: void gc()>();
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: void runFinalizationSync()>();
+
+        staticinvoke <android.os.Debug: void startAllocCounting()>();
+
+     label02:
+        $r11 = new java.io.BufferedReader;
+
+        $r12 = new java.io.InputStreamReader;
+
+        specialinvoke $r12.<java.io.InputStreamReader: void <init>(java.io.InputStream)>(r1);
+
+        specialinvoke $r11.<java.io.BufferedReader: void <init>(java.io.Reader,int)>($r12, 256);
+
+        r2 = $r11;
+
+     label03:
+        i1 = 0;
+
+     label04:
+        r5 = virtualinvoke r2.<java.io.BufferedReader: java.lang.String readLine()>();
+
+     label05:
+        if r5 == null goto label24;
+
+     label06:
+        r6 = virtualinvoke r5.<java.lang.String: java.lang.String trim()>();
+
+        $z1 = virtualinvoke r6.<java.lang.String: boolean startsWith(java.lang.String)>("#");
+
+        if $z1 != 0 goto label04;
+
+        z0 = virtualinvoke r6.<java.lang.String: boolean equals(java.lang.Object)>("");
+
+     label07:
+        if z0 != 0 goto label04;
+
+     label08:
+        staticinvoke <java.lang.Class: java.lang.Class forName(java.lang.String)>(r6);
+
+        $i7 = staticinvoke <android.os.Debug: int getGlobalAllocSize()>();
+
+        if $i7 <= 50000 goto label09;
+
+        staticinvoke <java.lang.System: void gc()>();
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: void runFinalizationSync()>();
+
+        staticinvoke <android.os.Debug: void resetGlobalAllocSize()>();
+
+     label09:
+        i1 = i1 + 1;
+
+        goto label04;
+
+     label10:
+        $r34 := @caughtexception;
+
+     label11:
+        $r35 = new java.lang.StringBuilder;
+
+        specialinvoke $r35.<java.lang.StringBuilder: void <init>()>();
+
+        $r31 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Class not found for preloading: ");
+
+        $r32 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r6);
+
+        $r33 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Zygote", $r33);
+
+     label12:
+        goto label04;
+
+     label13:
+        $r27 := @caughtexception;
+
+        r4 = $r27;
+
+     label14:
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", "Error reading preloaded-classes.", r4);
+
+     label15:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r1);
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: float setTargetHeapUtilization(float)>(f0);
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: void preloadDexCaches()>();
+
+        staticinvoke <android.os.Debug: void stopAllocCounting()>();
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void setEffectiveUser(int)>(0);
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void setEffectiveGroup(int)>(0);
+
+        return;
+
+     label16:
+        $r40 := @caughtexception;
+
+        r8 = $r40;
+
+     label17:
+        $r36 = new java.lang.StringBuilder;
+
+        specialinvoke $r36.<java.lang.StringBuilder: void <init>()>();
+
+        $r37 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Problem preloading ");
+
+        $r38 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r6);
+
+        $r42 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        $r41 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r8);
+
+        $r43 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Zygote", $r43);
+
+     label18:
+        goto label04;
+
+     label19:
+        $r39 := @caughtexception;
+
+        r3 = $r39;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r1);
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: float setTargetHeapUtilization(float)>(f0);
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: void preloadDexCaches()>();
+
+        staticinvoke <android.os.Debug: void stopAllocCounting()>();
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void setEffectiveUser(int)>(0);
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void setEffectiveGroup(int)>(0);
+
+        throw r3;
+
+     label20:
+        $r22 := @caughtexception;
+
+        r7 = $r22;
+
+     label21:
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        $r25 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error preloading ");
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r6);
+
+        $r23 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".");
+
+        $r26 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", $r26, r7);
+
+        $z3 = r7 instanceof java.lang.Error;
+
+        if $z3 == 0 goto label22;
+
+        $r28 = (java.lang.Error) r7;
+
+        throw $r28;
+
+     label22:
+        $z2 = r7 instanceof java.lang.RuntimeException;
+
+        if $z2 == 0 goto label23;
+
+        $r29 = (java.lang.RuntimeException) r7;
+
+        throw $r29;
+
+     label23:
+        $r30 = new java.lang.RuntimeException;
+
+        specialinvoke $r30.<java.lang.RuntimeException: void <init>(java.lang.Throwable)>(r7);
+
+        throw $r30;
+
+     label24:
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("...preloaded ");
+
+        $r14 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r17 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" classes in ");
+
+        $l4 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $l3 = $l4 - l0;
+
+        $r16 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l3);
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms.");
+
+        $r19 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("Zygote", $r19);
+
+     label25:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r1);
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: float setTargetHeapUtilization(float)>(f0);
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: void preloadDexCaches()>();
+
+        staticinvoke <android.os.Debug: void stopAllocCounting()>();
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void setEffectiveUser(int)>(0);
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void setEffectiveGroup(int)>(0);
+
+        return;
+
+        catch java.io.IOException from label02 to label03 with label13;
+        catch java.lang.Throwable from label02 to label03 with label19;
+        catch java.io.IOException from label04 to label05 with label13;
+        catch java.lang.Throwable from label04 to label05 with label19;
+        catch java.io.IOException from label06 to label07 with label13;
+        catch java.lang.Throwable from label06 to label07 with label19;
+        catch java.lang.ClassNotFoundException from label08 to label09 with label10;
+        catch java.lang.UnsatisfiedLinkError from label08 to label09 with label16;
+        catch java.lang.Throwable from label08 to label09 with label20;
+        catch java.io.IOException from label08 to label09 with label13;
+        catch java.lang.Throwable from label08 to label09 with label19;
+        catch java.io.IOException from label11 to label12 with label13;
+        catch java.lang.Throwable from label11 to label12 with label19;
+        catch java.lang.Throwable from label14 to label15 with label19;
+        catch java.io.IOException from label17 to label18 with label13;
+        catch java.lang.Throwable from label17 to label18 with label19;
+        catch java.io.IOException from label21 to label22 with label13;
+        catch java.lang.Throwable from label21 to label22 with label19;
+        catch java.io.IOException from label22 to label23 with label13;
+        catch java.lang.Throwable from label22 to label23 with label19;
+        catch java.io.IOException from label23 to label24 with label13;
+        catch java.lang.Throwable from label23 to label24 with label19;
+        catch java.io.IOException from label24 to label25 with label13;
+        catch java.lang.Throwable from label24 to label25 with label19;
+    }
+
+    private static int preloadColorStateLists(dalvik.system.VMRuntime, android.content.res.TypedArray)
+    {
+        dalvik.system.VMRuntime r0;
+        android.content.res.TypedArray r1;
+        int i0, i1, i2, $i3;
+        android.content.res.Resources $r2;
+        android.content.res.ColorStateList $r3;
+        java.lang.IllegalArgumentException $r4;
+        java.lang.StringBuilder $r5, $r6, $r8, $r9, $r10, $r13;
+        java.lang.String $r7, $r11, $r12;
+
+        r0 := @parameter0: dalvik.system.VMRuntime;
+
+        r1 := @parameter1: android.content.res.TypedArray;
+
+        i0 = virtualinvoke r1.<android.content.res.TypedArray: int length()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label4;
+
+        $i3 = staticinvoke <android.os.Debug: int getGlobalAllocSize()>();
+
+        if $i3 <= 50000 goto label2;
+
+        staticinvoke <java.lang.System: void gc()>();
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: void runFinalizationSync()>();
+
+        staticinvoke <android.os.Debug: void resetGlobalAllocSize()>();
+
+     label2:
+        i2 = virtualinvoke r1.<android.content.res.TypedArray: int getResourceId(int,int)>(i1, 0);
+
+        if i2 == 0 goto label3;
+
+        $r2 = <com.android.internal.os.ZygoteInit: android.content.res.Resources mResources>;
+
+        $r3 = virtualinvoke $r2.<android.content.res.Resources: android.content.res.ColorStateList getColorStateList(int)>(i2);
+
+        if $r3 != null goto label3;
+
+        $r4 = new java.lang.IllegalArgumentException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to find preloaded color resource #0x");
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>(i2);
+
+        $r8 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (");
+
+        $r11 = virtualinvoke r1.<android.content.res.TypedArray: java.lang.String getString(int)>(i1);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r12);
+
+        throw $r4;
+
+     label3:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label4:
+        return i0;
+    }
+
+    private static int preloadDrawables(dalvik.system.VMRuntime, android.content.res.TypedArray)
+    {
+        dalvik.system.VMRuntime r0;
+        android.content.res.TypedArray r1;
+        int i0, i1, i2, $i3;
+        android.content.res.Resources $r2;
+        android.graphics.drawable.Drawable $r3;
+        java.lang.IllegalArgumentException $r4;
+        java.lang.StringBuilder $r5, $r6, $r8, $r9, $r10, $r13;
+        java.lang.String $r7, $r11, $r12;
+
+        r0 := @parameter0: dalvik.system.VMRuntime;
+
+        r1 := @parameter1: android.content.res.TypedArray;
+
+        i0 = virtualinvoke r1.<android.content.res.TypedArray: int length()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label4;
+
+        $i3 = staticinvoke <android.os.Debug: int getGlobalAllocSize()>();
+
+        if $i3 <= 50000 goto label2;
+
+        staticinvoke <java.lang.System: void gc()>();
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: void runFinalizationSync()>();
+
+        staticinvoke <android.os.Debug: void resetGlobalAllocSize()>();
+
+     label2:
+        i2 = virtualinvoke r1.<android.content.res.TypedArray: int getResourceId(int,int)>(i1, 0);
+
+        if i2 == 0 goto label3;
+
+        $r2 = <com.android.internal.os.ZygoteInit: android.content.res.Resources mResources>;
+
+        $r3 = virtualinvoke $r2.<android.content.res.Resources: android.graphics.drawable.Drawable getDrawable(int)>(i2);
+
+        if $r3 != null goto label3;
+
+        $r4 = new java.lang.IllegalArgumentException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to find preloaded drawable resource #0x");
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>(i2);
+
+        $r8 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (");
+
+        $r11 = virtualinvoke r1.<android.content.res.TypedArray: java.lang.String getString(int)>(i1);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r12);
+
+        throw $r4;
+
+     label3:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label4:
+        return i0;
+    }
+
+    private static void preloadOpenGL()
+    {
+        boolean $z0;
+
+        $z0 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("ro.zygote.disable_gl_preload", 0);
+
+        if $z0 != 0 goto label1;
+
+        staticinvoke <android.opengl.EGL14: android.opengl.EGLDisplay eglGetDisplay(int)>(0);
+
+     label1:
+        return;
+    }
+
+    private static void preloadResources()
+    {
+        dalvik.system.VMRuntime r0;
+        java.lang.Throwable r1, $r24;
+        java.lang.RuntimeException r2, $r23;
+        long l0, l2, $l5, $l6, $l8, $l9;
+        android.content.res.TypedArray r3, r4;
+        int i1, i3;
+        android.content.res.Resources $r5, $r6, $r7, $r15, $r25;
+        java.lang.StringBuilder $r8, $r9, $r10, $r11, $r12, $r14, $r16, $r17, $r18, $r19, $r21, $r22;
+        java.lang.String $r13, $r20;
+
+        r0 = staticinvoke <dalvik.system.VMRuntime: dalvik.system.VMRuntime getRuntime()>();
+
+        staticinvoke <android.os.Debug: void startAllocCounting()>();
+
+     label1:
+        staticinvoke <java.lang.System: void gc()>();
+
+        virtualinvoke r0.<dalvik.system.VMRuntime: void runFinalizationSync()>();
+
+        $r5 = staticinvoke <android.content.res.Resources: android.content.res.Resources getSystem()>();
+
+        <com.android.internal.os.ZygoteInit: android.content.res.Resources mResources> = $r5;
+
+        $r6 = <com.android.internal.os.ZygoteInit: android.content.res.Resources mResources>;
+
+        virtualinvoke $r6.<android.content.res.Resources: void startPreloading()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("Zygote", "Preloading resources...");
+
+        l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $r7 = <com.android.internal.os.ZygoteInit: android.content.res.Resources mResources>;
+
+        r3 = virtualinvoke $r7.<android.content.res.Resources: android.content.res.TypedArray obtainTypedArray(int)>(17235973);
+
+        i1 = staticinvoke <com.android.internal.os.ZygoteInit: int preloadDrawables(dalvik.system.VMRuntime,android.content.res.TypedArray)>(r0, r3);
+
+        virtualinvoke r3.<android.content.res.TypedArray: void recycle()>();
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("...preloaded ");
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" resources in ");
+
+        $l5 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $l6 = $l5 - l0;
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l6);
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms.");
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("Zygote", $r13);
+
+        l2 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $r15 = <com.android.internal.os.ZygoteInit: android.content.res.Resources mResources>;
+
+        r4 = virtualinvoke $r15.<android.content.res.Resources: android.content.res.TypedArray obtainTypedArray(int)>(17235974);
+
+        i3 = staticinvoke <com.android.internal.os.ZygoteInit: int preloadColorStateLists(dalvik.system.VMRuntime,android.content.res.TypedArray)>(r0, r4);
+
+        virtualinvoke r4.<android.content.res.TypedArray: void recycle()>();
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        $r16 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("...preloaded ");
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i3);
+
+        $r19 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" resources in ");
+
+        $l8 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $l9 = $l8 - l2;
+
+        $r21 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l9);
+
+        $r22 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms.");
+
+        $r20 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("Zygote", $r20);
+
+        $r25 = <com.android.internal.os.ZygoteInit: android.content.res.Resources mResources>;
+
+        virtualinvoke $r25.<android.content.res.Resources: void finishPreloading()>();
+
+     label2:
+        staticinvoke <android.os.Debug: void stopAllocCounting()>();
+
+        return;
+
+     label3:
+        $r23 := @caughtexception;
+
+        r2 = $r23;
+
+     label4:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", "Failure preloading resources", r2);
+
+     label5:
+        staticinvoke <android.os.Debug: void stopAllocCounting()>();
+
+        return;
+
+     label6:
+        $r24 := @caughtexception;
+
+        r1 = $r24;
+
+        staticinvoke <android.os.Debug: void stopAllocCounting()>();
+
+        throw r1;
+
+        catch java.lang.RuntimeException from label1 to label2 with label3;
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+    }
+
+    private static void registerZygoteSocket()
+    {
+        java.lang.RuntimeException r0, $r6, $r7, $r9;
+        int i0;
+        java.io.IOException r1, $r8;
+        android.net.LocalServerSocket $r2, $r4;
+        java.lang.String $r3, $r14;
+        java.io.FileDescriptor $r5;
+        java.lang.StringBuilder $r10, $r11, $r12, $r13;
+
+        $r2 = <com.android.internal.os.ZygoteInit: android.net.LocalServerSocket sServerSocket>;
+
+        if $r2 != null goto label3;
+
+     label1:
+        $r3 = staticinvoke <java.lang.System: java.lang.String getenv(java.lang.String)>("ANDROID_SOCKET_zygote");
+
+        i0 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r3);
+
+     label2:
+        $r4 = new android.net.LocalServerSocket;
+
+        $r5 = staticinvoke <com.android.internal.os.ZygoteInit: java.io.FileDescriptor createFileDescriptor(int)>(i0);
+
+        specialinvoke $r4.<android.net.LocalServerSocket: void <init>(java.io.FileDescriptor)>($r5);
+
+        <com.android.internal.os.ZygoteInit: android.net.LocalServerSocket sServerSocket> = $r4;
+
+     label3:
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+        r0 = $r6;
+
+        $r7 = new java.lang.RuntimeException;
+
+        specialinvoke $r7.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>("ANDROID_SOCKET_zygote unset or invalid", r0);
+
+        throw $r7;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r1 = $r8;
+
+        $r9 = new java.lang.RuntimeException;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error binding to local socket \'");
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\'");
+
+        $r14 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r9.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>($r14, r1);
+
+        throw $r9;
+
+        catch java.lang.RuntimeException from label1 to label2 with label4;
+        catch java.io.IOException from label2 to label3 with label5;
+    }
+
+    static native void reopenStdio(java.io.FileDescriptor, java.io.FileDescriptor, java.io.FileDescriptor) throws java.io.IOException;
+
+    private static void runSelectLoop() throws com.android.internal.os.ZygoteInit$MethodAndArgsCaller
+    {
+        java.util.ArrayList r0, r1, $r5, $r6;
+        java.io.FileDescriptor[] r2;
+        int i0, i1;
+        java.io.IOException r3, $r15;
+        com.android.internal.os.ZygoteConnection r4, $r11;
+        android.net.LocalServerSocket $r7;
+        java.io.FileDescriptor $r8, $r14;
+        java.lang.Object[] $r9;
+        java.lang.Object $r10;
+        boolean $z2;
+        java.lang.RuntimeException $r16, $r17;
+
+        $r5 = new java.util.ArrayList;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>()>();
+
+        r0 = $r5;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r6;
+
+        r2 = newarray (java.io.FileDescriptor)[4];
+
+        $r7 = <com.android.internal.os.ZygoteInit: android.net.LocalServerSocket sServerSocket>;
+
+        $r8 = virtualinvoke $r7.<android.net.LocalServerSocket: java.io.FileDescriptor getFileDescriptor()>();
+
+        virtualinvoke r0.<java.util.ArrayList: boolean add(java.lang.Object)>($r8);
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>(null);
+
+        i0 = 10;
+
+     label1:
+        if i0 > 0 goto label4;
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void gc()>();
+
+        i0 = 10;
+
+     label2:
+        $r9 = virtualinvoke r0.<java.util.ArrayList: java.lang.Object[] toArray(java.lang.Object[])>(r2);
+
+        r2 = (java.io.FileDescriptor[]) $r9;
+
+        i1 = staticinvoke <com.android.internal.os.ZygoteInit: int selectReadable(java.io.FileDescriptor[])>(r2);
+
+     label3:
+        if i1 >= 0 goto label6;
+
+        $r16 = new java.lang.RuntimeException;
+
+        specialinvoke $r16.<java.lang.RuntimeException: void <init>(java.lang.String)>("Error in select()");
+
+        throw $r16;
+
+     label4:
+        i0 = i0 + -1;
+
+        goto label2;
+
+     label5:
+        $r15 := @caughtexception;
+
+        r3 = $r15;
+
+        $r17 = new java.lang.RuntimeException;
+
+        specialinvoke $r17.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>("Error in select()", r3);
+
+        throw $r17;
+
+     label6:
+        if i1 != 0 goto label7;
+
+        r4 = staticinvoke <com.android.internal.os.ZygoteInit: com.android.internal.os.ZygoteConnection acceptCommandPeer()>();
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>(r4);
+
+        $r14 = virtualinvoke r4.<com.android.internal.os.ZygoteConnection: java.io.FileDescriptor getFileDesciptor()>();
+
+        virtualinvoke r0.<java.util.ArrayList: boolean add(java.lang.Object)>($r14);
+
+        goto label1;
+
+     label7:
+        $r10 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        $r11 = (com.android.internal.os.ZygoteConnection) $r10;
+
+        $z2 = virtualinvoke $r11.<com.android.internal.os.ZygoteConnection: boolean runOnce()>();
+
+        if $z2 == 0 goto label1;
+
+        virtualinvoke r1.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+        virtualinvoke r0.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+        goto label1;
+
+        catch java.io.IOException from label2 to label3 with label5;
+    }
+
+    static native int selectReadable(java.io.FileDescriptor[]) throws java.io.IOException;
+
+    static native void setCloseOnExec(java.io.FileDescriptor, boolean) throws java.io.IOException;
+
+    private static void setEffectiveGroup(int)
+    {
+        int i0, i1;
+        java.lang.StringBuilder $r0, $r1, $r2;
+        java.lang.String $r3;
+
+        i0 := @parameter0: int;
+
+        i1 = staticinvoke <com.android.internal.os.ZygoteInit: int setregid(int,int)>(0, i0);
+
+        if i1 == 0 goto label1;
+
+        $r0 = new java.lang.StringBuilder;
+
+        specialinvoke $r0.<java.lang.StringBuilder: void <init>()>();
+
+        $r1 = virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("setregid() failed. errno: ");
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Zygote", $r3);
+
+     label1:
+        return;
+    }
+
+    private static void setEffectiveUser(int)
+    {
+        int i0, i1;
+        java.lang.StringBuilder $r0, $r1, $r2;
+        java.lang.String $r3;
+
+        i0 := @parameter0: int;
+
+        i1 = staticinvoke <com.android.internal.os.ZygoteInit: int setreuid(int,int)>(0, i0);
+
+        if i1 == 0 goto label1;
+
+        $r0 = new java.lang.StringBuilder;
+
+        specialinvoke $r0.<java.lang.StringBuilder: void <init>()>();
+
+        $r1 = virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("setreuid() failed. errno: ");
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Zygote", $r3);
+
+     label1:
+        return;
+    }
+
+    static native int setpgid(int, int);
+
+    static native int setregid(int, int);
+
+    static native int setreuid(int, int);
+
+    private static boolean startSystemServer() throws com.android.internal.os.ZygoteInit$MethodAndArgsCaller, java.lang.RuntimeException
+    {
+        int[] r0, $r12;
+        long l0, $l12, $l13;
+        java.lang.String[] r1;
+        com.android.internal.os.ZygoteConnection$Arguments r2, $r9;
+        java.lang.IllegalArgumentException r3, $r13, $r15;
+        int i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i14, $i15, $i16;
+        java.lang.StringBuilder $r4, $r5, $r6, $r7, $r8;
+        java.lang.String $r10;
+        int[][] $r11;
+        java.lang.RuntimeException $r14;
+
+        r0 = newarray (int)[10];
+
+        $i2 = <libcore.io.OsConstants: int CAP_KILL>;
+
+        r0[0] = $i2;
+
+        $i3 = <libcore.io.OsConstants: int CAP_NET_ADMIN>;
+
+        r0[1] = $i3;
+
+        $i4 = <libcore.io.OsConstants: int CAP_NET_BIND_SERVICE>;
+
+        r0[2] = $i4;
+
+        $i5 = <libcore.io.OsConstants: int CAP_NET_BROADCAST>;
+
+        r0[3] = $i5;
+
+        $i6 = <libcore.io.OsConstants: int CAP_NET_RAW>;
+
+        r0[4] = $i6;
+
+        $i7 = <libcore.io.OsConstants: int CAP_SYS_MODULE>;
+
+        r0[5] = $i7;
+
+        $i8 = <libcore.io.OsConstants: int CAP_SYS_NICE>;
+
+        r0[6] = $i8;
+
+        $i9 = <libcore.io.OsConstants: int CAP_SYS_RESOURCE>;
+
+        r0[7] = $i9;
+
+        $i10 = <libcore.io.OsConstants: int CAP_SYS_TIME>;
+
+        r0[8] = $i10;
+
+        $i11 = <libcore.io.OsConstants: int CAP_SYS_TTY_CONFIG>;
+
+        r0[9] = $i11;
+
+        l0 = staticinvoke <com.android.internal.os.ZygoteInit: long posixCapabilitiesAsBits(int[])>(r0);
+
+        r1 = newarray (java.lang.String)[7];
+
+        r1[0] = "--setuid=1000";
+
+        r1[1] = "--setgid=1000";
+
+        r1[2] = "--setgroups=1001,1002,1003,1004,1005,1006,1007,1008,1009,1010,1018,1032,3001,3002,3003,3006,3007";
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("--capabilities=");
+
+        $r5 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(",");
+
+        $r7 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r10 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r1[3] = $r10;
+
+        r1[4] = "--runtime-init";
+
+        r1[5] = "--nice-name=system_server";
+
+        r1[6] = "com.android.server.SystemServer";
+
+     label1:
+        $r9 = new com.android.internal.os.ZygoteConnection$Arguments;
+
+        specialinvoke $r9.<com.android.internal.os.ZygoteConnection$Arguments: void <init>(java.lang.String[])>(r1);
+
+        r2 = $r9;
+
+     label2:
+        staticinvoke <com.android.internal.os.ZygoteConnection: void applyDebuggerSystemProperty(com.android.internal.os.ZygoteConnection$Arguments)>(r2);
+
+        staticinvoke <com.android.internal.os.ZygoteConnection: void applyInvokeWithSystemProperty(com.android.internal.os.ZygoteConnection$Arguments)>(r2);
+
+        $i16 = r2.<com.android.internal.os.ZygoteConnection$Arguments: int uid>;
+
+        $i15 = r2.<com.android.internal.os.ZygoteConnection$Arguments: int gid>;
+
+        $r12 = r2.<com.android.internal.os.ZygoteConnection$Arguments: int[] gids>;
+
+        $i14 = r2.<com.android.internal.os.ZygoteConnection$Arguments: int debugFlags>;
+
+        $r11 = (int[][]) null;
+
+        $l12 = r2.<com.android.internal.os.ZygoteConnection$Arguments: long permittedCapabilities>;
+
+        $l13 = r2.<com.android.internal.os.ZygoteConnection$Arguments: long effectiveCapabilities>;
+
+        i1 = staticinvoke <dalvik.system.Zygote: int forkSystemServer(int,int,int[],int,int[][],long,long)>($i16, $i15, $r12, $i14, $r11, $l12, $l13);
+
+     label3:
+        if i1 != 0 goto label4;
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void handleSystemServerProcess(com.android.internal.os.ZygoteConnection$Arguments)>(r2);
+
+     label4:
+        return 1;
+
+     label5:
+        $r15 := @caughtexception;
+
+        r3 = $r15;
+
+     label6:
+        $r14 = new java.lang.RuntimeException;
+
+        specialinvoke $r14.<java.lang.RuntimeException: void <init>(java.lang.Throwable)>(r3);
+
+        throw $r14;
+
+     label7:
+        $r13 := @caughtexception;
+
+        r3 = $r13;
+
+        goto label6;
+
+        catch java.lang.IllegalArgumentException from label1 to label2 with label5;
+        catch java.lang.IllegalArgumentException from label2 to label3 with label7;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.internal.os.ZygoteInit: java.lang.String USAGE_STRING> = " <\"start-system-server\"|\"\" for startSystemServer>";
+
+        <com.android.internal.os.ZygoteInit: int UNPRIVILEGED_UID> = 9999;
+
+        <com.android.internal.os.ZygoteInit: int UNPRIVILEGED_GID> = 9999;
+
+        <com.android.internal.os.ZygoteInit: java.lang.String TAG> = "Zygote";
+
+        <com.android.internal.os.ZygoteInit: int ROOT_UID> = 0;
+
+        <com.android.internal.os.ZygoteInit: int ROOT_GID> = 0;
+
+        <com.android.internal.os.ZygoteInit: java.lang.String PROPERTY_DISABLE_OPENGL_PRELOADING> = "ro.zygote.disable_gl_preload";
+
+        <com.android.internal.os.ZygoteInit: boolean PRELOAD_RESOURCES> = 1;
+
+        <com.android.internal.os.ZygoteInit: int PRELOAD_GC_THRESHOLD> = 50000;
+
+        <com.android.internal.os.ZygoteInit: java.lang.String PRELOADED_CLASSES> = "preloaded-classes";
+
+        <com.android.internal.os.ZygoteInit: int LOG_BOOT_PROGRESS_PRELOAD_START> = 3020;
+
+        <com.android.internal.os.ZygoteInit: int LOG_BOOT_PROGRESS_PRELOAD_END> = 3030;
+
+        <com.android.internal.os.ZygoteInit: int GC_LOOP_COUNT> = 10;
+
+        <com.android.internal.os.ZygoteInit: java.lang.String ANDROID_SOCKET_ENV> = "ANDROID_SOCKET_zygote";
+
+        return;
+    }
+}

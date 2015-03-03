@@ -1,0 +1,3000 @@
+class com.android.server.AlarmManagerService extends android.app.IAlarmManager$Stub
+{
+    private static final int ALARM_EVENT;
+    private static final java.lang.String ClockReceiver_TAG;
+    private static final boolean DEBUG_BATCH;
+    private static final boolean DEBUG_VALIDATE;
+    private static final int ELAPSED_REALTIME_MASK;
+    private static final int ELAPSED_REALTIME_WAKEUP_MASK;
+    private static final int IS_WAKEUP_MASK;
+    private static final long LATE_ALARM_THRESHOLD;
+    private static final long MIN_FUZZABLE_INTERVAL;
+    private static final int RTC_MASK;
+    private static final int RTC_WAKEUP_MASK;
+    private static final java.lang.String TAG;
+    private static final java.lang.String TIMEZONE_PROPERTY;
+    private static final int TIME_CHANGED_MASK;
+    private static final int TYPE_NONWAKEUP_MASK;
+    private static final boolean WAKEUP_STATS;
+    private static final boolean localLOGV;
+    private static final android.content.Intent mBackgroundIntent;
+    private static final com.android.server.AlarmManagerService$BatchTimeOrder sBatchOrder;
+    private static final com.android.server.AlarmManagerService$IncreasingTimeOrder sIncreasingTimeOrder;
+    private final long RECENT_WAKEUP_PERIOD;
+    private final java.util.ArrayList mAlarmBatches;
+    private int mBroadcastRefCount;
+    private final java.util.HashMap mBroadcastStats;
+    private com.android.server.AlarmManagerService$ClockReceiver mClockReceiver;
+    private final android.content.Context mContext;
+    private final android.app.PendingIntent mDateChangeSender;
+    private int mDescriptor;
+    private final com.android.server.AlarmManagerService$AlarmHandler mHandler;
+    private java.util.ArrayList mInFlight;
+    private java.lang.Object mLock;
+    private final com.android.internal.util.LocalLog mLog;
+    private long mNextNonWakeup;
+    private long mNextWakeup;
+    private final java.util.LinkedList mRecentWakeups;
+    private final com.android.server.AlarmManagerService$ResultReceiver mResultReceiver;
+    private final android.app.PendingIntent mTimeTickSender;
+    private com.android.server.AlarmManagerService$UninstallReceiver mUninstallReceiver;
+    private final com.android.server.AlarmManagerService$AlarmThread mWaitThread;
+    private android.os.PowerManager$WakeLock mWakeLock;
+
+    static void <clinit>()
+    {
+        android.content.Intent $r0, $r1;
+        com.android.server.AlarmManagerService$IncreasingTimeOrder $r2;
+        com.android.server.AlarmManagerService$BatchTimeOrder $r3;
+
+        <com.android.server.AlarmManagerService: int TYPE_NONWAKEUP_MASK> = 1;
+
+        <com.android.server.AlarmManagerService: int TIME_CHANGED_MASK> = 65536;
+
+        <com.android.server.AlarmManagerService: java.lang.String TIMEZONE_PROPERTY> = "persist.sys.timezone";
+
+        <com.android.server.AlarmManagerService: java.lang.String TAG> = "AlarmManager";
+
+        <com.android.server.AlarmManagerService: int RTC_WAKEUP_MASK> = 1;
+
+        <com.android.server.AlarmManagerService: int RTC_MASK> = 2;
+
+        <com.android.server.AlarmManagerService: long MIN_FUZZABLE_INTERVAL> = 10000L;
+
+        <com.android.server.AlarmManagerService: long LATE_ALARM_THRESHOLD> = 10000L;
+
+        <com.android.server.AlarmManagerService: int IS_WAKEUP_MASK> = 5;
+
+        <com.android.server.AlarmManagerService: int ELAPSED_REALTIME_WAKEUP_MASK> = 4;
+
+        <com.android.server.AlarmManagerService: int ELAPSED_REALTIME_MASK> = 8;
+
+        <com.android.server.AlarmManagerService: boolean DEBUG_VALIDATE> = 0;
+
+        <com.android.server.AlarmManagerService: boolean DEBUG_BATCH> = 0;
+
+        <com.android.server.AlarmManagerService: java.lang.String ClockReceiver_TAG> = "ClockReceiver";
+
+        <com.android.server.AlarmManagerService: int ALARM_EVENT> = 1;
+
+        $r0 = new android.content.Intent;
+
+        specialinvoke $r0.<android.content.Intent: void <init>()>();
+
+        $r1 = virtualinvoke $r0.<android.content.Intent: android.content.Intent addFlags(int)>(4);
+
+        <com.android.server.AlarmManagerService: android.content.Intent mBackgroundIntent> = $r1;
+
+        $r2 = new com.android.server.AlarmManagerService$IncreasingTimeOrder;
+
+        specialinvoke $r2.<com.android.server.AlarmManagerService$IncreasingTimeOrder: void <init>()>();
+
+        <com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$IncreasingTimeOrder sIncreasingTimeOrder> = $r2;
+
+        $r3 = new com.android.server.AlarmManagerService$BatchTimeOrder;
+
+        specialinvoke $r3.<com.android.server.AlarmManagerService$BatchTimeOrder: void <init>()>();
+
+        <com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$BatchTimeOrder sBatchOrder> = $r3;
+
+        return;
+    }
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.AlarmManagerService r0;
+        android.content.Context r1;
+        java.lang.String r2;
+        android.content.Intent r3, $r16, $r18, $r19;
+        com.android.internal.util.LocalLog $r4;
+        java.lang.Object $r5, $r13;
+        java.util.ArrayList $r6, $r11;
+        com.android.server.AlarmManagerService$AlarmThread $r7, $r28;
+        com.android.server.AlarmManagerService$AlarmHandler $r8;
+        com.android.server.AlarmManagerService$ResultReceiver $r9;
+        java.util.LinkedList $r10;
+        java.util.HashMap $r12;
+        int $i0, $i1;
+        android.os.PowerManager$WakeLock $r14;
+        android.os.PowerManager $r15;
+        android.os.UserHandle $r17, $r21;
+        android.app.PendingIntent $r20, $r24;
+        com.android.server.AlarmManagerService$ClockReceiver $r23, $r25, $r26;
+        com.android.server.AlarmManagerService$UninstallReceiver $r27;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<android.app.IAlarmManager$Stub: void <init>()>();
+
+        $r4 = new com.android.internal.util.LocalLog;
+
+        specialinvoke $r4.<com.android.internal.util.LocalLog: void <init>(java.lang.String)>("AlarmManager");
+
+        r0.<com.android.server.AlarmManagerService: com.android.internal.util.LocalLog mLog> = $r4;
+
+        $r5 = new java.lang.Object;
+
+        specialinvoke $r5.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.AlarmManagerService: java.lang.Object mLock> = $r5;
+
+        r0.<com.android.server.AlarmManagerService: int mBroadcastRefCount> = 0;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.AlarmManagerService: java.util.ArrayList mInFlight> = $r6;
+
+        $r7 = new com.android.server.AlarmManagerService$AlarmThread;
+
+        specialinvoke $r7.<com.android.server.AlarmManagerService$AlarmThread: void <init>(com.android.server.AlarmManagerService)>(r0);
+
+        r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$AlarmThread mWaitThread> = $r7;
+
+        $r8 = new com.android.server.AlarmManagerService$AlarmHandler;
+
+        specialinvoke $r8.<com.android.server.AlarmManagerService$AlarmHandler: void <init>(com.android.server.AlarmManagerService)>(r0);
+
+        r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$AlarmHandler mHandler> = $r8;
+
+        $r9 = new com.android.server.AlarmManagerService$ResultReceiver;
+
+        specialinvoke $r9.<com.android.server.AlarmManagerService$ResultReceiver: void <init>(com.android.server.AlarmManagerService)>(r0);
+
+        r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$ResultReceiver mResultReceiver> = $r9;
+
+        $r10 = new java.util.LinkedList;
+
+        specialinvoke $r10.<java.util.LinkedList: void <init>()>();
+
+        r0.<com.android.server.AlarmManagerService: java.util.LinkedList mRecentWakeups> = $r10;
+
+        r0.<com.android.server.AlarmManagerService: long RECENT_WAKEUP_PERIOD> = 86400000L;
+
+        $r11 = new java.util.ArrayList;
+
+        specialinvoke $r11.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches> = $r11;
+
+        $r12 = new java.util.HashMap;
+
+        specialinvoke $r12.<java.util.HashMap: void <init>()>();
+
+        r0.<com.android.server.AlarmManagerService: java.util.HashMap mBroadcastStats> = $r12;
+
+        r0.<com.android.server.AlarmManagerService: android.content.Context mContext> = r1;
+
+        $i0 = specialinvoke r0.<com.android.server.AlarmManagerService: int init()>();
+
+        r0.<com.android.server.AlarmManagerService: int mDescriptor> = $i0;
+
+        r0.<com.android.server.AlarmManagerService: long mNextNonWakeup> = 0L;
+
+        r0.<com.android.server.AlarmManagerService: long mNextWakeup> = 0L;
+
+        r2 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("persist.sys.timezone");
+
+        if r2 == null goto label1;
+
+        virtualinvoke r0.<com.android.server.AlarmManagerService: void setTimeZone(java.lang.String)>(r2);
+
+     label1:
+        $r13 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r15 = (android.os.PowerManager) $r13;
+
+        $r14 = virtualinvoke $r15.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, "AlarmManager");
+
+        r0.<com.android.server.AlarmManagerService: android.os.PowerManager$WakeLock mWakeLock> = $r14;
+
+        $r16 = new android.content.Intent;
+
+        specialinvoke $r16.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.TIME_TICK");
+
+        $r18 = virtualinvoke $r16.<android.content.Intent: android.content.Intent addFlags(int)>(1342177280);
+
+        $r17 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        $r20 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getBroadcastAsUser(android.content.Context,int,android.content.Intent,int,android.os.UserHandle)>(r1, 0, $r18, 0, $r17);
+
+        r0.<com.android.server.AlarmManagerService: android.app.PendingIntent mTimeTickSender> = $r20;
+
+        $r19 = new android.content.Intent;
+
+        specialinvoke $r19.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.DATE_CHANGED");
+
+        r3 = $r19;
+
+        virtualinvoke r3.<android.content.Intent: android.content.Intent addFlags(int)>(536870912);
+
+        $r21 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        $r24 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getBroadcastAsUser(android.content.Context,int,android.content.Intent,int,android.os.UserHandle)>(r1, 0, r3, 67108864, $r21);
+
+        r0.<com.android.server.AlarmManagerService: android.app.PendingIntent mDateChangeSender> = $r24;
+
+        $r23 = new com.android.server.AlarmManagerService$ClockReceiver;
+
+        specialinvoke $r23.<com.android.server.AlarmManagerService$ClockReceiver: void <init>(com.android.server.AlarmManagerService)>(r0);
+
+        r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$ClockReceiver mClockReceiver> = $r23;
+
+        $r26 = r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$ClockReceiver mClockReceiver>;
+
+        virtualinvoke $r26.<com.android.server.AlarmManagerService$ClockReceiver: void scheduleTimeTickEvent()>();
+
+        $r25 = r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$ClockReceiver mClockReceiver>;
+
+        virtualinvoke $r25.<com.android.server.AlarmManagerService$ClockReceiver: void scheduleDateChangedEvent()>();
+
+        $r27 = new com.android.server.AlarmManagerService$UninstallReceiver;
+
+        specialinvoke $r27.<com.android.server.AlarmManagerService$UninstallReceiver: void <init>(com.android.server.AlarmManagerService)>(r0);
+
+        r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$UninstallReceiver mUninstallReceiver> = $r27;
+
+        $i1 = r0.<com.android.server.AlarmManagerService: int mDescriptor>;
+
+        if $i1 == -1 goto label2;
+
+        $r28 = r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$AlarmThread mWaitThread>;
+
+        virtualinvoke $r28.<com.android.server.AlarmManagerService$AlarmThread: void start()>();
+
+        return;
+
+     label2:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("AlarmManager", "Failed to open alarm driver. Falling back to a handler.");
+
+        return;
+    }
+
+    static com.android.server.AlarmManagerService$IncreasingTimeOrder access$000()
+    {
+        com.android.server.AlarmManagerService$IncreasingTimeOrder $r0;
+
+        $r0 = <com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$IncreasingTimeOrder sIncreasingTimeOrder>;
+
+        return $r0;
+    }
+
+    static com.android.server.AlarmManagerService$BroadcastStats access$100(com.android.server.AlarmManagerService, android.app.PendingIntent)
+    {
+        com.android.server.AlarmManagerService r0;
+        android.app.PendingIntent r1;
+        com.android.server.AlarmManagerService$BroadcastStats $r2;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        r1 := @parameter1: android.app.PendingIntent;
+
+        $r2 = specialinvoke r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$BroadcastStats getStatsLocked(android.app.PendingIntent)>(r1);
+
+        return $r2;
+    }
+
+    static android.content.Intent access$1000()
+    {
+        android.content.Intent $r0;
+
+        $r0 = <com.android.server.AlarmManagerService: android.content.Intent mBackgroundIntent>;
+
+        return $r0;
+    }
+
+    static com.android.server.AlarmManagerService$ResultReceiver access$1100(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        com.android.server.AlarmManagerService$ResultReceiver $r1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$ResultReceiver mResultReceiver>;
+
+        return $r1;
+    }
+
+    static com.android.server.AlarmManagerService$AlarmHandler access$1200(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        com.android.server.AlarmManagerService$AlarmHandler $r1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$AlarmHandler mHandler>;
+
+        return $r1;
+    }
+
+    static int access$1300(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $i0 = r0.<com.android.server.AlarmManagerService: int mBroadcastRefCount>;
+
+        return $i0;
+    }
+
+    static int access$1308(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        int i0, $i1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        i0 = r0.<com.android.server.AlarmManagerService: int mBroadcastRefCount>;
+
+        $i1 = i0 + 1;
+
+        r0.<com.android.server.AlarmManagerService: int mBroadcastRefCount> = $i1;
+
+        return i0;
+    }
+
+    static int access$1310(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        int i0, $i1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        i0 = r0.<com.android.server.AlarmManagerService: int mBroadcastRefCount>;
+
+        $i1 = i0 - 1;
+
+        r0.<com.android.server.AlarmManagerService: int mBroadcastRefCount> = $i1;
+
+        return i0;
+    }
+
+    static android.os.PowerManager$WakeLock access$1400(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        android.os.PowerManager$WakeLock $r1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        return $r1;
+    }
+
+    static java.util.ArrayList access$1500(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        java.util.ArrayList $r1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mInFlight>;
+
+        return $r1;
+    }
+
+    static int access$1600(com.android.server.AlarmManagerService, int, int)
+    {
+        com.android.server.AlarmManagerService r0;
+        int i0, i1, $i2;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $i2 = specialinvoke r0.<com.android.server.AlarmManagerService: int setKernelTimezone(int,int)>(i0, i1);
+
+        return $i2;
+    }
+
+    static android.app.PendingIntent access$1700(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        android.app.PendingIntent $r1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: android.app.PendingIntent mDateChangeSender>;
+
+        return $r1;
+    }
+
+    static java.util.HashMap access$1800(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        java.util.HashMap $r1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: java.util.HashMap mBroadcastStats>;
+
+        return $r1;
+    }
+
+    static com.android.internal.util.LocalLog access$1900(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        com.android.internal.util.LocalLog $r1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: com.android.internal.util.LocalLog mLog>;
+
+        return $r1;
+    }
+
+    static int access$200(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $i0 = r0.<com.android.server.AlarmManagerService: int mDescriptor>;
+
+        return $i0;
+    }
+
+    static int access$300(com.android.server.AlarmManagerService, int)
+    {
+        com.android.server.AlarmManagerService r0;
+        int i0, $i1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        i0 := @parameter1: int;
+
+        $i1 = specialinvoke r0.<com.android.server.AlarmManagerService: int waitForAlarm(int)>(i0);
+
+        return $i1;
+    }
+
+    static android.app.PendingIntent access$400(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        android.app.PendingIntent $r1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: android.app.PendingIntent mTimeTickSender>;
+
+        return $r1;
+    }
+
+    static com.android.server.AlarmManagerService$ClockReceiver access$500(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        com.android.server.AlarmManagerService$ClockReceiver $r1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$ClockReceiver mClockReceiver>;
+
+        return $r1;
+    }
+
+    static android.content.Context access$600(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static java.lang.Object access$700(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static void access$800(com.android.server.AlarmManagerService, java.util.ArrayList, long, long)
+    {
+        com.android.server.AlarmManagerService r0;
+        java.util.ArrayList r1;
+        long l0, l1;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        r1 := @parameter1: java.util.ArrayList;
+
+        l0 := @parameter2: long;
+
+        l1 := @parameter3: long;
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: void triggerAlarmsLocked(java.util.ArrayList,long,long)>(r1, l0, l1);
+
+        return;
+    }
+
+    static void access$900(com.android.server.AlarmManagerService)
+    {
+        com.android.server.AlarmManagerService r0;
+
+        r0 := @parameter0: com.android.server.AlarmManagerService;
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: void rescheduleKernelAlarmsLocked()>();
+
+        return;
+    }
+
+    static boolean addBatchLocked(java.util.ArrayList, com.android.server.AlarmManagerService$Batch)
+    {
+        java.util.ArrayList r0;
+        com.android.server.AlarmManagerService$Batch r1;
+        int i0, $i1;
+        com.android.server.AlarmManagerService$BatchTimeOrder $r2;
+
+        r0 := @parameter0: java.util.ArrayList;
+
+        r1 := @parameter1: com.android.server.AlarmManagerService$Batch;
+
+        $r2 = <com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$BatchTimeOrder sBatchOrder>;
+
+        i0 = staticinvoke <java.util.Collections: int binarySearch(java.util.List,java.lang.Object,java.util.Comparator)>(r0, r1, $r2);
+
+        if i0 >= 0 goto label1;
+
+        $i1 = 0 - i0;
+
+        i0 = -1 + $i1;
+
+     label1:
+        virtualinvoke r0.<java.util.ArrayList: void add(int,java.lang.Object)>(i0, r1);
+
+        if i0 != 0 goto label2;
+
+        return 1;
+
+     label2:
+        return 0;
+    }
+
+    private native void close(int);
+
+    static long convertToElapsed(long, int)
+    {
+        long l0, $l2, $l3, $l4;
+        int i1, i5;
+        boolean z0;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        z0 = 1;
+
+        i5 = (int) 1;
+
+        if i1 == i5 goto label1;
+
+        if i1 != 0 goto label3;
+
+     label1:
+        if z0 == 0 goto label2;
+
+        $l2 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $l3 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l4 = $l2 - $l3;
+
+        l0 = l0 - $l4;
+
+     label2:
+        return l0;
+
+     label3:
+        z0 = 0;
+
+        goto label1;
+    }
+
+    private static final void dumpAlarmList(java.io.PrintWriter, java.util.ArrayList, java.lang.String, long, long)
+    {
+        java.io.PrintWriter r0;
+        java.util.ArrayList r1;
+        java.lang.String r2, r4, $r8;
+        long l0, l1, l3;
+        int i2, $i4, $i5, $i6;
+        com.android.server.AlarmManagerService$Alarm r3;
+        java.lang.Object $r5;
+        java.lang.StringBuilder $r6, $r7, $r9;
+
+        r0 := @parameter0: java.io.PrintWriter;
+
+        r1 := @parameter1: java.util.ArrayList;
+
+        r2 := @parameter2: java.lang.String;
+
+        l0 := @parameter3: long;
+
+        l1 := @parameter4: long;
+
+        $i4 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        i2 = -1 + $i4;
+
+     label1:
+        if i2 < 0 goto label4;
+
+        $r5 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(i2);
+
+        r3 = (com.android.server.AlarmManagerService$Alarm) $r5;
+
+        $i5 = r3.<com.android.server.AlarmManagerService$Alarm: int type>;
+
+        r4 = staticinvoke <com.android.server.AlarmManagerService: java.lang.String labelForType(int)>($i5);
+
+        $i6 = r3.<com.android.server.AlarmManagerService$Alarm: int type>;
+
+        if $i6 > 1 goto label3;
+
+        l3 = l1;
+
+     label2:
+        virtualinvoke r0.<java.io.PrintWriter: void print(java.lang.String)>(r2);
+
+        virtualinvoke r0.<java.io.PrintWriter: void print(java.lang.String)>(r4);
+
+        virtualinvoke r0.<java.io.PrintWriter: void print(java.lang.String)>(" #");
+
+        virtualinvoke r0.<java.io.PrintWriter: void print(int)>(i2);
+
+        virtualinvoke r0.<java.io.PrintWriter: void print(java.lang.String)>(": ");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.Object)>(r3);
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  ");
+
+        $r8 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r3.<com.android.server.AlarmManagerService$Alarm: void dump(java.io.PrintWriter,java.lang.String,long)>(r0, $r8, l3);
+
+        i2 = i2 + -1;
+
+        goto label1;
+
+     label3:
+        l3 = l0;
+
+        goto label2;
+
+     label4:
+        return;
+    }
+
+    private static final void dumpAlarmList(java.io.PrintWriter, java.util.ArrayList, java.lang.String, java.lang.String, long)
+    {
+        java.io.PrintWriter r0;
+        java.util.ArrayList r1;
+        java.lang.String r2, r3, $r9;
+        long l0;
+        int i1, $i2;
+        com.android.server.AlarmManagerService$Alarm r4;
+        java.lang.Object $r5;
+        java.lang.StringBuilder $r6, $r7, $r8;
+
+        r0 := @parameter0: java.io.PrintWriter;
+
+        r1 := @parameter1: java.util.ArrayList;
+
+        r2 := @parameter2: java.lang.String;
+
+        r3 := @parameter3: java.lang.String;
+
+        l0 := @parameter4: long;
+
+        $i2 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        i1 = -1 + $i2;
+
+     label1:
+        if i1 < 0 goto label2;
+
+        $r5 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r4 = (com.android.server.AlarmManagerService$Alarm) $r5;
+
+        virtualinvoke r0.<java.io.PrintWriter: void print(java.lang.String)>(r2);
+
+        virtualinvoke r0.<java.io.PrintWriter: void print(java.lang.String)>(r3);
+
+        virtualinvoke r0.<java.io.PrintWriter: void print(java.lang.String)>(" #");
+
+        virtualinvoke r0.<java.io.PrintWriter: void print(int)>(i1);
+
+        virtualinvoke r0.<java.io.PrintWriter: void print(java.lang.String)>(": ");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.Object)>(r4);
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  ");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r4.<com.android.server.AlarmManagerService$Alarm: void dump(java.io.PrintWriter,java.lang.String,long)>(r0, $r9, l0);
+
+        i1 = i1 + -1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private com.android.server.AlarmManagerService$Batch findFirstWakeupBatchLocked()
+    {
+        com.android.server.AlarmManagerService r0;
+        int i0, i1;
+        com.android.server.AlarmManagerService$Batch r1;
+        java.util.ArrayList $r2, $r3;
+        java.lang.Object $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        $r2 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        i0 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label3;
+
+        $r3 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r1 = (com.android.server.AlarmManagerService$Batch) $r4;
+
+        $z0 = virtualinvoke r1.<com.android.server.AlarmManagerService$Batch: boolean hasWakeups()>();
+
+        if $z0 == 0 goto label2;
+
+        return r1;
+
+     label2:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label3:
+        return null;
+    }
+
+    private final com.android.server.AlarmManagerService$BroadcastStats getStatsLocked(android.app.PendingIntent)
+    {
+        com.android.server.AlarmManagerService r0;
+        android.app.PendingIntent r1;
+        java.lang.String r2;
+        com.android.server.AlarmManagerService$BroadcastStats r3, $r6;
+        java.util.HashMap $r4, $r7;
+        java.lang.Object $r5;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 := @parameter0: android.app.PendingIntent;
+
+        r2 = virtualinvoke r1.<android.app.PendingIntent: java.lang.String getTargetPackage()>();
+
+        $r4 = r0.<com.android.server.AlarmManagerService: java.util.HashMap mBroadcastStats>;
+
+        $r5 = virtualinvoke $r4.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r2);
+
+        r3 = (com.android.server.AlarmManagerService$BroadcastStats) $r5;
+
+        if r3 != null goto label1;
+
+        $r6 = new com.android.server.AlarmManagerService$BroadcastStats;
+
+        specialinvoke $r6.<com.android.server.AlarmManagerService$BroadcastStats: void <init>(java.lang.String)>(r2);
+
+        r3 = $r6;
+
+        $r7 = r0.<com.android.server.AlarmManagerService: java.util.HashMap mBroadcastStats>;
+
+        virtualinvoke $r7.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r2, r3);
+
+     label1:
+        return r3;
+    }
+
+    private native int init();
+
+    private static final java.lang.String labelForType(int)
+    {
+        int i0;
+
+        i0 := @parameter0: int;
+
+        tableswitch(i0)
+        {
+            case 0: goto label3;
+            case 1: goto label2;
+            case 2: goto label5;
+            case 3: goto label4;
+            default: goto label1;
+        };
+
+     label1:
+        return "--unknown--";
+
+     label2:
+        return "RTC";
+
+     label3:
+        return "RTC_WAKEUP";
+
+     label4:
+        return "ELAPSED";
+
+     label5:
+        return "ELAPSED_WAKEUP";
+    }
+
+    private void logBatchesLocked()
+    {
+        com.android.server.AlarmManagerService r0;
+        java.io.ByteArrayOutputStream r1, $r4;
+        java.io.PrintWriter r2, $r5;
+        long l0, l1;
+        int i2, i3;
+        com.android.server.AlarmManagerService$Batch r3;
+        java.util.ArrayList $r6, $r8, $r11;
+        java.lang.Object $r7;
+        java.lang.String $r12;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        $r4 = new java.io.ByteArrayOutputStream;
+
+        specialinvoke $r4.<java.io.ByteArrayOutputStream: void <init>(int)>(2048);
+
+        r1 = $r4;
+
+        $r5 = new java.io.PrintWriter;
+
+        specialinvoke $r5.<java.io.PrintWriter: void <init>(java.io.OutputStream)>(r1);
+
+        r2 = $r5;
+
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        l1 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $r6 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        i2 = virtualinvoke $r6.<java.util.ArrayList: int size()>();
+
+        i3 = 0;
+
+     label1:
+        if i3 >= i2 goto label2;
+
+        $r8 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $r7 = virtualinvoke $r8.<java.util.ArrayList: java.lang.Object get(int)>(i3);
+
+        r3 = (com.android.server.AlarmManagerService$Batch) $r7;
+
+        virtualinvoke r2.<java.io.PrintWriter: java.io.PrintWriter append(java.lang.CharSequence)>("Batch ");
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(int)>(i3);
+
+        virtualinvoke r2.<java.io.PrintWriter: java.io.PrintWriter append(java.lang.CharSequence)>(": ");
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.Object)>(r3);
+
+        $r11 = r3.<com.android.server.AlarmManagerService$Batch: java.util.ArrayList alarms>;
+
+        staticinvoke <com.android.server.AlarmManagerService: void dumpAlarmList(java.io.PrintWriter,java.util.ArrayList,java.lang.String,long,long)>(r2, $r11, "  ", l1, l0);
+
+        virtualinvoke r2.<java.io.PrintWriter: void flush()>();
+
+        $r12 = virtualinvoke r1.<java.io.ByteArrayOutputStream: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("AlarmManager", $r12);
+
+        virtualinvoke r1.<java.io.ByteArrayOutputStream: void reset()>();
+
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    static long maxTriggerTime(long, long, long)
+    {
+        long l0, l1, l2, l3, $l6, $l7;
+        byte $b4, $b5;
+        double $d0, $d1;
+
+        l0 := @parameter0: long;
+
+        l1 := @parameter1: long;
+
+        l2 := @parameter2: long;
+
+        $b4 = l2 cmp 0L;
+
+        if $b4 != 0 goto label3;
+
+        l3 = l1 - l0;
+
+     label1:
+        $b5 = l3 cmp 10000L;
+
+        if $b5 >= 0 goto label2;
+
+        l3 = 0L;
+
+     label2:
+        $d0 = (double) l3;
+
+        $d1 = 0.75 * $d0;
+
+        $l6 = (long) $d1;
+
+        $l7 = l1 + $l6;
+
+        return $l7;
+
+     label3:
+        l3 = l2;
+
+        goto label1;
+    }
+
+    private void rescheduleKernelAlarmsLocked()
+    {
+        com.android.server.AlarmManagerService r0;
+        com.android.server.AlarmManagerService$Batch r1, r2;
+        java.util.ArrayList $r3, $r4;
+        int $i0;
+        java.lang.Object $r5;
+        long $l1, $l2, $l4, $l5, $l6, $l7, $l9, $l10;
+        byte $b3, $b8;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        $r3 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $i0 = virtualinvoke $r3.<java.util.ArrayList: int size()>();
+
+        if $i0 <= 0 goto label2;
+
+        r1 = specialinvoke r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$Batch findFirstWakeupBatchLocked()>();
+
+        $r4 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        r2 = (com.android.server.AlarmManagerService$Batch) $r5;
+
+        if r1 == null goto label1;
+
+        $l7 = r0.<com.android.server.AlarmManagerService: long mNextWakeup>;
+
+        $l6 = r1.<com.android.server.AlarmManagerService$Batch: long start>;
+
+        $b8 = $l7 cmp $l6;
+
+        if $b8 == 0 goto label1;
+
+        $l10 = r1.<com.android.server.AlarmManagerService$Batch: long start>;
+
+        r0.<com.android.server.AlarmManagerService: long mNextWakeup> = $l10;
+
+        $l9 = r1.<com.android.server.AlarmManagerService$Batch: long start>;
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: void setLocked(int,long)>(2, $l9);
+
+     label1:
+        if r2 == r1 goto label2;
+
+        $l2 = r0.<com.android.server.AlarmManagerService: long mNextNonWakeup>;
+
+        $l1 = r2.<com.android.server.AlarmManagerService$Batch: long start>;
+
+        $b3 = $l2 cmp $l1;
+
+        if $b3 == 0 goto label2;
+
+        $l4 = r2.<com.android.server.AlarmManagerService$Batch: long start>;
+
+        r0.<com.android.server.AlarmManagerService: long mNextNonWakeup> = $l4;
+
+        $l5 = r2.<com.android.server.AlarmManagerService$Batch: long start>;
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: void setLocked(int,long)>(3, $l5);
+
+     label2:
+        return;
+    }
+
+    private native void set(int, int, long, long);
+
+    private void setImplLocked(int, long, long, long, long, long, android.app.PendingIntent, boolean, boolean, android.os.WorkSource)
+    {
+        com.android.server.AlarmManagerService r0;
+        int i0, i6;
+        long l1, l2, l3, l4, l5;
+        android.app.PendingIntent r1;
+        boolean z0, z1, $z2;
+        android.os.WorkSource r2;
+        com.android.server.AlarmManagerService$Alarm r3, $r5;
+        com.android.server.AlarmManagerService$Batch r4, r6, $r13;
+        java.util.ArrayList $r7, $r10, $r11, $r12;
+        java.lang.Object $r8;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        l2 := @parameter2: long;
+
+        l3 := @parameter3: long;
+
+        l4 := @parameter4: long;
+
+        l5 := @parameter5: long;
+
+        r1 := @parameter6: android.app.PendingIntent;
+
+        z0 := @parameter7: boolean;
+
+        z1 := @parameter8: boolean;
+
+        r2 := @parameter9: android.os.WorkSource;
+
+        $r5 = new com.android.server.AlarmManagerService$Alarm;
+
+        specialinvoke $r5.<com.android.server.AlarmManagerService$Alarm: void <init>(int,long,long,long,long,long,android.app.PendingIntent,android.os.WorkSource)>(i0, l1, l2, l3, l4, l5, r1, r2);
+
+        r3 = $r5;
+
+        virtualinvoke r0.<com.android.server.AlarmManagerService: void removeLocked(android.app.PendingIntent)>(r1);
+
+        if z0 == 0 goto label3;
+
+        i6 = -1;
+
+     label1:
+        if i6 >= 0 goto label4;
+
+        $r13 = new com.android.server.AlarmManagerService$Batch;
+
+        specialinvoke $r13.<com.android.server.AlarmManagerService$Batch: void <init>(com.android.server.AlarmManagerService$Alarm)>(r3);
+
+        r4 = $r13;
+
+        r4.<com.android.server.AlarmManagerService$Batch: boolean standalone> = z0;
+
+        $r12 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        staticinvoke <com.android.server.AlarmManagerService: boolean addBatchLocked(java.util.ArrayList,com.android.server.AlarmManagerService$Batch)>($r12, r4);
+
+     label2:
+        specialinvoke r0.<com.android.server.AlarmManagerService: void rescheduleKernelAlarmsLocked()>();
+
+        return;
+
+     label3:
+        i6 = virtualinvoke r0.<com.android.server.AlarmManagerService: int attemptCoalesceLocked(long,long)>(l2, l4);
+
+        goto label1;
+
+     label4:
+        $r7 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $r8 = virtualinvoke $r7.<java.util.ArrayList: java.lang.Object get(int)>(i6);
+
+        r6 = (com.android.server.AlarmManagerService$Batch) $r8;
+
+        $z2 = virtualinvoke r6.<com.android.server.AlarmManagerService$Batch: boolean add(com.android.server.AlarmManagerService$Alarm)>(r3);
+
+        if $z2 == 0 goto label2;
+
+        $r10 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        virtualinvoke $r10.<java.util.ArrayList: java.lang.Object remove(int)>(i6);
+
+        $r11 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        staticinvoke <com.android.server.AlarmManagerService: boolean addBatchLocked(java.util.ArrayList,com.android.server.AlarmManagerService$Batch)>($r11, r6);
+
+        goto label2;
+    }
+
+    private native int setKernelTimezone(int, int);
+
+    private void setLocked(int, long)
+    {
+        com.android.server.AlarmManagerService r0;
+        int i0, $i4, $i8;
+        long l1, l2, l3, $l6, $l7;
+        android.os.Message r1;
+        com.android.server.AlarmManagerService$AlarmHandler $r2, $r3;
+        byte $b5;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        $i4 = r0.<com.android.server.AlarmManagerService: int mDescriptor>;
+
+        if $i4 == -1 goto label3;
+
+        $b5 = l1 cmp 0L;
+
+        if $b5 >= 0 goto label2;
+
+        l2 = 0L;
+
+        l3 = 0L;
+
+     label1:
+        $i8 = r0.<com.android.server.AlarmManagerService: int mDescriptor>;
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: void set(int,int,long,long)>($i8, i0, l2, l3);
+
+        return;
+
+     label2:
+        l2 = l1 / 1000L;
+
+        $l7 = l1 % 1000L;
+
+        $l6 = 1000L * $l7;
+
+        l3 = 1000L * $l6;
+
+        goto label1;
+
+     label3:
+        r1 = staticinvoke <android.os.Message: android.os.Message obtain()>();
+
+        r1.<android.os.Message: int what> = 1;
+
+        $r2 = r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$AlarmHandler mHandler>;
+
+        virtualinvoke $r2.<com.android.server.AlarmManagerService$AlarmHandler: void removeMessages(int)>(1);
+
+        $r3 = r0.<com.android.server.AlarmManagerService: com.android.server.AlarmManagerService$AlarmHandler mHandler>;
+
+        virtualinvoke $r3.<com.android.server.AlarmManagerService$AlarmHandler: boolean sendMessageAtTime(android.os.Message,long)>(r1, l1);
+
+        return;
+    }
+
+    private void triggerAlarmsLocked(java.util.ArrayList, long, long)
+    {
+        com.android.server.AlarmManagerService r0;
+        java.util.ArrayList r1, $r4, $r6, $r8;
+        long l0, l1, l4, l5, $l8, $l9, $l12, $l13, $l14, $l15, $l16, $l17, $l18, $l19, $l22, $l24, $l25, $l26, $l27, $l28, $l29;
+        com.android.server.AlarmManagerService$Batch r2;
+        int i2, i3, $i6, $i10, $i20, $i21, $i23;
+        com.android.server.AlarmManagerService$Alarm r3;
+        java.lang.Object $r5;
+        byte $b7, $b11;
+        android.os.WorkSource $r9;
+        android.app.PendingIntent $r10;
+        boolean $z1;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 := @parameter0: java.util.ArrayList;
+
+        l0 := @parameter1: long;
+
+        l1 := @parameter2: long;
+
+     label1:
+        $r4 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $i6 = virtualinvoke $r4.<java.util.ArrayList: int size()>();
+
+        if $i6 <= 0 goto label2;
+
+        $r6 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $r5 = virtualinvoke $r6.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        r2 = (com.android.server.AlarmManagerService$Batch) $r5;
+
+        $l8 = r2.<com.android.server.AlarmManagerService$Batch: long start>;
+
+        $b7 = $l8 cmp l0;
+
+        if $b7 <= 0 goto label3;
+
+     label2:
+        return;
+
+     label3:
+        $r8 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        virtualinvoke $r8.<java.util.ArrayList: java.lang.Object remove(int)>(0);
+
+        i2 = virtualinvoke r2.<com.android.server.AlarmManagerService$Batch: int size()>();
+
+        i3 = 0;
+
+     label4:
+        if i3 >= i2 goto label1;
+
+        r3 = virtualinvoke r2.<com.android.server.AlarmManagerService$Batch: com.android.server.AlarmManagerService$Alarm get(int)>(i3);
+
+        r3.<com.android.server.AlarmManagerService$Alarm: int count> = 1;
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>(r3);
+
+        $l9 = r3.<com.android.server.AlarmManagerService$Alarm: long repeatInterval>;
+
+        $b11 = $l9 cmp 0L;
+
+        if $b11 <= 0 goto label5;
+
+        $i10 = r3.<com.android.server.AlarmManagerService$Alarm: int count>;
+
+        $l14 = (long) $i10;
+
+        $l13 = r3.<com.android.server.AlarmManagerService$Alarm: long whenElapsed>;
+
+        $l16 = l0 - $l13;
+
+        $l12 = r3.<com.android.server.AlarmManagerService$Alarm: long repeatInterval>;
+
+        $l17 = $l16 / $l12;
+
+        $l15 = $l14 + $l17;
+
+        $i20 = (int) $l15;
+
+        r3.<com.android.server.AlarmManagerService$Alarm: int count> = $i20;
+
+        $i21 = r3.<com.android.server.AlarmManagerService$Alarm: int count>;
+
+        $l19 = (long) $i21;
+
+        $l18 = r3.<com.android.server.AlarmManagerService$Alarm: long repeatInterval>;
+
+        l4 = $l19 * $l18;
+
+        $l24 = r3.<com.android.server.AlarmManagerService$Alarm: long whenElapsed>;
+
+        l5 = l4 + $l24;
+
+        $i23 = r3.<com.android.server.AlarmManagerService$Alarm: int type>;
+
+        $l25 = r3.<com.android.server.AlarmManagerService$Alarm: long when>;
+
+        $l27 = l4 + $l25;
+
+        $l28 = r3.<com.android.server.AlarmManagerService$Alarm: long windowLength>;
+
+        $l22 = r3.<com.android.server.AlarmManagerService$Alarm: long repeatInterval>;
+
+        $l26 = staticinvoke <com.android.server.AlarmManagerService: long maxTriggerTime(long,long,long)>(l0, l5, $l22);
+
+        $l29 = r3.<com.android.server.AlarmManagerService$Alarm: long repeatInterval>;
+
+        $r10 = r3.<com.android.server.AlarmManagerService$Alarm: android.app.PendingIntent operation>;
+
+        $z1 = r2.<com.android.server.AlarmManagerService$Batch: boolean standalone>;
+
+        $r9 = r3.<com.android.server.AlarmManagerService$Alarm: android.os.WorkSource workSource>;
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: void setImplLocked(int,long,long,long,long,long,android.app.PendingIntent,boolean,boolean,android.os.WorkSource)>($i23, $l27, l5, $l28, $l26, $l29, $r10, $z1, 1, $r9);
+
+     label5:
+        i3 = i3 + 1;
+
+        goto label4;
+    }
+
+    private boolean validateConsistencyLocked()
+    {
+        com.android.server.AlarmManagerService r0;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        return 1;
+    }
+
+    private native int waitForAlarm(int);
+
+    int attemptCoalesceLocked(long, long)
+    {
+        com.android.server.AlarmManagerService r0;
+        long l0, l1;
+        int i2, i3;
+        com.android.server.AlarmManagerService$Batch r1;
+        java.util.ArrayList $r2, $r3;
+        java.lang.Object $r4;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        l0 := @parameter0: long;
+
+        l1 := @parameter1: long;
+
+        $r2 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        i2 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        i3 = 0;
+
+     label1:
+        if i3 >= i2 goto label3;
+
+        $r3 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i3);
+
+        r1 = (com.android.server.AlarmManagerService$Batch) $r4;
+
+        $z0 = r1.<com.android.server.AlarmManagerService$Batch: boolean standalone>;
+
+        if $z0 != 0 goto label2;
+
+        $z1 = virtualinvoke r1.<com.android.server.AlarmManagerService$Batch: boolean canHold(long,long)>(l0, l1);
+
+        if $z1 == 0 goto label2;
+
+        return i3;
+
+     label2:
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label3:
+        return -1;
+    }
+
+    protected void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.server.AlarmManagerService r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        java.lang.Object r4, $r37, $r39, $r40, $r41, $r44, $r46, $r48, $r51, $r53, $r55, $r64, $r66, $r68, $r72, $r74, $r76, $r80, $r82, $r83;
+        java.lang.Throwable r5, $r84;
+        long l0, l1, l2, l3, $l14, $l15, $l16, $l17, $l18, $l19, $l22, $l25, $l30;
+        java.text.SimpleDateFormat r6, $r23;
+        com.android.server.AlarmManagerService$FilterStats[] r7;
+        int i4, i5, i6, i7, i8, i9, i10, i11, i12, $i13, $i20, $i21, $i23, $i24, $i26, $i27, $i28, $i29, $i31, $i32, $i33, $i34, $i35, $i36, $i37, $i38;
+        com.android.server.AlarmManagerService$1 r8, $r31;
+        java.util.Iterator r9, r13, r14, r18, r21;
+        java.util.ArrayList r10, $r28, $r36, $r77, $r78, $r79;
+        com.android.server.AlarmManagerService$FilterStats r11, r16, r17;
+        java.util.Map$Entry r12, $r50, $r73, $r81;
+        com.android.server.AlarmManagerService$BroadcastStats r15, $r60, $r71;
+        com.android.server.AlarmManagerService$Batch r19;
+        android.content.Context $r20;
+        java.lang.String $r22, $r26, $r29, $r38, $r52, $r57, $r58, $r62, $r75, $r90;
+        java.util.Date $r24, $r25, $r27;
+        java.util.HashMap $r30, $r33, $r43, $r70;
+        boolean $z0, $z1, $z2, $z3, $z5, $z6;
+        com.android.internal.util.LocalLog $r32;
+        java.util.Set $r34, $r35, $r42, $r69;
+        android.util.Pair $r45, $r47, $r49, $r54, $r59, $r61, $r65, $r67;
+        android.content.ComponentName $r56, $r63;
+        java.lang.StringBuilder $r85, $r86, $r87, $r88, $r89;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        $r20 = r0.<com.android.server.AlarmManagerService: android.content.Context mContext>;
+
+        $i13 = virtualinvoke $r20.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.DUMP");
+
+        if $i13 == 0 goto label01;
+
+        $r85 = new java.lang.StringBuilder;
+
+        specialinvoke $r85.<java.lang.StringBuilder: void <init>()>();
+
+        $r86 = virtualinvoke $r85.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Permission Denial: can\'t dump AlarmManager from from pid=");
+
+        $i37 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        $r87 = virtualinvoke $r86.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i37);
+
+        $r88 = virtualinvoke $r87.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", uid=");
+
+        $i38 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $r89 = virtualinvoke $r88.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i38);
+
+        $r90 = virtualinvoke $r89.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r90);
+
+        return;
+
+     label01:
+        r4 = r0.<com.android.server.AlarmManagerService: java.lang.Object mLock>;
+
+        entermonitor r4;
+
+     label02:
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("Current Alarm Manager state:");
+
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        l1 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $r23 = new java.text.SimpleDateFormat;
+
+        specialinvoke $r23.<java.text.SimpleDateFormat: void <init>(java.lang.String)>("yyyy-MM-dd HH:mm:ss");
+
+        r6 = $r23;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("nowRTC=");
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(long)>(l0);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("=");
+
+        $r24 = new java.util.Date;
+
+        specialinvoke $r24.<java.util.Date: void <init>(long)>(l0);
+
+        $r22 = virtualinvoke r6.<java.text.SimpleDateFormat: java.lang.String format(java.util.Date)>($r24);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r22);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" nowELAPSED=");
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(long)>(l1);
+
+        $l18 = r0.<com.android.server.AlarmManagerService: long mNextWakeup>;
+
+        $l14 = l0 - l1;
+
+        l2 = $l18 + $l14;
+
+        $l16 = r0.<com.android.server.AlarmManagerService: long mNextNonWakeup>;
+
+        $l17 = l0 - l1;
+
+        l3 = $l16 + $l17;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("Next alarm: ");
+
+        $l15 = r0.<com.android.server.AlarmManagerService: long mNextNonWakeup>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(long)>($l15);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" = ");
+
+        $r27 = new java.util.Date;
+
+        specialinvoke $r27.<java.util.Date: void <init>(long)>(l3);
+
+        $r26 = virtualinvoke r6.<java.text.SimpleDateFormat: java.lang.String format(java.util.Date)>($r27);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r26);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("Next wakeup: ");
+
+        $l19 = r0.<com.android.server.AlarmManagerService: long mNextWakeup>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(long)>($l19);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" = ");
+
+        $r25 = new java.util.Date;
+
+        specialinvoke $r25.<java.util.Date: void <init>(long)>(l2);
+
+        $r29 = virtualinvoke r6.<java.text.SimpleDateFormat: java.lang.String format(java.util.Date)>($r25);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r29);
+
+        $r28 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $i21 = virtualinvoke $r28.<java.util.ArrayList: int size()>();
+
+        if $i21 <= 0 goto label08;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("Pending alarm batches: ");
+
+        $r77 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $i33 = virtualinvoke $r77.<java.util.ArrayList: int size()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(int)>($i33);
+
+        $r78 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        r21 = virtualinvoke $r78.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label03:
+        $z5 = interfaceinvoke r21.<java.util.Iterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label08;
+
+        $r80 = interfaceinvoke r21.<java.util.Iterator: java.lang.Object next()>();
+
+        r19 = (com.android.server.AlarmManagerService$Batch) $r80;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.Object)>(r19);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(char)>(58);
+
+        $r79 = r19.<com.android.server.AlarmManagerService$Batch: java.util.ArrayList alarms>;
+
+        staticinvoke <com.android.server.AlarmManagerService: void dumpAlarmList(java.io.PrintWriter,java.util.ArrayList,java.lang.String,long,long)>(r2, $r79, "  ", l1, l0);
+
+     label04:
+        goto label03;
+
+     label05:
+        $r84 := @caughtexception;
+
+        r5 = $r84;
+
+     label06:
+        exitmonitor r4;
+
+     label07:
+        throw r5;
+
+     label08:
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  Broadcast ref count: ");
+
+        $i20 = r0.<com.android.server.AlarmManagerService: int mBroadcastRefCount>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(int)>($i20);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+        $r32 = r0.<com.android.server.AlarmManagerService: com.android.internal.util.LocalLog mLog>;
+
+        $z0 = virtualinvoke $r32.<com.android.internal.util.LocalLog: boolean dump(java.io.PrintWriter,java.lang.String,java.lang.String)>(r2, "  Recent problems", "    ");
+
+        if $z0 == 0 goto label09;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+     label09:
+        r7 = newarray (com.android.server.AlarmManagerService$FilterStats)[10];
+
+        $r31 = new com.android.server.AlarmManagerService$1;
+
+        specialinvoke $r31.<com.android.server.AlarmManagerService$1: void <init>(com.android.server.AlarmManagerService)>(r0);
+
+        r8 = $r31;
+
+     label10:
+        i4 = 0;
+
+     label11:
+        $r30 = r0.<com.android.server.AlarmManagerService: java.util.HashMap mBroadcastStats>;
+
+        $r35 = virtualinvoke $r30.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r9 = interfaceinvoke $r35.<java.util.Set: java.util.Iterator iterator()>();
+
+     label12:
+        $z2 = interfaceinvoke r9.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label24;
+
+        $r74 = interfaceinvoke r9.<java.util.Iterator: java.lang.Object next()>();
+
+        $r73 = (java.util.Map$Entry) $r74;
+
+        $r72 = interfaceinvoke $r73.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r71 = (com.android.server.AlarmManagerService$BroadcastStats) $r72;
+
+        $r70 = $r71.<com.android.server.AlarmManagerService$BroadcastStats: java.util.HashMap filterStats>;
+
+        $r69 = virtualinvoke $r70.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r18 = interfaceinvoke $r69.<java.util.Set: java.util.Iterator iterator()>();
+
+     label13:
+        $z6 = interfaceinvoke r18.<java.util.Iterator: boolean hasNext()>();
+
+        if $z6 == 0 goto label12;
+
+        $r82 = interfaceinvoke r18.<java.util.Iterator: java.lang.Object next()>();
+
+        $r81 = (java.util.Map$Entry) $r82;
+
+        $r83 = interfaceinvoke $r81.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        r17 = (com.android.server.AlarmManagerService$FilterStats) $r83;
+
+     label14:
+        if i4 <= 0 goto label50;
+
+     label15:
+        i10 = staticinvoke <java.util.Arrays: int binarySearch(java.lang.Object[],int,int,java.lang.Object,java.util.Comparator)>(r7, 0, i4, r17, r8);
+
+     label16:
+        goto label49;
+
+     label17:
+        i11 = lengthof r7;
+
+     label18:
+        if i10 >= i11 goto label13;
+
+     label19:
+        $i34 = lengthof r7;
+
+        $i36 = $i34 - i10;
+
+        i8 = -1 + $i36;
+
+     label20:
+        if i8 <= 0 goto label22;
+
+        i12 = i10 + 1;
+
+     label21:
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>(r7, i10, r7, i12, i8);
+
+     label22:
+        r7[i10] = r17;
+
+        i9 = lengthof r7;
+
+     label23:
+        if i4 >= i9 goto label13;
+
+        i4 = i4 + 1;
+
+        goto label13;
+
+     label24:
+        if i4 <= 0 goto label33;
+
+     label25:
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("  Top Alarms:");
+
+     label26:
+        i5 = 0;
+
+     label27:
+        if i5 >= i4 goto label33;
+
+     label28:
+        r11 = r7[i5];
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("    ");
+
+        $i32 = r11.<com.android.server.AlarmManagerService$FilterStats: int nesting>;
+
+        if $i32 <= 0 goto label29;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("*ACTIVE* ");
+
+     label29:
+        $l30 = r11.<com.android.server.AlarmManagerService$FilterStats: long aggregateTime>;
+
+        staticinvoke <android.util.TimeUtils: void formatDuration(long,java.io.PrintWriter)>($l30, r2);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" running, ");
+
+        $i31 = r11.<com.android.server.AlarmManagerService$FilterStats: int numWakeup>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(int)>($i31);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" wakeups, ");
+
+        $i29 = r11.<com.android.server.AlarmManagerService$FilterStats: int count>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(int)>($i29);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" alarms: ");
+
+        $r60 = r11.<com.android.server.AlarmManagerService$FilterStats: com.android.server.AlarmManagerService$BroadcastStats mBroadcastStats>;
+
+        $r58 = $r60.<com.android.server.AlarmManagerService$BroadcastStats: java.lang.String mPackageName>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r58);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("      ");
+
+        $r59 = r11.<com.android.server.AlarmManagerService$FilterStats: android.util.Pair mTarget>;
+
+        $r68 = $r59.<android.util.Pair: java.lang.Object first>;
+
+        if $r68 == null goto label30;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" act=");
+
+        $r61 = r11.<com.android.server.AlarmManagerService$FilterStats: android.util.Pair mTarget>;
+
+        $r76 = $r61.<android.util.Pair: java.lang.Object first>;
+
+        $r75 = (java.lang.String) $r76;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r75);
+
+     label30:
+        $r67 = r11.<com.android.server.AlarmManagerService$FilterStats: android.util.Pair mTarget>;
+
+        $r66 = $r67.<android.util.Pair: java.lang.Object second>;
+
+        if $r66 == null goto label31;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" cmp=");
+
+        $r65 = r11.<com.android.server.AlarmManagerService$FilterStats: android.util.Pair mTarget>;
+
+        $r64 = $r65.<android.util.Pair: java.lang.Object second>;
+
+        $r63 = (android.content.ComponentName) $r64;
+
+        $r62 = virtualinvoke $r63.<android.content.ComponentName: java.lang.String toShortString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r62);
+
+     label31:
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+     label32:
+        i5 = i5 + 1;
+
+        goto label27;
+
+     label33:
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>(" ");
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("  Alarm Stats:");
+
+        $r36 = new java.util.ArrayList;
+
+        specialinvoke $r36.<java.util.ArrayList: void <init>()>();
+
+        r10 = $r36;
+
+        $r33 = r0.<com.android.server.AlarmManagerService: java.util.HashMap mBroadcastStats>;
+
+        $r34 = virtualinvoke $r33.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r13 = interfaceinvoke $r34.<java.util.Set: java.util.Iterator iterator()>();
+
+     label34:
+        $z1 = interfaceinvoke r13.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label47;
+
+        $r39 = interfaceinvoke r13.<java.util.Iterator: java.lang.Object next()>();
+
+        r12 = (java.util.Map$Entry) $r39;
+
+        $r40 = interfaceinvoke r12.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        r15 = (com.android.server.AlarmManagerService$BroadcastStats) $r40;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  ");
+
+        $i24 = r15.<com.android.server.AlarmManagerService$BroadcastStats: int nesting>;
+
+        if $i24 <= 0 goto label35;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("*ACTIVE* ");
+
+     label35:
+        $r37 = interfaceinvoke r12.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r38 = (java.lang.String) $r37;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r38);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" ");
+
+        $l22 = r15.<com.android.server.AlarmManagerService$BroadcastStats: long aggregateTime>;
+
+        staticinvoke <android.util.TimeUtils: void formatDuration(long,java.io.PrintWriter)>($l22, r2);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" running, ");
+
+        $i23 = r15.<com.android.server.AlarmManagerService$BroadcastStats: int numWakeup>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(int)>($i23);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>(" wakeups:");
+
+        virtualinvoke r10.<java.util.ArrayList: void clear()>();
+
+        $r43 = r15.<com.android.server.AlarmManagerService$BroadcastStats: java.util.HashMap filterStats>;
+
+        $r42 = virtualinvoke $r43.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r14 = interfaceinvoke $r42.<java.util.Set: java.util.Iterator iterator()>();
+
+     label36:
+        $z3 = interfaceinvoke r14.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label38;
+
+        $r53 = interfaceinvoke r14.<java.util.Iterator: java.lang.Object next()>();
+
+        $r50 = (java.util.Map$Entry) $r53;
+
+        $r51 = interfaceinvoke $r50.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        virtualinvoke r10.<java.util.ArrayList: boolean add(java.lang.Object)>($r51);
+
+     label37:
+        goto label36;
+
+     label38:
+        staticinvoke <java.util.Collections: void sort(java.util.List,java.util.Comparator)>(r10, r8);
+
+     label39:
+        i7 = 0;
+
+     label40:
+        i6 = virtualinvoke r10.<java.util.ArrayList: int size()>();
+
+     label41:
+        if i7 >= i6 goto label34;
+
+     label42:
+        $r41 = virtualinvoke r10.<java.util.ArrayList: java.lang.Object get(int)>(i7);
+
+        r16 = (com.android.server.AlarmManagerService$FilterStats) $r41;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("    ");
+
+        $i26 = r16.<com.android.server.AlarmManagerService$FilterStats: int nesting>;
+
+        if $i26 <= 0 goto label43;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("*ACTIVE* ");
+
+     label43:
+        $l25 = r16.<com.android.server.AlarmManagerService$FilterStats: long aggregateTime>;
+
+        staticinvoke <android.util.TimeUtils: void formatDuration(long,java.io.PrintWriter)>($l25, r2);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" ");
+
+        $i28 = r16.<com.android.server.AlarmManagerService$FilterStats: int numWakeup>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(int)>($i28);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" wakes ");
+
+        $i27 = r16.<com.android.server.AlarmManagerService$FilterStats: int count>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(int)>($i27);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" alarms:");
+
+        $r49 = r16.<com.android.server.AlarmManagerService$FilterStats: android.util.Pair mTarget>;
+
+        $r48 = $r49.<android.util.Pair: java.lang.Object first>;
+
+        if $r48 == null goto label44;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" act=");
+
+        $r54 = r16.<com.android.server.AlarmManagerService$FilterStats: android.util.Pair mTarget>;
+
+        $r55 = $r54.<android.util.Pair: java.lang.Object first>;
+
+        $r52 = (java.lang.String) $r55;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r52);
+
+     label44:
+        $r45 = r16.<com.android.server.AlarmManagerService$FilterStats: android.util.Pair mTarget>;
+
+        $r44 = $r45.<android.util.Pair: java.lang.Object second>;
+
+        if $r44 == null goto label45;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" cmp=");
+
+        $r47 = r16.<com.android.server.AlarmManagerService$FilterStats: android.util.Pair mTarget>;
+
+        $r46 = $r47.<android.util.Pair: java.lang.Object second>;
+
+        $r56 = (android.content.ComponentName) $r46;
+
+        $r57 = virtualinvoke $r56.<android.content.ComponentName: java.lang.String toShortString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r57);
+
+     label45:
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+     label46:
+        i7 = i7 + 1;
+
+        goto label40;
+
+     label47:
+        exitmonitor r4;
+
+     label48:
+        return;
+
+     label49:
+        if i10 >= 0 goto label17;
+
+        $i35 = neg i10;
+
+        i10 = -1 + $i35;
+
+        goto label17;
+
+     label50:
+        i10 = 0;
+
+        goto label49;
+
+        catch java.lang.Throwable from label02 to label03 with label05;
+        catch java.lang.Throwable from label03 to label04 with label05;
+        catch java.lang.Throwable from label06 to label07 with label05;
+        catch java.lang.Throwable from label08 to label09 with label05;
+        catch java.lang.Throwable from label09 to label10 with label05;
+        catch java.lang.Throwable from label11 to label12 with label05;
+        catch java.lang.Throwable from label12 to label13 with label05;
+        catch java.lang.Throwable from label13 to label14 with label05;
+        catch java.lang.Throwable from label15 to label16 with label05;
+        catch java.lang.Throwable from label17 to label18 with label05;
+        catch java.lang.Throwable from label19 to label20 with label05;
+        catch java.lang.Throwable from label21 to label22 with label05;
+        catch java.lang.Throwable from label22 to label23 with label05;
+        catch java.lang.Throwable from label25 to label26 with label05;
+        catch java.lang.Throwable from label28 to label29 with label05;
+        catch java.lang.Throwable from label29 to label30 with label05;
+        catch java.lang.Throwable from label30 to label31 with label05;
+        catch java.lang.Throwable from label31 to label32 with label05;
+        catch java.lang.Throwable from label33 to label34 with label05;
+        catch java.lang.Throwable from label34 to label35 with label05;
+        catch java.lang.Throwable from label35 to label36 with label05;
+        catch java.lang.Throwable from label36 to label37 with label05;
+        catch java.lang.Throwable from label38 to label39 with label05;
+        catch java.lang.Throwable from label40 to label41 with label05;
+        catch java.lang.Throwable from label42 to label43 with label05;
+        catch java.lang.Throwable from label43 to label44 with label05;
+        catch java.lang.Throwable from label44 to label45 with label05;
+        catch java.lang.Throwable from label45 to label46 with label05;
+        catch java.lang.Throwable from label47 to label48 with label05;
+    }
+
+    protected void finalize() throws java.lang.Throwable
+    {
+        com.android.server.AlarmManagerService r0;
+        java.lang.Throwable r1, $r2;
+        int $i0;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+     label1:
+        $i0 = r0.<com.android.server.AlarmManagerService: int mDescriptor>;
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: void close(int)>($i0);
+
+     label2:
+        specialinvoke r0.<android.app.IAlarmManager$Stub: void finalize()>();
+
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        r1 = $r2;
+
+        specialinvoke r0.<android.app.IAlarmManager$Stub: void finalize()>();
+
+        throw r1;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public boolean lookForPackageLocked(java.lang.String)
+    {
+        com.android.server.AlarmManagerService r0;
+        java.lang.String r1;
+        int i0, $i1;
+        java.util.ArrayList $r2, $r3;
+        java.lang.Object $r4;
+        com.android.server.AlarmManagerService$Batch $r5;
+        boolean $z0;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 = 0;
+
+     label1:
+        $r2 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $i1 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        if i0 >= $i1 goto label3;
+
+        $r3 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        $r5 = (com.android.server.AlarmManagerService$Batch) $r4;
+
+        $z0 = virtualinvoke $r5.<com.android.server.AlarmManagerService$Batch: boolean hasPackage(java.lang.String)>(r1);
+
+        if $z0 == 0 goto label2;
+
+        return 1;
+
+     label2:
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    void rebatchAllAlarms()
+    {
+        com.android.server.AlarmManagerService r0;
+        java.lang.Object r1;
+        java.lang.Throwable r2, $r3;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 = r0.<com.android.server.AlarmManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        virtualinvoke r0.<com.android.server.AlarmManagerService: void rebatchAllAlarmsLocked(boolean)>(1);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        r2 = $r3;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    void rebatchAllAlarmsLocked(boolean)
+    {
+        com.android.server.AlarmManagerService r0;
+        boolean z0, $z1;
+        java.util.ArrayList r1, $r4, $r5;
+        long l0, l5, l6, $l8, $l9, $l10, $l11, $l13, $l15, $l17, $l18, $l19;
+        int i1, i2, i3, i4, $i7, $i16;
+        com.android.server.AlarmManagerService$Batch r2;
+        com.android.server.AlarmManagerService$Alarm r3;
+        java.lang.Object $r6, $r7;
+        byte $b12, $b14;
+        android.app.PendingIntent $r8;
+        android.os.WorkSource $r9;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        z0 := @parameter0: boolean;
+
+        $r4 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $r6 = virtualinvoke $r4.<java.util.ArrayList: java.lang.Object clone()>();
+
+        r1 = (java.util.ArrayList) $r6;
+
+        $r5 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        virtualinvoke $r5.<java.util.ArrayList: void clear()>();
+
+        l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        i1 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        i2 = 0;
+
+     label1:
+        if i2 >= i1 goto label8;
+
+        $r7 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(i2);
+
+        r2 = (com.android.server.AlarmManagerService$Batch) $r7;
+
+        i3 = virtualinvoke r2.<com.android.server.AlarmManagerService$Batch: int size()>();
+
+        i4 = 0;
+
+     label2:
+        if i4 >= i3 goto label7;
+
+        r3 = virtualinvoke r2.<com.android.server.AlarmManagerService$Batch: com.android.server.AlarmManagerService$Alarm get(int)>(i4);
+
+        $l8 = r3.<com.android.server.AlarmManagerService$Alarm: long when>;
+
+        $i7 = r3.<com.android.server.AlarmManagerService$Alarm: int type>;
+
+        l5 = staticinvoke <com.android.server.AlarmManagerService: long convertToElapsed(long,int)>($l8, $i7);
+
+        $l9 = r3.<com.android.server.AlarmManagerService$Alarm: long whenElapsed>;
+
+        $l10 = r3.<com.android.server.AlarmManagerService$Alarm: long maxWhen>;
+
+        $b12 = $l9 cmp $l10;
+
+        if $b12 != 0 goto label4;
+
+        l6 = l5;
+
+     label3:
+        $i16 = r3.<com.android.server.AlarmManagerService$Alarm: int type>;
+
+        $l15 = r3.<com.android.server.AlarmManagerService$Alarm: long when>;
+
+        $l18 = r3.<com.android.server.AlarmManagerService$Alarm: long windowLength>;
+
+        $l17 = r3.<com.android.server.AlarmManagerService$Alarm: long repeatInterval>;
+
+        $r8 = r3.<com.android.server.AlarmManagerService$Alarm: android.app.PendingIntent operation>;
+
+        $z1 = r2.<com.android.server.AlarmManagerService$Batch: boolean standalone>;
+
+        $r9 = r3.<com.android.server.AlarmManagerService$Alarm: android.os.WorkSource workSource>;
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: void setImplLocked(int,long,long,long,long,long,android.app.PendingIntent,boolean,boolean,android.os.WorkSource)>($i16, $l15, l5, $l18, l6, $l17, $r8, $z1, z0, $r9);
+
+        i4 = i4 + 1;
+
+        goto label2;
+
+     label4:
+        $l11 = r3.<com.android.server.AlarmManagerService$Alarm: long windowLength>;
+
+        $b14 = $l11 cmp 0L;
+
+        if $b14 <= 0 goto label6;
+
+        $l19 = r3.<com.android.server.AlarmManagerService$Alarm: long windowLength>;
+
+        l6 = l5 + $l19;
+
+     label5:
+        goto label3;
+
+     label6:
+        $l13 = r3.<com.android.server.AlarmManagerService$Alarm: long repeatInterval>;
+
+        l6 = staticinvoke <com.android.server.AlarmManagerService: long maxTriggerTime(long,long,long)>(l0, l5, $l13);
+
+        goto label5;
+
+     label7:
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label8:
+        return;
+    }
+
+    void recordWakeupAlarms(java.util.ArrayList, long, long)
+    {
+        com.android.server.AlarmManagerService r0;
+        java.util.ArrayList r1, $r6, $r7;
+        long l0, l1, $l6;
+        int i2, i3, i4, i5, $i8;
+        com.android.server.AlarmManagerService$Batch r2;
+        com.android.server.AlarmManagerService$Alarm r3;
+        com.android.server.AlarmManagerService$WakeupEvent r4, $r8;
+        java.lang.Object $r5, $r9;
+        byte $b7;
+        android.app.PendingIntent $r10, $r12;
+        android.content.Intent $r11;
+        java.util.LinkedList $r13;
+        java.lang.String $r14;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 := @parameter0: java.util.ArrayList;
+
+        l0 := @parameter1: long;
+
+        l1 := @parameter2: long;
+
+        i2 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        i3 = 0;
+
+     label1:
+        if i3 >= i2 goto label2;
+
+        $r5 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(i3);
+
+        r2 = (com.android.server.AlarmManagerService$Batch) $r5;
+
+        $l6 = r2.<com.android.server.AlarmManagerService$Batch: long start>;
+
+        $b7 = $l6 cmp l0;
+
+        if $b7 <= 0 goto label3;
+
+     label2:
+        return;
+
+     label3:
+        $r6 = r2.<com.android.server.AlarmManagerService$Batch: java.util.ArrayList alarms>;
+
+        i4 = virtualinvoke $r6.<java.util.ArrayList: int size()>();
+
+        i5 = 0;
+
+     label4:
+        if i5 >= i4 goto label5;
+
+        $r7 = r2.<com.android.server.AlarmManagerService$Batch: java.util.ArrayList alarms>;
+
+        $r9 = virtualinvoke $r7.<java.util.ArrayList: java.lang.Object get(int)>(i5);
+
+        r3 = (com.android.server.AlarmManagerService$Alarm) $r9;
+
+        $r8 = new com.android.server.AlarmManagerService$WakeupEvent;
+
+        $r10 = r3.<com.android.server.AlarmManagerService$Alarm: android.app.PendingIntent operation>;
+
+        $i8 = virtualinvoke $r10.<android.app.PendingIntent: int getCreatorUid()>();
+
+        $r12 = r3.<com.android.server.AlarmManagerService$Alarm: android.app.PendingIntent operation>;
+
+        $r11 = virtualinvoke $r12.<android.app.PendingIntent: android.content.Intent getIntent()>();
+
+        $r14 = virtualinvoke $r11.<android.content.Intent: java.lang.String getAction()>();
+
+        specialinvoke $r8.<com.android.server.AlarmManagerService$WakeupEvent: void <init>(com.android.server.AlarmManagerService,long,int,java.lang.String)>(r0, l1, $i8, $r14);
+
+        r4 = $r8;
+
+        $r13 = r0.<com.android.server.AlarmManagerService: java.util.LinkedList mRecentWakeups>;
+
+        virtualinvoke $r13.<java.util.LinkedList: boolean add(java.lang.Object)>(r4);
+
+        i5 = i5 + 1;
+
+        goto label4;
+
+     label5:
+        i3 = i3 + 1;
+
+        goto label1;
+    }
+
+    public void remove(android.app.PendingIntent)
+    {
+        com.android.server.AlarmManagerService r0;
+        android.app.PendingIntent r1;
+        java.lang.Object r2;
+        java.lang.Throwable r3, $r4;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 := @parameter0: android.app.PendingIntent;
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        r2 = r0.<com.android.server.AlarmManagerService: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label2:
+        virtualinvoke r0.<com.android.server.AlarmManagerService: void removeLocked(android.app.PendingIntent)>(r1);
+
+        exitmonitor r2;
+
+     label3:
+        return;
+
+     label4:
+        $r4 := @caughtexception;
+
+        r3 = $r4;
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        throw r3;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    public void removeLocked(android.app.PendingIntent)
+    {
+        com.android.server.AlarmManagerService r0;
+        android.app.PendingIntent r1;
+        boolean z0, $z1;
+        int i0, $i1, $i2;
+        com.android.server.AlarmManagerService$Batch r2;
+        java.util.ArrayList $r3, $r4, $r6;
+        java.lang.Object $r5;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 := @parameter0: android.app.PendingIntent;
+
+        z0 = 0;
+
+        $r3 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $i1 = virtualinvoke $r3.<java.util.ArrayList: int size()>();
+
+        i0 = -1 + $i1;
+
+     label1:
+        if i0 < 0 goto label3;
+
+        $r4 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        r2 = (com.android.server.AlarmManagerService$Batch) $r5;
+
+        $z1 = virtualinvoke r2.<com.android.server.AlarmManagerService$Batch: boolean remove(android.app.PendingIntent)>(r1);
+
+        z0 = z0 | $z1;
+
+        $i2 = virtualinvoke r2.<com.android.server.AlarmManagerService$Batch: int size()>();
+
+        if $i2 != 0 goto label2;
+
+        $r6 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        virtualinvoke $r6.<java.util.ArrayList: java.lang.Object remove(int)>(i0);
+
+     label2:
+        i0 = i0 + -1;
+
+        goto label1;
+
+     label3:
+        if z0 == 0 goto label4;
+
+        virtualinvoke r0.<com.android.server.AlarmManagerService: void rebatchAllAlarmsLocked(boolean)>(1);
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: void rescheduleKernelAlarmsLocked()>();
+
+     label4:
+        return;
+    }
+
+    public void removeLocked(java.lang.String)
+    {
+        com.android.server.AlarmManagerService r0;
+        java.lang.String r1;
+        boolean z0, $z1;
+        int i0, $i1, $i2;
+        com.android.server.AlarmManagerService$Batch r2;
+        java.util.ArrayList $r3, $r4, $r6;
+        java.lang.Object $r5;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 = 0;
+
+        $r3 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $i1 = virtualinvoke $r3.<java.util.ArrayList: int size()>();
+
+        i0 = -1 + $i1;
+
+     label1:
+        if i0 < 0 goto label3;
+
+        $r4 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        r2 = (com.android.server.AlarmManagerService$Batch) $r5;
+
+        $z1 = virtualinvoke r2.<com.android.server.AlarmManagerService$Batch: boolean remove(java.lang.String)>(r1);
+
+        z0 = z0 | $z1;
+
+        $i2 = virtualinvoke r2.<com.android.server.AlarmManagerService$Batch: int size()>();
+
+        if $i2 != 0 goto label2;
+
+        $r6 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        virtualinvoke $r6.<java.util.ArrayList: java.lang.Object remove(int)>(i0);
+
+     label2:
+        i0 = i0 + -1;
+
+        goto label1;
+
+     label3:
+        if z0 == 0 goto label4;
+
+        virtualinvoke r0.<com.android.server.AlarmManagerService: void rebatchAllAlarmsLocked(boolean)>(1);
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: void rescheduleKernelAlarmsLocked()>();
+
+     label4:
+        return;
+    }
+
+    public void removeUserLocked(int)
+    {
+        com.android.server.AlarmManagerService r0;
+        int i0, i1, $i2, $i3;
+        boolean z0, $z1;
+        com.android.server.AlarmManagerService$Batch r1;
+        java.util.ArrayList $r2, $r3, $r5;
+        java.lang.Object $r4;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        i0 := @parameter0: int;
+
+        z0 = 0;
+
+        $r2 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $i2 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        i1 = -1 + $i2;
+
+     label1:
+        if i1 < 0 goto label3;
+
+        $r3 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r1 = (com.android.server.AlarmManagerService$Batch) $r4;
+
+        $z1 = virtualinvoke r1.<com.android.server.AlarmManagerService$Batch: boolean remove(int)>(i0);
+
+        z0 = z0 | $z1;
+
+        $i3 = virtualinvoke r1.<com.android.server.AlarmManagerService$Batch: int size()>();
+
+        if $i3 != 0 goto label2;
+
+        $r5 = r0.<com.android.server.AlarmManagerService: java.util.ArrayList mAlarmBatches>;
+
+        virtualinvoke $r5.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+     label2:
+        i1 = i1 + -1;
+
+        goto label1;
+
+     label3:
+        if z0 == 0 goto label4;
+
+        virtualinvoke r0.<com.android.server.AlarmManagerService: void rebatchAllAlarmsLocked(boolean)>(1);
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: void rescheduleKernelAlarmsLocked()>();
+
+     label4:
+        return;
+    }
+
+    public void set(int, long, long, long, android.app.PendingIntent, android.os.WorkSource)
+    {
+        com.android.server.AlarmManagerService r0;
+        int i0;
+        long l1, l2, l3;
+        android.app.PendingIntent r1;
+        android.os.WorkSource r2;
+        android.content.Context $r3;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        l2 := @parameter2: long;
+
+        l3 := @parameter3: long;
+
+        r1 := @parameter4: android.app.PendingIntent;
+
+        r2 := @parameter5: android.os.WorkSource;
+
+        if r2 == null goto label1;
+
+        $r3 = r0.<com.android.server.AlarmManagerService: android.content.Context mContext>;
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingPermission(java.lang.String,java.lang.String)>("android.permission.UPDATE_DEVICE_STATS", "AlarmManager.set");
+
+     label1:
+        virtualinvoke r0.<com.android.server.AlarmManagerService: void set(int,long,long,long,android.app.PendingIntent,boolean,android.os.WorkSource)>(i0, l1, l2, l3, r1, 0, r2);
+
+        return;
+    }
+
+    public void set(int, long, long, long, android.app.PendingIntent, boolean, android.os.WorkSource)
+    {
+        com.android.server.AlarmManagerService r0;
+        int i0, $i15, $i16;
+        long l1, l2, l3, l4, l5, l6, l7, l8, l9, l10;
+        android.app.PendingIntent r1;
+        boolean z0;
+        android.os.WorkSource r2;
+        java.lang.Object r3;
+        java.lang.Throwable r4, $r23;
+        byte $b11, $b12, $b13, $b14;
+        java.lang.StringBuilder $r5, $r7, $r8, $r10, $r11, $r12, $r13, $r15, $r16, $r17, $r18, $r19, $r21, $r22;
+        java.lang.IllegalArgumentException $r6;
+        java.lang.String $r9, $r14, $r20;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        l2 := @parameter2: long;
+
+        l3 := @parameter3: long;
+
+        r1 := @parameter4: android.app.PendingIntent;
+
+        z0 := @parameter5: boolean;
+
+        r2 := @parameter6: android.os.WorkSource;
+
+        if r1 != null goto label01;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("AlarmManager", "set/setRepeating ignored because there is no intent");
+
+        return;
+
+     label01:
+        $b11 = l2 cmp 43200000L;
+
+        if $b11 <= 0 goto label02;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Window length ");
+
+        $r22 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l2);
+
+        $r21 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms suspiciously long; limiting to 1 hour");
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("AlarmManager", $r20);
+
+        l2 = 3600000L;
+
+     label02:
+        if i0 < 0 goto label03;
+
+        if i0 <= 3 goto label04;
+
+     label03:
+        $r6 = new java.lang.IllegalArgumentException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid alarm type ");
+
+        $r7 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r9 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r6.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r9);
+
+        throw $r6;
+
+     label04:
+        $b12 = l1 cmp 0L;
+
+        if $b12 >= 0 goto label05;
+
+        $i16 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        l9 = (long) $i16;
+
+        $i15 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        l10 = (long) $i15;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid alarm trigger time! ");
+
+        $r11 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l1);
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" from uid=");
+
+        $r17 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l9);
+
+        $r16 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" pid=");
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l10);
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("AlarmManager", $r14);
+
+        l1 = 0L;
+
+     label05:
+        l4 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        l5 = staticinvoke <com.android.server.AlarmManagerService: long convertToElapsed(long,int)>(l1, i0);
+
+        $b13 = l2 cmp 0L;
+
+        if $b13 != 0 goto label12;
+
+        l6 = l5;
+
+     label06:
+        r3 = r0.<com.android.server.AlarmManagerService: java.lang.Object mLock>;
+
+        entermonitor r3;
+
+        l7 = l1;
+
+        l8 = l2;
+
+     label07:
+        specialinvoke r0.<com.android.server.AlarmManagerService: void setImplLocked(int,long,long,long,long,long,android.app.PendingIntent,boolean,boolean,android.os.WorkSource)>(i0, l7, l5, l8, l6, l3, r1, z0, 1, r2);
+
+        exitmonitor r3;
+
+     label08:
+        return;
+
+     label09:
+        $r23 := @caughtexception;
+
+        r4 = $r23;
+
+     label10:
+        exitmonitor r3;
+
+     label11:
+        throw r4;
+
+     label12:
+        $b14 = l2 cmp 0L;
+
+        if $b14 >= 0 goto label13;
+
+        l6 = staticinvoke <com.android.server.AlarmManagerService: long maxTriggerTime(long,long,long)>(l4, l5, l3);
+
+        goto label06;
+
+     label13:
+        l6 = l5 + l2;
+
+        goto label06;
+
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    public void setTime(long)
+    {
+        com.android.server.AlarmManagerService r0;
+        long l0;
+        android.content.Context $r1;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        l0 := @parameter0: long;
+
+        $r1 = r0.<com.android.server.AlarmManagerService: android.content.Context mContext>;
+
+        virtualinvoke $r1.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.SET_TIME", "setTime");
+
+        staticinvoke <android.os.SystemClock: boolean setCurrentTimeMillis(long)>(l0);
+
+        return;
+    }
+
+    public void setTimeZone(java.lang.String)
+    {
+        com.android.server.AlarmManagerService r0;
+        java.lang.String r1, r5, $r8, $r13, $r17;
+        long l0, $l2;
+        java.lang.Throwable r2, r4, $r15, $r16;
+        boolean z0, z1, z2;
+        java.util.TimeZone r3;
+        int i1, $i3, $i4, $i6;
+        android.content.Intent r6, $r9;
+        android.content.Context $r7, $r12;
+        android.os.UserHandle $r11;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r7 = r0.<com.android.server.AlarmManagerService: android.content.Context mContext>;
+
+        virtualinvoke $r7.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.SET_TIME_ZONE", "setTimeZone");
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label01:
+        z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+     label02:
+        if z0 == 0 goto label03;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label03:
+        r3 = staticinvoke <java.util.TimeZone: java.util.TimeZone getTimeZone(java.lang.String)>(r1);
+
+        entermonitor r0;
+
+     label04:
+        r5 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("persist.sys.timezone");
+
+     label05:
+        if r5 == null goto label08;
+
+     label06:
+        $r17 = virtualinvoke r3.<java.util.TimeZone: java.lang.String getID()>();
+
+        z1 = virtualinvoke r5.<java.lang.String: boolean equals(java.lang.Object)>($r17);
+
+     label07:
+        z2 = 0;
+
+        if z1 != 0 goto label10;
+
+     label08:
+        z2 = 1;
+
+     label09:
+        $r8 = virtualinvoke r3.<java.util.TimeZone: java.lang.String getID()>();
+
+        staticinvoke <android.os.SystemProperties: void set(java.lang.String,java.lang.String)>("persist.sys.timezone", $r8);
+
+     label10:
+        $l2 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        i1 = virtualinvoke r3.<java.util.TimeZone: int getOffset(long)>($l2);
+
+        $i6 = r0.<com.android.server.AlarmManagerService: int mDescriptor>;
+
+        $i4 = i1 / 60000;
+
+        $i3 = neg $i4;
+
+        specialinvoke r0.<com.android.server.AlarmManagerService: int setKernelTimezone(int,int)>($i6, $i3);
+
+        exitmonitor r0;
+
+     label11:
+        staticinvoke <java.util.TimeZone: void setDefault(java.util.TimeZone)>(null);
+
+     label12:
+        if z2 == 0 goto label14;
+
+     label13:
+        $r9 = new android.content.Intent;
+
+        specialinvoke $r9.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.TIMEZONE_CHANGED");
+
+        r6 = $r9;
+
+        virtualinvoke r6.<android.content.Intent: android.content.Intent addFlags(int)>(536870912);
+
+        $r13 = virtualinvoke r3.<java.util.TimeZone: java.lang.String getID()>();
+
+        virtualinvoke r6.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("time-zone", $r13);
+
+        $r12 = r0.<com.android.server.AlarmManagerService: android.content.Context mContext>;
+
+        $r11 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r12.<android.content.Context: void sendBroadcastAsUser(android.content.Intent,android.os.UserHandle)>(r6, $r11);
+
+     label14:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label15:
+        $r16 := @caughtexception;
+
+        r4 = $r16;
+
+     label16:
+        exitmonitor r0;
+
+     label17:
+        throw r4;
+
+     label18:
+        $r15 := @caughtexception;
+
+        r2 = $r15;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw r2;
+
+        catch java.lang.Throwable from label01 to label02 with label18;
+        catch java.lang.Throwable from label03 to label04 with label18;
+        catch java.lang.Throwable from label04 to label05 with label15;
+        catch java.lang.Throwable from label06 to label07 with label15;
+        catch java.lang.Throwable from label09 to label10 with label15;
+        catch java.lang.Throwable from label10 to label11 with label15;
+        catch java.lang.Throwable from label11 to label12 with label18;
+        catch java.lang.Throwable from label13 to label14 with label18;
+        catch java.lang.Throwable from label16 to label17 with label15;
+        catch java.lang.Throwable from label17 to label18 with label18;
+    }
+
+    void setWakelockWorkSource(android.app.PendingIntent, android.os.WorkSource)
+    {
+        com.android.server.AlarmManagerService r0;
+        android.app.PendingIntent r1;
+        android.os.WorkSource r2, $r7;
+        int i0;
+        android.app.IActivityManager $r4;
+        android.content.IIntentSender $r5;
+        android.os.PowerManager$WakeLock $r6, $r8, $r9;
+        java.lang.Exception $r10;
+
+        r0 := @this: com.android.server.AlarmManagerService;
+
+        r1 := @parameter0: android.app.PendingIntent;
+
+        r2 := @parameter1: android.os.WorkSource;
+
+        if r2 == null goto label3;
+
+     label1:
+        $r9 = r0.<com.android.server.AlarmManagerService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r9.<android.os.PowerManager$WakeLock: void setWorkSource(android.os.WorkSource)>(r2);
+
+     label2:
+        return;
+
+     label3:
+        $r4 = staticinvoke <android.app.ActivityManagerNative: android.app.IActivityManager getDefault()>();
+
+        $r5 = virtualinvoke r1.<android.app.PendingIntent: android.content.IIntentSender getTarget()>();
+
+        i0 = interfaceinvoke $r4.<android.app.IActivityManager: int getUidForIntentSender(android.content.IIntentSender)>($r5);
+
+     label4:
+        if i0 < 0 goto label8;
+
+     label5:
+        $r8 = r0.<com.android.server.AlarmManagerService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        $r7 = new android.os.WorkSource;
+
+        specialinvoke $r7.<android.os.WorkSource: void <init>(int)>(i0);
+
+        virtualinvoke $r8.<android.os.PowerManager$WakeLock: void setWorkSource(android.os.WorkSource)>($r7);
+
+     label6:
+        return;
+
+     label7:
+        $r10 := @caughtexception;
+
+     label8:
+        $r6 = r0.<com.android.server.AlarmManagerService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r6.<android.os.PowerManager$WakeLock: void setWorkSource(android.os.WorkSource)>(null);
+
+        return;
+
+        catch java.lang.Exception from label1 to label2 with label7;
+        catch java.lang.Exception from label3 to label4 with label7;
+        catch java.lang.Exception from label5 to label6 with label7;
+    }
+}

@@ -1,0 +1,542 @@
+public class com.android.internal.telephony.SmsBroadcastUndelivered extends java.lang.Object implements java.lang.Runnable
+{
+    private static final boolean DBG;
+    static final long PARTIAL_SEGMENT_EXPIRE_AGE;
+    private static final java.lang.String[] PDU_PENDING_MESSAGE_PROJECTION;
+    private static final java.lang.String TAG;
+    private static final android.net.Uri sRawUri;
+    private final com.android.internal.telephony.cdma.CdmaInboundSmsHandler mCdmaInboundSmsHandler;
+    private final com.android.internal.telephony.gsm.GsmInboundSmsHandler mGsmInboundSmsHandler;
+    private final android.content.ContentResolver mResolver;
+
+    static void <clinit>()
+    {
+        java.lang.String[] $r0;
+        android.net.Uri $r1, $r2;
+
+        <com.android.internal.telephony.SmsBroadcastUndelivered: java.lang.String TAG> = "SmsBroadcastUndelivered";
+
+        <com.android.internal.telephony.SmsBroadcastUndelivered: long PARTIAL_SEGMENT_EXPIRE_AGE> = 2592000000L;
+
+        <com.android.internal.telephony.SmsBroadcastUndelivered: boolean DBG> = 1;
+
+        $r0 = newarray (java.lang.String)[8];
+
+        $r0[0] = "pdu";
+
+        $r0[1] = "sequence";
+
+        $r0[2] = "destination_port";
+
+        $r0[3] = "date";
+
+        $r0[4] = "reference_number";
+
+        $r0[5] = "count";
+
+        $r0[6] = "address";
+
+        $r0[7] = "_id";
+
+        <com.android.internal.telephony.SmsBroadcastUndelivered: java.lang.String[] PDU_PENDING_MESSAGE_PROJECTION> = $r0;
+
+        $r1 = <android.provider.Telephony$Sms: android.net.Uri CONTENT_URI>;
+
+        $r2 = staticinvoke <android.net.Uri: android.net.Uri withAppendedPath(android.net.Uri,java.lang.String)>($r1, "raw");
+
+        <com.android.internal.telephony.SmsBroadcastUndelivered: android.net.Uri sRawUri> = $r2;
+
+        return;
+    }
+
+    public void <init>(android.content.Context, com.android.internal.telephony.gsm.GsmInboundSmsHandler, com.android.internal.telephony.cdma.CdmaInboundSmsHandler)
+    {
+        com.android.internal.telephony.SmsBroadcastUndelivered r0;
+        android.content.Context r1;
+        com.android.internal.telephony.gsm.GsmInboundSmsHandler r2;
+        com.android.internal.telephony.cdma.CdmaInboundSmsHandler r3;
+        android.content.ContentResolver $r4;
+
+        r0 := @this: com.android.internal.telephony.SmsBroadcastUndelivered;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.internal.telephony.gsm.GsmInboundSmsHandler;
+
+        r3 := @parameter2: com.android.internal.telephony.cdma.CdmaInboundSmsHandler;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r4 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r0.<com.android.internal.telephony.SmsBroadcastUndelivered: android.content.ContentResolver mResolver> = $r4;
+
+        r0.<com.android.internal.telephony.SmsBroadcastUndelivered: com.android.internal.telephony.gsm.GsmInboundSmsHandler mGsmInboundSmsHandler> = r2;
+
+        r0.<com.android.internal.telephony.SmsBroadcastUndelivered: com.android.internal.telephony.cdma.CdmaInboundSmsHandler mCdmaInboundSmsHandler> = r3;
+
+        return;
+    }
+
+    private void broadcastSms(com.android.internal.telephony.InboundSmsTracker)
+    {
+        com.android.internal.telephony.SmsBroadcastUndelivered r0;
+        com.android.internal.telephony.InboundSmsTracker r1;
+        com.android.internal.telephony.InboundSmsHandler r2;
+        boolean $z0;
+        java.lang.StringBuilder $r3, $r4, $r6, $r7;
+        java.lang.String $r5, $r8;
+
+        r0 := @this: com.android.internal.telephony.SmsBroadcastUndelivered;
+
+        r1 := @parameter0: com.android.internal.telephony.InboundSmsTracker;
+
+        $z0 = virtualinvoke r1.<com.android.internal.telephony.InboundSmsTracker: boolean is3gpp2()>();
+
+        if $z0 == 0 goto label2;
+
+        r2 = r0.<com.android.internal.telephony.SmsBroadcastUndelivered: com.android.internal.telephony.cdma.CdmaInboundSmsHandler mCdmaInboundSmsHandler>;
+
+     label1:
+        if r2 == null goto label3;
+
+        virtualinvoke r2.<com.android.internal.telephony.InboundSmsHandler: void sendMessage(int,java.lang.Object)>(2, r1);
+
+        return;
+
+     label2:
+        r2 = r0.<com.android.internal.telephony.SmsBroadcastUndelivered: com.android.internal.telephony.gsm.GsmInboundSmsHandler mGsmInboundSmsHandler>;
+
+        goto label1;
+
+     label3:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("null handler for ");
+
+        $r5 = virtualinvoke r1.<com.android.internal.telephony.InboundSmsTracker: java.lang.String getFormat()>();
+
+        $r6 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" format, can\'t deliver.");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsBroadcastUndelivered", $r8);
+
+        return;
+    }
+
+    private void scanRawTable()
+    {
+        com.android.internal.telephony.SmsBroadcastUndelivered r0;
+        long l0, $l3, $l4, $l5, $l16, $l17, $l18, $l19, $l20, $l21, $l22, $l23, $l24, $l26, $l27, $l28;
+        java.util.HashMap r1, $r16;
+        java.util.HashSet r2, $r17;
+        android.database.Cursor r3;
+        java.lang.Throwable r4, $r44;
+        android.database.SQLException r5, $r58;
+        java.lang.String r6, r7, $r36, $r51, $r55;
+        boolean z0, z1, $z2;
+        com.android.internal.telephony.SmsBroadcastUndelivered$SmsReferenceKey r8, r12, $r33;
+        java.util.Iterator r9;
+        int i1, i2, $i7, $i8, $i12, $i13;
+        com.android.internal.telephony.InboundSmsTracker r10, $r32;
+        java.lang.Integer r11, $r38, $r39;
+        java.lang.IllegalArgumentException r13, $r53;
+        java.lang.String[] $r14, $r24;
+        android.net.Uri $r15, $r25;
+        android.content.ContentResolver $r18, $r26;
+        java.lang.StringBuilder $r19, $r20, $r21, $r23, $r27, $r28, $r29, $r30, $r31, $r35, $r40, $r42, $r43, $r45, $r46, $r47, $r48, $r49, $r50, $r52, $r54, $r56, $r57, $r59, $r60;
+        java.lang.Object $r22, $r34;
+        byte $b14;
+
+        r0 := @this: com.android.internal.telephony.SmsBroadcastUndelivered;
+
+        l0 = staticinvoke <java.lang.System: long nanoTime()>();
+
+        $r16 = new java.util.HashMap;
+
+        specialinvoke $r16.<java.util.HashMap: void <init>(int)>(4);
+
+        r1 = $r16;
+
+        $r17 = new java.util.HashSet;
+
+        specialinvoke $r17.<java.util.HashSet: void <init>(int)>(4);
+
+        r2 = $r17;
+
+        r3 = null;
+
+     label01:
+        $r18 = r0.<com.android.internal.telephony.SmsBroadcastUndelivered: android.content.ContentResolver mResolver>;
+
+        $r15 = <com.android.internal.telephony.SmsBroadcastUndelivered: android.net.Uri sRawUri>;
+
+        $r14 = <com.android.internal.telephony.SmsBroadcastUndelivered: java.lang.String[] PDU_PENDING_MESSAGE_PROJECTION>;
+
+        r3 = virtualinvoke $r18.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r15, $r14, null, null, null);
+
+     label02:
+        if r3 != null goto label07;
+
+     label03:
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsBroadcastUndelivered", "error getting pending message cursor");
+
+     label04:
+        if r3 == null goto label05;
+
+        interfaceinvoke r3.<android.database.Cursor: void close()>();
+
+     label05:
+        r6 = "SmsBroadcastUndelivered";
+
+        $r40 = new java.lang.StringBuilder;
+
+        specialinvoke $r40.<java.lang.StringBuilder: void <init>()>();
+
+        $r45 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("finished scanning raw table in ");
+
+        $l19 = staticinvoke <java.lang.System: long nanoTime()>();
+
+        $l21 = $l19 - l0;
+
+        $l20 = $l21 / 1000000L;
+
+        $r43 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l20);
+
+        $r42 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ms");
+
+        r7 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label06:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>(r6, r7);
+
+        return;
+
+     label07:
+        z0 = staticinvoke <com.android.internal.telephony.InboundSmsHandler: boolean isCurrentFormat3gpp2()>();
+
+     label08:
+        z1 = interfaceinvoke r3.<android.database.Cursor: boolean moveToNext()>();
+
+     label09:
+        if z1 == 0 goto label30;
+
+     label10:
+        $r32 = new com.android.internal.telephony.InboundSmsTracker;
+
+        specialinvoke $r32.<com.android.internal.telephony.InboundSmsTracker: void <init>(android.database.Cursor,boolean)>(r3, z0);
+
+        r10 = $r32;
+
+     label11:
+        $i8 = virtualinvoke r10.<com.android.internal.telephony.InboundSmsTracker: int getMessageCount()>();
+
+        if $i8 != 1 goto label22;
+
+        specialinvoke r0.<com.android.internal.telephony.SmsBroadcastUndelivered: void broadcastSms(com.android.internal.telephony.InboundSmsTracker)>(r10);
+
+     label12:
+        goto label08;
+
+     label13:
+        $r58 := @caughtexception;
+
+        r5 = $r58;
+
+     label14:
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("SmsBroadcastUndelivered", "error reading pending SMS messages", r5);
+
+     label15:
+        if r3 == null goto label16;
+
+        interfaceinvoke r3.<android.database.Cursor: void close()>();
+
+     label16:
+        r6 = "SmsBroadcastUndelivered";
+
+        $r57 = new java.lang.StringBuilder;
+
+        specialinvoke $r57.<java.lang.StringBuilder: void <init>()>();
+
+        $r56 = virtualinvoke $r57.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("finished scanning raw table in ");
+
+        $l28 = staticinvoke <java.lang.System: long nanoTime()>();
+
+        $l27 = $l28 - l0;
+
+        $l26 = $l27 / 1000000L;
+
+        $r60 = virtualinvoke $r56.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l26);
+
+        $r59 = virtualinvoke $r60.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ms");
+
+        r7 = virtualinvoke $r59.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        goto label06;
+
+     label17:
+        $r53 := @caughtexception;
+
+        r13 = $r53;
+
+     label18:
+        $r54 = new java.lang.StringBuilder;
+
+        specialinvoke $r54.<java.lang.StringBuilder: void <init>()>();
+
+        $r52 = virtualinvoke $r54.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("error loading SmsTracker: ");
+
+        $r50 = virtualinvoke $r52.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r13);
+
+        $r51 = virtualinvoke $r50.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsBroadcastUndelivered", $r51);
+
+     label19:
+        goto label08;
+
+     label20:
+        $r44 := @caughtexception;
+
+        r4 = $r44;
+
+        if r3 == null goto label21;
+
+        interfaceinvoke r3.<android.database.Cursor: void close()>();
+
+     label21:
+        $r49 = new java.lang.StringBuilder;
+
+        specialinvoke $r49.<java.lang.StringBuilder: void <init>()>();
+
+        $r48 = virtualinvoke $r49.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("finished scanning raw table in ");
+
+        $l24 = staticinvoke <java.lang.System: long nanoTime()>();
+
+        $l22 = $l24 - l0;
+
+        $l23 = $l22 / 1000000L;
+
+        $r46 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l23);
+
+        $r47 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ms");
+
+        $r55 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("SmsBroadcastUndelivered", $r55);
+
+        throw r4;
+
+     label22:
+        $r33 = new com.android.internal.telephony.SmsBroadcastUndelivered$SmsReferenceKey;
+
+        specialinvoke $r33.<com.android.internal.telephony.SmsBroadcastUndelivered$SmsReferenceKey: void <init>(com.android.internal.telephony.InboundSmsTracker)>(r10);
+
+        r12 = $r33;
+
+        $r34 = virtualinvoke r1.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r12);
+
+        r11 = (java.lang.Integer) $r34;
+
+     label23:
+        if r11 != null goto label26;
+
+     label24:
+        $r38 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(1);
+
+        virtualinvoke r1.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r12, $r38);
+
+        $l16 = virtualinvoke r10.<com.android.internal.telephony.InboundSmsTracker: long getTimestamp()>();
+
+        $l18 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $l17 = $l18 - 2592000000L;
+
+        $b14 = $l16 cmp $l17;
+
+        if $b14 >= 0 goto label08;
+
+        virtualinvoke r2.<java.util.HashSet: boolean add(java.lang.Object)>(r12);
+
+     label25:
+        goto label08;
+
+     label26:
+        $i12 = virtualinvoke r11.<java.lang.Integer: int intValue()>();
+
+        i2 = 1 + $i12;
+
+        $i13 = virtualinvoke r10.<com.android.internal.telephony.InboundSmsTracker: int getMessageCount()>();
+
+        if i2 != $i13 goto label28;
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("SmsBroadcastUndelivered", "found complete multi-part message");
+
+        specialinvoke r0.<com.android.internal.telephony.SmsBroadcastUndelivered: void broadcastSms(com.android.internal.telephony.InboundSmsTracker)>(r10);
+
+        virtualinvoke r2.<java.util.HashSet: boolean remove(java.lang.Object)>(r12);
+
+     label27:
+        goto label08;
+
+     label28:
+        $r39 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i2);
+
+        virtualinvoke r1.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r12, $r39);
+
+     label29:
+        goto label08;
+
+     label30:
+        r9 = virtualinvoke r2.<java.util.HashSet: java.util.Iterator iterator()>();
+
+     label31:
+        $z2 = interfaceinvoke r9.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label37;
+
+        $r22 = interfaceinvoke r9.<java.util.Iterator: java.lang.Object next()>();
+
+        r8 = (com.android.internal.telephony.SmsBroadcastUndelivered$SmsReferenceKey) $r22;
+
+        $r26 = r0.<com.android.internal.telephony.SmsBroadcastUndelivered: android.content.ContentResolver mResolver>;
+
+        $r25 = <com.android.internal.telephony.SmsBroadcastUndelivered: android.net.Uri sRawUri>;
+
+        $r24 = virtualinvoke r8.<com.android.internal.telephony.SmsBroadcastUndelivered$SmsReferenceKey: java.lang.String[] getDeleteWhereArgs()>();
+
+        i1 = virtualinvoke $r26.<android.content.ContentResolver: int delete(android.net.Uri,java.lang.String,java.lang.String[])>($r25, "address=? AND reference_number=? AND count=?", $r24);
+
+     label32:
+        if i1 != 0 goto label35;
+
+     label33:
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsBroadcastUndelivered", "No rows were deleted from raw table!");
+
+     label34:
+        goto label31;
+
+     label35:
+        $r28 = new java.lang.StringBuilder;
+
+        specialinvoke $r28.<java.lang.StringBuilder: void <init>()>();
+
+        $r27 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Deleted ");
+
+        $r31 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r30 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" rows from raw table for incomplete ");
+
+        $i7 = r8.<com.android.internal.telephony.SmsBroadcastUndelivered$SmsReferenceKey: int mMessageCount>;
+
+        $r29 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        $r35 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" part message");
+
+        $r36 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("SmsBroadcastUndelivered", $r36);
+
+     label36:
+        goto label31;
+
+     label37:
+        if r3 == null goto label38;
+
+        interfaceinvoke r3.<android.database.Cursor: void close()>();
+
+     label38:
+        r6 = "SmsBroadcastUndelivered";
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r20 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("finished scanning raw table in ");
+
+        $l4 = staticinvoke <java.lang.System: long nanoTime()>();
+
+        $l5 = $l4 - l0;
+
+        $l3 = $l5 / 1000000L;
+
+        $r21 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l3);
+
+        $r23 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ms");
+
+        r7 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        goto label06;
+
+        catch android.database.SQLException from label01 to label02 with label13;
+        catch java.lang.Throwable from label01 to label02 with label20;
+        catch android.database.SQLException from label03 to label04 with label13;
+        catch java.lang.Throwable from label03 to label04 with label20;
+        catch android.database.SQLException from label07 to label08 with label13;
+        catch java.lang.Throwable from label07 to label08 with label20;
+        catch android.database.SQLException from label08 to label09 with label13;
+        catch java.lang.Throwable from label08 to label09 with label20;
+        catch java.lang.IllegalArgumentException from label10 to label11 with label17;
+        catch android.database.SQLException from label10 to label11 with label13;
+        catch java.lang.Throwable from label10 to label11 with label20;
+        catch android.database.SQLException from label11 to label12 with label13;
+        catch java.lang.Throwable from label11 to label12 with label20;
+        catch java.lang.Throwable from label14 to label15 with label20;
+        catch android.database.SQLException from label18 to label19 with label13;
+        catch java.lang.Throwable from label18 to label19 with label20;
+        catch android.database.SQLException from label22 to label23 with label13;
+        catch java.lang.Throwable from label22 to label23 with label20;
+        catch android.database.SQLException from label24 to label25 with label13;
+        catch java.lang.Throwable from label24 to label25 with label20;
+        catch android.database.SQLException from label26 to label27 with label13;
+        catch java.lang.Throwable from label26 to label27 with label20;
+        catch android.database.SQLException from label28 to label29 with label13;
+        catch java.lang.Throwable from label28 to label29 with label20;
+        catch android.database.SQLException from label30 to label31 with label13;
+        catch java.lang.Throwable from label30 to label31 with label20;
+        catch android.database.SQLException from label31 to label32 with label13;
+        catch java.lang.Throwable from label31 to label32 with label20;
+        catch android.database.SQLException from label33 to label34 with label13;
+        catch java.lang.Throwable from label33 to label34 with label20;
+        catch android.database.SQLException from label35 to label36 with label13;
+        catch java.lang.Throwable from label35 to label36 with label20;
+    }
+
+    public void run()
+    {
+        com.android.internal.telephony.SmsBroadcastUndelivered r0;
+        com.android.internal.telephony.gsm.GsmInboundSmsHandler $r1, $r4;
+        com.android.internal.telephony.cdma.CdmaInboundSmsHandler $r2, $r3;
+
+        r0 := @this: com.android.internal.telephony.SmsBroadcastUndelivered;
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("SmsBroadcastUndelivered", "scanning raw table for undelivered messages");
+
+        specialinvoke r0.<com.android.internal.telephony.SmsBroadcastUndelivered: void scanRawTable()>();
+
+        $r1 = r0.<com.android.internal.telephony.SmsBroadcastUndelivered: com.android.internal.telephony.gsm.GsmInboundSmsHandler mGsmInboundSmsHandler>;
+
+        if $r1 == null goto label1;
+
+        $r4 = r0.<com.android.internal.telephony.SmsBroadcastUndelivered: com.android.internal.telephony.gsm.GsmInboundSmsHandler mGsmInboundSmsHandler>;
+
+        virtualinvoke $r4.<com.android.internal.telephony.gsm.GsmInboundSmsHandler: void sendMessage(int)>(6);
+
+     label1:
+        $r2 = r0.<com.android.internal.telephony.SmsBroadcastUndelivered: com.android.internal.telephony.cdma.CdmaInboundSmsHandler mCdmaInboundSmsHandler>;
+
+        if $r2 == null goto label2;
+
+        $r3 = r0.<com.android.internal.telephony.SmsBroadcastUndelivered: com.android.internal.telephony.cdma.CdmaInboundSmsHandler mCdmaInboundSmsHandler>;
+
+        virtualinvoke $r3.<com.android.internal.telephony.cdma.CdmaInboundSmsHandler: void sendMessage(int)>(6);
+
+     label2:
+        return;
+    }
+}

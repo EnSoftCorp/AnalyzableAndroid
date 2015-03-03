@@ -1,0 +1,1567 @@
+class com.android.internal.os.ZygoteConnection extends java.lang.Object
+{
+    private static final int CONNECTION_TIMEOUT_MILLIS;
+    private static final int MAX_ZYGOTE_ARGC;
+    private static final java.lang.String TAG;
+    private static final int[][] intArray2d;
+    private final android.net.LocalSocket mSocket;
+    private final java.io.DataOutputStream mSocketOutStream;
+    private final java.io.BufferedReader mSocketReader;
+    private final android.net.Credentials peer;
+    private final java.lang.String peerSecurityContext;
+
+    static void <clinit>()
+    {
+        int[] r0, $r1;
+        java.lang.Class $r2;
+        java.lang.Object $r3;
+        int[][] $r4;
+
+        <com.android.internal.os.ZygoteConnection: java.lang.String TAG> = "Zygote";
+
+        <com.android.internal.os.ZygoteConnection: int MAX_ZYGOTE_ARGC> = 1024;
+
+        <com.android.internal.os.ZygoteConnection: int CONNECTION_TIMEOUT_MILLIS> = 1000;
+
+        $r1 = newarray (int)[2];
+
+        $r1[0] = 0;
+
+        $r1[1] = 0;
+
+        r0 = $r1;
+
+        $r2 = <java.lang.Integer: java.lang.Class TYPE>;
+
+        $r3 = staticinvoke <java.lang.reflect.Array: java.lang.Object newInstance(java.lang.Class,int[])>($r2, r0);
+
+        $r4 = (int[][]) $r3;
+
+        <com.android.internal.os.ZygoteConnection: int[][] intArray2d> = $r4;
+
+        return;
+    }
+
+    void <init>(android.net.LocalSocket) throws java.io.IOException
+    {
+        com.android.internal.os.ZygoteConnection r0;
+        android.net.LocalSocket r1, $r8, $r9, $r11;
+        java.io.IOException r2, $r14;
+        java.io.DataOutputStream $r3;
+        java.io.OutputStream $r4;
+        java.io.BufferedReader $r5;
+        java.io.InputStreamReader $r6;
+        java.io.InputStream $r7;
+        android.net.Credentials $r10;
+        java.io.FileDescriptor $r12;
+        java.lang.String $r13;
+
+        r0 := @this: com.android.internal.os.ZygoteConnection;
+
+        r1 := @parameter0: android.net.LocalSocket;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.internal.os.ZygoteConnection: android.net.LocalSocket mSocket> = r1;
+
+        $r3 = new java.io.DataOutputStream;
+
+        $r4 = virtualinvoke r1.<android.net.LocalSocket: java.io.OutputStream getOutputStream()>();
+
+        specialinvoke $r3.<java.io.DataOutputStream: void <init>(java.io.OutputStream)>($r4);
+
+        r0.<com.android.internal.os.ZygoteConnection: java.io.DataOutputStream mSocketOutStream> = $r3;
+
+        $r5 = new java.io.BufferedReader;
+
+        $r6 = new java.io.InputStreamReader;
+
+        $r7 = virtualinvoke r1.<android.net.LocalSocket: java.io.InputStream getInputStream()>();
+
+        specialinvoke $r6.<java.io.InputStreamReader: void <init>(java.io.InputStream)>($r7);
+
+        specialinvoke $r5.<java.io.BufferedReader: void <init>(java.io.Reader,int)>($r6, 256);
+
+        r0.<com.android.internal.os.ZygoteConnection: java.io.BufferedReader mSocketReader> = $r5;
+
+        $r8 = r0.<com.android.internal.os.ZygoteConnection: android.net.LocalSocket mSocket>;
+
+        virtualinvoke $r8.<android.net.LocalSocket: void setSoTimeout(int)>(1000);
+
+     label1:
+        $r9 = r0.<com.android.internal.os.ZygoteConnection: android.net.LocalSocket mSocket>;
+
+        $r10 = virtualinvoke $r9.<android.net.LocalSocket: android.net.Credentials getPeerCredentials()>();
+
+        r0.<com.android.internal.os.ZygoteConnection: android.net.Credentials peer> = $r10;
+
+     label2:
+        $r11 = r0.<com.android.internal.os.ZygoteConnection: android.net.LocalSocket mSocket>;
+
+        $r12 = virtualinvoke $r11.<android.net.LocalSocket: java.io.FileDescriptor getFileDescriptor()>();
+
+        $r13 = staticinvoke <android.os.SELinux: java.lang.String getPeerContext(java.io.FileDescriptor)>($r12);
+
+        r0.<com.android.internal.os.ZygoteConnection: java.lang.String peerSecurityContext> = $r13;
+
+        return;
+
+     label3:
+        $r14 := @caughtexception;
+
+        r2 = $r14;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", "Cannot read peer credentials", r2);
+
+        throw r2;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    private static void applyCapabilitiesSecurityPolicy(com.android.internal.os.ZygoteConnection$Arguments, android.net.Credentials, java.lang.String) throws com.android.internal.os.ZygoteSecurityException
+    {
+        com.android.internal.os.ZygoteConnection$Arguments r0;
+        android.net.Credentials r1;
+        java.lang.String r2;
+        long l0, $l1, $l5, $l6, $l7, $l8, $l9, $l11, $l12, $l15;
+        byte $b2, $b10, $b13, $b14;
+        boolean $z0;
+        int $i3, $i4;
+        com.android.internal.os.ZygoteSecurityException $r4, $r5, $r6, $r7;
+        java.io.IOException $r8;
+
+        r0 := @parameter0: com.android.internal.os.ZygoteConnection$Arguments;
+
+        r1 := @parameter1: android.net.Credentials;
+
+        r2 := @parameter2: java.lang.String;
+
+        $l1 = r0.<com.android.internal.os.ZygoteConnection$Arguments: long permittedCapabilities>;
+
+        $b2 = $l1 cmp 0L;
+
+        if $b2 != 0 goto label2;
+
+        $l15 = r0.<com.android.internal.os.ZygoteConnection$Arguments: long effectiveCapabilities>;
+
+        $b14 = $l15 cmp 0L;
+
+        if $b14 != 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $z0 = staticinvoke <android.os.SELinux: boolean checkSELinuxAccess(java.lang.String,java.lang.String,java.lang.String,java.lang.String)>(r2, r2, "zygote", "specifycapabilities");
+
+        if $z0 != 0 goto label3;
+
+        $r5 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r5.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("Peer may not specify capabilities");
+
+        throw $r5;
+
+     label3:
+        $i3 = virtualinvoke r1.<android.net.Credentials: int getUid()>();
+
+        if $i3 == 0 goto label1;
+
+     label4:
+        $i4 = virtualinvoke r1.<android.net.Credentials: int getPid()>();
+
+        l0 = staticinvoke <com.android.internal.os.ZygoteInit: long capgetPermitted(int)>($i4);
+
+     label5:
+        $l5 = r0.<com.android.internal.os.ZygoteConnection$Arguments: long permittedCapabilities>;
+
+        $l7 = -1L ^ $l5;
+
+        $l6 = r0.<com.android.internal.os.ZygoteConnection$Arguments: long effectiveCapabilities>;
+
+        $l8 = $l7 & $l6;
+
+        $b10 = $l8 cmp 0L;
+
+        if $b10 == 0 goto label7;
+
+        $r6 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r6.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("Effective capabilities cannot be superset of  permitted capabilities");
+
+        throw $r6;
+
+     label6:
+        $r8 := @caughtexception;
+
+        $r7 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r7.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("Error retrieving peer\'s capabilities.");
+
+        throw $r7;
+
+     label7:
+        $l12 = l0 ^ -1L;
+
+        $l9 = r0.<com.android.internal.os.ZygoteConnection$Arguments: long permittedCapabilities>;
+
+        $l11 = $l12 & $l9;
+
+        $b13 = $l11 cmp 0L;
+
+        if $b13 == 0 goto label1;
+
+        $r4 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r4.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("Peer specified unpermitted capabilities");
+
+        throw $r4;
+
+        catch java.io.IOException from label4 to label5 with label6;
+    }
+
+    public static void applyDebuggerSystemProperty(com.android.internal.os.ZygoteConnection$Arguments)
+    {
+        com.android.internal.os.ZygoteConnection$Arguments r0;
+        java.lang.String $r1, $r2;
+        boolean $z0;
+        int $i0, $i1;
+
+        r0 := @parameter0: com.android.internal.os.ZygoteConnection$Arguments;
+
+        $r1 = "1";
+
+        $r2 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("ro.debuggable");
+
+        $z0 = virtualinvoke $r1.<java.lang.String: boolean equals(java.lang.Object)>($r2);
+
+        if $z0 == 0 goto label1;
+
+        $i0 = r0.<com.android.internal.os.ZygoteConnection$Arguments: int debugFlags>;
+
+        $i1 = 1 | $i0;
+
+        r0.<com.android.internal.os.ZygoteConnection$Arguments: int debugFlags> = $i1;
+
+     label1:
+        return;
+    }
+
+    private static void applyInvokeWithSecurityPolicy(com.android.internal.os.ZygoteConnection$Arguments, android.net.Credentials, java.lang.String) throws com.android.internal.os.ZygoteSecurityException
+    {
+        com.android.internal.os.ZygoteConnection$Arguments r0;
+        android.net.Credentials r1;
+        java.lang.String r2, $r3, $r4;
+        int i0;
+        boolean $z0;
+        com.android.internal.os.ZygoteSecurityException $r5, $r6;
+
+        r0 := @parameter0: com.android.internal.os.ZygoteConnection$Arguments;
+
+        r1 := @parameter1: android.net.Credentials;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 = virtualinvoke r1.<android.net.Credentials: int getUid()>();
+
+        $r3 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+        if $r3 == null goto label1;
+
+        if i0 == 0 goto label1;
+
+        $r6 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r6.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("Peer is not permitted to specify an explicit invoke-with wrapper command");
+
+        throw $r6;
+
+     label1:
+        $r4 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+        if $r4 == null goto label2;
+
+        $z0 = staticinvoke <android.os.SELinux: boolean checkSELinuxAccess(java.lang.String,java.lang.String,java.lang.String,java.lang.String)>(r2, r2, "zygote", "specifyinvokewith");
+
+        if $z0 != 0 goto label2;
+
+        $r5 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r5.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("Peer is not permitted to specify an explicit invoke-with wrapper command");
+
+        throw $r5;
+
+     label2:
+        return;
+    }
+
+    public static void applyInvokeWithSystemProperty(com.android.internal.os.ZygoteConnection$Arguments)
+    {
+        com.android.internal.os.ZygoteConnection$Arguments r0;
+        java.lang.String r1, $r2, $r3, $r4, $r7, $r9, $r10, $r11;
+        java.lang.StringBuilder $r5, $r6, $r8;
+        int $i0, $i1;
+
+        r0 := @parameter0: com.android.internal.os.ZygoteConnection$Arguments;
+
+        $r2 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+        if $r2 != null goto label2;
+
+        $r3 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String niceName>;
+
+        if $r3 == null goto label2;
+
+        $r4 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String niceName>;
+
+        if $r4 == null goto label2;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("wrap.");
+
+        $r7 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String niceName>;
+
+        $r8 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        r1 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $i0 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i0 <= 31 goto label1;
+
+        r1 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int,int)>(0, 31);
+
+     label1:
+        $r9 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>(r1);
+
+        r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith> = $r9;
+
+        $r10 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+        if $r10 == null goto label2;
+
+        $r11 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+        $i1 = virtualinvoke $r11.<java.lang.String: int length()>();
+
+        if $i1 != 0 goto label2;
+
+        r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith> = null;
+
+     label2:
+        return;
+    }
+
+    private static void applyRlimitSecurityPolicy(com.android.internal.os.ZygoteConnection$Arguments, android.net.Credentials, java.lang.String) throws com.android.internal.os.ZygoteSecurityException
+    {
+        com.android.internal.os.ZygoteConnection$Arguments r0;
+        android.net.Credentials r1;
+        java.lang.String r2;
+        int i0;
+        java.util.ArrayList $r3, $r5;
+        boolean $z0;
+        com.android.internal.os.ZygoteSecurityException $r4, $r6;
+
+        r0 := @parameter0: com.android.internal.os.ZygoteConnection$Arguments;
+
+        r1 := @parameter1: android.net.Credentials;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 = virtualinvoke r1.<android.net.Credentials: int getUid()>();
+
+        if i0 == 0 goto label1;
+
+        if i0 == 1000 goto label1;
+
+        $r5 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.util.ArrayList rlimits>;
+
+        if $r5 == null goto label1;
+
+        $r6 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r6.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("This UID may not specify rlimits.");
+
+        throw $r6;
+
+     label1:
+        $r3 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.util.ArrayList rlimits>;
+
+        if $r3 == null goto label2;
+
+        $z0 = staticinvoke <android.os.SELinux: boolean checkSELinuxAccess(java.lang.String,java.lang.String,java.lang.String,java.lang.String)>(r2, r2, "zygote", "specifyrlimits");
+
+        if $z0 != 0 goto label2;
+
+        $r4 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r4.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("Peer may not specify rlimits");
+
+        throw $r4;
+
+     label2:
+        return;
+    }
+
+    private static void applyUidSecurityPolicy(com.android.internal.os.ZygoteConnection$Arguments, android.net.Credentials, java.lang.String) throws com.android.internal.os.ZygoteSecurityException
+    {
+        com.android.internal.os.ZygoteConnection$Arguments r0;
+        android.net.Credentials r1;
+        java.lang.String r2, r3;
+        int i0, $i1, $i2, $i3;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10;
+        com.android.internal.os.ZygoteSecurityException $r4, $r6, $r8;
+        int[] $r5, $r7;
+
+        r0 := @parameter0: com.android.internal.os.ZygoteConnection$Arguments;
+
+        r1 := @parameter1: android.net.Credentials;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 = virtualinvoke r1.<android.net.Credentials: int getUid()>();
+
+        if i0 != 0 goto label03;
+
+     label01:
+        $z3 = r0.<com.android.internal.os.ZygoteConnection$Arguments: boolean uidSpecified>;
+
+        if $z3 != 0 goto label02;
+
+        $z7 = r0.<com.android.internal.os.ZygoteConnection$Arguments: boolean gidSpecified>;
+
+        if $z7 != 0 goto label02;
+
+        $r7 = r0.<com.android.internal.os.ZygoteConnection$Arguments: int[] gids>;
+
+        if $r7 == null goto label08;
+
+     label02:
+        $z4 = staticinvoke <android.os.SELinux: boolean checkSELinuxAccess(java.lang.String,java.lang.String,java.lang.String,java.lang.String)>(r2, r2, "zygote", "specifyids");
+
+        if $z4 != 0 goto label08;
+
+        $r6 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r6.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("Peer may not specify uid\'s or gid\'s");
+
+        throw $r6;
+
+     label03:
+        if i0 != 1000 goto label06;
+
+        r3 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("ro.factorytest");
+
+        $z8 = virtualinvoke r3.<java.lang.String: boolean equals(java.lang.Object)>("1");
+
+        if $z8 != 0 goto label05;
+
+        $z10 = virtualinvoke r3.<java.lang.String: boolean equals(java.lang.Object)>("2");
+
+        if $z10 != 0 goto label05;
+
+        z0 = 1;
+
+     label04:
+        if z0 == 0 goto label01;
+
+        $z9 = r0.<com.android.internal.os.ZygoteConnection$Arguments: boolean uidSpecified>;
+
+        if $z9 == 0 goto label01;
+
+        $i3 = r0.<com.android.internal.os.ZygoteConnection$Arguments: int uid>;
+
+        if $i3 >= 1000 goto label01;
+
+        $r8 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r8.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("System UID may not launch process with UID < 1000");
+
+        throw $r8;
+
+     label05:
+        z0 = 0;
+
+        goto label04;
+
+     label06:
+        $z1 = r0.<com.android.internal.os.ZygoteConnection$Arguments: boolean uidSpecified>;
+
+        if $z1 != 0 goto label07;
+
+        $z2 = r0.<com.android.internal.os.ZygoteConnection$Arguments: boolean gidSpecified>;
+
+        if $z2 != 0 goto label07;
+
+        $r5 = r0.<com.android.internal.os.ZygoteConnection$Arguments: int[] gids>;
+
+        if $r5 == null goto label01;
+
+     label07:
+        $r4 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r4.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("App UIDs may not specify uid\'s or gid\'s");
+
+        throw $r4;
+
+     label08:
+        $z5 = r0.<com.android.internal.os.ZygoteConnection$Arguments: boolean uidSpecified>;
+
+        if $z5 != 0 goto label09;
+
+        $i2 = virtualinvoke r1.<android.net.Credentials: int getUid()>();
+
+        r0.<com.android.internal.os.ZygoteConnection$Arguments: int uid> = $i2;
+
+        r0.<com.android.internal.os.ZygoteConnection$Arguments: boolean uidSpecified> = 1;
+
+     label09:
+        $z6 = r0.<com.android.internal.os.ZygoteConnection$Arguments: boolean gidSpecified>;
+
+        if $z6 != 0 goto label10;
+
+        $i1 = virtualinvoke r1.<android.net.Credentials: int getGid()>();
+
+        r0.<com.android.internal.os.ZygoteConnection$Arguments: int gid> = $i1;
+
+        r0.<com.android.internal.os.ZygoteConnection$Arguments: boolean gidSpecified> = 1;
+
+     label10:
+        return;
+    }
+
+    private static void applyseInfoSecurityPolicy(com.android.internal.os.ZygoteConnection$Arguments, android.net.Credentials, java.lang.String) throws com.android.internal.os.ZygoteSecurityException
+    {
+        com.android.internal.os.ZygoteConnection$Arguments r0;
+        android.net.Credentials r1;
+        java.lang.String r2, $r3;
+        int i0;
+        boolean $z0;
+        com.android.internal.os.ZygoteSecurityException $r4, $r5;
+
+        r0 := @parameter0: com.android.internal.os.ZygoteConnection$Arguments;
+
+        r1 := @parameter1: android.net.Credentials;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 = virtualinvoke r1.<android.net.Credentials: int getUid()>();
+
+        $r3 = r0.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String seInfo>;
+
+        if $r3 != null goto label2;
+
+     label1:
+        return;
+
+     label2:
+        if i0 == 0 goto label3;
+
+        if i0 == 1000 goto label3;
+
+        $r5 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r5.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("This UID may not specify SEAndroid info.");
+
+        throw $r5;
+
+     label3:
+        $z0 = staticinvoke <android.os.SELinux: boolean checkSELinuxAccess(java.lang.String,java.lang.String,java.lang.String,java.lang.String)>(r2, r2, "zygote", "specifyseinfo");
+
+        if $z0 != 0 goto label1;
+
+        $r4 = new com.android.internal.os.ZygoteSecurityException;
+
+        specialinvoke $r4.<com.android.internal.os.ZygoteSecurityException: void <init>(java.lang.String)>("Peer may not specify SEAndroid info");
+
+        throw $r4;
+    }
+
+    private void handleChildProc(com.android.internal.os.ZygoteConnection$Arguments, java.io.FileDescriptor[], java.io.FileDescriptor, java.io.PrintStream) throws com.android.internal.os.ZygoteInit$MethodAndArgsCaller
+    {
+        com.android.internal.os.ZygoteConnection r0;
+        com.android.internal.os.ZygoteConnection$Arguments r1;
+        java.io.FileDescriptor[] r2;
+        java.io.FileDescriptor r3, $r26, $r27, $r31, $r32;
+        java.io.PrintStream r4;
+        java.lang.String r6, $r11, $r15, $r16, $r19, $r20, $r21, $r23, $r24, $r28, $r29;
+        java.lang.String[] r7, $r12, $r13, $r14, $r22, $r25;
+        java.lang.ClassLoader r8, $r18;
+        java.lang.RuntimeException r9, $r34;
+        java.io.IOException r10, $r30;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6;
+        boolean $z0;
+        dalvik.system.PathClassLoader $r17;
+        java.lang.ArrayIndexOutOfBoundsException $r33;
+
+        r0 := @this: com.android.internal.os.ZygoteConnection;
+
+        r1 := @parameter0: com.android.internal.os.ZygoteConnection$Arguments;
+
+        r2 := @parameter1: java.io.FileDescriptor[];
+
+        r3 := @parameter2: java.io.FileDescriptor;
+
+        r4 := @parameter3: java.io.PrintStream;
+
+        virtualinvoke r0.<com.android.internal.os.ZygoteConnection: void closeSocket()>();
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void closeServerSocket()>();
+
+        if r2 == null goto label07;
+
+     label01:
+        $r31 = r2[0];
+
+        $r27 = r2[1];
+
+        $r26 = r2[2];
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void reopenStdio(java.io.FileDescriptor,java.io.FileDescriptor,java.io.FileDescriptor)>($r31, $r27, $r26);
+
+        i0 = lengthof r2;
+
+     label02:
+        i1 = 0;
+
+     label03:
+        if i1 >= i0 goto label06;
+
+     label04:
+        $r32 = r2[i1];
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.io.FileDescriptor)>($r32);
+
+     label05:
+        i1 = i1 + 1;
+
+        goto label03;
+
+     label06:
+        r4 = <java.lang.System: java.io.PrintStream err>;
+
+     label07:
+        $r11 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String niceName>;
+
+        if $r11 == null goto label08;
+
+        $r29 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String niceName>;
+
+        staticinvoke <android.os.Process: void setArgV0(java.lang.String)>($r29);
+
+     label08:
+        $z0 = r1.<com.android.internal.os.ZygoteConnection$Arguments: boolean runtimeInit>;
+
+        if $z0 == 0 goto label11;
+
+        $r23 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+        if $r23 == null goto label10;
+
+        $r28 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+        $r24 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String niceName>;
+
+        $i5 = r1.<com.android.internal.os.ZygoteConnection$Arguments: int targetSdkVersion>;
+
+        $r25 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String[] remainingArgs>;
+
+        staticinvoke <com.android.internal.os.WrapperInit: void execApplication(java.lang.String,java.lang.String,int,java.io.FileDescriptor,java.lang.String[])>($r28, $r24, $i5, r3, $r25);
+
+        return;
+
+     label09:
+        $r30 := @caughtexception;
+
+        r10 = $r30;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", "Error reopening stdio", r10);
+
+        goto label07;
+
+     label10:
+        $i6 = r1.<com.android.internal.os.ZygoteConnection$Arguments: int targetSdkVersion>;
+
+        $r22 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String[] remainingArgs>;
+
+        staticinvoke <com.android.internal.os.RuntimeInit: void zygoteInit(int,java.lang.String[])>($i6, $r22);
+
+        return;
+
+     label11:
+        $r13 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String[] remainingArgs>;
+
+        r6 = $r13[0];
+
+     label12:
+        $r12 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String[] remainingArgs>;
+
+        $i3 = lengthof $r12;
+
+        $i2 = -1 + $i3;
+
+        r7 = newarray (java.lang.String)[$i2];
+
+        $r14 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String[] remainingArgs>;
+
+        $i4 = lengthof r7;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r14, 1, r7, 0, $i4);
+
+        $r16 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+        if $r16 == null goto label14;
+
+        $r20 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+        $r21 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String classpath>;
+
+        staticinvoke <com.android.internal.os.WrapperInit: void execStandalone(java.lang.String,java.lang.String,java.lang.String,java.lang.String[])>($r20, $r21, r6, r7);
+
+        return;
+
+     label13:
+        $r33 := @caughtexception;
+
+        staticinvoke <com.android.internal.os.ZygoteConnection: void logAndPrintError(java.io.PrintStream,java.lang.String,java.lang.Throwable)>(r4, "Missing required class name argument", null);
+
+        return;
+
+     label14:
+        $r15 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String classpath>;
+
+        if $r15 == null goto label18;
+
+        $r17 = new dalvik.system.PathClassLoader;
+
+        $r19 = r1.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String classpath>;
+
+        $r18 = staticinvoke <java.lang.ClassLoader: java.lang.ClassLoader getSystemClassLoader()>();
+
+        specialinvoke $r17.<dalvik.system.PathClassLoader: void <init>(java.lang.String,java.lang.ClassLoader)>($r19, $r18);
+
+        r8 = $r17;
+
+     label15:
+        staticinvoke <com.android.internal.os.ZygoteInit: void invokeStaticMain(java.lang.ClassLoader,java.lang.String,java.lang.String[])>(r8, r6, r7);
+
+     label16:
+        return;
+
+     label17:
+        $r34 := @caughtexception;
+
+        r9 = $r34;
+
+        staticinvoke <com.android.internal.os.ZygoteConnection: void logAndPrintError(java.io.PrintStream,java.lang.String,java.lang.Throwable)>(r4, "Error starting.", r9);
+
+        return;
+
+     label18:
+        r8 = staticinvoke <java.lang.ClassLoader: java.lang.ClassLoader getSystemClassLoader()>();
+
+        goto label15;
+
+        catch java.io.IOException from label01 to label02 with label09;
+        catch java.io.IOException from label04 to label05 with label09;
+        catch java.io.IOException from label06 to label07 with label09;
+        catch java.lang.ArrayIndexOutOfBoundsException from label11 to label12 with label13;
+        catch java.lang.RuntimeException from label15 to label16 with label17;
+    }
+
+    private boolean handleParentProc(int, java.io.FileDescriptor[], java.io.FileDescriptor, com.android.internal.os.ZygoteConnection$Arguments)
+    {
+        com.android.internal.os.ZygoteConnection r0;
+        int i0, i1, i2, i3, i4, i5;
+        java.io.FileDescriptor[] r1;
+        java.io.FileDescriptor r2, $r25;
+        com.android.internal.os.ZygoteConnection$Arguments r3;
+        boolean z0;
+        java.io.DataInputStream r4, $r14;
+        java.lang.Throwable r5, $r30;
+        java.io.IOException r7, r9, $r26, $r27, $r28, $r29, $r31;
+        java.io.DataOutputStream $r11, $r12;
+        java.io.FileInputStream $r13;
+        java.lang.StringBuilder $r15, $r16, $r17, $r18, $r19, $r20, $r22, $r24;
+        java.lang.String $r21, $r23;
+
+        r0 := @this: com.android.internal.os.ZygoteConnection;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.io.FileDescriptor[];
+
+        r2 := @parameter2: java.io.FileDescriptor;
+
+        r3 := @parameter3: com.android.internal.os.ZygoteConnection$Arguments;
+
+        if i0 <= 0 goto label01;
+
+        specialinvoke r0.<com.android.internal.os.ZygoteConnection: void setChildPgid(int)>(i0);
+
+     label01:
+        if r1 == null goto label03;
+
+        i5 = lengthof r1;
+
+        i4 = 0;
+
+     label02:
+        if i4 >= i5 goto label03;
+
+        $r25 = r1[i4];
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.io.FileDescriptor)>($r25);
+
+        i4 = i4 + 1;
+
+        goto label02;
+
+     label03:
+        z0 = 0;
+
+        if r2 == null goto label18;
+
+        z0 = 0;
+
+        if i0 <= 0 goto label18;
+
+        $r14 = new java.io.DataInputStream;
+
+        $r13 = new java.io.FileInputStream;
+
+        specialinvoke $r13.<java.io.FileInputStream: void <init>(java.io.FileDescriptor)>(r2);
+
+        specialinvoke $r14.<java.io.DataInputStream: void <init>(java.io.InputStream)>($r13);
+
+        r4 = $r14;
+
+        i1 = -1;
+
+     label04:
+        i3 = virtualinvoke r4.<java.io.DataInputStream: int readInt()>();
+
+     label05:
+        i1 = i3;
+
+     label06:
+        virtualinvoke r4.<java.io.DataInputStream: void close()>();
+
+     label07:
+        z0 = 0;
+
+        if i1 <= 0 goto label18;
+
+        i2 = i1;
+
+     label08:
+        if i2 <= 0 goto label17;
+
+        if i2 == i0 goto label17;
+
+        i2 = staticinvoke <android.os.Process: int getParentPid(int)>(i2);
+
+        goto label08;
+
+     label09:
+        $r28 := @caughtexception;
+
+        r7 = $r28;
+
+     label10:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", "Error reading pid from wrapped process, child may have died", r7);
+
+     label11:
+        virtualinvoke r4.<java.io.DataInputStream: void close()>();
+
+     label12:
+        goto label07;
+
+     label13:
+        $r29 := @caughtexception;
+
+        goto label07;
+
+     label14:
+        $r30 := @caughtexception;
+
+        r5 = $r30;
+
+     label15:
+        virtualinvoke r4.<java.io.DataInputStream: void close()>();
+
+     label16:
+        throw r5;
+
+     label17:
+        if i2 <= 0 goto label20;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r24 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Wrapped process has pid ");
+
+        $r22 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r23 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("Zygote", $r23);
+
+        i0 = i1;
+
+        z0 = 1;
+
+     label18:
+        $r12 = r0.<com.android.internal.os.ZygoteConnection: java.io.DataOutputStream mSocketOutStream>;
+
+        virtualinvoke $r12.<java.io.DataOutputStream: void writeInt(int)>(i0);
+
+        $r11 = r0.<com.android.internal.os.ZygoteConnection: java.io.DataOutputStream mSocketOutStream>;
+
+        virtualinvoke $r11.<java.io.DataOutputStream: void writeBoolean(boolean)>(z0);
+
+     label19:
+        return 0;
+
+     label20:
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        $r16 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Wrapped process reported a pid that is not a child of the process that we forked: childPid=");
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" innerPid=");
+
+        $r20 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r21 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Zygote", $r21);
+
+        z0 = 0;
+
+        goto label18;
+
+     label21:
+        $r31 := @caughtexception;
+
+        r9 = $r31;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", "Error reading from command socket", r9);
+
+        return 1;
+
+     label22:
+        $r27 := @caughtexception;
+
+        goto label07;
+
+     label23:
+        $r26 := @caughtexception;
+
+        goto label16;
+
+        catch java.io.IOException from label04 to label05 with label09;
+        catch java.lang.Throwable from label04 to label05 with label14;
+        catch java.io.IOException from label06 to label07 with label22;
+        catch java.lang.Throwable from label10 to label11 with label14;
+        catch java.io.IOException from label11 to label12 with label13;
+        catch java.io.IOException from label15 to label16 with label23;
+        catch java.io.IOException from label18 to label19 with label21;
+    }
+
+    private static void logAndPrintError(java.io.PrintStream, java.lang.String, java.lang.Throwable)
+    {
+        java.io.PrintStream r0;
+        java.lang.String r1, $r6;
+        java.io.Serializable r2;
+        java.lang.StringBuilder r3, $r5, r7;
+        java.lang.Throwable r8;
+
+        r0 := @parameter0: java.io.PrintStream;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.Throwable;
+
+        r8 = (java.lang.Throwable) r2;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", r1, r8);
+
+        if r0 == null goto label2;
+
+        r7 = new java.lang.StringBuilder;
+
+        specialinvoke r7.<java.lang.StringBuilder: void <init>()>();
+
+        r3 = virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        if r2 != null goto label1;
+
+        r2 = "";
+
+     label1:
+        $r5 = virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<java.io.PrintStream: void println(java.lang.String)>($r6);
+
+     label2:
+        return;
+    }
+
+    private java.lang.String[] readArgumentList() throws java.io.IOException
+    {
+        com.android.internal.os.ZygoteConnection r0;
+        java.lang.String r2, $r6, $r7;
+        int i0, i1;
+        java.lang.String[] r3;
+        java.io.BufferedReader $r4, $r5;
+        java.io.IOException $r8, $r9, $r11;
+        java.lang.NumberFormatException $r10;
+
+        r0 := @this: com.android.internal.os.ZygoteConnection;
+
+     label1:
+        $r4 = r0.<com.android.internal.os.ZygoteConnection: java.io.BufferedReader mSocketReader>;
+
+        r2 = virtualinvoke $r4.<java.io.BufferedReader: java.lang.String readLine()>();
+
+     label2:
+        if r2 != null goto label3;
+
+        return null;
+
+     label3:
+        i0 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r2);
+
+     label4:
+        if i0 <= 1024 goto label6;
+
+        $r9 = new java.io.IOException;
+
+        specialinvoke $r9.<java.io.IOException: void <init>(java.lang.String)>("max arg count exceeded");
+
+        throw $r9;
+
+     label5:
+        $r10 := @caughtexception;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Zygote", "invalid Zygote wire format: non-int at argc");
+
+        $r11 = new java.io.IOException;
+
+        specialinvoke $r11.<java.io.IOException: void <init>(java.lang.String)>("invalid wire format");
+
+        throw $r11;
+
+     label6:
+        r3 = newarray (java.lang.String)[i0];
+
+        i1 = 0;
+
+     label7:
+        if i1 >= i0 goto label9;
+
+        $r5 = r0.<com.android.internal.os.ZygoteConnection: java.io.BufferedReader mSocketReader>;
+
+        $r6 = virtualinvoke $r5.<java.io.BufferedReader: java.lang.String readLine()>();
+
+        r3[i1] = $r6;
+
+        $r7 = r3[i1];
+
+        if $r7 != null goto label8;
+
+        $r8 = new java.io.IOException;
+
+        specialinvoke $r8.<java.io.IOException: void <init>(java.lang.String)>("truncated request");
+
+        throw $r8;
+
+     label8:
+        i1 = i1 + 1;
+
+        goto label7;
+
+     label9:
+        return r3;
+
+        catch java.lang.NumberFormatException from label1 to label2 with label5;
+        catch java.lang.NumberFormatException from label3 to label4 with label5;
+    }
+
+    private void setChildPgid(int)
+    {
+        com.android.internal.os.ZygoteConnection r0;
+        int i0, $i1, $i2;
+        android.net.Credentials $r2;
+        java.io.IOException $r3;
+
+        r0 := @this: com.android.internal.os.ZygoteConnection;
+
+        i0 := @parameter0: int;
+
+     label1:
+        $r2 = r0.<com.android.internal.os.ZygoteConnection: android.net.Credentials peer>;
+
+        $i1 = virtualinvoke $r2.<android.net.Credentials: int getPid()>();
+
+        $i2 = staticinvoke <com.android.internal.os.ZygoteInit: int getpgid(int)>($i1);
+
+        staticinvoke <com.android.internal.os.ZygoteInit: int setpgid(int,int)>(i0, $i2);
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("Zygote", "Zygote: setpgid failed. This is normal if peer is not in our session");
+
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    void closeSocket()
+    {
+        com.android.internal.os.ZygoteConnection r0;
+        java.io.IOException r1, $r3;
+        android.net.LocalSocket $r2;
+
+        r0 := @this: com.android.internal.os.ZygoteConnection;
+
+     label1:
+        $r2 = r0.<com.android.internal.os.ZygoteConnection: android.net.LocalSocket mSocket>;
+
+        virtualinvoke $r2.<android.net.LocalSocket: void close()>();
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        r1 = $r3;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("Zygote", "Exception while closing command socket in parent", r1);
+
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    java.io.FileDescriptor getFileDesciptor()
+    {
+        com.android.internal.os.ZygoteConnection r0;
+        android.net.LocalSocket $r1;
+        java.io.FileDescriptor $r2;
+
+        r0 := @this: com.android.internal.os.ZygoteConnection;
+
+        $r1 = r0.<com.android.internal.os.ZygoteConnection: android.net.LocalSocket mSocket>;
+
+        $r2 = virtualinvoke $r1.<android.net.LocalSocket: java.io.FileDescriptor getFileDescriptor()>();
+
+        return $r2;
+    }
+
+    void run() throws com.android.internal.os.ZygoteInit$MethodAndArgsCaller
+    {
+        com.android.internal.os.ZygoteConnection r0;
+        int i0;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.os.ZygoteConnection;
+
+        i0 = 10;
+
+     label1:
+        if i0 > 0 goto label3;
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void gc()>();
+
+        i0 = 10;
+
+     label2:
+        $z0 = virtualinvoke r0.<com.android.internal.os.ZygoteConnection: boolean runOnce()>();
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label3:
+        i0 = i0 + -1;
+
+        goto label2;
+    }
+
+    boolean runOnce() throws com.android.internal.os.ZygoteInit$MethodAndArgsCaller
+    {
+        com.android.internal.os.ZygoteConnection r0;
+        com.android.internal.os.ZygoteConnection$Arguments r1, r8, $r19;
+        java.io.IOException r2, r9, $r41, $r44, $r54;
+        java.lang.String[] r3;
+        java.io.FileDescriptor[] r4, r16;
+        java.io.PrintStream r5, $r37;
+        int i0, i1, i2, $i3, $i4, $i5, $i6;
+        java.io.FileDescriptor r6, r7, $r38;
+        java.lang.Throwable r10, $r48;
+        boolean z0, z1;
+        libcore.io.ErrnoException r11, $r50, $r55;
+        java.lang.IllegalArgumentException r12, $r43, $r51;
+        int[][] r13, $r35;
+        com.android.internal.os.ZygoteSecurityException r14, $r42, $r49;
+        java.lang.String r15, $r21, $r23, $r24, $r26, $r29, $r30, $r33, $r45, $r53;
+        java.io.FileOutputStream r17, $r39;
+        android.net.LocalSocket $r18;
+        android.net.Credentials $r20, $r22, $r25, $r27, $r31;
+        java.util.ArrayList $r28, $r34;
+        int[] $r32;
+        libcore.io.Os $r36;
+        java.lang.Object[] $r40;
+        java.lang.StringBuilder $r46, $r47, $r52;
+
+        r0 := @this: com.android.internal.os.ZygoteConnection;
+
+        r1 = null;
+
+     label01:
+        r3 = specialinvoke r0.<com.android.internal.os.ZygoteConnection: java.lang.String[] readArgumentList()>();
+
+        $r18 = r0.<com.android.internal.os.ZygoteConnection: android.net.LocalSocket mSocket>;
+
+        r4 = virtualinvoke $r18.<android.net.LocalSocket: java.io.FileDescriptor[] getAncillaryFileDescriptors()>();
+
+     label02:
+        if r3 != null goto label04;
+
+        virtualinvoke r0.<com.android.internal.os.ZygoteConnection: void closeSocket()>();
+
+        return 1;
+
+     label03:
+        $r41 := @caughtexception;
+
+        r2 = $r41;
+
+        $r47 = new java.lang.StringBuilder;
+
+        specialinvoke $r47.<java.lang.StringBuilder: void <init>()>();
+
+        $r46 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("IOException on command socket ");
+
+        $r45 = virtualinvoke r2.<java.io.IOException: java.lang.String getMessage()>();
+
+        $r52 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r45);
+
+        $r53 = virtualinvoke $r52.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Zygote", $r53);
+
+        virtualinvoke r0.<com.android.internal.os.ZygoteConnection: void closeSocket()>();
+
+        return 1;
+
+     label04:
+        r5 = null;
+
+        if r4 == null goto label05;
+
+        i2 = lengthof r4;
+
+        r5 = null;
+
+        if i2 < 3 goto label05;
+
+        $r39 = new java.io.FileOutputStream;
+
+        $r38 = r4[2];
+
+        specialinvoke $r39.<java.io.FileOutputStream: void <init>(java.io.FileDescriptor)>($r38);
+
+        r17 = $r39;
+
+        $r37 = new java.io.PrintStream;
+
+        specialinvoke $r37.<java.io.PrintStream: void <init>(java.io.OutputStream)>(r17);
+
+        r5 = $r37;
+
+     label05:
+        i0 = -1;
+
+        r6 = null;
+
+        r7 = null;
+
+     label06:
+        $r19 = new com.android.internal.os.ZygoteConnection$Arguments;
+
+        specialinvoke $r19.<com.android.internal.os.ZygoteConnection$Arguments: void <init>(java.lang.String[])>(r3);
+
+        r8 = $r19;
+
+     label07:
+        $r20 = r0.<com.android.internal.os.ZygoteConnection: android.net.Credentials peer>;
+
+        $r21 = r0.<com.android.internal.os.ZygoteConnection: java.lang.String peerSecurityContext>;
+
+        staticinvoke <com.android.internal.os.ZygoteConnection: void applyUidSecurityPolicy(com.android.internal.os.ZygoteConnection$Arguments,android.net.Credentials,java.lang.String)>(r8, $r20, $r21);
+
+        $r22 = r0.<com.android.internal.os.ZygoteConnection: android.net.Credentials peer>;
+
+        $r23 = r0.<com.android.internal.os.ZygoteConnection: java.lang.String peerSecurityContext>;
+
+        staticinvoke <com.android.internal.os.ZygoteConnection: void applyRlimitSecurityPolicy(com.android.internal.os.ZygoteConnection$Arguments,android.net.Credentials,java.lang.String)>(r8, $r22, $r23);
+
+        $r27 = r0.<com.android.internal.os.ZygoteConnection: android.net.Credentials peer>;
+
+        $r26 = r0.<com.android.internal.os.ZygoteConnection: java.lang.String peerSecurityContext>;
+
+        staticinvoke <com.android.internal.os.ZygoteConnection: void applyCapabilitiesSecurityPolicy(com.android.internal.os.ZygoteConnection$Arguments,android.net.Credentials,java.lang.String)>(r8, $r27, $r26);
+
+        $r25 = r0.<com.android.internal.os.ZygoteConnection: android.net.Credentials peer>;
+
+        $r24 = r0.<com.android.internal.os.ZygoteConnection: java.lang.String peerSecurityContext>;
+
+        staticinvoke <com.android.internal.os.ZygoteConnection: void applyInvokeWithSecurityPolicy(com.android.internal.os.ZygoteConnection$Arguments,android.net.Credentials,java.lang.String)>(r8, $r25, $r24);
+
+        $r31 = r0.<com.android.internal.os.ZygoteConnection: android.net.Credentials peer>;
+
+        $r30 = r0.<com.android.internal.os.ZygoteConnection: java.lang.String peerSecurityContext>;
+
+        staticinvoke <com.android.internal.os.ZygoteConnection: void applyseInfoSecurityPolicy(com.android.internal.os.ZygoteConnection$Arguments,android.net.Credentials,java.lang.String)>(r8, $r31, $r30);
+
+        staticinvoke <com.android.internal.os.ZygoteConnection: void applyDebuggerSystemProperty(com.android.internal.os.ZygoteConnection$Arguments)>(r8);
+
+        staticinvoke <com.android.internal.os.ZygoteConnection: void applyInvokeWithSystemProperty(com.android.internal.os.ZygoteConnection$Arguments)>(r8);
+
+        r13 = (int[][]) null;
+
+        $r28 = r8.<com.android.internal.os.ZygoteConnection$Arguments: java.util.ArrayList rlimits>;
+
+        if $r28 == null goto label08;
+
+        $r34 = r8.<com.android.internal.os.ZygoteConnection$Arguments: java.util.ArrayList rlimits>;
+
+        $r35 = <com.android.internal.os.ZygoteConnection: int[][] intArray2d>;
+
+        $r40 = virtualinvoke $r34.<java.util.ArrayList: java.lang.Object[] toArray(java.lang.Object[])>($r35);
+
+        r13 = (int[][]) $r40;
+
+     label08:
+        z1 = r8.<com.android.internal.os.ZygoteConnection$Arguments: boolean runtimeInit>;
+
+     label09:
+        r6 = null;
+
+        r7 = null;
+
+        if z1 == 0 goto label13;
+
+     label10:
+        r15 = r8.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String invokeWith>;
+
+     label11:
+        r6 = null;
+
+        r7 = null;
+
+        if r15 == null goto label13;
+
+     label12:
+        $r36 = <libcore.io.Libcore: libcore.io.Os os>;
+
+        r16 = interfaceinvoke $r36.<libcore.io.Os: java.io.FileDescriptor[] pipe()>();
+
+        r6 = r16[1];
+
+        r7 = r16[0];
+
+        staticinvoke <com.android.internal.os.ZygoteInit: void setCloseOnExec(java.io.FileDescriptor,boolean)>(r7, 1);
+
+     label13:
+        $i6 = r8.<com.android.internal.os.ZygoteConnection$Arguments: int uid>;
+
+        $i5 = r8.<com.android.internal.os.ZygoteConnection$Arguments: int gid>;
+
+        $r32 = r8.<com.android.internal.os.ZygoteConnection$Arguments: int[] gids>;
+
+        $i3 = r8.<com.android.internal.os.ZygoteConnection$Arguments: int debugFlags>;
+
+        $i4 = r8.<com.android.internal.os.ZygoteConnection$Arguments: int mountExternal>;
+
+        $r33 = r8.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String seInfo>;
+
+        $r29 = r8.<com.android.internal.os.ZygoteConnection$Arguments: java.lang.String niceName>;
+
+        i1 = staticinvoke <dalvik.system.Zygote: int forkAndSpecialize(int,int,int[],int,int[][],int,java.lang.String,java.lang.String)>($i6, $i5, $r32, $i3, r13, $i4, $r33, $r29);
+
+     label14:
+        i0 = i1;
+
+        r1 = r8;
+
+     label15:
+        if i0 != 0 goto label28;
+
+     label16:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.io.FileDescriptor)>(r7);
+
+     label17:
+        r7 = null;
+
+     label18:
+        specialinvoke r0.<com.android.internal.os.ZygoteConnection: void handleChildProc(com.android.internal.os.ZygoteConnection$Arguments,java.io.FileDescriptor[],java.io.FileDescriptor,java.io.PrintStream)>(r1, r4, r6, r5);
+
+     label19:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.io.FileDescriptor)>(r6);
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.io.FileDescriptor)>(null);
+
+        return 1;
+
+     label20:
+        $r44 := @caughtexception;
+
+        r9 = $r44;
+
+     label21:
+        staticinvoke <com.android.internal.os.ZygoteConnection: void logAndPrintError(java.io.PrintStream,java.lang.String,java.lang.Throwable)>(r5, "Exception creating pipe", r9);
+
+        goto label15;
+
+     label22:
+        $r55 := @caughtexception;
+
+        r11 = $r55;
+
+     label23:
+        staticinvoke <com.android.internal.os.ZygoteConnection: void logAndPrintError(java.io.PrintStream,java.lang.String,java.lang.Throwable)>(r5, "Exception creating pipe", r11);
+
+        goto label15;
+
+     label24:
+        $r43 := @caughtexception;
+
+        r12 = $r43;
+
+     label25:
+        staticinvoke <com.android.internal.os.ZygoteConnection: void logAndPrintError(java.io.PrintStream,java.lang.String,java.lang.Throwable)>(r5, "Invalid zygote arguments", r12);
+
+        goto label15;
+
+     label26:
+        $r49 := @caughtexception;
+
+        r14 = $r49;
+
+     label27:
+        staticinvoke <com.android.internal.os.ZygoteConnection: void logAndPrintError(java.io.PrintStream,java.lang.String,java.lang.Throwable)>(r5, "Zygote security policy prevents request: ", r14);
+
+        goto label15;
+
+     label28:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.io.FileDescriptor)>(r6);
+
+     label29:
+        r6 = null;
+
+     label30:
+        z0 = specialinvoke r0.<com.android.internal.os.ZygoteConnection: boolean handleParentProc(int,java.io.FileDescriptor[],java.io.FileDescriptor,com.android.internal.os.ZygoteConnection$Arguments)>(i0, r4, r7, r1);
+
+     label31:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.io.FileDescriptor)>(null);
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.io.FileDescriptor)>(r7);
+
+        return z0;
+
+     label32:
+        $r48 := @caughtexception;
+
+        r10 = $r48;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.io.FileDescriptor)>(r6);
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.io.FileDescriptor)>(r7);
+
+        throw r10;
+
+     label33:
+        $r42 := @caughtexception;
+
+        r14 = $r42;
+
+        r1 = r8;
+
+        goto label27;
+
+     label34:
+        $r51 := @caughtexception;
+
+        r12 = $r51;
+
+        r1 = r8;
+
+        goto label25;
+
+     label35:
+        $r50 := @caughtexception;
+
+        r11 = $r50;
+
+        r1 = r8;
+
+        goto label23;
+
+     label36:
+        $r54 := @caughtexception;
+
+        r9 = $r54;
+
+        r1 = r8;
+
+        goto label21;
+
+        catch java.io.IOException from label01 to label02 with label03;
+        catch java.io.IOException from label06 to label07 with label20;
+        catch libcore.io.ErrnoException from label06 to label07 with label22;
+        catch java.lang.IllegalArgumentException from label06 to label07 with label24;
+        catch com.android.internal.os.ZygoteSecurityException from label06 to label07 with label26;
+        catch java.io.IOException from label07 to label08 with label36;
+        catch libcore.io.ErrnoException from label07 to label08 with label35;
+        catch java.lang.IllegalArgumentException from label07 to label08 with label34;
+        catch com.android.internal.os.ZygoteSecurityException from label07 to label08 with label33;
+        catch java.io.IOException from label08 to label09 with label36;
+        catch libcore.io.ErrnoException from label08 to label09 with label35;
+        catch java.lang.IllegalArgumentException from label08 to label09 with label34;
+        catch com.android.internal.os.ZygoteSecurityException from label08 to label09 with label33;
+        catch java.io.IOException from label10 to label11 with label36;
+        catch libcore.io.ErrnoException from label10 to label11 with label35;
+        catch java.lang.IllegalArgumentException from label10 to label11 with label34;
+        catch com.android.internal.os.ZygoteSecurityException from label10 to label11 with label33;
+        catch java.io.IOException from label12 to label13 with label36;
+        catch libcore.io.ErrnoException from label12 to label13 with label35;
+        catch java.lang.IllegalArgumentException from label12 to label13 with label34;
+        catch com.android.internal.os.ZygoteSecurityException from label12 to label13 with label33;
+        catch java.io.IOException from label13 to label14 with label36;
+        catch libcore.io.ErrnoException from label13 to label14 with label35;
+        catch java.lang.IllegalArgumentException from label13 to label14 with label34;
+        catch com.android.internal.os.ZygoteSecurityException from label13 to label14 with label33;
+        catch java.lang.Throwable from label16 to label17 with label32;
+        catch java.lang.Throwable from label18 to label19 with label32;
+        catch java.lang.Throwable from label28 to label29 with label32;
+        catch java.lang.Throwable from label30 to label31 with label32;
+    }
+}

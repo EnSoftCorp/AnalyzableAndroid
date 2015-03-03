@@ -1,0 +1,2595 @@
+class com.android.org.chromium.content.browser.ContentViewGestureHandler extends java.lang.Object implements com.android.org.chromium.content.browser.LongPressDetector$LongPressDelegate
+{
+    static final boolean $assertionsDisabled;
+    private static final int DOUBLE_TAP_TIMEOUT;
+    private float mAccumulatedScrollErrorX;
+    private float mAccumulatedScrollErrorY;
+    private android.view.MotionEvent mCurrentDownEvent;
+    private final boolean mDisableClickDelay;
+    private float mDoubleTapDragZoomAnchorX;
+    private float mDoubleTapDragZoomAnchorY;
+    private com.android.org.chromium.content.browser.third_party.GestureDetector$OnDoubleTapListener mDoubleTapListener;
+    private int mDoubleTapMode;
+    private float mDoubleTapY;
+    private final android.os.Bundle mExtraParamBundleDoubleTapDragZoom;
+    private final android.os.Bundle mExtraParamBundleFling;
+    private final android.os.Bundle mExtraParamBundlePinchBy;
+    private final android.os.Bundle mExtraParamBundleScroll;
+    private final android.os.Bundle mExtraParamBundleSingleTap;
+    private boolean mFlingMayBeActive;
+    private com.android.org.chromium.content.browser.third_party.GestureDetector mGestureDetector;
+    private boolean mIgnoreRemainingTouchEvents;
+    private boolean mIgnoreSingleTap;
+    private long mLastDoubleTapTimeMs;
+    private android.view.MotionEvent mLastLongPressEvent;
+    private float mLastRawX;
+    private float mLastRawY;
+    private com.android.org.chromium.content.browser.third_party.GestureDetector$OnGestureListener mListener;
+    private com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector;
+    private final com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate mMotionEventDelegate;
+    private boolean mNeedsTapEndingEvent;
+    private final java.util.Deque mPendingMotionEvents;
+    private boolean mPinchInProgress;
+    private final float mPxToDp;
+    private int mScaledTouchSlopSquare;
+    private boolean mSeenFirstScrollEvent;
+    private boolean mShouldDisableDoubleTap;
+    private boolean mShowPressIsCalled;
+    private int mSingleTapX;
+    private int mSingleTapY;
+    private final com.android.org.chromium.content.browser.SnapScrollController mSnapScrollController;
+    private int mTouchHandlingState;
+    private boolean mTouchScrolling;
+    private final com.android.org.chromium.content.browser.ZoomManager mZoomManager;
+
+    static void <clinit>()
+    {
+        boolean z0, $z1;
+        java.lang.Class $r0;
+        int $i0;
+
+        $r0 = class "com/android/org/chromium/content/browser/ContentViewGestureHandler";
+
+        $z1 = virtualinvoke $r0.<java.lang.Class: boolean desiredAssertionStatus()>();
+
+        if $z1 != 0 goto label2;
+
+        z0 = 1;
+
+     label1:
+        <com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean $assertionsDisabled> = z0;
+
+        $i0 = staticinvoke <android.view.ViewConfiguration: int getDoubleTapTimeout()>();
+
+        <com.android.org.chromium.content.browser.ContentViewGestureHandler: int DOUBLE_TAP_TIMEOUT> = $i0;
+
+        return;
+
+     label2:
+        z0 = 0;
+
+        goto label1;
+    }
+
+    void <init>(android.content.Context, com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate, com.android.org.chromium.content.browser.ZoomManager)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.content.Context r1;
+        com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate r2;
+        com.android.org.chromium.content.browser.ZoomManager r3, $r12;
+        boolean z0, z1, z2;
+        java.util.ArrayDeque $r4;
+        android.os.Bundle $r5, $r6, $r7, $r8, $r9;
+        com.android.org.chromium.content.browser.LongPressDetector $r10;
+        com.android.org.chromium.content.browser.SnapScrollController $r11;
+        android.content.res.Resources $r13;
+        float $f0, $f1;
+        android.util.DisplayMetrics $r14;
+        com.android.org.chromium.base.CommandLine $r15;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate;
+
+        r3 := @parameter2: com.android.org.chromium.content.browser.ZoomManager;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r4 = new java.util.ArrayDeque;
+
+        specialinvoke $r4.<java.util.ArrayDeque: void <init>()>();
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents> = $r4;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState> = 0;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mPinchInProgress> = 0;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mDoubleTapMode> = 0;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mLastRawX> = 0.0F;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mLastRawY> = 0.0F;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mAccumulatedScrollErrorX> = 0.0F;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mAccumulatedScrollErrorY> = 0.0F;
+
+        $r5 = new android.os.Bundle;
+
+        specialinvoke $r5.<android.os.Bundle: void <init>()>();
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundleSingleTap> = $r5;
+
+        $r6 = new android.os.Bundle;
+
+        specialinvoke $r6.<android.os.Bundle: void <init>()>();
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundleFling> = $r6;
+
+        $r7 = new android.os.Bundle;
+
+        specialinvoke $r7.<android.os.Bundle: void <init>()>();
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundleScroll> = $r7;
+
+        $r8 = new android.os.Bundle;
+
+        specialinvoke $r8.<android.os.Bundle: void <init>()>();
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundleDoubleTapDragZoom> = $r8;
+
+        $r9 = new android.os.Bundle;
+
+        specialinvoke $r9.<android.os.Bundle: void <init>()>();
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundlePinchBy> = $r9;
+
+        $r10 = new com.android.org.chromium.content.browser.LongPressDetector;
+
+        specialinvoke $r10.<com.android.org.chromium.content.browser.LongPressDetector: void <init>(android.content.Context,com.android.org.chromium.content.browser.LongPressDetector$LongPressDelegate)>(r1, r0);
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector> = $r10;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate mMotionEventDelegate> = r2;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ZoomManager mZoomManager> = r3;
+
+        $r11 = new com.android.org.chromium.content.browser.SnapScrollController;
+
+        $r12 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ZoomManager mZoomManager>;
+
+        specialinvoke $r11.<com.android.org.chromium.content.browser.SnapScrollController: void <init>(android.content.Context,com.android.org.chromium.content.browser.ZoomManager)>(r1, $r12);
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.SnapScrollController mSnapScrollController> = $r11;
+
+        $r13 = virtualinvoke r1.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $r14 = virtualinvoke $r13.<android.content.res.Resources: android.util.DisplayMetrics getDisplayMetrics()>();
+
+        $f0 = $r14.<android.util.DisplayMetrics: float density>;
+
+        $f1 = 1.0F / $f0;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mPxToDp> = $f1;
+
+        z0 = staticinvoke <com.android.org.chromium.base.CommandLine: boolean isInitialized()>();
+
+        z1 = 0;
+
+        if z0 == 0 goto label1;
+
+        $r15 = staticinvoke <com.android.org.chromium.base.CommandLine: com.android.org.chromium.base.CommandLine getInstance()>();
+
+        z2 = virtualinvoke $r15.<com.android.org.chromium.base.CommandLine: boolean hasSwitch(java.lang.String)>("disable-click-delay");
+
+        z1 = 0;
+
+        if z2 == 0 goto label1;
+
+        z1 = 1;
+
+     label1:
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mDisableClickDelay> = z1;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void initGestureDetectors(android.content.Context)>(r1);
+
+        return;
+    }
+
+    static boolean access$000(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mShowPressIsCalled>;
+
+        return $z0;
+    }
+
+    static boolean access$002(com.android.org.chromium.content.browser.ContentViewGestureHandler, boolean)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mShowPressIsCalled> = z0;
+
+        return z0;
+    }
+
+    static boolean access$100(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mIgnoreSingleTap>;
+
+        return $z0;
+    }
+
+    static boolean access$1000(com.android.org.chromium.content.browser.ContentViewGestureHandler, int, android.view.MotionEvent, android.os.Bundle)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0;
+        android.view.MotionEvent r1;
+        android.os.Bundle r2;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: android.view.MotionEvent;
+
+        r2 := @parameter3: android.os.Bundle;
+
+        $z0 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendMotionEventAsGesture(int,android.view.MotionEvent,android.os.Bundle)>(i0, r1, r2);
+
+        return $z0;
+    }
+
+    static boolean access$102(com.android.org.chromium.content.browser.ContentViewGestureHandler, boolean)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mIgnoreSingleTap> = z0;
+
+        return z0;
+    }
+
+    static void access$1100(com.android.org.chromium.content.browser.ContentViewGestureHandler, android.view.MotionEvent)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter1: android.view.MotionEvent;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void sendTapCancelIfNecessary(android.view.MotionEvent)>(r1);
+
+        return;
+    }
+
+    static boolean access$1200(com.android.org.chromium.content.browser.ContentViewGestureHandler, int, long, int, int, android.os.Bundle)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0, i2, i3;
+        long l1;
+        android.os.Bundle r1;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        i0 := @parameter1: int;
+
+        l1 := @parameter2: long;
+
+        i2 := @parameter3: int;
+
+        i3 := @parameter4: int;
+
+        r1 := @parameter5: android.os.Bundle;
+
+        $z0 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendGesture(int,long,int,int,android.os.Bundle)>(i0, l1, i2, i3, r1);
+
+        return $z0;
+    }
+
+    static android.os.Bundle access$1300(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.os.Bundle $r1;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundleScroll>;
+
+        return $r1;
+    }
+
+    static com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate access$1400(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate $r1;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate mMotionEventDelegate>;
+
+        return $r1;
+    }
+
+    static com.android.org.chromium.content.browser.LongPressDetector access$1500(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        com.android.org.chromium.content.browser.LongPressDetector $r1;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector>;
+
+        return $r1;
+    }
+
+    static int access$1600()
+    {
+        int $i0;
+
+        $i0 = <com.android.org.chromium.content.browser.ContentViewGestureHandler: int DOUBLE_TAP_TIMEOUT>;
+
+        return $i0;
+    }
+
+    static boolean access$1700(com.android.org.chromium.content.browser.ContentViewGestureHandler, int, android.view.MotionEvent, android.os.Bundle)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0;
+        android.view.MotionEvent r1;
+        android.os.Bundle r2;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: android.view.MotionEvent;
+
+        r2 := @parameter3: android.os.Bundle;
+
+        $z0 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendTapEndingEventAsGesture(int,android.view.MotionEvent,android.os.Bundle)>(i0, r1, r2);
+
+        return $z0;
+    }
+
+    static void access$1800(com.android.org.chromium.content.browser.ContentViewGestureHandler, int, int)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0, i1;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void setClickXAndY(int,int)>(i0, i1);
+
+        return;
+    }
+
+    static boolean access$1900(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $z0 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean isDoubleTapDisabled()>();
+
+        return $z0;
+    }
+
+    static boolean access$200(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mTouchScrolling>;
+
+        return $z0;
+    }
+
+    static boolean access$2000(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mDisableClickDelay>;
+
+        return $z0;
+    }
+
+    static boolean access$202(com.android.org.chromium.content.browser.ContentViewGestureHandler, boolean)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mTouchScrolling> = z0;
+
+        return z0;
+    }
+
+    static android.os.Bundle access$2100(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.os.Bundle $r1;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundleSingleTap>;
+
+        return $r1;
+    }
+
+    static float access$2200(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $f0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mDoubleTapDragZoomAnchorX>;
+
+        return $f0;
+    }
+
+    static float access$2202(com.android.org.chromium.content.browser.ContentViewGestureHandler, float)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        f0 := @parameter1: float;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mDoubleTapDragZoomAnchorX> = f0;
+
+        return f0;
+    }
+
+    static float access$2300(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $f0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mDoubleTapDragZoomAnchorY>;
+
+        return $f0;
+    }
+
+    static float access$2302(com.android.org.chromium.content.browser.ContentViewGestureHandler, float)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        f0 := @parameter1: float;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mDoubleTapDragZoomAnchorY> = f0;
+
+        return f0;
+    }
+
+    static int access$2400(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $i0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mDoubleTapMode>;
+
+        return $i0;
+    }
+
+    static int access$2402(com.android.org.chromium.content.browser.ContentViewGestureHandler, int)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mDoubleTapMode> = i0;
+
+        return i0;
+    }
+
+    static int access$2500(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $i0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mScaledTouchSlopSquare>;
+
+        return $i0;
+    }
+
+    static android.os.Bundle access$2600(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.os.Bundle $r1;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundleDoubleTapDragZoom>;
+
+        return $r1;
+    }
+
+    static float access$2700(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $f0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mDoubleTapY>;
+
+        return $f0;
+    }
+
+    static float access$2702(com.android.org.chromium.content.browser.ContentViewGestureHandler, float)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        f0 := @parameter1: float;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mDoubleTapY> = f0;
+
+        return f0;
+    }
+
+    static float access$2800(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $f0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mPxToDp>;
+
+        return $f0;
+    }
+
+    static com.android.org.chromium.content.browser.ZoomManager access$2900(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        com.android.org.chromium.content.browser.ZoomManager $r1;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ZoomManager mZoomManager>;
+
+        return $r1;
+    }
+
+    static boolean access$300(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mSeenFirstScrollEvent>;
+
+        return $z0;
+    }
+
+    static android.view.MotionEvent access$3002(com.android.org.chromium.content.browser.ContentViewGestureHandler, android.view.MotionEvent)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter1: android.view.MotionEvent;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent mLastLongPressEvent> = r1;
+
+        return r1;
+    }
+
+    static boolean access$302(com.android.org.chromium.content.browser.ContentViewGestureHandler, boolean)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mSeenFirstScrollEvent> = z0;
+
+        return z0;
+    }
+
+    static com.android.org.chromium.content.browser.SnapScrollController access$400(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        com.android.org.chromium.content.browser.SnapScrollController $r1;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.SnapScrollController mSnapScrollController>;
+
+        return $r1;
+    }
+
+    static float access$500(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $f0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mLastRawX>;
+
+        return $f0;
+    }
+
+    static float access$502(com.android.org.chromium.content.browser.ContentViewGestureHandler, float)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        f0 := @parameter1: float;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mLastRawX> = f0;
+
+        return f0;
+    }
+
+    static float access$600(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $f0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mLastRawY>;
+
+        return $f0;
+    }
+
+    static float access$602(com.android.org.chromium.content.browser.ContentViewGestureHandler, float)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        f0 := @parameter1: float;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mLastRawY> = f0;
+
+        return f0;
+    }
+
+    static float access$700(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $f0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mAccumulatedScrollErrorX>;
+
+        return $f0;
+    }
+
+    static float access$702(com.android.org.chromium.content.browser.ContentViewGestureHandler, float)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        f0 := @parameter1: float;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mAccumulatedScrollErrorX> = f0;
+
+        return f0;
+    }
+
+    static float access$800(com.android.org.chromium.content.browser.ContentViewGestureHandler)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $f0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mAccumulatedScrollErrorY>;
+
+        return $f0;
+    }
+
+    static float access$802(com.android.org.chromium.content.browser.ContentViewGestureHandler, float)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        float f0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        f0 := @parameter1: float;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: float mAccumulatedScrollErrorY> = f0;
+
+        return f0;
+    }
+
+    static boolean access$902(com.android.org.chromium.content.browser.ContentViewGestureHandler, boolean)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mNeedsTapEndingEvent> = z0;
+
+        return z0;
+    }
+
+    private void drainAllPendingEventsUntilNextDown()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1;
+        boolean $z0;
+        java.util.Deque $r2, $r4, $r6;
+        java.lang.Object $r3, $r7;
+        int $i0, $i1;
+        java.lang.AssertionError $r8;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $z0 = <com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean $assertionsDisabled>;
+
+        if $z0 != 0 goto label1;
+
+        $i1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i1 == 1 goto label1;
+
+        $r8 = new java.lang.AssertionError;
+
+        specialinvoke $r8.<java.lang.AssertionError: void <init>()>();
+
+        throw $r8;
+
+     label1:
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState> = 2;
+
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $r3 = interfaceinvoke $r2.<java.util.Deque: java.lang.Object peekFirst()>();
+
+        r1 = (android.view.MotionEvent) $r3;
+
+     label2:
+        if r1 == null goto label3;
+
+        $i0 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i0 == 0 goto label3;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean processTouchEvent(android.view.MotionEvent)>(r1);
+
+        $r4 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        interfaceinvoke $r4.<java.util.Deque: java.lang.Object removeFirst()>();
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void recycleEvent(android.view.MotionEvent)>(r1);
+
+        $r6 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $r7 = interfaceinvoke $r6.<java.util.Deque: java.lang.Object peekFirst()>();
+
+        r1 = (android.view.MotionEvent) $r7;
+
+        goto label2;
+
+     label3:
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void trySendPendingEventsToNative()>();
+
+        return;
+    }
+
+    private void endTouchScrollIfNecessary(long, boolean)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        long l0;
+        boolean z0, $z1;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        l0 := @parameter0: long;
+
+        z0 := @parameter1: boolean;
+
+        $z1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mTouchScrolling>;
+
+        if $z1 != 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mTouchScrolling> = 0;
+
+        if z0 == 0 goto label1;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendGesture(int,long,int,int,android.os.Bundle)>(8, l0, 0, 0, null);
+
+        return;
+    }
+
+    private void initGestureDetectors(android.content.Context)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.content.Context r1;
+        int i0, $i1;
+        java.lang.Throwable r2, $r8;
+        com.android.org.chromium.content.browser.ContentViewGestureHandler$1 r3, $r5;
+        android.view.ViewConfiguration $r4;
+        com.android.org.chromium.content.browser.third_party.GestureDetector $r6, $r7;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter0: android.content.Context;
+
+        $r4 = staticinvoke <android.view.ViewConfiguration: android.view.ViewConfiguration get(android.content.Context)>(r1);
+
+        i0 = virtualinvoke $r4.<android.view.ViewConfiguration: int getScaledTouchSlop()>();
+
+        $i1 = i0 * i0;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mScaledTouchSlopSquare> = $i1;
+
+     label1:
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void begin()>();
+
+        $r5 = new com.android.org.chromium.content.browser.ContentViewGestureHandler$1;
+
+        specialinvoke $r5.<com.android.org.chromium.content.browser.ContentViewGestureHandler$1: void <init>(com.android.org.chromium.content.browser.ContentViewGestureHandler,int)>(r0, i0);
+
+        r3 = $r5;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.third_party.GestureDetector$OnGestureListener mListener> = r3;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.third_party.GestureDetector$OnDoubleTapListener mDoubleTapListener> = r3;
+
+        $r6 = new com.android.org.chromium.content.browser.third_party.GestureDetector;
+
+        specialinvoke $r6.<com.android.org.chromium.content.browser.third_party.GestureDetector: void <init>(android.content.Context,com.android.org.chromium.content.browser.third_party.GestureDetector$OnGestureListener)>(r1, r3);
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.third_party.GestureDetector mGestureDetector> = $r6;
+
+        $r7 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.third_party.GestureDetector mGestureDetector>;
+
+        virtualinvoke $r7.<com.android.org.chromium.content.browser.third_party.GestureDetector: void setIsLongpressEnabled(boolean)>(0);
+
+     label2:
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void end()>();
+
+        return;
+
+     label3:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void end()>();
+
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    private boolean isDoubleTapActive()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int $i0, $i1;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $i0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mDoubleTapMode>;
+
+        if $i0 == 3 goto label1;
+
+        $i1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mDoubleTapMode>;
+
+        if $i1 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private boolean isDoubleTapDisabled()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $i0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mDoubleTapMode>;
+
+        if $i0 == 3 goto label1;
+
+        $z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mShouldDisableDoubleTap>;
+
+        if $z0 == 0 goto label2;
+
+     label1:
+        return 1;
+
+     label2:
+        return 0;
+    }
+
+    private android.view.MotionEvent obtainActionCancelMotionEvent()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        long $l0, $l1;
+        android.view.MotionEvent $r1;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $l1 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $r1 = staticinvoke <android.view.MotionEvent: android.view.MotionEvent obtain(long,long,int,float,float,int)>($l0, $l1, 3, 0.0F, 0.0F, 0);
+
+        return $r1;
+    }
+
+    private boolean offerTouchEventToJavaScript(android.view.MotionEvent)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1, r2, r3, r4;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i11, $i12;
+        android.view.MotionEvent$PointerCoords[] r5;
+        java.util.Deque $r6, $r9, $r12, $r13, $r14, $r15, $r18, $r22;
+        boolean $z0;
+        java.lang.StringBuilder $r7, $r8, $r11, $r19, $r20, $r21;
+        java.lang.String $r10, $r23;
+        java.lang.Object $r16, $r17;
+        long $l10;
+        android.view.MotionEvent$PointerCoords $r24, $r25;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        i0 = 0;
+
+        $i2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i2 != 0 goto label2;
+
+     label1:
+        return 0;
+
+     label2:
+        $i3 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i3 != 2 goto label5;
+
+        $r15 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $r17 = interfaceinvoke $r15.<java.util.Deque: java.lang.Object peekLast()>();
+
+        r4 = (android.view.MotionEvent) $r17;
+
+        if r4 == null goto label5;
+
+        $r18 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $r16 = interfaceinvoke $r18.<java.util.Deque: java.lang.Object peekFirst()>();
+
+        if r4 == $r16 goto label5;
+
+        $i5 = virtualinvoke r4.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i5 != 2 goto label5;
+
+        $i6 = virtualinvoke r4.<android.view.MotionEvent: int getPointerCount()>();
+
+        $i7 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        if $i6 != $i7 goto label5;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("QueueSize = ");
+
+        $r22 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $i8 = interfaceinvoke $r22.<java.util.Deque: int size()>();
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i8);
+
+        $r23 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void instant(java.lang.String,java.lang.String)>("offerTouchEventToJavaScript:EventCoalesced", $r23);
+
+        $i11 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        r5 = newarray (android.view.MotionEvent$PointerCoords)[$i11];
+
+     label3:
+        $i9 = lengthof r5;
+
+        if i0 >= $i9 goto label4;
+
+        $r25 = new android.view.MotionEvent$PointerCoords;
+
+        specialinvoke $r25.<android.view.MotionEvent$PointerCoords: void <init>()>();
+
+        r5[i0] = $r25;
+
+        $r24 = r5[i0];
+
+        virtualinvoke r1.<android.view.MotionEvent: void getPointerCoords(int,android.view.MotionEvent$PointerCoords)>(i0, $r24);
+
+        i0 = i0 + 1;
+
+        goto label3;
+
+     label4:
+        $l10 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        $i12 = virtualinvoke r1.<android.view.MotionEvent: int getMetaState()>();
+
+        virtualinvoke r4.<android.view.MotionEvent: void addBatch(long,android.view.MotionEvent$PointerCoords[],int)>($l10, r5, $i12);
+
+        return 1;
+
+     label5:
+        $r6 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $z0 = interfaceinvoke $r6.<java.util.Deque: boolean isEmpty()>();
+
+        if $z0 == 0 goto label7;
+
+        r3 = staticinvoke <android.view.MotionEvent: android.view.MotionEvent obtain(android.view.MotionEvent)>(r1);
+
+        $r13 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        interfaceinvoke $r13.<java.util.Deque: boolean add(java.lang.Object)>(r3);
+
+        i1 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int sendPendingEventToNative()>();
+
+        if i1 == 0 goto label6;
+
+        $r14 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        interfaceinvoke $r14.<java.util.Deque: boolean remove(java.lang.Object)>(r3);
+
+     label6:
+        if i1 == 2 goto label1;
+
+        return 1;
+
+     label7:
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("QueueSize = ");
+
+        $r9 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $i4 = interfaceinvoke $r9.<java.util.Deque: int size()>();
+
+        $r11 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void instant(java.lang.String,java.lang.String)>("offerTouchEventToJavaScript:EventQueued", $r10);
+
+        r2 = staticinvoke <android.view.MotionEvent: android.view.MotionEvent obtain(android.view.MotionEvent)>(r1);
+
+        $r12 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        interfaceinvoke $r12.<java.util.Deque: boolean add(java.lang.Object)>(r2);
+
+        return 1;
+    }
+
+    private boolean processTouchEvent(android.view.MotionEvent)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1, $r6;
+        boolean z0, z1, z2, z3, z4, $z5, $z6;
+        int i0, $i1, $i3;
+        com.android.org.chromium.content.browser.LongPressDetector $r2, $r3;
+        com.android.org.chromium.content.browser.ZoomManager $r4;
+        long $l2;
+        com.android.org.chromium.content.browser.third_party.GestureDetector $r5;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        $i1 = virtualinvoke r1.<android.view.MotionEvent: int getAction()>();
+
+        if $i1 == 1 goto label1;
+
+        i0 = virtualinvoke r1.<android.view.MotionEvent: int getAction()>();
+
+        z1 = 0;
+
+        if i0 != 3 goto label2;
+
+     label1:
+        z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mTouchScrolling>;
+
+        z1 = 0;
+
+        if z0 == 0 goto label2;
+
+        z1 = 1;
+
+     label2:
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector>;
+
+        virtualinvoke $r2.<com.android.org.chromium.content.browser.LongPressDetector: void cancelLongPressIfNeeded(android.view.MotionEvent)>(r1);
+
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector>;
+
+        virtualinvoke $r3.<com.android.org.chromium.content.browser.LongPressDetector: void startLongPressTimerIfNeeded(android.view.MotionEvent)>(r1);
+
+        z2 = virtualinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean canHandle(android.view.MotionEvent)>(r1);
+
+        z3 = 0;
+
+        if z2 == 0 goto label3;
+
+        $r5 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.third_party.GestureDetector mGestureDetector>;
+
+        $z6 = virtualinvoke $r5.<com.android.org.chromium.content.browser.third_party.GestureDetector: boolean onTouchEvent(android.view.MotionEvent)>(r1);
+
+        z3 = 0 | $z6;
+
+        $i3 = virtualinvoke r1.<android.view.MotionEvent: int getAction()>();
+
+        if $i3 != 0 goto label3;
+
+        $r6 = staticinvoke <android.view.MotionEvent: android.view.MotionEvent obtain(android.view.MotionEvent)>(r1);
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent mCurrentDownEvent> = $r6;
+
+     label3:
+        $r4 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ZoomManager mZoomManager>;
+
+        $z5 = virtualinvoke $r4.<com.android.org.chromium.content.browser.ZoomManager: boolean processTouchEvent(android.view.MotionEvent)>(r1);
+
+        z4 = z3 | $z5;
+
+        if z1 == 0 goto label4;
+
+        if z4 != 0 goto label4;
+
+        $l2 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void endTouchScrollIfNecessary(long,boolean)>($l2, 1);
+
+     label4:
+        return z4;
+    }
+
+    private void recycleEvent(android.view.MotionEvent)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        virtualinvoke r1.<android.view.MotionEvent: void recycle()>();
+
+        return;
+    }
+
+    private void reportDoubleTap()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate r1;
+        boolean z0, $z1;
+        long $l0, $l2;
+        byte $b1;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $l0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: long mLastDoubleTapTimeMs>;
+
+        $b1 = $l0 cmp 0L;
+
+        if $b1 <= 0 goto label2;
+
+        r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate mMotionEventDelegate>;
+
+        $z1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mDisableClickDelay>;
+
+        if $z1 != 0 goto label3;
+
+        z0 = 1;
+
+     label1:
+        interfaceinvoke r1.<com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate: void sendActionAfterDoubleTapUMA(int,boolean)>(2, z0);
+
+     label2:
+        $l2 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: long mLastDoubleTapTimeMs> = $l2;
+
+        return;
+
+     label3:
+        z0 = 0;
+
+        goto label1;
+    }
+
+    private boolean sendGesture(int, long, int, int, android.os.Bundle)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0, i2, i3;
+        long l1;
+        android.os.Bundle r1;
+        boolean $z0, $z1;
+        com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate $r2;
+        byte $b4;
+        java.lang.AssertionError $r3;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        i2 := @parameter2: int;
+
+        i3 := @parameter3: int;
+
+        r1 := @parameter4: android.os.Bundle;
+
+        $z0 = <com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean $assertionsDisabled>;
+
+        if $z0 != 0 goto label1;
+
+        $b4 = l1 cmp 0L;
+
+        if $b4 != 0 goto label1;
+
+        $r3 = new java.lang.AssertionError;
+
+        specialinvoke $r3.<java.lang.AssertionError: void <init>()>();
+
+        throw $r3;
+
+     label1:
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void updateDoubleTapUmaTimer()>();
+
+        if i0 != 1 goto label2;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void reportDoubleTap()>();
+
+     label2:
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate mMotionEventDelegate>;
+
+        $z1 = interfaceinvoke $r2.<com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate: boolean sendGesture(int,long,int,int,android.os.Bundle)>(i0, l1, i2, i3, r1);
+
+        return $z1;
+    }
+
+    private boolean sendMotionEventAsGesture(int, android.view.MotionEvent, android.os.Bundle)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0, $i2, $i3;
+        android.view.MotionEvent r1;
+        android.os.Bundle r2;
+        long $l1;
+        float $f0, $f1;
+        boolean $z0;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.view.MotionEvent;
+
+        r2 := @parameter2: android.os.Bundle;
+
+        $l1 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        $f0 = virtualinvoke r1.<android.view.MotionEvent: float getX()>();
+
+        $i2 = (int) $f0;
+
+        $f1 = virtualinvoke r1.<android.view.MotionEvent: float getY()>();
+
+        $i3 = (int) $f1;
+
+        $z0 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendGesture(int,long,int,int,android.os.Bundle)>(i0, $l1, $i2, $i3, r2);
+
+        return $z0;
+    }
+
+    private int sendPendingEventToNative()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1, $r8, $r9;
+        com.android.org.chromium.content.browser.TouchPoint[] r2;
+        int i0, $i1, $i2, $i3, $i4, $i6, $i7;
+        boolean z0, $z1, $z2, $z3, $z4, $z5;
+        java.util.Deque $r3;
+        java.lang.Object $r4;
+        com.android.org.chromium.content.browser.LongPressDetector $r5, $r7;
+        long $l5;
+        com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate $r6;
+        java.lang.AssertionError $r10, $r11;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $r4 = interfaceinvoke $r3.<java.util.Deque: java.lang.Object peekFirst()>();
+
+        r1 = (android.view.MotionEvent) $r4;
+
+        if r1 != null goto label02;
+
+        $z5 = <com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean $assertionsDisabled>;
+
+        if $z5 != 0 goto label01;
+
+        $r11 = new java.lang.AssertionError;
+
+        specialinvoke $r11.<java.lang.AssertionError: void <init>(java.lang.Object)>("Cannot send from an empty pending event queue");
+
+        throw $r11;
+
+     label01:
+        return 2;
+
+     label02:
+        $z1 = <com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean $assertionsDisabled>;
+
+        if $z1 != 0 goto label03;
+
+        $i7 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i7 != 0 goto label03;
+
+        $r10 = new java.lang.AssertionError;
+
+        specialinvoke $r10.<java.lang.AssertionError: void <init>()>();
+
+        throw $r10;
+
+     label03:
+        $i1 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i1 != 0 goto label05;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState> = 1;
+
+        $r9 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent mCurrentDownEvent>;
+
+        if $r9 == null goto label04;
+
+        $r8 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent mCurrentDownEvent>;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void recycleEvent(android.view.MotionEvent)>($r8);
+
+     label04:
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent mCurrentDownEvent> = null;
+
+     label05:
+        $r5 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector>;
+
+        virtualinvoke $r5.<com.android.org.chromium.content.browser.LongPressDetector: void onOfferTouchEventToJavaScript(android.view.MotionEvent)>(r1);
+
+        $i2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i2 != 2 goto label06;
+
+        return 2;
+
+     label06:
+        $i3 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i3 != 2 goto label07;
+
+        $r7 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector>;
+
+        z0 = virtualinvoke $r7.<com.android.org.chromium.content.browser.LongPressDetector: boolean confirmOfferMoveEventToJavaScript(android.view.MotionEvent)>(r1);
+
+        $i6 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i6 == 3 goto label07;
+
+        if z0 != 0 goto label07;
+
+        return 1;
+
+     label07:
+        $z2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mTouchScrolling>;
+
+        if $z2 != 0 goto label08;
+
+        $z3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mPinchInProgress>;
+
+        if $z3 == 0 goto label09;
+
+     label08:
+        return 2;
+
+     label09:
+        $i4 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        r2 = newarray (com.android.org.chromium.content.browser.TouchPoint)[$i4];
+
+        i0 = staticinvoke <com.android.org.chromium.content.browser.TouchPoint: int createTouchPoints(android.view.MotionEvent,com.android.org.chromium.content.browser.TouchPoint[])>(r1, r2);
+
+        if i0 != -1 goto label10;
+
+        return 2;
+
+     label10:
+        $r6 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate mMotionEventDelegate>;
+
+        $l5 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        $z4 = interfaceinvoke $r6.<com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate: boolean sendTouchEvent(long,int,com.android.org.chromium.content.browser.TouchPoint[])>($l5, i0, r2);
+
+        if $z4 == 0 goto label11;
+
+        return 0;
+
+     label11:
+        return 2;
+    }
+
+    private void sendTapCancelIfNecessary(android.view.MotionEvent)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        $z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mNeedsTapEndingEvent>;
+
+        if $z0 != 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $z1 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendTapEndingEventAsGesture(int,android.view.MotionEvent,android.os.Bundle)>(14, r1, null);
+
+        if $z1 == 0 goto label1;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent mLastLongPressEvent> = null;
+
+        return;
+    }
+
+    private boolean sendTapEndingEventAsGesture(int, android.view.MotionEvent, android.os.Bundle)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0;
+        android.view.MotionEvent r1;
+        android.os.Bundle r2;
+        boolean $z0;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.view.MotionEvent;
+
+        r2 := @parameter2: android.os.Bundle;
+
+        $z0 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendMotionEventAsGesture(int,android.view.MotionEvent,android.os.Bundle)>(i0, r1, r2);
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mNeedsTapEndingEvent> = 0;
+
+        return 1;
+    }
+
+    private void setClickXAndY(int, int)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0, i1;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mSingleTapX> = i0;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mSingleTapY> = i1;
+
+        return;
+    }
+
+    private void trySendPendingEventsToNative()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0, $i1;
+        android.view.MotionEvent r1;
+        java.util.Deque $r2, $r3;
+        boolean $z0;
+        java.lang.Object $r4;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+     label1:
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $z0 = interfaceinvoke $r2.<java.util.Deque: boolean isEmpty()>();
+
+        if $z0 != 0 goto label2;
+
+        i0 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int sendPendingEventToNative()>();
+
+        if i0 != 0 goto label3;
+
+     label2:
+        return;
+
+     label3:
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $r4 = interfaceinvoke $r3.<java.util.Deque: java.lang.Object removeFirst()>();
+
+        r1 = (android.view.MotionEvent) $r4;
+
+        $i1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i1 == 3 goto label4;
+
+        if i0 == 1 goto label4;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean processTouchEvent(android.view.MotionEvent)>(r1);
+
+     label4:
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void recycleEvent(android.view.MotionEvent)>(r1);
+
+        goto label1;
+    }
+
+    private void updateDoubleTapListener()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean $z0, $z1;
+        com.android.org.chromium.content.browser.third_party.GestureDetector$OnDoubleTapListener $r1;
+        com.android.org.chromium.content.browser.third_party.GestureDetector $r2, $r3;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $z0 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean isDoubleTapDisabled()>();
+
+        if $z0 == 0 goto label2;
+
+        $z1 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean isDoubleTapActive()>();
+
+        if $z1 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.third_party.GestureDetector mGestureDetector>;
+
+        virtualinvoke $r3.<com.android.org.chromium.content.browser.third_party.GestureDetector: void setOnDoubleTapListener(com.android.org.chromium.content.browser.third_party.GestureDetector$OnDoubleTapListener)>(null);
+
+        return;
+
+     label2:
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.third_party.GestureDetector mGestureDetector>;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.third_party.GestureDetector$OnDoubleTapListener mDoubleTapListener>;
+
+        virtualinvoke $r2.<com.android.org.chromium.content.browser.third_party.GestureDetector: void setOnDoubleTapListener(com.android.org.chromium.content.browser.third_party.GestureDetector$OnDoubleTapListener)>($r1);
+
+        return;
+    }
+
+    private void updateDoubleTapUmaTimer()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate r1;
+        boolean z0, $z1;
+        long $l0, $l2, $l3, $l4;
+        byte $b1, $b5;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $l0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: long mLastDoubleTapTimeMs>;
+
+        $b1 = $l0 cmp 0L;
+
+        if $b1 != 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $l2 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $l3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: long mLastDoubleTapTimeMs>;
+
+        $l4 = $l2 - $l3;
+
+        $b5 = $l4 cmp 5000L;
+
+        if $b5 < 0 goto label1;
+
+        r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate mMotionEventDelegate>;
+
+        $z1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mDisableClickDelay>;
+
+        if $z1 != 0 goto label4;
+
+        z0 = 1;
+
+     label3:
+        interfaceinvoke r1.<com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate: void sendActionAfterDoubleTapUMA(int,boolean)>(2, z0);
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: long mLastDoubleTapTimeMs> = 0L;
+
+        return;
+
+     label4:
+        z0 = 0;
+
+        goto label3;
+    }
+
+    boolean canHandle(android.view.MotionEvent)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1, $r2, $r3;
+        int $i0;
+        long $l1, $l2;
+        byte $b3;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        $i0 = virtualinvoke r1.<android.view.MotionEvent: int getAction()>();
+
+        if $i0 == 0 goto label1;
+
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent mCurrentDownEvent>;
+
+        if $r2 == null goto label2;
+
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent mCurrentDownEvent>;
+
+        $l1 = virtualinvoke $r3.<android.view.MotionEvent: long getDownTime()>();
+
+        $l2 = virtualinvoke r1.<android.view.MotionEvent: long getDownTime()>();
+
+        $b3 = $l1 cmp $l2;
+
+        if $b3 != 0 goto label2;
+
+     label1:
+        return 1;
+
+     label2:
+        return 0;
+    }
+
+    void confirmTouchEvent(int)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        java.lang.Throwable r1, $r13;
+        android.view.MotionEvent r2;
+        java.util.Deque $r3, $r4, $r6;
+        boolean $z0, $z1, $z2, $z5;
+        java.lang.Object $r5;
+        com.android.org.chromium.content.browser.LongPressDetector $r7;
+        java.util.Iterator $r8;
+        com.android.org.chromium.content.browser.ZoomManager $r9;
+        java.lang.AssertionError $r10, $r11, $r12;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        i0 := @parameter0: int;
+
+     label01:
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void begin(java.lang.String)>("confirmTouchEvent");
+
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $z0 = interfaceinvoke $r3.<java.util.Deque: boolean isEmpty()>();
+
+        if $z0 == 0 goto label03;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ContentViewGestureHandler", "confirmTouchEvent with Empty pending list!");
+
+     label02:
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void end(java.lang.String)>("confirmTouchEvent");
+
+        return;
+
+     label03:
+        $z1 = <com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean $assertionsDisabled>;
+
+        if $z1 != 0 goto label05;
+
+        $i7 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i7 != 0 goto label05;
+
+        $r12 = new java.lang.AssertionError;
+
+        specialinvoke $r12.<java.lang.AssertionError: void <init>()>();
+
+        throw $r12;
+
+     label04:
+        $r13 := @caughtexception;
+
+        r1 = $r13;
+
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void end(java.lang.String)>("confirmTouchEvent");
+
+        throw r1;
+
+     label05:
+        $z2 = <com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean $assertionsDisabled>;
+
+        if $z2 != 0 goto label06;
+
+        $i6 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i6 != 2 goto label06;
+
+        $r11 = new java.lang.AssertionError;
+
+        specialinvoke $r11.<java.lang.AssertionError: void <init>()>();
+
+        throw $r11;
+
+     label06:
+        $r4 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $r5 = interfaceinvoke $r4.<java.util.Deque: java.lang.Object removeFirst()>();
+
+        r2 = (android.view.MotionEvent) $r5;
+
+     label07:
+        tableswitch(i0)
+        {
+            case 0: goto label10;
+            case 1: goto label11;
+            case 2: goto label16;
+            case 3: goto label19;
+            case 4: goto label11;
+            default: goto label08;
+        };
+
+     label08:
+        $r7 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector>;
+
+        $r6 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        $r8 = interfaceinvoke $r6.<java.util.Deque: java.util.Iterator iterator()>();
+
+        virtualinvoke $r7.<com.android.org.chromium.content.browser.LongPressDetector: void cancelLongPressIfNeeded(java.util.Iterator)>($r8);
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void recycleEvent(android.view.MotionEvent)>(r2);
+
+     label09:
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void end(java.lang.String)>("confirmTouchEvent");
+
+        return;
+
+     label10:
+        $z5 = <com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean $assertionsDisabled>;
+
+        if $z5 != 0 goto label08;
+
+        $r10 = new java.lang.AssertionError;
+
+        specialinvoke $r10.<java.lang.AssertionError: void <init>()>();
+
+        throw $r10;
+
+     label11:
+        $i4 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i4 == 3 goto label14;
+
+        $i5 = virtualinvoke r2.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i5 == 0 goto label14;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void sendTapCancelIfNecessary(android.view.MotionEvent)>(r2);
+
+        virtualinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void resetGestureHandlers()>();
+
+     label12:
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState> = 3;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void trySendPendingEventsToNative()>();
+
+     label13:
+        goto label08;
+
+     label14:
+        $r9 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ZoomManager mZoomManager>;
+
+        virtualinvoke $r9.<com.android.org.chromium.content.browser.ZoomManager: void passTouchEventThrough(android.view.MotionEvent)>(r2);
+
+     label15:
+        goto label12;
+
+     label16:
+        $i3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i3 == 3 goto label17;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean processTouchEvent(android.view.MotionEvent)>(r2);
+
+     label17:
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void trySendPendingEventsToNative()>();
+
+     label18:
+        goto label08;
+
+     label19:
+        $i1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i1 == 3 goto label20;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean processTouchEvent(android.view.MotionEvent)>(r2);
+
+     label20:
+        $i2 = virtualinvoke r2.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i2 != 0 goto label22;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void drainAllPendingEventsUntilNextDown()>();
+
+     label21:
+        goto label08;
+
+     label22:
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void trySendPendingEventsToNative()>();
+
+     label23:
+        goto label08;
+
+        catch java.lang.Throwable from label01 to label02 with label04;
+        catch java.lang.Throwable from label03 to label04 with label04;
+        catch java.lang.Throwable from label05 to label06 with label04;
+        catch java.lang.Throwable from label06 to label07 with label04;
+        catch java.lang.Throwable from label08 to label09 with label04;
+        catch java.lang.Throwable from label10 to label11 with label04;
+        catch java.lang.Throwable from label11 to label12 with label04;
+        catch java.lang.Throwable from label12 to label13 with label04;
+        catch java.lang.Throwable from label14 to label15 with label04;
+        catch java.lang.Throwable from label16 to label17 with label04;
+        catch java.lang.Throwable from label17 to label18 with label04;
+        catch java.lang.Throwable from label19 to label20 with label04;
+        catch java.lang.Throwable from label20 to label21 with label04;
+        catch java.lang.Throwable from label22 to label23 with label04;
+    }
+
+    void endDoubleTapDragIfNecessary(android.view.MotionEvent)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1;
+        boolean $z0;
+        int $i0, $i3, $i4;
+        long $l1, $l2;
+        float $f0, $f1;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        $z0 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean isDoubleTapActive()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $i0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mDoubleTapMode>;
+
+        if $i0 != 2 goto label3;
+
+        if r1 != null goto label2;
+
+        r1 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent obtainActionCancelMotionEvent()>();
+
+     label2:
+        $l1 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        virtualinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void pinchEnd(long)>($l1);
+
+        $l2 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        $f0 = virtualinvoke r1.<android.view.MotionEvent: float getX()>();
+
+        $i3 = (int) $f0;
+
+        $f1 = virtualinvoke r1.<android.view.MotionEvent: float getY()>();
+
+        $i4 = (int) $f1;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendGesture(int,long,int,int,android.os.Bundle)>(8, $l2, $i3, $i4, null);
+
+     label3:
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mDoubleTapMode> = 0;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void updateDoubleTapListener()>();
+
+        return;
+    }
+
+    void endFlingIfNecessary(long)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        long l0;
+        boolean $z0;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        l0 := @parameter0: long;
+
+        $z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mFlingMayBeActive>;
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mFlingMayBeActive> = 0;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendGesture(int,long,int,int,android.os.Bundle)>(10, l0, 0, 0, null);
+
+        return;
+    }
+
+    void fling(long, int, int, int, int)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        long l0;
+        int i1, i2, i3, i4, $i5;
+        boolean $z0, $z1;
+        android.os.Bundle $r1, $r2, $r3, $r4;
+        java.lang.AssertionError $r5;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        i3 := @parameter3: int;
+
+        i4 := @parameter4: int;
+
+        virtualinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void endFlingIfNecessary(long)>(l0);
+
+        if i3 != 0 goto label1;
+
+        if i4 != 0 goto label1;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void endTouchScrollIfNecessary(long,boolean)>(l0, 1);
+
+        return;
+
+     label1:
+        $z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mTouchScrolling>;
+
+        if $z0 != 0 goto label2;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendGesture(int,long,int,int,android.os.Bundle)>(6, l0, i1, i2, null);
+
+     label2:
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void endTouchScrollIfNecessary(long,boolean)>(l0, 0);
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mFlingMayBeActive> = 1;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundleFling>;
+
+        virtualinvoke $r1.<android.os.Bundle: void putInt(java.lang.String,int)>("Velocity X", i3);
+
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundleFling>;
+
+        virtualinvoke $r2.<android.os.Bundle: void putInt(java.lang.String,int)>("Velocity Y", i4);
+
+        $z1 = <com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean $assertionsDisabled>;
+
+        if $z1 != 0 goto label3;
+
+        $r4 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundleFling>;
+
+        $i5 = virtualinvoke $r4.<android.os.Bundle: int size()>();
+
+        if $i5 == 2 goto label3;
+
+        $r5 = new java.lang.AssertionError;
+
+        specialinvoke $r5.<java.lang.AssertionError: void <init>()>();
+
+        throw $r5;
+
+     label3:
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundleFling>;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendGesture(int,long,int,int,android.os.Bundle)>(9, l0, i1, i2, $r3);
+
+        return;
+    }
+
+    void hasTouchEventHandlers(boolean)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean z0;
+        java.util.Deque $r1;
+        int $i0;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        z0 := @parameter0: boolean;
+
+        if z0 == 0 goto label2;
+
+        $i0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState>;
+
+        if $i0 != 0 goto label1;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState> = 2;
+
+     label1:
+        return;
+
+     label2:
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mTouchHandlingState> = 0;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: java.util.Deque mPendingMotionEvents>;
+
+        interfaceinvoke $r1.<java.util.Deque: void clear()>();
+
+        return;
+    }
+
+    boolean isNativePinching()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean $z0;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mPinchInProgress>;
+
+        return $z0;
+    }
+
+    boolean isNativeScrolling()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean $z0;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $z0 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mTouchScrolling>;
+
+        return $z0;
+    }
+
+    public void onLongPress(android.view.MotionEvent)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1;
+        com.android.org.chromium.content.browser.third_party.GestureDetector$OnGestureListener $r2;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.third_party.GestureDetector$OnGestureListener mListener>;
+
+        interfaceinvoke $r2.<com.android.org.chromium.content.browser.third_party.GestureDetector$OnGestureListener: void onLongPress(android.view.MotionEvent)>(r1);
+
+        return;
+    }
+
+    boolean onTouchEvent(android.view.MotionEvent)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1;
+        java.lang.Throwable r2, $r5;
+        boolean z0, z1, $z2;
+        com.android.org.chromium.content.browser.LongPressDetector $r3;
+        com.android.org.chromium.content.browser.SnapScrollController $r4;
+        int $i0, $i1, $i3;
+        long $l2;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+     label01:
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void begin(java.lang.String)>("onTouchEvent");
+
+        $z2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mIgnoreRemainingTouchEvents>;
+
+        if $z2 == 0 goto label02;
+
+        $i3 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i3 != 0 goto label05;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mIgnoreRemainingTouchEvents> = 0;
+
+     label02:
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector>;
+
+        virtualinvoke $r3.<com.android.org.chromium.content.browser.LongPressDetector: void cancelLongPressIfNeeded(android.view.MotionEvent)>(r1);
+
+        $r4 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.SnapScrollController mSnapScrollController>;
+
+        virtualinvoke $r4.<com.android.org.chromium.content.browser.SnapScrollController: void setSnapScrollingMode(android.view.MotionEvent)>(r1);
+
+        $i0 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i0 != 0 goto label06;
+
+        $l2 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        virtualinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void endFlingIfNecessary(long)>($l2);
+
+     label03:
+        z0 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean offerTouchEventToJavaScript(android.view.MotionEvent)>(r1);
+
+     label04:
+        if z0 == 0 goto label09;
+
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void end(java.lang.String)>("onTouchEvent");
+
+        return 1;
+
+     label05:
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void end(java.lang.String)>("onTouchEvent");
+
+        return 0;
+
+     label06:
+        $i1 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i1 != 5 goto label03;
+
+        virtualinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void endDoubleTapDragIfNecessary(android.view.MotionEvent)>(null);
+
+     label07:
+        goto label03;
+
+     label08:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void end(java.lang.String)>("onTouchEvent");
+
+        throw r2;
+
+     label09:
+        z1 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean processTouchEvent(android.view.MotionEvent)>(r1);
+
+     label10:
+        staticinvoke <com.android.org.chromium.content.common.TraceEvent: void end(java.lang.String)>("onTouchEvent");
+
+        return z1;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label02 to label03 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    void onWindowFocusLost()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        com.android.org.chromium.content.browser.LongPressDetector $r1;
+        boolean $z0;
+        android.view.MotionEvent $r2, $r3;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector>;
+
+        $z0 = virtualinvoke $r1.<com.android.org.chromium.content.browser.LongPressDetector: boolean isInLongPress()>();
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent mLastLongPressEvent>;
+
+        if $r2 == null goto label1;
+
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent mLastLongPressEvent>;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void sendTapCancelIfNecessary(android.view.MotionEvent)>($r3);
+
+     label1:
+        return;
+    }
+
+    void pinchBegin(long, int, int)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        long l0;
+        int i1, i2;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendGesture(int,long,int,int,android.os.Bundle)>(11, l0, i1, i2, null);
+
+        return;
+    }
+
+    void pinchBy(long, int, int, float)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        long l0;
+        int i1, i2, $i3;
+        float f0;
+        android.os.Bundle $r1, $r2, $r3;
+        boolean $z0;
+        java.lang.AssertionError $r4;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        f0 := @parameter3: float;
+
+        $r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundlePinchBy>;
+
+        virtualinvoke $r1.<android.os.Bundle: void putFloat(java.lang.String,float)>("Delta", f0);
+
+        $z0 = <com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean $assertionsDisabled>;
+
+        if $z0 != 0 goto label1;
+
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundlePinchBy>;
+
+        $i3 = virtualinvoke $r3.<android.os.Bundle: int size()>();
+
+        if $i3 == 1 goto label1;
+
+        $r4 = new java.lang.AssertionError;
+
+        specialinvoke $r4.<java.lang.AssertionError: void <init>()>();
+
+        throw $r4;
+
+     label1:
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.os.Bundle mExtraParamBundlePinchBy>;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendGesture(int,long,int,int,android.os.Bundle)>(12, l0, i1, i2, $r2);
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mPinchInProgress> = 1;
+
+        return;
+    }
+
+    void pinchEnd(long)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        long l0;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        l0 := @parameter0: long;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendGesture(int,long,int,int,android.os.Bundle)>(13, l0, 0, 0, null);
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mPinchInProgress> = 0;
+
+        return;
+    }
+
+    public void reportActionAfterDoubleTapUMA(int)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        int i0;
+        com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate r1;
+        boolean z0, $z1;
+        long $l1, $l3, $l4, $l5;
+        byte $b2, $b6;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void updateDoubleTapUmaTimer()>();
+
+        $l1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: long mLastDoubleTapTimeMs>;
+
+        $b2 = $l1 cmp 0L;
+
+        if $b2 != 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $l3 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $l4 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: long mLastDoubleTapTimeMs>;
+
+        $l5 = $l3 - $l4;
+
+        $b6 = $l5 cmp 5000L;
+
+        if $b6 >= 0 goto label1;
+
+        r1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate mMotionEventDelegate>;
+
+        $z1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mDisableClickDelay>;
+
+        if $z1 != 0 goto label4;
+
+        z0 = 1;
+
+     label3:
+        interfaceinvoke r1.<com.android.org.chromium.content.browser.ContentViewGestureHandler$MotionEventDelegate: void sendActionAfterDoubleTapUMA(int,boolean)>(i0, z0);
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: long mLastDoubleTapTimeMs> = 0L;
+
+        return;
+
+     label4:
+        z0 = 0;
+
+        goto label3;
+    }
+
+    void resetGestureHandlers()
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1;
+        com.android.org.chromium.content.browser.third_party.GestureDetector $r2;
+        com.android.org.chromium.content.browser.ZoomManager $r3;
+        com.android.org.chromium.content.browser.LongPressDetector $r4;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: android.view.MotionEvent obtainActionCancelMotionEvent()>();
+
+        virtualinvoke r1.<android.view.MotionEvent: void setSource(int)>(2);
+
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.third_party.GestureDetector mGestureDetector>;
+
+        virtualinvoke $r2.<com.android.org.chromium.content.browser.third_party.GestureDetector: boolean onTouchEvent(android.view.MotionEvent)>(r1);
+
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ZoomManager mZoomManager>;
+
+        virtualinvoke $r3.<com.android.org.chromium.content.browser.ZoomManager: boolean processTouchEvent(android.view.MotionEvent)>(r1);
+
+        virtualinvoke r1.<android.view.MotionEvent: void recycle()>();
+
+        $r4 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector>;
+
+        virtualinvoke $r4.<com.android.org.chromium.content.browser.LongPressDetector: void cancelLongPress()>();
+
+        return;
+    }
+
+    void setIgnoreSingleTap(boolean)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean z0;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        z0 := @parameter0: boolean;
+
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mIgnoreSingleTap> = z0;
+
+        return;
+    }
+
+    boolean triggerLongTapIfNeeded(android.view.MotionEvent)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        android.view.MotionEvent r1;
+        com.android.org.chromium.content.browser.LongPressDetector $r2;
+        boolean $z0, $z1;
+        int $i0;
+        com.android.org.chromium.content.browser.ZoomManager $r3;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        $r2 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.LongPressDetector mLongPressDetector>;
+
+        $z0 = virtualinvoke $r2.<com.android.org.chromium.content.browser.LongPressDetector: boolean isInLongPress()>();
+
+        if $z0 == 0 goto label1;
+
+        $i0 = virtualinvoke r1.<android.view.MotionEvent: int getAction()>();
+
+        if $i0 != 1 goto label1;
+
+        $r3 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: com.android.org.chromium.content.browser.ZoomManager mZoomManager>;
+
+        $z1 = virtualinvoke $r3.<com.android.org.chromium.content.browser.ZoomManager: boolean isScaleGestureDetectionInProgress()>();
+
+        if $z1 != 0 goto label1;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void sendTapCancelIfNecessary(android.view.MotionEvent)>(r1);
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean sendMotionEventAsGesture(int,android.view.MotionEvent,android.os.Bundle)>(15, r1, null);
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    public void updateDoubleTapSupport(boolean)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean z0, $z1, $z2;
+        byte b0;
+        int $i1;
+        java.lang.AssertionError $r1;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = <com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean $assertionsDisabled>;
+
+        if $z1 != 0 goto label1;
+
+        $z2 = specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean isDoubleTapActive()>();
+
+        if $z2 == 0 goto label1;
+
+        $r1 = new java.lang.AssertionError;
+
+        specialinvoke $r1.<java.lang.AssertionError: void <init>()>();
+
+        throw $r1;
+
+     label1:
+        if z0 == 0 goto label3;
+
+        b0 = 0;
+
+     label2:
+        $i1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mDoubleTapMode>;
+
+        if $i1 != b0 goto label4;
+
+        return;
+
+     label3:
+        b0 = 3;
+
+        goto label2;
+
+     label4:
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: int mDoubleTapMode> = b0;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void updateDoubleTapListener()>();
+
+        return;
+    }
+
+    public void updateShouldDisableDoubleTap(boolean)
+    {
+        com.android.org.chromium.content.browser.ContentViewGestureHandler r0;
+        boolean z0, $z1;
+
+        r0 := @this: com.android.org.chromium.content.browser.ContentViewGestureHandler;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mShouldDisableDoubleTap>;
+
+        if $z1 != z0 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: boolean mShouldDisableDoubleTap> = z0;
+
+        specialinvoke r0.<com.android.org.chromium.content.browser.ContentViewGestureHandler: void updateDoubleTapListener()>();
+
+        return;
+    }
+}

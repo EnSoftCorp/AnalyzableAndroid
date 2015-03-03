@@ -1,0 +1,1291 @@
+public class libcore.net.url.FtpURLConnection extends java.net.URLConnection
+{
+    private static final int FTP_DATAOPEN;
+    private static final int FTP_FILEOK;
+    private static final int FTP_LOGGEDIN;
+    private static final int FTP_NOTFOUND;
+    private static final int FTP_OK;
+    private static final int FTP_OPENDATA;
+    private static final int FTP_PASWD;
+    private static final int FTP_PORT;
+    private static final int FTP_TRANSFEROK;
+    private static final int FTP_USERREADY;
+    private java.net.ServerSocket acceptSocket;
+    private java.net.Socket controlSocket;
+    private java.io.InputStream ctrlInput;
+    private java.io.OutputStream ctrlOutput;
+    private java.net.Proxy currentProxy;
+    private int dataPort;
+    private java.net.Socket dataSocket;
+    private java.lang.String hostName;
+    private java.io.InputStream inputStream;
+    private java.lang.String password;
+    private java.net.Proxy proxy;
+    private java.lang.String replyCode;
+    private java.net.URI uri;
+    private java.lang.String username;
+
+    protected void <init>(java.net.URL)
+    {
+        libcore.net.url.FtpURLConnection r0;
+        java.net.URL r1;
+        java.lang.String r2, $r4, $r6, $r7;
+        int i0, $i1;
+        java.net.URI $r5;
+        java.net.URISyntaxException $r8;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        r1 := @parameter0: java.net.URL;
+
+        specialinvoke r0.<java.net.URLConnection: void <init>(java.net.URL)>(r1);
+
+        r0.<libcore.net.url.FtpURLConnection: java.lang.String username> = "anonymous";
+
+        r0.<libcore.net.url.FtpURLConnection: java.lang.String password> = "";
+
+        $r4 = virtualinvoke r1.<java.net.URL: java.lang.String getHost()>();
+
+        r0.<libcore.net.url.FtpURLConnection: java.lang.String hostName> = $r4;
+
+        r2 = virtualinvoke r1.<java.net.URL: java.lang.String getUserInfo()>();
+
+        if r2 == null goto label1;
+
+        i0 = virtualinvoke r2.<java.lang.String: int indexOf(int)>(58);
+
+        if i0 < 0 goto label4;
+
+        $r6 = virtualinvoke r2.<java.lang.String: java.lang.String substring(int,int)>(0, i0);
+
+        r0.<libcore.net.url.FtpURLConnection: java.lang.String username> = $r6;
+
+        $i1 = i0 + 1;
+
+        $r7 = virtualinvoke r2.<java.lang.String: java.lang.String substring(int)>($i1);
+
+        r0.<libcore.net.url.FtpURLConnection: java.lang.String password> = $r7;
+
+     label1:
+        r0.<libcore.net.url.FtpURLConnection: java.net.URI uri> = null;
+
+     label2:
+        $r5 = virtualinvoke r1.<java.net.URL: java.net.URI toURI()>();
+
+        r0.<libcore.net.url.FtpURLConnection: java.net.URI uri> = $r5;
+
+     label3:
+        return;
+
+     label4:
+        r0.<libcore.net.url.FtpURLConnection: java.lang.String username> = r2;
+
+        goto label1;
+
+     label5:
+        $r8 := @caughtexception;
+
+        return;
+
+        catch java.net.URISyntaxException from label2 to label3 with label5;
+    }
+
+    protected void <init>(java.net.URL, java.net.Proxy)
+    {
+        libcore.net.url.FtpURLConnection r0;
+        java.net.URL r1;
+        java.net.Proxy r2;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        r1 := @parameter0: java.net.URL;
+
+        r2 := @parameter1: java.net.Proxy;
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void <init>(java.net.URL)>(r1);
+
+        r0.<libcore.net.url.FtpURLConnection: java.net.Proxy proxy> = r2;
+
+        return;
+    }
+
+    private void cd() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        int i0, i1, $i2;
+        java.lang.String r1, $r3, $r5, $r10, $r13, $r17;
+        java.net.URL $r2, $r4;
+        java.lang.StringBuilder $r6, $r7, $r8, $r9, $r12, $r14, $r15, $r16;
+        java.io.IOException $r11;
+        char $c3;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $r2 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        $r3 = virtualinvoke $r2.<java.net.URL: java.lang.String getFile()>();
+
+        i0 = virtualinvoke $r3.<java.lang.String: int lastIndexOf(int)>(47);
+
+        if i0 <= 0 goto label2;
+
+        $r4 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        $r5 = virtualinvoke $r4.<java.net.URL: java.lang.String getFile()>();
+
+        r1 = virtualinvoke $r5.<java.lang.String: java.lang.String substring(int,int)>(0, i0);
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("CWD ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\r\n");
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void write(java.lang.String)>($r10);
+
+        i1 = specialinvoke r0.<libcore.net.url.FtpURLConnection: int getReply()>();
+
+        if i1 == 250 goto label1;
+
+        $i2 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i2 <= 0 goto label1;
+
+        $c3 = virtualinvoke r1.<java.lang.String: char charAt(int)>(0);
+
+        if $c3 != 47 goto label1;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("CWD ");
+
+        $r13 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int)>(1);
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r13);
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\r\n");
+
+        $r17 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void write(java.lang.String)>($r17);
+
+        i1 = specialinvoke r0.<libcore.net.url.FtpURLConnection: int getReply()>();
+
+     label1:
+        if i1 == 250 goto label2;
+
+        $r11 = new java.io.IOException;
+
+        specialinvoke $r11.<java.io.IOException: void <init>(java.lang.String)>("Unable to change directories");
+
+        throw $r11;
+
+     label2:
+        return;
+    }
+
+    private void connectInternal() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        int i0, i1, $i2, $i3, $i4;
+        java.net.InetSocketAddress r1, $r6;
+        java.net.URL $r3;
+        java.net.Proxy $r4, $r23, $r27;
+        java.net.Socket $r5, $r8, $r9, $r11, $r16, $r18, $r22, $r24, $r26;
+        java.lang.String $r7;
+        java.io.OutputStream $r10;
+        boolean $z0, $z1, $z2;
+        java.io.InputStream $r12, $r25;
+        java.net.ServerSocket $r13, $r14, $r15, $r17, $r19;
+        java.io.BufferedInputStream $r20;
+        libcore.net.url.FtpURLInputStream $r21;
+        java.net.Proxy$Type $r28, $r29;
+        java.io.InterruptedIOException $r30;
+        java.io.IOException $r31;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $r3 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        i0 = virtualinvoke $r3.<java.net.URL: int getPort()>();
+
+        i1 = virtualinvoke r0.<libcore.net.url.FtpURLConnection: int getConnectTimeout()>();
+
+        if i0 > 0 goto label01;
+
+        i0 = 21;
+
+     label01:
+        $r4 = r0.<libcore.net.url.FtpURLConnection: java.net.Proxy currentProxy>;
+
+        if $r4 == null goto label02;
+
+        $r28 = <java.net.Proxy$Type: java.net.Proxy$Type HTTP>;
+
+        $r23 = r0.<libcore.net.url.FtpURLConnection: java.net.Proxy currentProxy>;
+
+        $r29 = virtualinvoke $r23.<java.net.Proxy: java.net.Proxy$Type type()>();
+
+        if $r28 != $r29 goto label10;
+
+     label02:
+        $r5 = new java.net.Socket;
+
+        specialinvoke $r5.<java.net.Socket: void <init>()>();
+
+        r0.<libcore.net.url.FtpURLConnection: java.net.Socket controlSocket> = $r5;
+
+     label03:
+        $r6 = new java.net.InetSocketAddress;
+
+        $r7 = r0.<libcore.net.url.FtpURLConnection: java.lang.String hostName>;
+
+        specialinvoke $r6.<java.net.InetSocketAddress: void <init>(java.lang.String,int)>($r7, i0);
+
+        r1 = $r6;
+
+        $r8 = r0.<libcore.net.url.FtpURLConnection: java.net.Socket controlSocket>;
+
+        virtualinvoke $r8.<java.net.Socket: void connect(java.net.SocketAddress,int)>(r1, i1);
+
+        r0.<libcore.net.url.FtpURLConnection: boolean connected> = 1;
+
+        $r9 = r0.<libcore.net.url.FtpURLConnection: java.net.Socket controlSocket>;
+
+        $r10 = virtualinvoke $r9.<java.net.Socket: java.io.OutputStream getOutputStream()>();
+
+        r0.<libcore.net.url.FtpURLConnection: java.io.OutputStream ctrlOutput> = $r10;
+
+        $r11 = r0.<libcore.net.url.FtpURLConnection: java.net.Socket controlSocket>;
+
+        $r12 = virtualinvoke $r11.<java.net.Socket: java.io.InputStream getInputStream()>();
+
+        r0.<libcore.net.url.FtpURLConnection: java.io.InputStream ctrlInput> = $r12;
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void login()>();
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void setType()>();
+
+        $z0 = virtualinvoke r0.<libcore.net.url.FtpURLConnection: boolean getDoInput()>();
+
+        if $z0 != 0 goto label04;
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void cd()>();
+
+     label04:
+        $r14 = new java.net.ServerSocket;
+
+        specialinvoke $r14.<java.net.ServerSocket: void <init>(int)>(0);
+
+        r0.<libcore.net.url.FtpURLConnection: java.net.ServerSocket acceptSocket> = $r14;
+
+        $r13 = r0.<libcore.net.url.FtpURLConnection: java.net.ServerSocket acceptSocket>;
+
+        $i2 = virtualinvoke $r13.<java.net.ServerSocket: int getLocalPort()>();
+
+        r0.<libcore.net.url.FtpURLConnection: int dataPort> = $i2;
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void port()>();
+
+     label05:
+        if i1 != 0 goto label06;
+
+     label06:
+        $r15 = r0.<libcore.net.url.FtpURLConnection: java.net.ServerSocket acceptSocket>;
+
+        $i3 = virtualinvoke r0.<libcore.net.url.FtpURLConnection: int getConnectTimeout()>();
+
+        virtualinvoke $r15.<java.net.ServerSocket: void setSoTimeout(int)>($i3);
+
+        $z1 = virtualinvoke r0.<libcore.net.url.FtpURLConnection: boolean getDoInput()>();
+
+        if $z1 == 0 goto label11;
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void getFile()>();
+
+     label07:
+        $r17 = r0.<libcore.net.url.FtpURLConnection: java.net.ServerSocket acceptSocket>;
+
+        $r16 = virtualinvoke $r17.<java.net.ServerSocket: java.net.Socket accept()>();
+
+        r0.<libcore.net.url.FtpURLConnection: java.net.Socket dataSocket> = $r16;
+
+        $r18 = r0.<libcore.net.url.FtpURLConnection: java.net.Socket dataSocket>;
+
+        $i4 = virtualinvoke r0.<libcore.net.url.FtpURLConnection: int getReadTimeout()>();
+
+        virtualinvoke $r18.<java.net.Socket: void setSoTimeout(int)>($i4);
+
+        $r19 = r0.<libcore.net.url.FtpURLConnection: java.net.ServerSocket acceptSocket>;
+
+        virtualinvoke $r19.<java.net.ServerSocket: void close()>();
+
+     label08:
+        $z2 = virtualinvoke r0.<libcore.net.url.FtpURLConnection: boolean getDoInput()>();
+
+        if $z2 == 0 goto label09;
+
+        $r21 = new libcore.net.url.FtpURLInputStream;
+
+        $r20 = new java.io.BufferedInputStream;
+
+        $r24 = r0.<libcore.net.url.FtpURLConnection: java.net.Socket dataSocket>;
+
+        $r25 = virtualinvoke $r24.<java.net.Socket: java.io.InputStream getInputStream()>();
+
+        specialinvoke $r20.<java.io.BufferedInputStream: void <init>(java.io.InputStream)>($r25);
+
+        $r22 = r0.<libcore.net.url.FtpURLConnection: java.net.Socket controlSocket>;
+
+        specialinvoke $r21.<libcore.net.url.FtpURLInputStream: void <init>(java.io.InputStream,java.net.Socket)>($r20, $r22);
+
+        r0.<libcore.net.url.FtpURLConnection: java.io.InputStream inputStream> = $r21;
+
+     label09:
+        return;
+
+     label10:
+        $r26 = new java.net.Socket;
+
+        $r27 = r0.<libcore.net.url.FtpURLConnection: java.net.Proxy currentProxy>;
+
+        specialinvoke $r26.<java.net.Socket: void <init>(java.net.Proxy)>($r27);
+
+        r0.<libcore.net.url.FtpURLConnection: java.net.Socket controlSocket> = $r26;
+
+        goto label03;
+
+     label11:
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void sendFile()>();
+
+     label12:
+        goto label07;
+
+     label13:
+        $r30 := @caughtexception;
+
+        $r31 = new java.io.IOException;
+
+        specialinvoke $r31.<java.io.IOException: void <init>(java.lang.String)>("Could not establish data connection");
+
+        throw $r31;
+
+        catch java.io.InterruptedIOException from label04 to label05 with label13;
+        catch java.io.InterruptedIOException from label06 to label07 with label13;
+        catch java.io.InterruptedIOException from label07 to label08 with label13;
+        catch java.io.InterruptedIOException from label11 to label12 with label13;
+    }
+
+    private void getFile() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        java.lang.String r1, $r7, $r12, $r16, $r17;
+        int i0, $i2;
+        java.net.URL $r2;
+        java.lang.StringBuilder $r3, $r4, $r5, $r6, $r9, $r10, $r11, $r13, $r14, $r15, $r18;
+        java.io.FileNotFoundException $r8;
+        char $c1;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $r2 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        r1 = virtualinvoke $r2.<java.net.URL: java.lang.String getFile()>();
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("RETR ");
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\r\n");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void write(java.lang.String)>($r7);
+
+        i0 = specialinvoke r0.<libcore.net.url.FtpURLConnection: int getReply()>();
+
+        if i0 != 550 goto label1;
+
+        $i2 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i2 <= 0 goto label1;
+
+        $c1 = virtualinvoke r1.<java.lang.String: char charAt(int)>(0);
+
+        if $c1 != 47 goto label1;
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("RETR ");
+
+        $r16 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int)>(1);
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r16);
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\r\n");
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void write(java.lang.String)>($r17);
+
+        i0 = specialinvoke r0.<libcore.net.url.FtpURLConnection: int getReply()>();
+
+     label1:
+        if i0 == 150 goto label2;
+
+        if i0 == 226 goto label2;
+
+        $r8 = new java.io.FileNotFoundException;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to retrieve file: ");
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r8.<java.io.FileNotFoundException: void <init>(java.lang.String)>($r12);
+
+        throw $r8;
+
+     label2:
+        return;
+    }
+
+    private int getReply() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        byte[] r1;
+        int i0, i1, i2, i3, $i4, $i5;
+        boolean z0, $z1;
+        java.lang.NumberFormatException r2, $r9;
+        java.lang.String $r3, $r7;
+        java.nio.charset.Charset $r4;
+        java.io.InputStream $r5, $r8;
+        byte $b6;
+        java.io.EOFException $r10;
+        java.lang.Throwable $r11;
+        java.io.IOException $r12, $r13, $r14;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        r1 = newarray (byte)[3];
+
+        i0 = 0;
+
+     label1:
+        $i4 = lengthof r1;
+
+        if i0 >= $i4 goto label3;
+
+        $r8 = r0.<libcore.net.url.FtpURLConnection: java.io.InputStream ctrlInput>;
+
+        i3 = virtualinvoke $r8.<java.io.InputStream: int read()>();
+
+        if i3 != -1 goto label2;
+
+        $r10 = new java.io.EOFException;
+
+        specialinvoke $r10.<java.io.EOFException: void <init>()>();
+
+        throw $r10;
+
+     label2:
+        $b6 = (byte) i3;
+
+        r1[i0] = $b6;
+
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label3:
+        $r3 = new java.lang.String;
+
+        $i5 = lengthof r1;
+
+        $r4 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset ISO_8859_1>;
+
+        specialinvoke $r3.<java.lang.String: void <init>(byte[],int,int,java.nio.charset.Charset)>(r1, 0, $i5, $r4);
+
+        r0.<libcore.net.url.FtpURLConnection: java.lang.String replyCode> = $r3;
+
+        $r5 = r0.<libcore.net.url.FtpURLConnection: java.io.InputStream ctrlInput>;
+
+        i1 = virtualinvoke $r5.<java.io.InputStream: int read()>();
+
+        z0 = 0;
+
+        if i1 != 45 goto label4;
+
+        z0 = 1;
+
+     label4:
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: java.lang.String readLine()>();
+
+        if z0 == 0 goto label6;
+
+     label5:
+        $z1 = specialinvoke r0.<libcore.net.url.FtpURLConnection: boolean readMultiLine()>();
+
+        if $z1 != 0 goto label5;
+
+     label6:
+        $r7 = r0.<libcore.net.url.FtpURLConnection: java.lang.String replyCode>;
+
+        i2 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r7);
+
+     label7:
+        return i2;
+
+     label8:
+        $r9 := @caughtexception;
+
+        r2 = $r9;
+
+        $r12 = new java.io.IOException;
+
+        specialinvoke $r12.<java.io.IOException: void <init>(java.lang.String)>("reply code is invalid");
+
+        $r11 = virtualinvoke $r12.<java.io.IOException: java.lang.Throwable initCause(java.lang.Throwable)>(r2);
+
+        $r14 = (java.io.IOException) $r11;
+
+        $r13 = (java.io.IOException) $r14;
+
+        throw $r13;
+
+        catch java.lang.NumberFormatException from label6 to label7 with label8;
+    }
+
+    private void login() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        int i0, i1, $i2;
+        java.io.IOException $r1, $r20, $r29;
+        java.lang.StringBuilder $r2, $r3, $r6, $r8, $r9, $r11, $r12, $r14, $r15, $r16, $r19, $r21, $r22, $r26, $r27, $r30, $r33;
+        java.net.URL $r4, $r24, $r28;
+        java.lang.String $r5, $r7, $r10, $r13, $r17, $r18, $r23, $r25, $r31, $r32;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $i2 = specialinvoke r0.<libcore.net.url.FtpURLConnection: int getReply()>();
+
+        if $i2 != 220 goto label2;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("USER ");
+
+        $r10 = r0.<libcore.net.url.FtpURLConnection: java.lang.String username>;
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\r\n");
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void write(java.lang.String)>($r13);
+
+        i0 = specialinvoke r0.<libcore.net.url.FtpURLConnection: int getReply()>();
+
+        if i0 == 331 goto label1;
+
+        if i0 != 230 goto label3;
+
+     label1:
+        if i0 != 331 goto label4;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("PASS ");
+
+        $r17 = r0.<libcore.net.url.FtpURLConnection: java.lang.String password>;
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r17);
+
+        $r19 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\r\n");
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void write(java.lang.String)>($r18);
+
+        i1 = specialinvoke r0.<libcore.net.url.FtpURLConnection: int getReply()>();
+
+        if i1 == 200 goto label4;
+
+        if i1 == 220 goto label4;
+
+        if i1 == 230 goto label4;
+
+        $r20 = new java.io.IOException;
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to log in to server (PASS): ");
+
+        $r24 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        $r23 = virtualinvoke $r24.<java.net.URL: java.lang.String getHost()>();
+
+        $r26 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r23);
+
+        $r25 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r20.<java.io.IOException: void <init>(java.lang.String)>($r25);
+
+        throw $r20;
+
+     label2:
+        $r1 = new java.io.IOException;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to connect to server: ");
+
+        $r4 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        $r5 = virtualinvoke $r4.<java.net.URL: java.lang.String getHost()>();
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r1.<java.io.IOException: void <init>(java.lang.String)>($r7);
+
+        throw $r1;
+
+     label3:
+        $r29 = new java.io.IOException;
+
+        $r30 = new java.lang.StringBuilder;
+
+        specialinvoke $r30.<java.lang.StringBuilder: void <init>()>();
+
+        $r27 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to log in to server (USER): ");
+
+        $r28 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        $r32 = virtualinvoke $r28.<java.net.URL: java.lang.String getHost()>();
+
+        $r33 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r32);
+
+        $r31 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r29.<java.io.IOException: void <init>(java.lang.String)>($r31);
+
+        throw $r29;
+
+     label4:
+        return;
+    }
+
+    private void port() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        java.lang.StringBuilder $r1, $r2, $r7, $r8, $r9, $r10, $r11, $r13;
+        java.net.Socket $r3;
+        java.net.InetAddress $r4;
+        java.lang.String $r5, $r6, $r12;
+        int $i0, $i1, $i2, $i3, $i4;
+        java.io.IOException $r14;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("PORT ");
+
+        $r3 = r0.<libcore.net.url.FtpURLConnection: java.net.Socket controlSocket>;
+
+        $r4 = virtualinvoke $r3.<java.net.Socket: java.net.InetAddress getLocalAddress()>();
+
+        $r5 = virtualinvoke $r4.<java.net.InetAddress: java.lang.String getHostAddress()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.String: java.lang.String replace(char,char)>(46, 44);
+
+        $r7 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(44);
+
+        $i0 = r0.<libcore.net.url.FtpURLConnection: int dataPort>;
+
+        $i1 = $i0 >> 8;
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(44);
+
+        $i2 = r0.<libcore.net.url.FtpURLConnection: int dataPort>;
+
+        $i3 = 255 & $i2;
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\r\n");
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void write(java.lang.String)>($r12);
+
+        $i4 = specialinvoke r0.<libcore.net.url.FtpURLConnection: int getReply()>();
+
+        if $i4 == 200 goto label1;
+
+        $r14 = new java.io.IOException;
+
+        specialinvoke $r14.<java.io.IOException: void <init>(java.lang.String)>("Unable to configure data port");
+
+        throw $r14;
+
+     label1:
+        return;
+    }
+
+    private java.lang.String readLine() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        java.lang.StringBuilder r1, $r2;
+        int i0;
+        java.io.InputStream $r3;
+        java.lang.String $r4;
+        char $c1;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        r1 = $r2;
+
+     label1:
+        $r3 = r0.<libcore.net.url.FtpURLConnection: java.io.InputStream ctrlInput>;
+
+        i0 = virtualinvoke $r3.<java.io.InputStream: int read()>();
+
+        if i0 == 10 goto label2;
+
+        $c1 = (char) i0;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>($c1);
+
+        goto label1;
+
+     label2:
+        $r4 = virtualinvoke r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r4;
+    }
+
+    private boolean readMultiLine() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        java.lang.String r1, $r2, $r3;
+        int $i0;
+        boolean $z0;
+        char $c1;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        r1 = specialinvoke r0.<libcore.net.url.FtpURLConnection: java.lang.String readLine()>();
+
+        $i0 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i0 >= 4 goto label2;
+
+     label1:
+        return 1;
+
+     label2:
+        $r2 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int,int)>(0, 3);
+
+        $r3 = r0.<libcore.net.url.FtpURLConnection: java.lang.String replyCode>;
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>($r3);
+
+        if $z0 == 0 goto label1;
+
+        $c1 = virtualinvoke r1.<java.lang.String: char charAt(int)>(3);
+
+        if $c1 != 32 goto label1;
+
+        return 0;
+    }
+
+    private void sendFile() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        int i0, $i1, $i2, $i3;
+        java.lang.StringBuilder $r1, $r2, $r10, $r12;
+        java.net.URL $r3, $r5, $r7;
+        java.lang.String $r4, $r6, $r8, $r9, $r11;
+        java.io.IOException $r13;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("STOR ");
+
+        $r3 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        $r4 = virtualinvoke $r3.<java.net.URL: java.lang.String getFile()>();
+
+        $r5 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        $r6 = virtualinvoke $r5.<java.net.URL: java.lang.String getFile()>();
+
+        $i1 = virtualinvoke $r6.<java.lang.String: int lastIndexOf(int)>(47);
+
+        $i2 = 1 + $i1;
+
+        $r7 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        $r8 = virtualinvoke $r7.<java.net.URL: java.lang.String getFile()>();
+
+        $i3 = virtualinvoke $r8.<java.lang.String: int length()>();
+
+        $r9 = virtualinvoke $r4.<java.lang.String: java.lang.String substring(int,int)>($i2, $i3);
+
+        $r10 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\r\n");
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void write(java.lang.String)>($r11);
+
+        i0 = specialinvoke r0.<libcore.net.url.FtpURLConnection: int getReply()>();
+
+        if i0 == 150 goto label1;
+
+        if i0 == 200 goto label1;
+
+        if i0 == 125 goto label1;
+
+        $r13 = new java.io.IOException;
+
+        specialinvoke $r13.<java.io.IOException: void <init>(java.lang.String)>("Unable to store file");
+
+        throw $r13;
+
+     label1:
+        return;
+    }
+
+    private void setType() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        int $i0;
+        java.io.IOException $r1;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void write(java.lang.String)>("TYPE I\r\n");
+
+        $i0 = specialinvoke r0.<libcore.net.url.FtpURLConnection: int getReply()>();
+
+        if $i0 == 200 goto label1;
+
+        $r1 = new java.io.IOException;
+
+        specialinvoke $r1.<java.io.IOException: void <init>(java.lang.String)>("Unable to set transfer type");
+
+        throw $r1;
+
+     label1:
+        return;
+    }
+
+    private void write(java.lang.String) throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        java.lang.String r1;
+        java.nio.charset.Charset $r2;
+        java.io.OutputStream $r3;
+        byte[] $r4;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r3 = r0.<libcore.net.url.FtpURLConnection: java.io.OutputStream ctrlOutput>;
+
+        $r2 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset ISO_8859_1>;
+
+        $r4 = virtualinvoke r1.<java.lang.String: byte[] getBytes(java.nio.charset.Charset)>($r2);
+
+        virtualinvoke $r3.<java.io.OutputStream: void write(byte[])>($r4);
+
+        return;
+    }
+
+    public void connect() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        java.util.List r1;
+        java.net.SocketAddress $r2;
+        java.net.ProxySelector r3, r7;
+        java.util.Iterator r4;
+        boolean z0, $z1;
+        java.lang.String r5, $r14;
+        java.io.IOException r6, $r9, $r19;
+        java.net.Proxy $r8, $r16, $r18, $r20, $r21, $r23;
+        java.lang.StringBuilder $r10, $r11, $r12;
+        java.lang.Object $r13;
+        java.net.URI $r15, $r22;
+        java.util.ArrayList $r17;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $r8 = r0.<libcore.net.url.FtpURLConnection: java.net.Proxy proxy>;
+
+        if $r8 == null goto label3;
+
+        $r17 = new java.util.ArrayList;
+
+        specialinvoke $r17.<java.util.ArrayList: void <init>(int)>(1);
+
+        r1 = $r17;
+
+        $r18 = r0.<libcore.net.url.FtpURLConnection: java.net.Proxy proxy>;
+
+        interfaceinvoke r1.<java.util.List: boolean add(java.lang.Object)>($r18);
+
+     label1:
+        if r1 != null goto label4;
+
+        r0.<libcore.net.url.FtpURLConnection: java.net.Proxy currentProxy> = null;
+
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void connectInternal()>();
+
+     label2:
+        return;
+
+     label3:
+        r7 = staticinvoke <java.net.ProxySelector: java.net.ProxySelector getDefault()>();
+
+        r1 = null;
+
+        if r7 == null goto label1;
+
+        $r15 = r0.<libcore.net.url.FtpURLConnection: java.net.URI uri>;
+
+        r1 = virtualinvoke r7.<java.net.ProxySelector: java.util.List select(java.net.URI)>($r15);
+
+        goto label1;
+
+     label4:
+        r3 = staticinvoke <java.net.ProxySelector: java.net.ProxySelector getDefault()>();
+
+        r4 = interfaceinvoke r1.<java.util.List: java.util.Iterator iterator()>();
+
+        z0 = 0;
+
+        r5 = "";
+
+     label5:
+        $z1 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label9;
+
+        if z0 != 0 goto label9;
+
+        $r13 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        $r16 = (java.net.Proxy) $r13;
+
+        r0.<libcore.net.url.FtpURLConnection: java.net.Proxy currentProxy> = $r16;
+
+     label6:
+        specialinvoke r0.<libcore.net.url.FtpURLConnection: void connectInternal()>();
+
+     label7:
+        z0 = 1;
+
+        goto label5;
+
+     label8:
+        $r19 := @caughtexception;
+
+        r6 = $r19;
+
+        r5 = virtualinvoke r6.<java.io.IOException: java.lang.String getLocalizedMessage()>();
+
+        if r3 == null goto label5;
+
+        $r20 = <java.net.Proxy: java.net.Proxy NO_PROXY>;
+
+        $r21 = r0.<libcore.net.url.FtpURLConnection: java.net.Proxy currentProxy>;
+
+        if $r20 == $r21 goto label5;
+
+        $r22 = r0.<libcore.net.url.FtpURLConnection: java.net.URI uri>;
+
+        $r23 = r0.<libcore.net.url.FtpURLConnection: java.net.Proxy currentProxy>;
+
+        $r2 = virtualinvoke $r23.<java.net.Proxy: java.net.SocketAddress address()>();
+
+        virtualinvoke r3.<java.net.ProxySelector: void connectFailed(java.net.URI,java.net.SocketAddress,java.io.IOException)>($r22, $r2, r6);
+
+        goto label5;
+
+     label9:
+        if z0 != 0 goto label2;
+
+        $r9 = new java.io.IOException;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to connect to server: ");
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r5);
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r9.<java.io.IOException: void <init>(java.lang.String)>($r14);
+
+        throw $r9;
+
+        catch java.io.IOException from label6 to label7 with label8;
+    }
+
+    public java.lang.String getContentType()
+    {
+        libcore.net.url.FtpURLConnection r0;
+        java.lang.String r1, $r3;
+        java.net.URL $r2;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $r2 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        $r3 = virtualinvoke $r2.<java.net.URL: java.lang.String getFile()>();
+
+        r1 = staticinvoke <libcore.net.url.FtpURLConnection: java.lang.String guessContentTypeFromName(java.lang.String)>($r3);
+
+        if r1 != null goto label1;
+
+        r1 = "content/unknown";
+
+     label1:
+        return r1;
+    }
+
+    public java.io.InputStream getInputStream() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        boolean $z0;
+        java.io.InputStream $r1;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $z0 = r0.<libcore.net.url.FtpURLConnection: boolean connected>;
+
+        if $z0 != 0 goto label1;
+
+        virtualinvoke r0.<libcore.net.url.FtpURLConnection: void connect()>();
+
+     label1:
+        $r1 = r0.<libcore.net.url.FtpURLConnection: java.io.InputStream inputStream>;
+
+        return $r1;
+    }
+
+    public java.io.OutputStream getOutputStream() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        boolean $z0;
+        java.net.Socket $r1;
+        java.io.OutputStream $r2;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $z0 = r0.<libcore.net.url.FtpURLConnection: boolean connected>;
+
+        if $z0 != 0 goto label1;
+
+        virtualinvoke r0.<libcore.net.url.FtpURLConnection: void connect()>();
+
+     label1:
+        $r1 = r0.<libcore.net.url.FtpURLConnection: java.net.Socket dataSocket>;
+
+        $r2 = virtualinvoke $r1.<java.net.Socket: java.io.OutputStream getOutputStream()>();
+
+        return $r2;
+    }
+
+    public java.security.Permission getPermission() throws java.io.IOException
+    {
+        libcore.net.url.FtpURLConnection r0;
+        int i0;
+        java.net.URL $r1;
+        java.net.SocketPermission $r2;
+        java.lang.StringBuilder $r3, $r5, $r6, $r7;
+        java.lang.String $r4, $r8;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        $r1 = r0.<libcore.net.url.FtpURLConnection: java.net.URL url>;
+
+        i0 = virtualinvoke $r1.<java.net.URL: int getPort()>();
+
+        if i0 > 0 goto label1;
+
+        i0 = 21;
+
+     label1:
+        $r2 = new java.net.SocketPermission;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = r0.<libcore.net.url.FtpURLConnection: java.lang.String hostName>;
+
+        $r5 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r4);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r2.<java.net.SocketPermission: void <init>(java.lang.String,java.lang.String)>($r8, "connect, resolve");
+
+        return $r2;
+    }
+
+    public void setDoInput(boolean)
+    {
+        libcore.net.url.FtpURLConnection r0;
+        boolean z0, z1, $z2;
+        java.lang.IllegalAccessError $r1;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        z0 := @parameter0: boolean;
+
+        $z2 = r0.<libcore.net.url.FtpURLConnection: boolean connected>;
+
+        if $z2 == 0 goto label1;
+
+        $r1 = new java.lang.IllegalAccessError;
+
+        specialinvoke $r1.<java.lang.IllegalAccessError: void <init>()>();
+
+        throw $r1;
+
+     label1:
+        r0.<libcore.net.url.FtpURLConnection: boolean doInput> = z0;
+
+        if z0 != 0 goto label3;
+
+        z1 = 1;
+
+     label2:
+        r0.<libcore.net.url.FtpURLConnection: boolean doOutput> = z1;
+
+        return;
+
+     label3:
+        z1 = 0;
+
+        goto label2;
+    }
+
+    public void setDoOutput(boolean)
+    {
+        libcore.net.url.FtpURLConnection r0;
+        boolean z0, z1, $z2;
+        java.lang.IllegalAccessError $r1;
+
+        r0 := @this: libcore.net.url.FtpURLConnection;
+
+        z0 := @parameter0: boolean;
+
+        $z2 = r0.<libcore.net.url.FtpURLConnection: boolean connected>;
+
+        if $z2 == 0 goto label1;
+
+        $r1 = new java.lang.IllegalAccessError;
+
+        specialinvoke $r1.<java.lang.IllegalAccessError: void <init>()>();
+
+        throw $r1;
+
+     label1:
+        r0.<libcore.net.url.FtpURLConnection: boolean doOutput> = z0;
+
+        if z0 != 0 goto label3;
+
+        z1 = 1;
+
+     label2:
+        r0.<libcore.net.url.FtpURLConnection: boolean doInput> = z1;
+
+        return;
+
+     label3:
+        z1 = 0;
+
+        goto label2;
+    }
+
+    public static void <clinit>()
+    {
+        <libcore.net.url.FtpURLConnection: int FTP_USERREADY> = 220;
+
+        <libcore.net.url.FtpURLConnection: int FTP_TRANSFEROK> = 226;
+
+        <libcore.net.url.FtpURLConnection: int FTP_PORT> = 21;
+
+        <libcore.net.url.FtpURLConnection: int FTP_PASWD> = 331;
+
+        <libcore.net.url.FtpURLConnection: int FTP_OPENDATA> = 150;
+
+        <libcore.net.url.FtpURLConnection: int FTP_OK> = 200;
+
+        <libcore.net.url.FtpURLConnection: int FTP_NOTFOUND> = 550;
+
+        <libcore.net.url.FtpURLConnection: int FTP_LOGGEDIN> = 230;
+
+        <libcore.net.url.FtpURLConnection: int FTP_FILEOK> = 250;
+
+        <libcore.net.url.FtpURLConnection: int FTP_DATAOPEN> = 125;
+
+        return;
+    }
+}
