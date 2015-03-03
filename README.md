@@ -44,9 +44,9 @@ make -j24
 
 5) Utilize Tom's OrganizeJava tool to crawl through the captured source and organize it in a unified folder structure
 
-6) Copy the organized source into an empty Eclipse Java project. Delete the JRE (and any other JARs) from the build path
+6) Copy the organized source into an empty Eclipse Java project. Delete the JRE (and any other JARs) from the build path.
 
-7) Iteratively fix compilation errors.
+7) Iteratively fix compilation errors
 
     - Correct imports using find/replace
     - Change method and field visibility where required
@@ -55,10 +55,14 @@ make -j24
     - Move source which was not correctly organized into correct packages.
     - Delete completely unused packages with errors rather than trying to fix them. Utilize Eclipse references feature to determine if used.
     - Fix other misc errors like file name not matching top level type name
+    - Sometimes a clean/build helps for stale build errors
 
 8) Confirm that all source compiles and is free of errors with no JARs on the build path
 
-9) Confirm that all packages/types in the Android 19 API appear to be present
+9) Confirm that all packages/types in the Android API appear to be present
+
+## Building bytecode Eclipse project
+Edit and run the [gatherjars.sh](https://github.com/EnSoftCorp/AnalyzableAndroid/blob/master/Tools/gatherjars.sh) script to gather Android jars.  Then create an empty Eclipse project, remove all existing project Jars, and add the gathered Jars to the project.
 
 ## Running PScout
 
