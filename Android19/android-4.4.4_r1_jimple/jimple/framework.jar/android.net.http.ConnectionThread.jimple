@@ -1,0 +1,363 @@
+class android.net.http.ConnectionThread extends java.lang.Thread
+{
+    static final int WAIT_TICK;
+    static final int WAIT_TIMEOUT;
+    android.net.http.Connection mConnection;
+    private android.net.http.RequestQueue$ConnectionManager mConnectionManager;
+    private android.content.Context mContext;
+    long mCurrentThreadTime;
+    private int mId;
+    private android.net.http.RequestFeeder mRequestFeeder;
+    private volatile boolean mRunning;
+    long mTotalThreadTime;
+    private boolean mWaiting;
+
+    void <init>(android.content.Context, int, android.net.http.RequestQueue$ConnectionManager, android.net.http.RequestFeeder)
+    {
+        android.net.http.ConnectionThread r0;
+        android.content.Context r1;
+        int i0;
+        android.net.http.RequestQueue$ConnectionManager r2;
+        android.net.http.RequestFeeder r3;
+        java.lang.StringBuilder $r4, $r5, $r6;
+        java.lang.String $r7;
+
+        r0 := @this: android.net.http.ConnectionThread;
+
+        r1 := @parameter0: android.content.Context;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: android.net.http.RequestQueue$ConnectionManager;
+
+        r3 := @parameter3: android.net.http.RequestFeeder;
+
+        specialinvoke r0.<java.lang.Thread: void <init>()>();
+
+        r0.<android.net.http.ConnectionThread: boolean mRunning> = 1;
+
+        r0.<android.net.http.ConnectionThread: android.content.Context mContext> = r1;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("http");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<android.net.http.ConnectionThread: void setName(java.lang.String)>($r7);
+
+        r0.<android.net.http.ConnectionThread: int mId> = i0;
+
+        r0.<android.net.http.ConnectionThread: android.net.http.RequestQueue$ConnectionManager mConnectionManager> = r2;
+
+        r0.<android.net.http.ConnectionThread: android.net.http.RequestFeeder mRequestFeeder> = r3;
+
+        return;
+    }
+
+    void requestStop()
+    {
+        android.net.http.ConnectionThread r0;
+        android.net.http.RequestFeeder r1, $r3;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: android.net.http.ConnectionThread;
+
+        r1 = r0.<android.net.http.ConnectionThread: android.net.http.RequestFeeder mRequestFeeder>;
+
+        entermonitor r1;
+
+     label1:
+        r0.<android.net.http.ConnectionThread: boolean mRunning> = 0;
+
+        $r3 = r0.<android.net.http.ConnectionThread: android.net.http.RequestFeeder mRequestFeeder>;
+
+        virtualinvoke $r3.<java.lang.Object: void notify()>();
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void run()
+    {
+        android.net.http.ConnectionThread r0;
+        android.net.http.Request r1;
+        long l0, $l1, $l4, $l5, $l6, $l7, $l8, $l9, $l11, $l12, $l13;
+        android.net.http.RequestFeeder r2, $r5, $r16;
+        java.lang.Throwable r3, $r18;
+        boolean $z0, $z1, $z2;
+        byte $b2, $b3, $b10;
+        org.apache.http.HttpHost $r6;
+        android.content.Context $r7;
+        android.net.http.RequestQueue$ConnectionManager $r8, $r14;
+        android.net.http.Connection $r9, $r10, $r11, $r12, $r13, $r15;
+        java.lang.InterruptedException $r17;
+
+        r0 := @this: android.net.http.ConnectionThread;
+
+        staticinvoke <android.os.Process: void setThreadPriority(int)>(1);
+
+        r0.<android.net.http.ConnectionThread: long mCurrentThreadTime> = 0L;
+
+        r0.<android.net.http.ConnectionThread: long mTotalThreadTime> = 0L;
+
+     label01:
+        $z0 = r0.<android.net.http.ConnectionThread: boolean mRunning>;
+
+        if $z0 == 0 goto label14;
+
+        $l1 = r0.<android.net.http.ConnectionThread: long mCurrentThreadTime>;
+
+        $b2 = $l1 cmp -1L;
+
+        if $b2 != 0 goto label02;
+
+        $l13 = staticinvoke <android.os.SystemClock: long currentThreadTimeMillis()>();
+
+        r0.<android.net.http.ConnectionThread: long mCurrentThreadTime> = $l13;
+
+     label02:
+        $r5 = r0.<android.net.http.ConnectionThread: android.net.http.RequestFeeder mRequestFeeder>;
+
+        r1 = interfaceinvoke $r5.<android.net.http.RequestFeeder: android.net.http.Request getRequest()>();
+
+        if r1 != null goto label11;
+
+        r2 = r0.<android.net.http.ConnectionThread: android.net.http.RequestFeeder mRequestFeeder>;
+
+        entermonitor r2;
+
+     label03:
+        r0.<android.net.http.ConnectionThread: boolean mWaiting> = 1;
+
+     label04:
+        $r16 = r0.<android.net.http.ConnectionThread: android.net.http.RequestFeeder mRequestFeeder>;
+
+        virtualinvoke $r16.<java.lang.Object: void wait()>();
+
+     label05:
+        r0.<android.net.http.ConnectionThread: boolean mWaiting> = 0;
+
+        $l11 = r0.<android.net.http.ConnectionThread: long mCurrentThreadTime>;
+
+        $b10 = $l11 cmp 0L;
+
+        if $b10 == 0 goto label06;
+
+        $l12 = staticinvoke <android.os.SystemClock: long currentThreadTimeMillis()>();
+
+        r0.<android.net.http.ConnectionThread: long mCurrentThreadTime> = $l12;
+
+     label06:
+        exitmonitor r2;
+
+     label07:
+        goto label01;
+
+     label08:
+        $r18 := @caughtexception;
+
+        r3 = $r18;
+
+     label09:
+        exitmonitor r2;
+
+     label10:
+        throw r3;
+
+     label11:
+        $r8 = r0.<android.net.http.ConnectionThread: android.net.http.RequestQueue$ConnectionManager mConnectionManager>;
+
+        $r7 = r0.<android.net.http.ConnectionThread: android.content.Context mContext>;
+
+        $r6 = r1.<android.net.http.Request: org.apache.http.HttpHost mHost>;
+
+        $r9 = interfaceinvoke $r8.<android.net.http.RequestQueue$ConnectionManager: android.net.http.Connection getConnection(android.content.Context,org.apache.http.HttpHost)>($r7, $r6);
+
+        r0.<android.net.http.ConnectionThread: android.net.http.Connection mConnection> = $r9;
+
+        $r11 = r0.<android.net.http.ConnectionThread: android.net.http.Connection mConnection>;
+
+        virtualinvoke $r11.<android.net.http.Connection: void processRequests(android.net.http.Request)>(r1);
+
+        $r10 = r0.<android.net.http.ConnectionThread: android.net.http.Connection mConnection>;
+
+        $z1 = virtualinvoke $r10.<android.net.http.Connection: boolean getCanPersist()>();
+
+        if $z1 == 0 goto label13;
+
+        $r14 = r0.<android.net.http.ConnectionThread: android.net.http.RequestQueue$ConnectionManager mConnectionManager>;
+
+        $r13 = r0.<android.net.http.ConnectionThread: android.net.http.Connection mConnection>;
+
+        $z2 = interfaceinvoke $r14.<android.net.http.RequestQueue$ConnectionManager: boolean recycleConnection(android.net.http.Connection)>($r13);
+
+        if $z2 != 0 goto label12;
+
+        $r15 = r0.<android.net.http.ConnectionThread: android.net.http.Connection mConnection>;
+
+        virtualinvoke $r15.<android.net.http.Connection: void closeConnection()>();
+
+     label12:
+        r0.<android.net.http.ConnectionThread: android.net.http.Connection mConnection> = null;
+
+        $l4 = r0.<android.net.http.ConnectionThread: long mCurrentThreadTime>;
+
+        $b3 = $l4 cmp 0L;
+
+        if $b3 <= 0 goto label01;
+
+        l0 = r0.<android.net.http.ConnectionThread: long mCurrentThreadTime>;
+
+        $l6 = staticinvoke <android.os.SystemClock: long currentThreadTimeMillis()>();
+
+        r0.<android.net.http.ConnectionThread: long mCurrentThreadTime> = $l6;
+
+        $l7 = r0.<android.net.http.ConnectionThread: long mTotalThreadTime>;
+
+        $l5 = r0.<android.net.http.ConnectionThread: long mCurrentThreadTime>;
+
+        $l8 = $l5 - l0;
+
+        $l9 = $l7 + $l8;
+
+        r0.<android.net.http.ConnectionThread: long mTotalThreadTime> = $l9;
+
+        goto label01;
+
+     label13:
+        $r12 = r0.<android.net.http.ConnectionThread: android.net.http.Connection mConnection>;
+
+        virtualinvoke $r12.<android.net.http.Connection: void closeConnection()>();
+
+        goto label12;
+
+     label14:
+        return;
+
+     label15:
+        $r17 := @caughtexception;
+
+        goto label05;
+
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.InterruptedException from label04 to label05 with label15;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label05 to label06 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public java.lang.String toString()
+    {
+        android.net.http.ConnectionThread r0;
+        java.lang.Throwable r1, $r14;
+        java.lang.String r2, r3, r4;
+        android.net.http.Connection $r5, $r6;
+        boolean $z0;
+        java.lang.StringBuilder $r7, $r8, $r9, $r10, $r11, $r12, $r13;
+        int $i0;
+
+        r0 := @this: android.net.http.ConnectionThread;
+
+        entermonitor r0;
+
+     label01:
+        $r5 = r0.<android.net.http.ConnectionThread: android.net.http.Connection mConnection>;
+
+        if $r5 != null goto label07;
+
+     label02:
+        r2 = "";
+
+     label03:
+        $z0 = r0.<android.net.http.ConnectionThread: boolean mWaiting>;
+
+        if $z0 == 0 goto label09;
+
+     label04:
+        r3 = "w";
+
+     label05:
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("cid ");
+
+        $i0 = r0.<android.net.http.ConnectionThread: int mId>;
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        r4 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label06:
+        exitmonitor r0;
+
+        return r4;
+
+     label07:
+        $r6 = r0.<android.net.http.ConnectionThread: android.net.http.Connection mConnection>;
+
+        r2 = virtualinvoke $r6.<android.net.http.Connection: java.lang.String toString()>();
+
+     label08:
+        goto label03;
+
+     label09:
+        r3 = "a";
+
+        goto label05;
+
+     label10:
+        $r14 := @caughtexception;
+
+        r1 = $r14;
+
+        exitmonitor r0;
+
+        throw r1;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label03 to label04 with label10;
+        catch java.lang.Throwable from label05 to label06 with label10;
+        catch java.lang.Throwable from label07 to label08 with label10;
+    }
+
+    public static void <clinit>()
+    {
+        <android.net.http.ConnectionThread: int WAIT_TIMEOUT> = 5000;
+
+        <android.net.http.ConnectionThread: int WAIT_TICK> = 1000;
+
+        return;
+    }
+}

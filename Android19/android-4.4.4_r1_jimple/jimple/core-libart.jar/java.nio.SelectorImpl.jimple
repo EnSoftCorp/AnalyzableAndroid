@@ -1,0 +1,1135 @@
+final class java.nio.SelectorImpl extends java.nio.channels.spi.AbstractSelector
+{
+    final java.lang.Object keysLock;
+    private final java.util.Set mutableKeys;
+    private final java.util.Set mutableSelectedKeys;
+    private final java.util.UnsafeArrayList pollFds;
+    private final java.util.Set selectedKeys;
+    private final java.util.Set unmodifiableKeys;
+    private final java.io.FileDescriptor wakeupIn;
+    private final java.io.FileDescriptor wakeupOut;
+
+    public void <init>(java.nio.channels.spi.SelectorProvider) throws java.io.IOException
+    {
+        java.nio.SelectorImpl r0;
+        java.nio.channels.spi.SelectorProvider r1;
+        libcore.io.ErrnoException r2, $r20;
+        java.io.FileDescriptor[] r3;
+        java.lang.Object $r4;
+        java.util.HashSet $r5, $r8;
+        java.util.Set $r6, $r7, $r10;
+        java.nio.SelectorImpl$UnaddableSet $r9;
+        java.util.UnsafeArrayList $r11, $r17;
+        libcore.io.Os $r12;
+        java.io.FileDescriptor $r13, $r14, $r16, $r18;
+        libcore.io.StructPollfd $r15;
+        int $i0;
+        java.io.IOException $r19;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        r1 := @parameter0: java.nio.channels.spi.SelectorProvider;
+
+        specialinvoke r0.<java.nio.channels.spi.AbstractSelector: void <init>(java.nio.channels.spi.SelectorProvider)>(r1);
+
+        $r4 = new java.lang.Object;
+
+        specialinvoke $r4.<java.lang.Object: void <init>()>();
+
+        r0.<java.nio.SelectorImpl: java.lang.Object keysLock> = $r4;
+
+        $r5 = new java.util.HashSet;
+
+        specialinvoke $r5.<java.util.HashSet: void <init>()>();
+
+        r0.<java.nio.SelectorImpl: java.util.Set mutableKeys> = $r5;
+
+        $r6 = r0.<java.nio.SelectorImpl: java.util.Set mutableKeys>;
+
+        $r7 = staticinvoke <java.util.Collections: java.util.Set unmodifiableSet(java.util.Set)>($r6);
+
+        r0.<java.nio.SelectorImpl: java.util.Set unmodifiableKeys> = $r7;
+
+        $r8 = new java.util.HashSet;
+
+        specialinvoke $r8.<java.util.HashSet: void <init>()>();
+
+        r0.<java.nio.SelectorImpl: java.util.Set mutableSelectedKeys> = $r8;
+
+        $r9 = new java.nio.SelectorImpl$UnaddableSet;
+
+        $r10 = r0.<java.nio.SelectorImpl: java.util.Set mutableSelectedKeys>;
+
+        specialinvoke $r9.<java.nio.SelectorImpl$UnaddableSet: void <init>(java.util.Set)>($r10);
+
+        r0.<java.nio.SelectorImpl: java.util.Set selectedKeys> = $r9;
+
+        $r11 = new java.util.UnsafeArrayList;
+
+        specialinvoke $r11.<java.util.UnsafeArrayList: void <init>(java.lang.Class,int)>(class "libcore/io/StructPollfd", 8);
+
+        r0.<java.nio.SelectorImpl: java.util.UnsafeArrayList pollFds> = $r11;
+
+     label1:
+        $r12 = <libcore.io.Libcore: libcore.io.Os os>;
+
+        r3 = interfaceinvoke $r12.<libcore.io.Os: java.io.FileDescriptor[] pipe()>();
+
+        $r13 = r3[0];
+
+        r0.<java.nio.SelectorImpl: java.io.FileDescriptor wakeupIn> = $r13;
+
+        $r14 = r3[1];
+
+        r0.<java.nio.SelectorImpl: java.io.FileDescriptor wakeupOut> = $r14;
+
+        $r16 = r0.<java.nio.SelectorImpl: java.io.FileDescriptor wakeupIn>;
+
+        staticinvoke <libcore.io.IoUtils: void setBlocking(java.io.FileDescriptor,boolean)>($r16, 0);
+
+        $r17 = r0.<java.nio.SelectorImpl: java.util.UnsafeArrayList pollFds>;
+
+        $r15 = new libcore.io.StructPollfd;
+
+        specialinvoke $r15.<libcore.io.StructPollfd: void <init>()>();
+
+        virtualinvoke $r17.<java.util.UnsafeArrayList: boolean add(java.lang.Object)>($r15);
+
+        $r18 = r0.<java.nio.SelectorImpl: java.io.FileDescriptor wakeupIn>;
+
+        $i0 = <libcore.io.OsConstants: int POLLIN>;
+
+        specialinvoke r0.<java.nio.SelectorImpl: void setPollFd(int,java.io.FileDescriptor,int,java.lang.Object)>(0, $r18, $i0, null);
+
+     label2:
+        return;
+
+     label3:
+        $r20 := @caughtexception;
+
+        r2 = $r20;
+
+        $r19 = virtualinvoke r2.<libcore.io.ErrnoException: java.io.IOException rethrowAsIOException()>();
+
+        throw $r19;
+
+        catch libcore.io.ErrnoException from label1 to label2 with label3;
+    }
+
+    private void checkClosed()
+    {
+        java.nio.SelectorImpl r0;
+        boolean $z0;
+        java.nio.channels.ClosedSelectorException $r1;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        $z0 = virtualinvoke r0.<java.nio.SelectorImpl: boolean isOpen()>();
+
+        if $z0 != 0 goto label1;
+
+        $r1 = new java.nio.channels.ClosedSelectorException;
+
+        specialinvoke $r1.<java.nio.channels.ClosedSelectorException: void <init>()>();
+
+        throw $r1;
+
+     label1:
+        return;
+    }
+
+    private int doCancel()
+    {
+        java.nio.SelectorImpl r0;
+        java.util.Set r1, $r6, $r7;
+        java.lang.Throwable r2, $r9;
+        int i0, i1;
+        java.util.Iterator r3;
+        java.nio.channels.SelectionKey r4;
+        boolean $z0, $z2;
+        java.lang.Object $r5;
+        java.nio.channels.spi.AbstractSelectionKey $r8;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        r1 = virtualinvoke r0.<java.nio.SelectorImpl: java.util.Set cancelledKeys()>();
+
+        entermonitor r1;
+
+     label01:
+        i0 = interfaceinvoke r1.<java.util.Set: int size()>();
+
+     label02:
+        i1 = 0;
+
+        if i0 <= 0 goto label07;
+
+     label03:
+        r3 = interfaceinvoke r1.<java.util.Set: java.util.Iterator iterator()>();
+
+     label04:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label06;
+
+        $r5 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (java.nio.channels.SelectionKey) $r5;
+
+        $r6 = r0.<java.nio.SelectorImpl: java.util.Set mutableKeys>;
+
+        interfaceinvoke $r6.<java.util.Set: boolean remove(java.lang.Object)>(r4);
+
+        $r8 = (java.nio.channels.spi.AbstractSelectionKey) r4;
+
+        virtualinvoke r0.<java.nio.SelectorImpl: void deregister(java.nio.channels.spi.AbstractSelectionKey)>($r8);
+
+        $r7 = r0.<java.nio.SelectorImpl: java.util.Set mutableSelectedKeys>;
+
+        $z2 = interfaceinvoke $r7.<java.util.Set: boolean remove(java.lang.Object)>(r4);
+
+        if $z2 == 0 goto label04;
+
+     label05:
+        i1 = i1 + 1;
+
+        goto label04;
+
+     label06:
+        interfaceinvoke r1.<java.util.Set: void clear()>();
+
+     label07:
+        exitmonitor r1;
+
+     label08:
+        return i1;
+
+     label09:
+        $r9 := @caughtexception;
+
+        r2 = $r9;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        throw r2;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label06 to label07 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    private void ensurePollFdsCapacity()
+    {
+        java.nio.SelectorImpl r0;
+        java.util.UnsafeArrayList $r1, $r4;
+        int $i0, $i1, $i2;
+        java.util.Set $r2;
+        libcore.io.StructPollfd $r3;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+     label1:
+        $r1 = r0.<java.nio.SelectorImpl: java.util.UnsafeArrayList pollFds>;
+
+        $i0 = virtualinvoke $r1.<java.util.UnsafeArrayList: int size()>();
+
+        $r2 = r0.<java.nio.SelectorImpl: java.util.Set mutableKeys>;
+
+        $i1 = interfaceinvoke $r2.<java.util.Set: int size()>();
+
+        $i2 = 1 + $i1;
+
+        if $i0 >= $i2 goto label2;
+
+        $r4 = r0.<java.nio.SelectorImpl: java.util.UnsafeArrayList pollFds>;
+
+        $r3 = new libcore.io.StructPollfd;
+
+        specialinvoke $r3.<libcore.io.StructPollfd: void <init>()>();
+
+        virtualinvoke $r4.<java.util.UnsafeArrayList: boolean add(java.lang.Object)>($r3);
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void preparePollFds()
+    {
+        java.nio.SelectorImpl r0;
+        int i0, i1, i2, i4, $i5, $i6, $i7, $i8, $i9;
+        java.util.Iterator r1;
+        java.nio.SelectionKeyImpl r2;
+        short s3;
+        java.util.Set $r3;
+        boolean $z0;
+        java.lang.Object $r4;
+        java.nio.channels.SelectableChannel $r5;
+        java.nio.FileDescriptorChannel $r6;
+        java.io.FileDescriptor $r7;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        i0 = 1;
+
+        $r3 = r0.<java.nio.SelectorImpl: java.util.Set mutableKeys>;
+
+        r1 = interfaceinvoke $r3.<java.util.Set: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (java.nio.SelectionKeyImpl) $r4;
+
+        i1 = virtualinvoke r2.<java.nio.SelectionKeyImpl: int interestOpsNoCheck()>();
+
+        i2 = i1 & 17;
+
+        s3 = 0;
+
+        if i2 == 0 goto label2;
+
+        $i7 = <libcore.io.OsConstants: int POLLIN>;
+
+        $i9 = 0 | $i7;
+
+        s3 = (short) $i9;
+
+     label2:
+        $i5 = i1 & 12;
+
+        if $i5 == 0 goto label3;
+
+        $i6 = <libcore.io.OsConstants: int POLLOUT>;
+
+        $i8 = s3 | $i6;
+
+        s3 = (short) $i8;
+
+     label3:
+        if s3 == 0 goto label1;
+
+        i4 = i0 + 1;
+
+        $r5 = virtualinvoke r2.<java.nio.SelectionKeyImpl: java.nio.channels.SelectableChannel channel()>();
+
+        $r6 = (java.nio.FileDescriptorChannel) $r5;
+
+        $r7 = interfaceinvoke $r6.<java.nio.FileDescriptorChannel: java.io.FileDescriptor getFD()>();
+
+        specialinvoke r0.<java.nio.SelectorImpl: void setPollFd(int,java.io.FileDescriptor,int,java.lang.Object)>(i0, $r7, s3, r2);
+
+        i0 = i4;
+
+        goto label1;
+
+     label4:
+        return;
+    }
+
+    private int processPollFds() throws java.io.IOException
+    {
+        java.nio.SelectorImpl r0;
+        int i0, i1, i2, i3, i4, $i5, $i7, $i10, $i12, $i13, $i14, $i15, $i17, $i18, $i19, $i20, $i21, $i22, $i23;
+        libcore.io.StructPollfd r1, $r6;
+        java.nio.SelectionKeyImpl r2;
+        boolean z0, $z2;
+        byte[] r3;
+        java.util.UnsafeArrayList $r4, $r7, $r9;
+        java.lang.Object $r5, $r8, $r11;
+        short $s6, $s8, $s9, $s11, $s16;
+        java.io.FileDescriptor $r10, $r14;
+        java.util.Set $r12, $r13;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        $r4 = r0.<java.nio.SelectorImpl: java.util.UnsafeArrayList pollFds>;
+
+        $r5 = virtualinvoke $r4.<java.util.UnsafeArrayList: java.lang.Object get(int)>(0);
+
+        $r6 = (libcore.io.StructPollfd) $r5;
+
+        $s6 = $r6.<libcore.io.StructPollfd: short revents>;
+
+        $i5 = <libcore.io.OsConstants: int POLLIN>;
+
+        if $s6 != $i5 goto label02;
+
+        r3 = newarray (byte)[8];
+
+     label01:
+        $r14 = r0.<java.nio.SelectorImpl: java.io.FileDescriptor wakeupIn>;
+
+        $i23 = staticinvoke <libcore.io.IoBridge: int read(java.io.FileDescriptor,byte[],int,int)>($r14, r3, 0, 1);
+
+        if $i23 > 0 goto label01;
+
+     label02:
+        i0 = 0;
+
+        i1 = 1;
+
+     label03:
+        $r7 = r0.<java.nio.SelectorImpl: java.util.UnsafeArrayList pollFds>;
+
+        $i7 = virtualinvoke $r7.<java.util.UnsafeArrayList: int size()>();
+
+        if i1 >= $i7 goto label06;
+
+        $r9 = r0.<java.nio.SelectorImpl: java.util.UnsafeArrayList pollFds>;
+
+        $r8 = virtualinvoke $r9.<java.util.UnsafeArrayList: java.lang.Object get(int)>(i1);
+
+        r1 = (libcore.io.StructPollfd) $r8;
+
+        $s8 = r1.<libcore.io.StructPollfd: short revents>;
+
+        if $s8 != 0 goto label05;
+
+     label04:
+        i1 = i1 + 1;
+
+        goto label03;
+
+     label05:
+        $r10 = r1.<libcore.io.StructPollfd: java.io.FileDescriptor fd>;
+
+        if $r10 != null goto label07;
+
+     label06:
+        return i0;
+
+     label07:
+        $r11 = r1.<libcore.io.StructPollfd: java.lang.Object userData>;
+
+        r2 = (java.nio.SelectionKeyImpl) $r11;
+
+        r1.<libcore.io.StructPollfd: java.io.FileDescriptor fd> = null;
+
+        r1.<libcore.io.StructPollfd: java.lang.Object userData> = null;
+
+        i2 = virtualinvoke r2.<java.nio.SelectionKeyImpl: int interestOpsNoCheck()>();
+
+        $s9 = r1.<libcore.io.StructPollfd: short revents>;
+
+        $i10 = <libcore.io.OsConstants: int POLLHUP>;
+
+        i3 = $s9 & $i10;
+
+        i4 = 0;
+
+        if i3 == 0 goto label08;
+
+        i4 = 0 | i2;
+
+     label08:
+        $s11 = r1.<libcore.io.StructPollfd: short revents>;
+
+        $i12 = <libcore.io.OsConstants: int POLLIN>;
+
+        $i14 = $s11 & $i12;
+
+        if $i14 == 0 goto label09;
+
+        $i20 = i2 & 17;
+
+        i4 = i4 | $i20;
+
+     label09:
+        $s16 = r1.<libcore.io.StructPollfd: short revents>;
+
+        $i13 = <libcore.io.OsConstants: int POLLOUT>;
+
+        $i15 = $s16 & $i13;
+
+        if $i15 == 0 goto label10;
+
+        $z2 = virtualinvoke r2.<java.nio.SelectionKeyImpl: boolean isConnected()>();
+
+        if $z2 == 0 goto label11;
+
+        $i22 = i2 & 4;
+
+        i4 = i4 | $i22;
+
+     label10:
+        if i4 == 0 goto label04;
+
+        $r13 = r0.<java.nio.SelectorImpl: java.util.Set mutableSelectedKeys>;
+
+        z0 = interfaceinvoke $r13.<java.util.Set: boolean contains(java.lang.Object)>(r2);
+
+        if z0 == 0 goto label12;
+
+        $i18 = virtualinvoke r2.<java.nio.SelectionKeyImpl: int readyOps()>();
+
+        if $i18 == i4 goto label12;
+
+        $i19 = virtualinvoke r2.<java.nio.SelectionKeyImpl: int readyOps()>();
+
+        $i17 = i4 | $i19;
+
+        virtualinvoke r2.<java.nio.SelectionKeyImpl: void setReadyOps(int)>($i17);
+
+        i0 = i0 + 1;
+
+        goto label04;
+
+     label11:
+        $i21 = i2 & 8;
+
+        i4 = i4 | $i21;
+
+        goto label10;
+
+     label12:
+        if z0 != 0 goto label04;
+
+        virtualinvoke r2.<java.nio.SelectionKeyImpl: void setReadyOps(int)>(i4);
+
+        $r12 = r0.<java.nio.SelectorImpl: java.util.Set mutableSelectedKeys>;
+
+        interfaceinvoke $r12.<java.util.Set: boolean add(java.lang.Object)>(r2);
+
+        i0 = i0 + 1;
+
+        goto label04;
+    }
+
+    private int selectInternal(long) throws java.io.IOException
+    {
+        java.nio.SelectorImpl r0;
+        long l0;
+        java.lang.Throwable r1, r3, r5, r7, r8, $r14, $r15, $r17, $r18, $r19;
+        java.util.Set r2, r4;
+        boolean z0;
+        java.lang.Object r6;
+        int i1, i2, i3, i4, $i7, $i8, $i9, $i10;
+        libcore.io.ErrnoException r9, $r16;
+        byte $b6;
+        java.util.UnsafeArrayList $r10;
+        java.lang.Object[] $r11;
+        libcore.io.Os $r12;
+        libcore.io.StructPollfd[] $r13;
+        java.io.IOException $r20;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        l0 := @parameter0: long;
+
+        specialinvoke r0.<java.nio.SelectorImpl: void checkClosed()>();
+
+        entermonitor r0;
+
+     label01:
+        r2 = r0.<java.nio.SelectorImpl: java.util.Set unmodifiableKeys>;
+
+        entermonitor r2;
+
+     label02:
+        r4 = r0.<java.nio.SelectorImpl: java.util.Set selectedKeys>;
+
+        entermonitor r4;
+
+     label03:
+        specialinvoke r0.<java.nio.SelectorImpl: int doCancel()>();
+
+     label04:
+        $b6 = l0 cmp 0L;
+
+        if $b6 == 0 goto label19;
+
+        z0 = 1;
+
+     label05:
+        r6 = r0.<java.nio.SelectorImpl: java.lang.Object keysLock>;
+
+        entermonitor r6;
+
+     label06:
+        specialinvoke r0.<java.nio.SelectorImpl: void preparePollFds()>();
+
+        exitmonitor r6;
+
+     label07:
+        i1 = -1;
+
+        if z0 == 0 goto label09;
+
+     label08:
+        virtualinvoke r0.<java.nio.SelectorImpl: void begin()>();
+
+     label09:
+        $r12 = <libcore.io.Libcore: libcore.io.Os os>;
+
+        $r10 = r0.<java.nio.SelectorImpl: java.util.UnsafeArrayList pollFds>;
+
+        $r11 = virtualinvoke $r10.<java.util.UnsafeArrayList: java.lang.Object[] array()>();
+
+        $r13 = (libcore.io.StructPollfd[]) $r11;
+
+        $i7 = (int) l0;
+
+        i3 = interfaceinvoke $r12.<libcore.io.Os: int poll(libcore.io.StructPollfd[],int)>($r13, $i7);
+
+     label10:
+        i1 = i3;
+
+     label11:
+        if z0 == 0 goto label13;
+
+     label12:
+        virtualinvoke r0.<java.nio.SelectorImpl: void end()>();
+
+     label13:
+        i2 = 0;
+
+        if i1 <= 0 goto label15;
+
+     label14:
+        i2 = specialinvoke r0.<java.nio.SelectorImpl: int processPollFds()>();
+
+     label15:
+        $i8 = specialinvoke r0.<java.nio.SelectorImpl: int doCancel()>();
+
+        i4 = i2 - $i8;
+
+        exitmonitor r4;
+
+     label16:
+        exitmonitor r2;
+
+     label17:
+        exitmonitor r0;
+
+     label18:
+        return i4;
+
+     label19:
+        z0 = 0;
+
+        goto label05;
+
+     label20:
+        $r19 := @caughtexception;
+
+        r7 = $r19;
+
+     label21:
+        exitmonitor r6;
+
+     label22:
+        throw r7;
+
+     label23:
+        $r15 := @caughtexception;
+
+        r5 = $r15;
+
+     label24:
+        exitmonitor r4;
+
+     label25:
+        throw r5;
+
+     label26:
+        $r17 := @caughtexception;
+
+        r3 = $r17;
+
+     label27:
+        exitmonitor r2;
+
+     label28:
+        throw r3;
+
+     label29:
+        $r14 := @caughtexception;
+
+        r1 = $r14;
+
+     label30:
+        exitmonitor r0;
+
+     label31:
+        throw r1;
+
+     label32:
+        $r16 := @caughtexception;
+
+        r9 = $r16;
+
+     label33:
+        $i10 = r9.<libcore.io.ErrnoException: int errno>;
+
+        $i9 = <libcore.io.OsConstants: int EINTR>;
+
+        if $i10 == $i9 goto label11;
+
+        $r20 = virtualinvoke r9.<libcore.io.ErrnoException: java.io.IOException rethrowAsIOException()>();
+
+        throw $r20;
+
+     label34:
+        $r18 := @caughtexception;
+
+        r8 = $r18;
+
+        if z0 == 0 goto label36;
+
+     label35:
+        virtualinvoke r0.<java.nio.SelectorImpl: void end()>();
+
+     label36:
+        throw r8;
+
+        catch java.lang.Throwable from label01 to label02 with label29;
+        catch java.lang.Throwable from label02 to label03 with label26;
+        catch java.lang.Throwable from label03 to label04 with label23;
+        catch java.lang.Throwable from label05 to label06 with label23;
+        catch java.lang.Throwable from label06 to label07 with label20;
+        catch java.lang.Throwable from label08 to label09 with label34;
+        catch libcore.io.ErrnoException from label09 to label10 with label32;
+        catch java.lang.Throwable from label09 to label10 with label34;
+        catch java.lang.Throwable from label12 to label13 with label23;
+        catch java.lang.Throwable from label14 to label15 with label23;
+        catch java.lang.Throwable from label15 to label16 with label23;
+        catch java.lang.Throwable from label16 to label17 with label26;
+        catch java.lang.Throwable from label17 to label18 with label29;
+        catch java.lang.Throwable from label21 to label22 with label20;
+        catch java.lang.Throwable from label22 to label23 with label23;
+        catch java.lang.Throwable from label24 to label25 with label23;
+        catch java.lang.Throwable from label25 to label26 with label26;
+        catch java.lang.Throwable from label27 to label28 with label26;
+        catch java.lang.Throwable from label28 to label29 with label29;
+        catch java.lang.Throwable from label30 to label31 with label29;
+        catch java.lang.Throwable from label33 to label34 with label34;
+        catch java.lang.Throwable from label35 to label36 with label23;
+    }
+
+    private void setPollFd(int, java.io.FileDescriptor, int, java.lang.Object)
+    {
+        java.nio.SelectorImpl r0;
+        int i0, i1;
+        java.io.FileDescriptor r1;
+        java.lang.Object r2, $r5;
+        libcore.io.StructPollfd r3;
+        java.util.UnsafeArrayList $r4;
+        short $s2;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.io.FileDescriptor;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: java.lang.Object;
+
+        $r4 = r0.<java.nio.SelectorImpl: java.util.UnsafeArrayList pollFds>;
+
+        $r5 = virtualinvoke $r4.<java.util.UnsafeArrayList: java.lang.Object get(int)>(i0);
+
+        r3 = (libcore.io.StructPollfd) $r5;
+
+        r3.<libcore.io.StructPollfd: java.io.FileDescriptor fd> = r1;
+
+        $s2 = (short) i1;
+
+        r3.<libcore.io.StructPollfd: short events> = $s2;
+
+        r3.<libcore.io.StructPollfd: java.lang.Object userData> = r2;
+
+        return;
+    }
+
+    protected void implCloseSelector() throws java.io.IOException
+    {
+        java.nio.SelectorImpl r0;
+        java.lang.Throwable r1, r3, r5, $r13, $r15, $r16;
+        java.util.Set r2, r4, $r10;
+        java.util.Iterator r6;
+        java.io.FileDescriptor $r8, $r9;
+        boolean $z0;
+        java.nio.SelectionKeyImpl $r11;
+        java.lang.Object $r12;
+        java.nio.channels.spi.AbstractSelectionKey $r14;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        virtualinvoke r0.<java.nio.SelectorImpl: java.nio.channels.Selector wakeup()>();
+
+        entermonitor r0;
+
+     label01:
+        r2 = r0.<java.nio.SelectorImpl: java.util.Set unmodifiableKeys>;
+
+        entermonitor r2;
+
+     label02:
+        r4 = r0.<java.nio.SelectorImpl: java.util.Set selectedKeys>;
+
+        entermonitor r4;
+
+     label03:
+        $r8 = r0.<java.nio.SelectorImpl: java.io.FileDescriptor wakeupIn>;
+
+        staticinvoke <libcore.io.IoUtils: void close(java.io.FileDescriptor)>($r8);
+
+        $r9 = r0.<java.nio.SelectorImpl: java.io.FileDescriptor wakeupOut>;
+
+        staticinvoke <libcore.io.IoUtils: void close(java.io.FileDescriptor)>($r9);
+
+        specialinvoke r0.<java.nio.SelectorImpl: int doCancel()>();
+
+        $r10 = r0.<java.nio.SelectorImpl: java.util.Set mutableKeys>;
+
+        r6 = interfaceinvoke $r10.<java.util.Set: java.util.Iterator iterator()>();
+
+     label04:
+        $z0 = interfaceinvoke r6.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label15;
+
+        $r12 = interfaceinvoke r6.<java.util.Iterator: java.lang.Object next()>();
+
+        $r11 = (java.nio.SelectionKeyImpl) $r12;
+
+        $r14 = (java.nio.channels.spi.AbstractSelectionKey) $r11;
+
+        virtualinvoke r0.<java.nio.SelectorImpl: void deregister(java.nio.channels.spi.AbstractSelectionKey)>($r14);
+
+     label05:
+        goto label04;
+
+     label06:
+        $r15 := @caughtexception;
+
+        r5 = $r15;
+
+     label07:
+        exitmonitor r4;
+
+     label08:
+        throw r5;
+
+     label09:
+        $r13 := @caughtexception;
+
+        r3 = $r13;
+
+     label10:
+        exitmonitor r2;
+
+     label11:
+        throw r3;
+
+     label12:
+        $r16 := @caughtexception;
+
+        r1 = $r16;
+
+     label13:
+        exitmonitor r0;
+
+     label14:
+        throw r1;
+
+     label15:
+        exitmonitor r4;
+
+     label16:
+        exitmonitor r2;
+
+     label17:
+        exitmonitor r0;
+
+     label18:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label12;
+        catch java.lang.Throwable from label02 to label03 with label09;
+        catch java.lang.Throwable from label03 to label04 with label06;
+        catch java.lang.Throwable from label04 to label05 with label06;
+        catch java.lang.Throwable from label07 to label08 with label06;
+        catch java.lang.Throwable from label08 to label09 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+        catch java.lang.Throwable from label11 to label12 with label12;
+        catch java.lang.Throwable from label13 to label14 with label12;
+        catch java.lang.Throwable from label15 to label16 with label06;
+        catch java.lang.Throwable from label16 to label17 with label09;
+        catch java.lang.Throwable from label17 to label18 with label12;
+    }
+
+    public java.util.Set keys()
+    {
+        java.nio.SelectorImpl r0;
+        java.lang.Throwable r1, $r3;
+        java.util.Set r2;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        entermonitor r0;
+
+     label1:
+        specialinvoke r0.<java.nio.SelectorImpl: void checkClosed()>();
+
+        r2 = r0.<java.nio.SelectorImpl: java.util.Set unmodifiableKeys>;
+
+     label2:
+        exitmonitor r0;
+
+        return r2;
+
+     label3:
+        $r3 := @caughtexception;
+
+        r1 = $r3;
+
+        exitmonitor r0;
+
+        throw r1;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    protected java.nio.channels.SelectionKey register(java.nio.channels.spi.AbstractSelectableChannel, int, java.lang.Object)
+    {
+        java.nio.SelectorImpl r0;
+        java.nio.channels.spi.AbstractSelectableChannel r1;
+        int i0;
+        java.lang.Object r2;
+        java.lang.Throwable r3, r6, $r11, $r13;
+        java.util.Set r4, $r10;
+        java.nio.SelectionKeyImpl r5, $r9;
+        java.nio.channels.spi.SelectorProvider $r7, $r8;
+        boolean $z0;
+        java.nio.channels.IllegalSelectorException $r12;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        r1 := @parameter0: java.nio.channels.spi.AbstractSelectableChannel;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.Object;
+
+        $r7 = virtualinvoke r0.<java.nio.SelectorImpl: java.nio.channels.spi.SelectorProvider provider()>();
+
+        $r8 = virtualinvoke r1.<java.nio.channels.spi.AbstractSelectableChannel: java.nio.channels.spi.SelectorProvider provider()>();
+
+        $z0 = virtualinvoke $r7.<java.lang.Object: boolean equals(java.lang.Object)>($r8);
+
+        if $z0 != 0 goto label01;
+
+        $r12 = new java.nio.channels.IllegalSelectorException;
+
+        specialinvoke $r12.<java.nio.channels.IllegalSelectorException: void <init>()>();
+
+        throw $r12;
+
+     label01:
+        entermonitor r0;
+
+     label02:
+        r4 = r0.<java.nio.SelectorImpl: java.util.Set unmodifiableKeys>;
+
+        entermonitor r4;
+
+     label03:
+        $r9 = new java.nio.SelectionKeyImpl;
+
+        specialinvoke $r9.<java.nio.SelectionKeyImpl: void <init>(java.nio.channels.spi.AbstractSelectableChannel,int,java.lang.Object,java.nio.SelectorImpl)>(r1, i0, r2, r0);
+
+        r5 = $r9;
+
+        $r10 = r0.<java.nio.SelectorImpl: java.util.Set mutableKeys>;
+
+        interfaceinvoke $r10.<java.util.Set: boolean add(java.lang.Object)>(r5);
+
+        specialinvoke r0.<java.nio.SelectorImpl: void ensurePollFdsCapacity()>();
+
+        exitmonitor r4;
+
+     label04:
+        exitmonitor r0;
+
+     label05:
+        return r5;
+
+     label06:
+        $r13 := @caughtexception;
+
+        r6 = $r13;
+
+     label07:
+        exitmonitor r4;
+
+     label08:
+        throw r6;
+
+     label09:
+        $r11 := @caughtexception;
+
+        r3 = $r11;
+
+     label10:
+        exitmonitor r0;
+
+     label11:
+        throw r3;
+
+        catch java.lang.Throwable from label02 to label03 with label09;
+        catch java.lang.Throwable from label03 to label04 with label06;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label07 to label08 with label06;
+        catch java.lang.Throwable from label08 to label09 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    public int select() throws java.io.IOException
+    {
+        java.nio.SelectorImpl r0;
+        int $i0;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        $i0 = specialinvoke r0.<java.nio.SelectorImpl: int selectInternal(long)>(-1L);
+
+        return $i0;
+    }
+
+    public int select(long) throws java.io.IOException
+    {
+        java.nio.SelectorImpl r0;
+        long l0;
+        byte $b1, $b2;
+        int $i3;
+        java.lang.IllegalArgumentException $r1;
+        java.lang.StringBuilder $r2, $r3, $r4;
+        java.lang.String $r5;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        l0 := @parameter0: long;
+
+        $b1 = l0 cmp 0L;
+
+        if $b1 >= 0 goto label1;
+
+        $r1 = new java.lang.IllegalArgumentException;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("timeout < 0: ");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r1.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r5);
+
+        throw $r1;
+
+     label1:
+        $b2 = l0 cmp 0L;
+
+        if $b2 != 0 goto label2;
+
+        l0 = -1L;
+
+     label2:
+        $i3 = specialinvoke r0.<java.nio.SelectorImpl: int selectInternal(long)>(l0);
+
+        return $i3;
+    }
+
+    public int selectNow() throws java.io.IOException
+    {
+        java.nio.SelectorImpl r0;
+        int $i0;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        $i0 = specialinvoke r0.<java.nio.SelectorImpl: int selectInternal(long)>(0L);
+
+        return $i0;
+    }
+
+    public java.util.Set selectedKeys()
+    {
+        java.nio.SelectorImpl r0;
+        java.lang.Throwable r1, $r3;
+        java.util.Set r2;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+        entermonitor r0;
+
+     label1:
+        specialinvoke r0.<java.nio.SelectorImpl: void checkClosed()>();
+
+        r2 = r0.<java.nio.SelectorImpl: java.util.Set selectedKeys>;
+
+     label2:
+        exitmonitor r0;
+
+        return r2;
+
+     label3:
+        $r3 := @caughtexception;
+
+        r1 = $r3;
+
+        exitmonitor r0;
+
+        throw r1;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public java.nio.channels.Selector wakeup()
+    {
+        java.nio.SelectorImpl r0;
+        byte[] $r2;
+        java.io.FileDescriptor $r3;
+        libcore.io.Os $r4;
+        libcore.io.ErrnoException $r5;
+
+        r0 := @this: java.nio.SelectorImpl;
+
+     label1:
+        $r4 = <libcore.io.Libcore: libcore.io.Os os>;
+
+        $r3 = r0.<java.nio.SelectorImpl: java.io.FileDescriptor wakeupOut>;
+
+        $r2 = newarray (byte)[1];
+
+        $r2[0] = 1;
+
+        interfaceinvoke $r4.<libcore.io.Os: int write(java.io.FileDescriptor,byte[],int,int)>($r3, $r2, 0, 1);
+
+     label2:
+        return r0;
+
+     label3:
+        $r5 := @caughtexception;
+
+        return r0;
+
+        catch libcore.io.ErrnoException from label1 to label2 with label3;
+    }
+}

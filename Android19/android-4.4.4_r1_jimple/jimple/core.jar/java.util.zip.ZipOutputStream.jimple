@@ -1,0 +1,1286 @@
+public class java.util.zip.ZipOutputStream extends java.util.zip.DeflaterOutputStream implements java.util.zip.ZipConstants
+{
+    public static final int DEFLATED;
+    public static final int STORED;
+    private static final int ZIP_VERSION_2_0;
+    private java.io.ByteArrayOutputStream cDir;
+    private byte[] commentBytes;
+    private int compressionLevel;
+    private final java.util.zip.CRC32 crc;
+    private int curOffset;
+    private java.util.zip.ZipEntry currentEntry;
+    private int defaultCompressionMethod;
+    private final java.util.HashSet entries;
+    private byte[] nameBytes;
+    private int nameLength;
+    private int offset;
+
+    public void <init>(java.io.OutputStream)
+    {
+        java.util.zip.ZipOutputStream r0;
+        java.io.OutputStream r1;
+        java.util.zip.Deflater $r2;
+        byte[] $r3;
+        java.util.HashSet $r4;
+        java.io.ByteArrayOutputStream $r5;
+        java.util.zip.CRC32 $r6;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        r1 := @parameter0: java.io.OutputStream;
+
+        $r2 = new java.util.zip.Deflater;
+
+        specialinvoke $r2.<java.util.zip.Deflater: void <init>(int,boolean)>(-1, 1);
+
+        specialinvoke r0.<java.util.zip.DeflaterOutputStream: void <init>(java.io.OutputStream,java.util.zip.Deflater)>(r1, $r2);
+
+        $r3 = <libcore.util.EmptyArray: byte[] BYTE>;
+
+        r0.<java.util.zip.ZipOutputStream: byte[] commentBytes> = $r3;
+
+        $r4 = new java.util.HashSet;
+
+        specialinvoke $r4.<java.util.HashSet: void <init>()>();
+
+        r0.<java.util.zip.ZipOutputStream: java.util.HashSet entries> = $r4;
+
+        r0.<java.util.zip.ZipOutputStream: int defaultCompressionMethod> = 8;
+
+        r0.<java.util.zip.ZipOutputStream: int compressionLevel> = -1;
+
+        $r5 = new java.io.ByteArrayOutputStream;
+
+        specialinvoke $r5.<java.io.ByteArrayOutputStream: void <init>()>();
+
+        r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir> = $r5;
+
+        $r6 = new java.util.zip.CRC32;
+
+        specialinvoke $r6.<java.util.zip.CRC32: void <init>()>();
+
+        r0.<java.util.zip.ZipOutputStream: java.util.zip.CRC32 crc> = $r6;
+
+        r0.<java.util.zip.ZipOutputStream: int offset> = 0;
+
+        r0.<java.util.zip.ZipOutputStream: int curOffset> = 0;
+
+        return;
+    }
+
+    private void checkOpen() throws java.io.IOException
+    {
+        java.util.zip.ZipOutputStream r0;
+        java.io.ByteArrayOutputStream $r1;
+        java.io.IOException $r2;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        $r1 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        if $r1 != null goto label1;
+
+        $r2 = new java.io.IOException;
+
+        specialinvoke $r2.<java.io.IOException: void <init>(java.lang.String)>("Stream is closed");
+
+        throw $r2;
+
+     label1:
+        return;
+    }
+
+    private long writeLong(java.io.OutputStream, long) throws java.io.IOException
+    {
+        java.util.zip.ZipOutputStream r0;
+        java.io.OutputStream r1;
+        long l0, $l1, $l3, $l6, $l9;
+        int $i2, $i4, $i5, $i7, $i8, $i10, $i11;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        r1 := @parameter0: java.io.OutputStream;
+
+        l0 := @parameter1: long;
+
+        $l1 = 255L & l0;
+
+        $i2 = (int) $l1;
+
+        virtualinvoke r1.<java.io.OutputStream: void write(int)>($i2);
+
+        $l3 = l0 >> 8;
+
+        $i4 = (int) $l3;
+
+        $i5 = 255 & $i4;
+
+        virtualinvoke r1.<java.io.OutputStream: void write(int)>($i5);
+
+        $l6 = l0 >> 16;
+
+        $i7 = (int) $l6;
+
+        $i8 = 255 & $i7;
+
+        virtualinvoke r1.<java.io.OutputStream: void write(int)>($i8);
+
+        $l9 = l0 >> 24;
+
+        $i10 = (int) $l9;
+
+        $i11 = 255 & $i10;
+
+        virtualinvoke r1.<java.io.OutputStream: void write(int)>($i11);
+
+        return l0;
+    }
+
+    private int writeShort(java.io.OutputStream, int) throws java.io.IOException
+    {
+        java.util.zip.ZipOutputStream r0;
+        java.io.OutputStream r1;
+        int i0, $i1, $i2, $i3;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        r1 := @parameter0: java.io.OutputStream;
+
+        i0 := @parameter1: int;
+
+        $i1 = i0 & 255;
+
+        virtualinvoke r1.<java.io.OutputStream: void write(int)>($i1);
+
+        $i2 = i0 >> 8;
+
+        $i3 = 255 & $i2;
+
+        virtualinvoke r1.<java.io.OutputStream: void write(int)>($i3);
+
+        return i0;
+    }
+
+    public void close() throws java.io.IOException
+    {
+        java.util.zip.ZipOutputStream r0;
+        java.io.OutputStream $r1, $r3;
+        java.util.zip.Deflater $r2;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        $r1 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        if $r1 == null goto label1;
+
+        virtualinvoke r0.<java.util.zip.ZipOutputStream: void finish()>();
+
+        $r2 = r0.<java.util.zip.ZipOutputStream: java.util.zip.Deflater def>;
+
+        virtualinvoke $r2.<java.util.zip.Deflater: void end()>();
+
+        $r3 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        virtualinvoke $r3.<java.io.OutputStream: void close()>();
+
+        r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out> = null;
+
+     label1:
+        return;
+    }
+
+    public void closeEntry() throws java.io.IOException
+    {
+        java.util.zip.ZipOutputStream r0;
+        short s0, s1;
+        byte[] r1, $r33, $r40, $r43, $r52, $r54;
+        java.lang.String r2;
+        java.io.OutputStream r3, r5, r8, $r57;
+        long l2, l3, l4, $l18, $l22, $l23, $l25, $l27, $l31, $l41, $l51, $l59, $l60, $l61, $l64, $l66, $l68, $l69, $l72;
+        java.util.zip.ZipEntry r4, r6, r7, $r9, $r10, $r11, $r12, $r14, $r18, $r21, $r22, $r23, $r32, $r35, $r41, $r45, $r55, $r61, $r62;
+        int $i5, $i6, $i7, $i9, $i14, $i15, $i17, $i20, $i24, $i26, $i28, $i29, $i30, $i33, $i35, $i42, $i43, $i44, $i45, $i46, $i47, $i48, $i49, $i50, $i52, $i53, $i55, $i56, $i62, $i63, $i71, $i74;
+        java.io.ByteArrayOutputStream $r13, $r15, $r16, $r17, $r19, $r20, $r24, $r26, $r28, $r29, $r31, $r34, $r36, $r37, $r38, $r39, $r42, $r44, $r46, $r50, $r51, $r56, $r60;
+        java.util.zip.CRC32 $r25, $r27, $r30, $r48, $r58, $r63, $r66;
+        java.util.zip.Deflater $r47, $r49, $r59, $r64, $r65;
+        java.nio.charset.Charset $r53;
+        byte $b65, $b67;
+        java.util.zip.ZipException $r67, $r68;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: void checkOpen()>();
+
+        $r10 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        if $r10 != null goto label01;
+
+        return;
+
+     label01:
+        $r9 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $i5 = virtualinvoke $r9.<java.util.zip.ZipEntry: int getMethod()>();
+
+        if $i5 != 8 goto label02;
+
+        specialinvoke r0.<java.util.zip.DeflaterOutputStream: void finish()>();
+
+     label02:
+        $r12 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $i7 = virtualinvoke $r12.<java.util.zip.ZipEntry: int getMethod()>();
+
+        if $i7 != 0 goto label04;
+
+        $r66 = r0.<java.util.zip.ZipOutputStream: java.util.zip.CRC32 crc>;
+
+        $l72 = virtualinvoke $r66.<java.util.zip.CRC32: long getValue()>();
+
+        $r62 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $l66 = $r62.<java.util.zip.ZipEntry: long crc>;
+
+        $b65 = $l72 cmp $l66;
+
+        if $b65 == 0 goto label03;
+
+        $r68 = new java.util.zip.ZipException;
+
+        specialinvoke $r68.<java.util.zip.ZipException: void <init>(java.lang.String)>("CRC mismatch");
+
+        throw $r68;
+
+     label03:
+        $r61 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $l68 = $r61.<java.util.zip.ZipEntry: long size>;
+
+        $r63 = r0.<java.util.zip.ZipOutputStream: java.util.zip.CRC32 crc>;
+
+        $l69 = $r63.<java.util.zip.CRC32: long tbytes>;
+
+        $b67 = $l68 cmp $l69;
+
+        if $b67 == 0 goto label04;
+
+        $r67 = new java.util.zip.ZipException;
+
+        specialinvoke $r67.<java.util.zip.ZipException: void <init>(java.lang.String)>("Size mismatch");
+
+        throw $r67;
+
+     label04:
+        r0.<java.util.zip.ZipOutputStream: int curOffset> = 30;
+
+        $r11 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $i6 = virtualinvoke $r11.<java.util.zip.ZipEntry: int getMethod()>();
+
+        if $i6 == 0 goto label05;
+
+        $i55 = r0.<java.util.zip.ZipOutputStream: int curOffset>;
+
+        $i56 = 16 + $i55;
+
+        r0.<java.util.zip.ZipOutputStream: int curOffset> = $i56;
+
+        $r57 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r57, 134695760L);
+
+        r3 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        r4 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r58 = r0.<java.util.zip.ZipOutputStream: java.util.zip.CRC32 crc>;
+
+        l2 = virtualinvoke $r58.<java.util.zip.CRC32: long getValue()>();
+
+        r4.<java.util.zip.ZipEntry: long crc> = l2;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>(r3, l2);
+
+        r5 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        r6 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r65 = r0.<java.util.zip.ZipOutputStream: java.util.zip.Deflater def>;
+
+        $i71 = virtualinvoke $r65.<java.util.zip.Deflater: int getTotalOut()>();
+
+        l3 = (long) $i71;
+
+        r6.<java.util.zip.ZipEntry: long compressedSize> = l3;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>(r5, l3);
+
+        r8 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        r7 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r64 = r0.<java.util.zip.ZipOutputStream: java.util.zip.Deflater def>;
+
+        $i74 = virtualinvoke $r64.<java.util.zip.Deflater: int getTotalIn()>();
+
+        l4 = (long) $i74;
+
+        r7.<java.util.zip.ZipEntry: long size> = l4;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>(r8, l4);
+
+     label05:
+        $r14 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $i9 = virtualinvoke $r14.<java.util.zip.ZipEntry: int getMethod()>();
+
+        if $i9 != 0 goto label12;
+
+        s0 = 0;
+
+     label06:
+        s1 = s0 | 2048;
+
+        $r13 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r13, 33639248L);
+
+        $r16 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r16, 20);
+
+        $r15 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r15, 20);
+
+        $r19 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r19, s1);
+
+        $r17 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r18 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $i15 = virtualinvoke $r18.<java.util.zip.ZipEntry: int getMethod()>();
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r17, $i15);
+
+        $r20 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r22 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $i17 = $r22.<java.util.zip.ZipEntry: int time>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r20, $i17);
+
+        $r24 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r21 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $i14 = $r21.<java.util.zip.ZipEntry: int modDate>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r24, $i14);
+
+        $r26 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r25 = r0.<java.util.zip.ZipOutputStream: java.util.zip.CRC32 crc>;
+
+        $l18 = virtualinvoke $r25.<java.util.zip.CRC32: long getValue()>();
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r26, $l18);
+
+        $r23 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $i20 = virtualinvoke $r23.<java.util.zip.ZipEntry: int getMethod()>();
+
+        if $i20 != 8 goto label13;
+
+        $i49 = r0.<java.util.zip.ZipOutputStream: int curOffset>;
+
+        $l51 = (long) $i49;
+
+        $r50 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r49 = r0.<java.util.zip.ZipOutputStream: java.util.zip.Deflater def>;
+
+        $i52 = virtualinvoke $r49.<java.util.zip.Deflater: int getTotalOut()>();
+
+        $l59 = (long) $i52;
+
+        $l60 = specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r50, $l59);
+
+        $l61 = $l51 + $l60;
+
+        $i62 = (int) $l61;
+
+        r0.<java.util.zip.ZipOutputStream: int curOffset> = $i62;
+
+        $r60 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r59 = r0.<java.util.zip.ZipOutputStream: java.util.zip.Deflater def>;
+
+        $i63 = virtualinvoke $r59.<java.util.zip.Deflater: int getTotalIn()>();
+
+        $l64 = (long) $i63;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r60, $l64);
+
+     label07:
+        $i30 = r0.<java.util.zip.ZipOutputStream: int curOffset>;
+
+        $r29 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $i28 = r0.<java.util.zip.ZipOutputStream: int nameLength>;
+
+        $i29 = specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r29, $i28);
+
+        $i35 = $i30 + $i29;
+
+        r0.<java.util.zip.ZipOutputStream: int curOffset> = $i35;
+
+        $r35 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r33 = $r35.<java.util.zip.ZipEntry: byte[] extra>;
+
+        if $r33 == null goto label14;
+
+        $i48 = r0.<java.util.zip.ZipOutputStream: int curOffset>;
+
+        $r56 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r55 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r54 = $r55.<java.util.zip.ZipEntry: byte[] extra>;
+
+        $i53 = lengthof $r54;
+
+        $i47 = specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r56, $i53);
+
+        $i50 = $i48 + $i47;
+
+        r0.<java.util.zip.ZipOutputStream: int curOffset> = $i50;
+
+     label08:
+        $r32 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        r2 = virtualinvoke $r32.<java.util.zip.ZipEntry: java.lang.String getComment()>();
+
+        r1 = <libcore.util.EmptyArray: byte[] BYTE>;
+
+        if r2 == null goto label09;
+
+        $r53 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset UTF_8>;
+
+        r1 = virtualinvoke r2.<java.lang.String: byte[] getBytes(java.nio.charset.Charset)>($r53);
+
+     label09:
+        $r39 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $i33 = lengthof r1;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r39, $i33);
+
+        $r38 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r38, 0);
+
+        $r37 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r37, 0);
+
+        $r36 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r36, 0L);
+
+        $r44 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $i42 = r0.<java.util.zip.ZipOutputStream: int offset>;
+
+        $l41 = (long) $i42;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r44, $l41);
+
+        $r42 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r43 = r0.<java.util.zip.ZipOutputStream: byte[] nameBytes>;
+
+        virtualinvoke $r42.<java.io.ByteArrayOutputStream: void write(byte[])>($r43);
+
+        r0.<java.util.zip.ZipOutputStream: byte[] nameBytes> = null;
+
+        $r41 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r40 = $r41.<java.util.zip.ZipEntry: byte[] extra>;
+
+        if $r40 == null goto label10;
+
+        $r51 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r45 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r52 = $r45.<java.util.zip.ZipEntry: byte[] extra>;
+
+        virtualinvoke $r51.<java.io.ByteArrayOutputStream: void write(byte[])>($r52);
+
+     label10:
+        $i45 = r0.<java.util.zip.ZipOutputStream: int offset>;
+
+        $i46 = r0.<java.util.zip.ZipOutputStream: int curOffset>;
+
+        $i44 = $i45 + $i46;
+
+        r0.<java.util.zip.ZipOutputStream: int offset> = $i44;
+
+        $i43 = lengthof r1;
+
+        if $i43 <= 0 goto label11;
+
+        $r46 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        virtualinvoke $r46.<java.io.ByteArrayOutputStream: void write(byte[])>(r1);
+
+     label11:
+        r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry> = null;
+
+        $r48 = r0.<java.util.zip.ZipOutputStream: java.util.zip.CRC32 crc>;
+
+        virtualinvoke $r48.<java.util.zip.CRC32: void reset()>();
+
+        $r47 = r0.<java.util.zip.ZipOutputStream: java.util.zip.Deflater def>;
+
+        virtualinvoke $r47.<java.util.zip.Deflater: void reset()>();
+
+        r0.<java.util.zip.ZipOutputStream: boolean done> = 0;
+
+        return;
+
+     label12:
+        s0 = 8;
+
+        goto label06;
+
+     label13:
+        $i26 = r0.<java.util.zip.ZipOutputStream: int curOffset>;
+
+        $l23 = (long) $i26;
+
+        $r28 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r27 = r0.<java.util.zip.ZipOutputStream: java.util.zip.CRC32 crc>;
+
+        $l27 = $r27.<java.util.zip.CRC32: long tbytes>;
+
+        $l22 = specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r28, $l27);
+
+        $l25 = $l23 + $l22;
+
+        $i24 = (int) $l25;
+
+        r0.<java.util.zip.ZipOutputStream: int curOffset> = $i24;
+
+        $r31 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r30 = r0.<java.util.zip.ZipOutputStream: java.util.zip.CRC32 crc>;
+
+        $l31 = $r30.<java.util.zip.CRC32: long tbytes>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r31, $l31);
+
+        goto label07;
+
+     label14:
+        $r34 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r34, 0);
+
+        goto label08;
+    }
+
+    public void finish() throws java.io.IOException
+    {
+        java.util.zip.ZipOutputStream r0;
+        int i0, $i4, $i6, $i11, $i13, $i14;
+        java.io.OutputStream $r1, $r20;
+        java.io.ByteArrayOutputStream $r2, $r5, $r6, $r7, $r8, $r10, $r12, $r13, $r14, $r17, $r19, $r21;
+        java.util.HashSet $r3, $r9, $r11;
+        boolean $z0;
+        java.util.zip.ZipEntry $r4;
+        long $l7, $l10;
+        byte[] $r15, $r16, $r18;
+        java.util.zip.ZipException $r22;
+        java.io.IOException $r23;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        $r1 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        if $r1 != null goto label1;
+
+        $r23 = new java.io.IOException;
+
+        specialinvoke $r23.<java.io.IOException: void <init>(java.lang.String)>("Stream is closed");
+
+        throw $r23;
+
+     label1:
+        $r2 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        if $r2 != null goto label2;
+
+        return;
+
+     label2:
+        $r3 = r0.<java.util.zip.ZipOutputStream: java.util.HashSet entries>;
+
+        $z0 = virtualinvoke $r3.<java.util.HashSet: boolean isEmpty()>();
+
+        if $z0 == 0 goto label3;
+
+        $r22 = new java.util.zip.ZipException;
+
+        specialinvoke $r22.<java.util.zip.ZipException: void <init>(java.lang.String)>("No entries");
+
+        throw $r22;
+
+     label3:
+        $r4 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        if $r4 == null goto label4;
+
+        virtualinvoke r0.<java.util.zip.ZipOutputStream: void closeEntry()>();
+
+     label4:
+        $r5 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        i0 = virtualinvoke $r5.<java.io.ByteArrayOutputStream: int size()>();
+
+        $r6 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r6, 101010256L);
+
+        $r7 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r7, 0);
+
+        $r8 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r8, 0);
+
+        $r10 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r9 = r0.<java.util.zip.ZipOutputStream: java.util.HashSet entries>;
+
+        $i4 = virtualinvoke $r9.<java.util.HashSet: int size()>();
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r10, $i4);
+
+        $r12 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r11 = r0.<java.util.zip.ZipOutputStream: java.util.HashSet entries>;
+
+        $i6 = virtualinvoke $r11.<java.util.HashSet: int size()>();
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r12, $i6);
+
+        $r13 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $l7 = (long) i0;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r13, $l7);
+
+        $r14 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $i11 = r0.<java.util.zip.ZipOutputStream: int offset>;
+
+        $l10 = (long) $i11;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r14, $l10);
+
+        $r17 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r15 = r0.<java.util.zip.ZipOutputStream: byte[] commentBytes>;
+
+        $i13 = lengthof $r15;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r17, $i13);
+
+        $r16 = r0.<java.util.zip.ZipOutputStream: byte[] commentBytes>;
+
+        $i14 = lengthof $r16;
+
+        if $i14 <= 0 goto label5;
+
+        $r19 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r18 = r0.<java.util.zip.ZipOutputStream: byte[] commentBytes>;
+
+        virtualinvoke $r19.<java.io.ByteArrayOutputStream: void write(byte[])>($r18);
+
+     label5:
+        $r21 = r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir>;
+
+        $r20 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        virtualinvoke $r21.<java.io.ByteArrayOutputStream: void writeTo(java.io.OutputStream)>($r20);
+
+        r0.<java.util.zip.ZipOutputStream: java.io.ByteArrayOutputStream cDir> = null;
+
+        return;
+    }
+
+    public void putNextEntry(java.util.zip.ZipEntry) throws java.io.IOException
+    {
+        java.util.zip.ZipOutputStream r0;
+        java.util.zip.ZipEntry r1, $r2, $r10, $r18, $r20, $r22, $r29, $r30, $r35, $r37, $r39, $r42, $r44, $r49;
+        int i0, $i3, $i4, $i5, $i6, $i14, $i16, $i19, $i25, $i30;
+        short s1, s2;
+        java.lang.String $r3, $r7, $r13, $r54, $r55, $r59;
+        java.util.HashSet $r4, $r5, $r12;
+        boolean $z0;
+        java.nio.charset.Charset $r6;
+        byte[] $r8, $r9, $r28, $r32, $r34, $r36, $r40;
+        java.util.zip.Deflater $r11;
+        java.io.OutputStream $r14, $r15, $r16, $r17, $r19, $r21, $r23, $r24, $r25, $r26, $r27, $r31, $r33, $r38, $r41, $r43, $r45;
+        long $l10, $l24, $l27, $l29, $l32, $l34, $l36, $l38, $l39, $l40, $l41, $l44, $l45;
+        byte $b11, $b33, $b35, $b37, $b42, $b43;
+        java.lang.StringBuilder $r46, $r47, $r48, $r51, $r52, $r53, $r56;
+        java.lang.IllegalArgumentException $r50;
+        java.util.zip.ZipException $r57, $r58, $r60, $r61, $r62;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        r1 := @parameter0: java.util.zip.ZipEntry;
+
+        $r2 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        if $r2 == null goto label01;
+
+        virtualinvoke r0.<java.util.zip.ZipOutputStream: void closeEntry()>();
+
+     label01:
+        i0 = virtualinvoke r1.<java.util.zip.ZipEntry: int getMethod()>();
+
+        if i0 != -1 goto label02;
+
+        i0 = r0.<java.util.zip.ZipOutputStream: int defaultCompressionMethod>;
+
+     label02:
+        if i0 != 0 goto label07;
+
+        $l39 = virtualinvoke r1.<java.util.zip.ZipEntry: long getCompressedSize()>();
+
+        $b37 = $l39 cmp -1L;
+
+        if $b37 != 0 goto label04;
+
+        $l45 = virtualinvoke r1.<java.util.zip.ZipEntry: long getSize()>();
+
+        virtualinvoke r1.<java.util.zip.ZipEntry: void setCompressedSize(long)>($l45);
+
+     label03:
+        $l36 = virtualinvoke r1.<java.util.zip.ZipEntry: long getCrc()>();
+
+        $b33 = $l36 cmp -1L;
+
+        if $b33 != 0 goto label05;
+
+        $r60 = new java.util.zip.ZipException;
+
+        specialinvoke $r60.<java.util.zip.ZipException: void <init>(java.lang.String)>("STORED entry missing CRC");
+
+        throw $r60;
+
+     label04:
+        $l38 = virtualinvoke r1.<java.util.zip.ZipEntry: long getSize()>();
+
+        $b35 = $l38 cmp -1L;
+
+        if $b35 != 0 goto label03;
+
+        $l40 = virtualinvoke r1.<java.util.zip.ZipEntry: long getCompressedSize()>();
+
+        virtualinvoke r1.<java.util.zip.ZipEntry: void setSize(long)>($l40);
+
+        goto label03;
+
+     label05:
+        $l34 = virtualinvoke r1.<java.util.zip.ZipEntry: long getSize()>();
+
+        $b43 = $l34 cmp -1L;
+
+        if $b43 != 0 goto label06;
+
+        $r62 = new java.util.zip.ZipException;
+
+        specialinvoke $r62.<java.util.zip.ZipException: void <init>(java.lang.String)>("STORED entry missing size");
+
+        throw $r62;
+
+     label06:
+        $l41 = r1.<java.util.zip.ZipEntry: long size>;
+
+        $l44 = r1.<java.util.zip.ZipEntry: long compressedSize>;
+
+        $b42 = $l41 cmp $l44;
+
+        if $b42 == 0 goto label07;
+
+        $r61 = new java.util.zip.ZipException;
+
+        specialinvoke $r61.<java.util.zip.ZipException: void <init>(java.lang.String)>("STORED entry size/compressed size mismatch");
+
+        throw $r61;
+
+     label07:
+        specialinvoke r0.<java.util.zip.ZipOutputStream: void checkOpen()>();
+
+        $r4 = r0.<java.util.zip.ZipOutputStream: java.util.HashSet entries>;
+
+        $r3 = r1.<java.util.zip.ZipEntry: java.lang.String name>;
+
+        $z0 = virtualinvoke $r4.<java.util.HashSet: boolean contains(java.lang.Object)>($r3);
+
+        if $z0 == 0 goto label08;
+
+        $r57 = new java.util.zip.ZipException;
+
+        $r52 = new java.lang.StringBuilder;
+
+        specialinvoke $r52.<java.lang.StringBuilder: void <init>()>();
+
+        $r51 = virtualinvoke $r52.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Entry already exists: ");
+
+        $r54 = r1.<java.util.zip.ZipEntry: java.lang.String name>;
+
+        $r53 = virtualinvoke $r51.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r54);
+
+        $r59 = virtualinvoke $r53.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r57.<java.util.zip.ZipException: void <init>(java.lang.String)>($r59);
+
+        throw $r57;
+
+     label08:
+        $r5 = r0.<java.util.zip.ZipOutputStream: java.util.HashSet entries>;
+
+        $i3 = virtualinvoke $r5.<java.util.HashSet: int size()>();
+
+        if $i3 != 65535 goto label09;
+
+        $r58 = new java.util.zip.ZipException;
+
+        specialinvoke $r58.<java.util.zip.ZipException: void <init>(java.lang.String)>("Too many entries for the zip file format\'s 16-bit entry count");
+
+        throw $r58;
+
+     label09:
+        $r7 = r1.<java.util.zip.ZipEntry: java.lang.String name>;
+
+        $r6 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset UTF_8>;
+
+        $r8 = virtualinvoke $r7.<java.lang.String: byte[] getBytes(java.nio.charset.Charset)>($r6);
+
+        r0.<java.util.zip.ZipOutputStream: byte[] nameBytes> = $r8;
+
+        $r9 = r0.<java.util.zip.ZipOutputStream: byte[] nameBytes>;
+
+        $i4 = lengthof $r9;
+
+        r0.<java.util.zip.ZipOutputStream: int nameLength> = $i4;
+
+        $i6 = r0.<java.util.zip.ZipOutputStream: int nameLength>;
+
+        if $i6 <= 65535 goto label10;
+
+        $r50 = new java.lang.IllegalArgumentException;
+
+        $r47 = new java.lang.StringBuilder;
+
+        specialinvoke $r47.<java.lang.StringBuilder: void <init>()>();
+
+        $r46 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Name too long: ");
+
+        $i30 = r0.<java.util.zip.ZipOutputStream: int nameLength>;
+
+        $r48 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i30);
+
+        $r56 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" UTF-8 bytes");
+
+        $r55 = virtualinvoke $r56.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r50.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r55);
+
+        throw $r50;
+
+     label10:
+        $r11 = r0.<java.util.zip.ZipOutputStream: java.util.zip.Deflater def>;
+
+        $i5 = r0.<java.util.zip.ZipOutputStream: int compressionLevel>;
+
+        virtualinvoke $r11.<java.util.zip.Deflater: void setLevel(int)>($i5);
+
+        virtualinvoke r1.<java.util.zip.ZipEntry: void setMethod(int)>(i0);
+
+        r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry> = r1;
+
+        $r12 = r0.<java.util.zip.ZipOutputStream: java.util.HashSet entries>;
+
+        $r10 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r13 = $r10.<java.util.zip.ZipEntry: java.lang.String name>;
+
+        virtualinvoke $r12.<java.util.HashSet: boolean add(java.lang.Object)>($r13);
+
+        if i0 != 0 goto label16;
+
+        s1 = 0;
+
+     label11:
+        s2 = s1 | 2048;
+
+        $r14 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r14, 67324752L);
+
+        $r15 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r15, 20);
+
+        $r16 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r16, s2);
+
+        $r17 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r17, i0);
+
+        $r18 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $l10 = virtualinvoke $r18.<java.util.zip.ZipEntry: long getTime()>();
+
+        $b11 = $l10 cmp -1L;
+
+        if $b11 != 0 goto label12;
+
+        $r49 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $l32 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        virtualinvoke $r49.<java.util.zip.ZipEntry: void setTime(long)>($l32);
+
+     label12:
+        $r19 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        $r20 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $i14 = $r20.<java.util.zip.ZipEntry: int time>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r19, $i14);
+
+        $r21 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        $r22 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $i16 = $r22.<java.util.zip.ZipEntry: int modDate>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r21, $i16);
+
+        if i0 != 0 goto label17;
+
+        $r38 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        $r37 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $l24 = $r37.<java.util.zip.ZipEntry: long crc>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r38, $l24);
+
+        $r45 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        $r44 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $l29 = $r44.<java.util.zip.ZipEntry: long size>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r45, $l29);
+
+        $r43 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        $r42 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $l27 = $r42.<java.util.zip.ZipEntry: long size>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r43, $l27);
+
+     label13:
+        $r25 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        $i19 = r0.<java.util.zip.ZipOutputStream: int nameLength>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r25, $i19);
+
+        $r29 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r28 = $r29.<java.util.zip.ZipEntry: byte[] extra>;
+
+        if $r28 == null goto label18;
+
+        $r41 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        $r39 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r40 = $r39.<java.util.zip.ZipEntry: byte[] extra>;
+
+        $i25 = lengthof $r40;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r41, $i25);
+
+     label14:
+        $r31 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        $r32 = r0.<java.util.zip.ZipOutputStream: byte[] nameBytes>;
+
+        virtualinvoke $r31.<java.io.OutputStream: void write(byte[])>($r32);
+
+        $r30 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r36 = $r30.<java.util.zip.ZipEntry: byte[] extra>;
+
+        if $r36 == null goto label15;
+
+        $r33 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        $r35 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $r34 = $r35.<java.util.zip.ZipEntry: byte[] extra>;
+
+        virtualinvoke $r33.<java.io.OutputStream: void write(byte[])>($r34);
+
+     label15:
+        return;
+
+     label16:
+        s1 = 8;
+
+        goto label11;
+
+     label17:
+        $r24 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r24, 0L);
+
+        $r23 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r23, 0L);
+
+        $r26 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: long writeLong(java.io.OutputStream,long)>($r26, 0L);
+
+        goto label13;
+
+     label18:
+        $r27 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        specialinvoke r0.<java.util.zip.ZipOutputStream: int writeShort(java.io.OutputStream,int)>($r27, 0);
+
+        goto label14;
+    }
+
+    public void setComment(java.lang.String)
+    {
+        java.util.zip.ZipOutputStream r0;
+        java.lang.String r1, $r9;
+        byte[] r2;
+        java.nio.charset.Charset $r3;
+        int $i0, $i1;
+        java.lang.IllegalArgumentException $r4;
+        java.lang.StringBuilder $r5, $r6, $r7, $r8;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        r1 := @parameter0: java.lang.String;
+
+        if r1 != null goto label1;
+
+        r0.<java.util.zip.ZipOutputStream: byte[] commentBytes> = null;
+
+        return;
+
+     label1:
+        $r3 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset UTF_8>;
+
+        r2 = virtualinvoke r1.<java.lang.String: byte[] getBytes(java.nio.charset.Charset)>($r3);
+
+        $i0 = lengthof r2;
+
+        if $i0 <= 65535 goto label2;
+
+        $r4 = new java.lang.IllegalArgumentException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Comment too long: ");
+
+        $i1 = lengthof r2;
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" bytes");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r9);
+
+        throw $r4;
+
+     label2:
+        r0.<java.util.zip.ZipOutputStream: byte[] commentBytes> = r2;
+
+        return;
+    }
+
+    public void setLevel(int)
+    {
+        java.util.zip.ZipOutputStream r0;
+        int i0;
+        java.lang.IllegalArgumentException $r1;
+        java.lang.StringBuilder $r2, $r3, $r4;
+        java.lang.String $r5;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        i0 := @parameter0: int;
+
+        if i0 < -1 goto label1;
+
+        if i0 <= 9 goto label2;
+
+     label1:
+        $r1 = new java.lang.IllegalArgumentException;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Bad level: ");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r1.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r5);
+
+        throw $r1;
+
+     label2:
+        r0.<java.util.zip.ZipOutputStream: int compressionLevel> = i0;
+
+        return;
+    }
+
+    public void setMethod(int)
+    {
+        java.util.zip.ZipOutputStream r0;
+        int i0;
+        java.lang.IllegalArgumentException $r1;
+        java.lang.StringBuilder $r2, $r3, $r4;
+        java.lang.String $r5;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        i0 := @parameter0: int;
+
+        if i0 == 0 goto label1;
+
+        if i0 == 8 goto label1;
+
+        $r1 = new java.lang.IllegalArgumentException;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Bad method: ");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r1.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r5);
+
+        throw $r1;
+
+     label1:
+        r0.<java.util.zip.ZipOutputStream: int defaultCompressionMethod> = i0;
+
+        return;
+    }
+
+    public void write(byte[], int, int) throws java.io.IOException
+    {
+        java.util.zip.ZipOutputStream r0;
+        byte[] r1;
+        int i0, i1, $i2, $i3;
+        java.util.zip.ZipEntry $r2, $r3;
+        java.util.zip.CRC32 $r4;
+        java.io.OutputStream $r5;
+        java.util.zip.ZipException $r6;
+
+        r0 := @this: java.util.zip.ZipOutputStream;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $i2 = lengthof r1;
+
+        staticinvoke <java.util.Arrays: void checkOffsetAndCount(int,int,int)>($i2, i0, i1);
+
+        $r2 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        if $r2 != null goto label1;
+
+        $r6 = new java.util.zip.ZipException;
+
+        specialinvoke $r6.<java.util.zip.ZipException: void <init>(java.lang.String)>("No active entry");
+
+        throw $r6;
+
+     label1:
+        $r3 = r0.<java.util.zip.ZipOutputStream: java.util.zip.ZipEntry currentEntry>;
+
+        $i3 = virtualinvoke $r3.<java.util.zip.ZipEntry: int getMethod()>();
+
+        if $i3 != 0 goto label3;
+
+        $r5 = r0.<java.util.zip.ZipOutputStream: java.io.OutputStream out>;
+
+        virtualinvoke $r5.<java.io.OutputStream: void write(byte[],int,int)>(r1, i0, i1);
+
+     label2:
+        $r4 = r0.<java.util.zip.ZipOutputStream: java.util.zip.CRC32 crc>;
+
+        virtualinvoke $r4.<java.util.zip.CRC32: void update(byte[],int,int)>(r1, i0, i1);
+
+        return;
+
+     label3:
+        specialinvoke r0.<java.util.zip.DeflaterOutputStream: void write(byte[],int,int)>(r1, i0, i1);
+
+        goto label2;
+    }
+
+    public static void <clinit>()
+    {
+        <java.util.zip.ZipOutputStream: int ZIP_VERSION_2_0> = 20;
+
+        <java.util.zip.ZipOutputStream: int STORED> = 0;
+
+        <java.util.zip.ZipOutputStream: int DEFLATED> = 8;
+
+        return;
+    }
+}

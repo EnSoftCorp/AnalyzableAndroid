@@ -1,0 +1,1307 @@
+public class com.android.server.ClipboardService extends android.content.IClipboard$Stub
+{
+    private static final java.lang.String TAG;
+    private final android.app.IActivityManager mAm;
+    private final android.app.AppOpsManager mAppOps;
+    private android.util.SparseArray mClipboards;
+    private final android.content.Context mContext;
+    private final android.os.IBinder mPermissionOwner;
+    private final android.content.pm.PackageManager mPm;
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.ClipboardService r0;
+        android.content.Context r1, $r13;
+        android.os.RemoteException r2, $r15;
+        android.os.IBinder r3, r5;
+        android.content.IntentFilter r4, r18;
+        android.app.IActivityManager $r7, $r11;
+        android.content.pm.PackageManager $r8;
+        java.lang.Object $r9;
+        android.app.AppOpsManager $r10;
+        android.util.SparseArray r17;
+        com.android.server.ClipboardService$1 r19;
+        java.lang.Throwable r20;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<android.content.IClipboard$Stub: void <init>()>();
+
+        r17 = new android.util.SparseArray;
+
+        specialinvoke r17.<android.util.SparseArray: void <init>()>();
+
+        r0.<com.android.server.ClipboardService: android.util.SparseArray mClipboards> = r17;
+
+        r0.<com.android.server.ClipboardService: android.content.Context mContext> = r1;
+
+        $r7 = staticinvoke <android.app.ActivityManagerNative: android.app.IActivityManager getDefault()>();
+
+        r0.<com.android.server.ClipboardService: android.app.IActivityManager mAm> = $r7;
+
+        $r8 = virtualinvoke r1.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r0.<com.android.server.ClipboardService: android.content.pm.PackageManager mPm> = $r8;
+
+        $r9 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("appops");
+
+        $r10 = (android.app.AppOpsManager) $r9;
+
+        r0.<com.android.server.ClipboardService: android.app.AppOpsManager mAppOps> = $r10;
+
+     label1:
+        $r11 = r0.<com.android.server.ClipboardService: android.app.IActivityManager mAm>;
+
+        r5 = interfaceinvoke $r11.<android.app.IActivityManager: android.os.IBinder newUriPermissionOwner(java.lang.String)>("clipboard");
+
+     label2:
+        r3 = r5;
+
+     label3:
+        r0.<com.android.server.ClipboardService: android.os.IBinder mPermissionOwner> = r3;
+
+        r18 = new android.content.IntentFilter;
+
+        specialinvoke r18.<android.content.IntentFilter: void <init>()>();
+
+        r4 = r18;
+
+        virtualinvoke r4.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.USER_REMOVED");
+
+        $r13 = r0.<com.android.server.ClipboardService: android.content.Context mContext>;
+
+        r19 = new com.android.server.ClipboardService$1;
+
+        specialinvoke r19.<com.android.server.ClipboardService$1: void <init>(com.android.server.ClipboardService)>(r0);
+
+        virtualinvoke $r13.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>(r19, r4);
+
+        return;
+
+     label4:
+        $r15 := @caughtexception;
+
+        r2 = $r15;
+
+        r20 = (java.lang.Throwable) r2;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("clipboard", "AM dead", r20);
+
+        r3 = null;
+
+        goto label3;
+
+        catch android.os.RemoteException from label1 to label2 with label4;
+    }
+
+    static void access$000(com.android.server.ClipboardService, int)
+    {
+        com.android.server.ClipboardService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.ClipboardService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.ClipboardService: void removeClipboard(int)>(i0);
+
+        return;
+    }
+
+    private final void addActiveOwnerLocked(int, java.lang.String)
+    {
+        com.android.server.ClipboardService r0;
+        int i0, i1, i3, i4, $i5;
+        java.lang.String r1, $r22, $r23;
+        android.content.pm.IPackageManager r2;
+        long l2;
+        java.lang.Throwable r3, $r24;
+        com.android.server.ClipboardService$PerUserClipboard r5;
+        android.content.pm.PackageInfo r6;
+        android.content.pm.ApplicationInfo $r7;
+        boolean $z0, $z1;
+        java.util.HashSet $r8, $r11;
+        android.content.ClipData $r9, $r10, $r12;
+        java.lang.SecurityException $r13;
+        android.content.ClipData$Item $r14;
+        java.lang.StringBuilder $r15, $r16, $r17, $r18, $r20, $r21, $r25, $r26;
+        java.lang.IllegalArgumentException $r19;
+        android.os.RemoteException $r27;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 = staticinvoke <android.app.AppGlobals: android.content.pm.IPackageManager getPackageManager()>();
+
+        i1 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        l2 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label01:
+        r6 = interfaceinvoke r2.<android.content.pm.IPackageManager: android.content.pm.PackageInfo getPackageInfo(java.lang.String,int,int)>(r1, 0, i1);
+
+     label02:
+        if r6 != null goto label07;
+
+     label03:
+        $r19 = new java.lang.IllegalArgumentException;
+
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        $r25 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown package ");
+
+        $r26 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r23 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r19.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r23);
+
+        throw $r19;
+
+     label04:
+        $r27 := @caughtexception;
+
+     label05:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l2);
+
+        r5 = specialinvoke r0.<com.android.server.ClipboardService: com.android.server.ClipboardService$PerUserClipboard getClipboard()>();
+
+        $r9 = r5.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+        if $r9 == null goto label10;
+
+        $r8 = r5.<com.android.server.ClipboardService$PerUserClipboard: java.util.HashSet activePermissionOwners>;
+
+        $z1 = virtualinvoke $r8.<java.util.HashSet: boolean contains(java.lang.Object)>(r1);
+
+        if $z1 != 0 goto label10;
+
+        $r10 = r5.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+        i3 = virtualinvoke $r10.<android.content.ClipData: int getItemCount()>();
+
+        i4 = 0;
+
+     label06:
+        if i4 >= i3 goto label09;
+
+        $r12 = r5.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+        $r14 = virtualinvoke $r12.<android.content.ClipData: android.content.ClipData$Item getItemAt(int)>(i4);
+
+        specialinvoke r0.<com.android.server.ClipboardService: void grantItemLocked(android.content.ClipData$Item,java.lang.String)>($r14, r1);
+
+        i4 = i4 + 1;
+
+        goto label06;
+
+     label07:
+        $r7 = r6.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i5 = $r7.<android.content.pm.ApplicationInfo: int uid>;
+
+        $z0 = staticinvoke <android.os.UserHandle: boolean isSameApp(int,int)>($i5, i0);
+
+        if $z0 != 0 goto label05;
+
+        $r13 = new java.lang.SecurityException;
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        $r18 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Calling uid ");
+
+        $r15 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r16 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" does not own package ");
+
+        $r21 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r22 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r13.<java.lang.SecurityException: void <init>(java.lang.String)>($r22);
+
+        throw $r13;
+
+     label08:
+        $r24 := @caughtexception;
+
+        r3 = $r24;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l2);
+
+        throw r3;
+
+     label09:
+        $r11 = r5.<com.android.server.ClipboardService$PerUserClipboard: java.util.HashSet activePermissionOwners>;
+
+        virtualinvoke $r11.<java.util.HashSet: boolean add(java.lang.Object)>(r1);
+
+     label10:
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label04;
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch android.os.RemoteException from label03 to label04 with label04;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch android.os.RemoteException from label07 to label08 with label04;
+        catch java.lang.Throwable from label07 to label08 with label08;
+    }
+
+    private final void checkDataOwnerLocked(android.content.ClipData, int)
+    {
+        com.android.server.ClipboardService r0;
+        android.content.ClipData r1;
+        int i0, i1, i2;
+        android.content.ClipData$Item $r2;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: android.content.ClipData;
+
+        i0 := @parameter1: int;
+
+        i1 = virtualinvoke r1.<android.content.ClipData: int getItemCount()>();
+
+        i2 = 0;
+
+     label1:
+        if i2 >= i1 goto label2;
+
+        $r2 = virtualinvoke r1.<android.content.ClipData: android.content.ClipData$Item getItemAt(int)>(i2);
+
+        specialinvoke r0.<com.android.server.ClipboardService: void checkItemOwnerLocked(android.content.ClipData$Item,int)>($r2, i0);
+
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private final void checkItemOwnerLocked(android.content.ClipData$Item, int)
+    {
+        com.android.server.ClipboardService r0;
+        android.content.ClipData$Item r1;
+        int i0;
+        android.content.Intent r2;
+        android.net.Uri $r3, $r4, $r5, $r6;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: android.content.ClipData$Item;
+
+        i0 := @parameter1: int;
+
+        $r3 = virtualinvoke r1.<android.content.ClipData$Item: android.net.Uri getUri()>();
+
+        if $r3 == null goto label1;
+
+        $r6 = virtualinvoke r1.<android.content.ClipData$Item: android.net.Uri getUri()>();
+
+        specialinvoke r0.<com.android.server.ClipboardService: void checkUriOwnerLocked(android.net.Uri,int)>($r6, i0);
+
+     label1:
+        r2 = virtualinvoke r1.<android.content.ClipData$Item: android.content.Intent getIntent()>();
+
+        if r2 == null goto label2;
+
+        $r4 = virtualinvoke r2.<android.content.Intent: android.net.Uri getData()>();
+
+        if $r4 == null goto label2;
+
+        $r5 = virtualinvoke r2.<android.content.Intent: android.net.Uri getData()>();
+
+        specialinvoke r0.<com.android.server.ClipboardService: void checkUriOwnerLocked(android.net.Uri,int)>($r5, i0);
+
+     label2:
+        return;
+    }
+
+    private final void checkUriOwnerLocked(android.net.Uri, int)
+    {
+        com.android.server.ClipboardService r0;
+        android.net.Uri r1;
+        int i0;
+        long l1;
+        java.lang.Throwable r3, $r8;
+        java.lang.String $r4, $r5;
+        boolean $z0;
+        android.app.IActivityManager $r6;
+        android.os.RemoteException $r7;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: android.net.Uri;
+
+        i0 := @parameter1: int;
+
+        $r4 = "content";
+
+        $r5 = virtualinvoke r1.<android.net.Uri: java.lang.String getScheme()>();
+
+        $z0 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>($r5);
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label2:
+        $r6 = r0.<com.android.server.ClipboardService: android.app.IActivityManager mAm>;
+
+        interfaceinvoke $r6.<android.app.IActivityManager: int checkGrantUriPermission(int,java.lang.String,android.net.Uri,int)>(i0, null, r1, 1);
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        return;
+
+     label4:
+        $r8 := @caughtexception;
+
+        r3 = $r8;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw r3;
+
+     label5:
+        $r7 := @caughtexception;
+
+        goto label3;
+
+        catch android.os.RemoteException from label2 to label3 with label5;
+        catch java.lang.Throwable from label2 to label3 with label4;
+    }
+
+    private final void clearActiveOwnersLocked()
+    {
+        com.android.server.ClipboardService r0;
+        com.android.server.ClipboardService$PerUserClipboard r1;
+        int i0, i1;
+        java.util.HashSet $r2;
+        android.content.ClipData $r3, $r4, $r5;
+        android.content.ClipData$Item $r6;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 = specialinvoke r0.<com.android.server.ClipboardService: com.android.server.ClipboardService$PerUserClipboard getClipboard()>();
+
+        $r2 = r1.<com.android.server.ClipboardService$PerUserClipboard: java.util.HashSet activePermissionOwners>;
+
+        virtualinvoke $r2.<java.util.HashSet: void clear()>();
+
+        $r3 = r1.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+        if $r3 != null goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r4 = r1.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+        i0 = virtualinvoke $r4.<android.content.ClipData: int getItemCount()>();
+
+        i1 = 0;
+
+     label3:
+        if i1 >= i0 goto label1;
+
+        $r5 = r1.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+        $r6 = virtualinvoke $r5.<android.content.ClipData: android.content.ClipData$Item getItemAt(int)>(i1);
+
+        specialinvoke r0.<com.android.server.ClipboardService: void revokeItemLocked(android.content.ClipData$Item)>($r6);
+
+        i1 = i1 + 1;
+
+        goto label3;
+    }
+
+    private com.android.server.ClipboardService$PerUserClipboard getClipboard()
+    {
+        com.android.server.ClipboardService r0;
+        int $i0;
+        com.android.server.ClipboardService$PerUserClipboard $r1;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        $r1 = specialinvoke r0.<com.android.server.ClipboardService: com.android.server.ClipboardService$PerUserClipboard getClipboard(int)>($i0);
+
+        return $r1;
+    }
+
+    private com.android.server.ClipboardService$PerUserClipboard getClipboard(int)
+    {
+        com.android.server.ClipboardService r0;
+        int i0;
+        android.util.SparseArray r1, $r4, $r7;
+        java.lang.Throwable r2, $r8;
+        com.android.server.ClipboardService$PerUserClipboard r3, $r6;
+        java.lang.Object $r5;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.ClipboardService: android.util.SparseArray mClipboards>;
+
+        entermonitor r1;
+
+     label1:
+        $r4 = r0.<com.android.server.ClipboardService: android.util.SparseArray mClipboards>;
+
+        $r5 = virtualinvoke $r4.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        r3 = (com.android.server.ClipboardService$PerUserClipboard) $r5;
+
+     label2:
+        if r3 != null goto label4;
+
+     label3:
+        $r6 = new com.android.server.ClipboardService$PerUserClipboard;
+
+        specialinvoke $r6.<com.android.server.ClipboardService$PerUserClipboard: void <init>(com.android.server.ClipboardService,int)>(r0, i0);
+
+        r3 = $r6;
+
+        $r7 = r0.<com.android.server.ClipboardService: android.util.SparseArray mClipboards>;
+
+        virtualinvoke $r7.<android.util.SparseArray: void put(int,java.lang.Object)>(i0, r3);
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return r3;
+
+     label6:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    private final void grantItemLocked(android.content.ClipData$Item, java.lang.String)
+    {
+        com.android.server.ClipboardService r0;
+        android.content.ClipData$Item r1;
+        java.lang.String r2;
+        android.content.Intent r3;
+        android.net.Uri $r4, $r5, $r6, $r7;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: android.content.ClipData$Item;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r4 = virtualinvoke r1.<android.content.ClipData$Item: android.net.Uri getUri()>();
+
+        if $r4 == null goto label1;
+
+        $r7 = virtualinvoke r1.<android.content.ClipData$Item: android.net.Uri getUri()>();
+
+        specialinvoke r0.<com.android.server.ClipboardService: void grantUriLocked(android.net.Uri,java.lang.String)>($r7, r2);
+
+     label1:
+        r3 = virtualinvoke r1.<android.content.ClipData$Item: android.content.Intent getIntent()>();
+
+        if r3 == null goto label2;
+
+        $r5 = virtualinvoke r3.<android.content.Intent: android.net.Uri getData()>();
+
+        if $r5 == null goto label2;
+
+        $r6 = virtualinvoke r3.<android.content.Intent: android.net.Uri getData()>();
+
+        specialinvoke r0.<com.android.server.ClipboardService: void grantUriLocked(android.net.Uri,java.lang.String)>($r6, r2);
+
+     label2:
+        return;
+    }
+
+    private final void grantUriLocked(android.net.Uri, java.lang.String)
+    {
+        com.android.server.ClipboardService r0;
+        android.net.Uri r1;
+        java.lang.String r2;
+        long l0;
+        java.lang.Throwable r4, $r8;
+        android.app.IActivityManager $r5;
+        android.os.IBinder $r6;
+        int $i1;
+        android.os.RemoteException $r7;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: android.net.Uri;
+
+        r2 := @parameter1: java.lang.String;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        $r5 = r0.<com.android.server.ClipboardService: android.app.IActivityManager mAm>;
+
+        $r6 = r0.<com.android.server.ClipboardService: android.os.IBinder mPermissionOwner>;
+
+        $i1 = staticinvoke <android.os.Process: int myUid()>();
+
+        interfaceinvoke $r5.<android.app.IActivityManager: void grantUriPermissionFromOwner(android.os.IBinder,int,java.lang.String,android.net.Uri,int)>($r6, $i1, r2, r1, 1);
+
+     label2:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label3:
+        $r8 := @caughtexception;
+
+        r4 = $r8;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw r4;
+
+     label4:
+        $r7 := @caughtexception;
+
+        goto label2;
+
+        catch android.os.RemoteException from label1 to label2 with label4;
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    private void removeClipboard(int)
+    {
+        com.android.server.ClipboardService r0;
+        int i0;
+        android.util.SparseArray r1, $r3;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.ClipboardService: android.util.SparseArray mClipboards>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.ClipboardService: android.util.SparseArray mClipboards>;
+
+        virtualinvoke $r3.<android.util.SparseArray: void remove(int)>(i0);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private final void revokeItemLocked(android.content.ClipData$Item)
+    {
+        com.android.server.ClipboardService r0;
+        android.content.ClipData$Item r1;
+        android.content.Intent r2;
+        android.net.Uri $r3, $r4, $r5, $r6;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: android.content.ClipData$Item;
+
+        $r3 = virtualinvoke r1.<android.content.ClipData$Item: android.net.Uri getUri()>();
+
+        if $r3 == null goto label1;
+
+        $r6 = virtualinvoke r1.<android.content.ClipData$Item: android.net.Uri getUri()>();
+
+        specialinvoke r0.<com.android.server.ClipboardService: void revokeUriLocked(android.net.Uri)>($r6);
+
+     label1:
+        r2 = virtualinvoke r1.<android.content.ClipData$Item: android.content.Intent getIntent()>();
+
+        if r2 == null goto label2;
+
+        $r4 = virtualinvoke r2.<android.content.Intent: android.net.Uri getData()>();
+
+        if $r4 == null goto label2;
+
+        $r5 = virtualinvoke r2.<android.content.Intent: android.net.Uri getData()>();
+
+        specialinvoke r0.<com.android.server.ClipboardService: void revokeUriLocked(android.net.Uri)>($r5);
+
+     label2:
+        return;
+    }
+
+    private final void revokeUriLocked(android.net.Uri)
+    {
+        com.android.server.ClipboardService r0;
+        android.net.Uri r1;
+        long l0;
+        java.lang.Throwable r3, $r7;
+        android.os.IBinder $r4;
+        android.app.IActivityManager $r5;
+        android.os.RemoteException $r6;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: android.net.Uri;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        $r5 = r0.<com.android.server.ClipboardService: android.app.IActivityManager mAm>;
+
+        $r4 = r0.<com.android.server.ClipboardService: android.os.IBinder mPermissionOwner>;
+
+        interfaceinvoke $r5.<android.app.IActivityManager: void revokeUriPermissionFromOwner(android.os.IBinder,android.net.Uri,int)>($r4, r1, 3);
+
+     label2:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r3 = $r7;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw r3;
+
+     label4:
+        $r6 := @caughtexception;
+
+        goto label2;
+
+        catch android.os.RemoteException from label1 to label2 with label4;
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public void addPrimaryClipChangedListener(android.content.IOnPrimaryClipChangedListener, java.lang.String)
+    {
+        com.android.server.ClipboardService r0;
+        android.content.IOnPrimaryClipChangedListener r1;
+        java.lang.String r2;
+        java.lang.Throwable r3, $r7;
+        com.android.server.ClipboardService$PerUserClipboard $r4;
+        com.android.server.ClipboardService$ListenerInfo $r5;
+        android.os.RemoteCallbackList $r6;
+        int $i0;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: android.content.IOnPrimaryClipChangedListener;
+
+        r2 := @parameter1: java.lang.String;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = specialinvoke r0.<com.android.server.ClipboardService: com.android.server.ClipboardService$PerUserClipboard getClipboard()>();
+
+        $r6 = $r4.<com.android.server.ClipboardService$PerUserClipboard: android.os.RemoteCallbackList primaryClipListeners>;
+
+        $r5 = new com.android.server.ClipboardService$ListenerInfo;
+
+        $i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke $r5.<com.android.server.ClipboardService$ListenerInfo: void <init>(com.android.server.ClipboardService,int,java.lang.String)>(r0, $i0, r2);
+
+        virtualinvoke $r6.<android.os.RemoteCallbackList: boolean register(android.os.IInterface,java.lang.Object)>(r1, $r5);
+
+        exitmonitor r0;
+
+     label2:
+        return;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r3 = $r7;
+
+     label4:
+        exitmonitor r0;
+
+     label5:
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public android.content.ClipData getPrimaryClip(java.lang.String)
+    {
+        com.android.server.ClipboardService r0;
+        java.lang.String r1;
+        java.lang.Throwable r2, $r6;
+        android.content.ClipData r3;
+        android.app.AppOpsManager $r4;
+        int $i0, $i1, $i2;
+        com.android.server.ClipboardService$PerUserClipboard $r5;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: java.lang.String;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.server.ClipboardService: android.app.AppOpsManager mAppOps>;
+
+        $i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $i1 = virtualinvoke $r4.<android.app.AppOpsManager: int noteOp(int,int,java.lang.String)>(29, $i0, r1);
+
+        if $i1 == 0 goto label3;
+
+        exitmonitor r0;
+
+     label2:
+        return null;
+
+     label3:
+        $i2 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.ClipboardService: void addActiveOwnerLocked(int,java.lang.String)>($i2, r1);
+
+        $r5 = specialinvoke r0.<com.android.server.ClipboardService: com.android.server.ClipboardService$PerUserClipboard getClipboard()>();
+
+        r3 = $r5.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+        exitmonitor r0;
+
+     label4:
+        return r3;
+
+     label5:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+     label6:
+        exitmonitor r0;
+
+     label7:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public android.content.ClipDescription getPrimaryClipDescription(java.lang.String)
+    {
+        com.android.server.ClipboardService r0;
+        java.lang.String r1;
+        java.lang.Throwable r2, $r8;
+        com.android.server.ClipboardService$PerUserClipboard r3;
+        android.content.ClipData r4, $r7;
+        android.content.ClipDescription r5;
+        android.app.AppOpsManager $r6;
+        int $i0, $i1;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: java.lang.String;
+
+        entermonitor r0;
+
+     label01:
+        $r6 = r0.<com.android.server.ClipboardService: android.app.AppOpsManager mAppOps>;
+
+        $i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $i1 = virtualinvoke $r6.<android.app.AppOpsManager: int checkOp(int,int,java.lang.String)>(29, $i0, r1);
+
+        if $i1 == 0 goto label03;
+
+        exitmonitor r0;
+
+     label02:
+        return null;
+
+     label03:
+        r3 = specialinvoke r0.<com.android.server.ClipboardService: com.android.server.ClipboardService$PerUserClipboard getClipboard()>();
+
+        r4 = r3.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+     label04:
+        r5 = null;
+
+        if r4 == null goto label06;
+
+     label05:
+        $r7 = r3.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+        r5 = virtualinvoke $r7.<android.content.ClipData: android.content.ClipDescription getDescription()>();
+
+     label06:
+        exitmonitor r0;
+
+     label07:
+        return r5;
+
+     label08:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+     label09:
+        exitmonitor r0;
+
+     label10:
+        throw r2;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label05 to label06 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public boolean hasClipboardText(java.lang.String)
+    {
+        com.android.server.ClipboardService r0;
+        java.lang.String r1;
+        java.lang.Throwable r2, $r9;
+        com.android.server.ClipboardService$PerUserClipboard r3;
+        java.lang.CharSequence r4;
+        boolean z0;
+        int i0, $i1, $i2;
+        android.app.AppOpsManager $r5;
+        android.content.ClipData $r6, $r7;
+        android.content.ClipData$Item $r8;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: java.lang.String;
+
+        entermonitor r0;
+
+     label01:
+        $r5 = r0.<com.android.server.ClipboardService: android.app.AppOpsManager mAppOps>;
+
+        $i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $i2 = virtualinvoke $r5.<android.app.AppOpsManager: int checkOp(int,int,java.lang.String)>(29, $i1, r1);
+
+        if $i2 == 0 goto label03;
+
+        exitmonitor r0;
+
+     label02:
+        return 0;
+
+     label03:
+        r3 = specialinvoke r0.<com.android.server.ClipboardService: com.android.server.ClipboardService$PerUserClipboard getClipboard()>();
+
+        $r6 = r3.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+        if $r6 == null goto label12;
+
+        $r7 = r3.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+        $r8 = virtualinvoke $r7.<android.content.ClipData: android.content.ClipData$Item getItemAt(int)>(0);
+
+        r4 = virtualinvoke $r8.<android.content.ClipData$Item: java.lang.CharSequence getText()>();
+
+     label04:
+        z0 = 0;
+
+        if r4 == null goto label07;
+
+     label05:
+        i0 = interfaceinvoke r4.<java.lang.CharSequence: int length()>();
+
+     label06:
+        z0 = 0;
+
+        if i0 <= 0 goto label07;
+
+        z0 = 1;
+
+     label07:
+        exitmonitor r0;
+
+     label08:
+        return z0;
+
+     label09:
+        $r9 := @caughtexception;
+
+        r2 = $r9;
+
+     label10:
+        exitmonitor r0;
+
+     label11:
+        throw r2;
+
+     label12:
+        exitmonitor r0;
+
+     label13:
+        return 0;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label05 to label06 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+        catch java.lang.Throwable from label12 to label13 with label09;
+    }
+
+    public boolean hasPrimaryClip(java.lang.String)
+    {
+        com.android.server.ClipboardService r0;
+        java.lang.String r1;
+        java.lang.Throwable r2, $r6;
+        android.content.ClipData r3;
+        boolean z0;
+        android.app.AppOpsManager $r4;
+        int $i0, $i1;
+        com.android.server.ClipboardService$PerUserClipboard $r5;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: java.lang.String;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.server.ClipboardService: android.app.AppOpsManager mAppOps>;
+
+        $i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $i1 = virtualinvoke $r4.<android.app.AppOpsManager: int checkOp(int,int,java.lang.String)>(29, $i0, r1);
+
+        if $i1 == 0 goto label3;
+
+        exitmonitor r0;
+
+     label2:
+        return 0;
+
+     label3:
+        $r5 = specialinvoke r0.<com.android.server.ClipboardService: com.android.server.ClipboardService$PerUserClipboard getClipboard()>();
+
+        r3 = $r5.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip>;
+
+     label4:
+        z0 = 0;
+
+        if r3 == null goto label5;
+
+        z0 = 1;
+
+     label5:
+        exitmonitor r0;
+
+     label6:
+        return z0;
+
+     label7:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+     label8:
+        exitmonitor r0;
+
+     label9:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public boolean onTransact(int, android.os.Parcel, android.os.Parcel, int) throws android.os.RemoteException
+    {
+        com.android.server.ClipboardService r0;
+        int i0, i1;
+        android.os.Parcel r1, r2;
+        java.lang.RuntimeException r3, $r4;
+        boolean z0, $z1;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.os.Parcel;
+
+        r2 := @parameter2: android.os.Parcel;
+
+        i1 := @parameter3: int;
+
+     label1:
+        z0 = specialinvoke r0.<android.content.IClipboard$Stub: boolean onTransact(int,android.os.Parcel,android.os.Parcel,int)>(i0, r1, r2, i1);
+
+     label2:
+        return z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r3 = $r4;
+
+        $z1 = r3 instanceof java.lang.SecurityException;
+
+        if $z1 != 0 goto label4;
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("clipboard", "Exception: ", r3);
+
+     label4:
+        throw r3;
+
+        catch java.lang.RuntimeException from label1 to label2 with label3;
+    }
+
+    public void removePrimaryClipChangedListener(android.content.IOnPrimaryClipChangedListener)
+    {
+        com.android.server.ClipboardService r0;
+        android.content.IOnPrimaryClipChangedListener r1;
+        java.lang.Throwable r2, $r5;
+        com.android.server.ClipboardService$PerUserClipboard $r3;
+        android.os.RemoteCallbackList $r4;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: android.content.IOnPrimaryClipChangedListener;
+
+        entermonitor r0;
+
+     label1:
+        $r3 = specialinvoke r0.<com.android.server.ClipboardService: com.android.server.ClipboardService$PerUserClipboard getClipboard()>();
+
+        $r4 = $r3.<com.android.server.ClipboardService$PerUserClipboard: android.os.RemoteCallbackList primaryClipListeners>;
+
+        virtualinvoke $r4.<android.os.RemoteCallbackList: boolean unregister(android.os.IInterface)>(r1);
+
+        exitmonitor r0;
+
+     label2:
+        return;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+     label4:
+        exitmonitor r0;
+
+     label5:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void setPrimaryClip(android.content.ClipData, java.lang.String)
+    {
+        com.android.server.ClipboardService r0;
+        android.content.ClipData r1;
+        java.lang.String r2, $r12;
+        int i0, i2, i3, $i4, $i5, $i6, $i7;
+        com.android.server.ClipboardService$PerUserClipboard r3;
+        long l1;
+        java.lang.Throwable r4, r6, $r19, $r20;
+        com.android.server.ClipboardService$ListenerInfo r7;
+        android.app.AppOpsManager $r8, $r14;
+        android.os.RemoteCallbackList $r9, $r10, $r11, $r15, $r21;
+        java.lang.Object $r13;
+        android.content.IOnPrimaryClipChangedListener $r16;
+        android.os.IInterface $r17;
+        java.lang.IllegalArgumentException $r18;
+        android.os.RemoteException $r22;
+
+        r0 := @this: com.android.server.ClipboardService;
+
+        r1 := @parameter0: android.content.ClipData;
+
+        r2 := @parameter1: java.lang.String;
+
+        entermonitor r0;
+
+        if r1 == null goto label05;
+
+     label01:
+        $i7 = virtualinvoke r1.<android.content.ClipData: int getItemCount()>();
+
+        if $i7 > 0 goto label05;
+
+        $r18 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r18.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("No items");
+
+        throw $r18;
+
+     label02:
+        $r19 := @caughtexception;
+
+        r4 = $r19;
+
+     label03:
+        exitmonitor r0;
+
+     label04:
+        throw r4;
+
+     label05:
+        i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $r8 = r0.<com.android.server.ClipboardService: android.app.AppOpsManager mAppOps>;
+
+        $i4 = virtualinvoke $r8.<android.app.AppOpsManager: int noteOp(int,int,java.lang.String)>(30, i0, r2);
+
+        if $i4 == 0 goto label07;
+
+        exitmonitor r0;
+
+     label06:
+        return;
+
+     label07:
+        specialinvoke r0.<com.android.server.ClipboardService: void checkDataOwnerLocked(android.content.ClipData,int)>(r1, i0);
+
+        specialinvoke r0.<com.android.server.ClipboardService: void clearActiveOwnersLocked()>();
+
+        r3 = specialinvoke r0.<com.android.server.ClipboardService: com.android.server.ClipboardService$PerUserClipboard getClipboard()>();
+
+        r3.<com.android.server.ClipboardService$PerUserClipboard: android.content.ClipData primaryClip> = r1;
+
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+        $r9 = r3.<com.android.server.ClipboardService$PerUserClipboard: android.os.RemoteCallbackList primaryClipListeners>;
+
+        i2 = virtualinvoke $r9.<android.os.RemoteCallbackList: int beginBroadcast()>();
+
+     label08:
+        i3 = 0;
+
+     label09:
+        if i3 >= i2 goto label14;
+
+     label10:
+        $r11 = r3.<com.android.server.ClipboardService$PerUserClipboard: android.os.RemoteCallbackList primaryClipListeners>;
+
+        $r13 = virtualinvoke $r11.<android.os.RemoteCallbackList: java.lang.Object getBroadcastCookie(int)>(i3);
+
+        r7 = (com.android.server.ClipboardService$ListenerInfo) $r13;
+
+        $r14 = r0.<com.android.server.ClipboardService: android.app.AppOpsManager mAppOps>;
+
+        $i5 = r7.<com.android.server.ClipboardService$ListenerInfo: int mUid>;
+
+        $r12 = r7.<com.android.server.ClipboardService$ListenerInfo: java.lang.String mPackageName>;
+
+        $i6 = virtualinvoke $r14.<android.app.AppOpsManager: int checkOpNoThrow(int,int,java.lang.String)>(29, $i5, $r12);
+
+        if $i6 != 0 goto label11;
+
+        $r15 = r3.<com.android.server.ClipboardService$PerUserClipboard: android.os.RemoteCallbackList primaryClipListeners>;
+
+        $r17 = virtualinvoke $r15.<android.os.RemoteCallbackList: android.os.IInterface getBroadcastItem(int)>(i3);
+
+        $r16 = (android.content.IOnPrimaryClipChangedListener) $r17;
+
+        interfaceinvoke $r16.<android.content.IOnPrimaryClipChangedListener: void dispatchPrimaryClipChanged()>();
+
+     label11:
+        i3 = i3 + 1;
+
+        goto label09;
+
+     label12:
+        $r20 := @caughtexception;
+
+        r6 = $r20;
+
+     label13:
+        $r21 = r3.<com.android.server.ClipboardService$PerUserClipboard: android.os.RemoteCallbackList primaryClipListeners>;
+
+        virtualinvoke $r21.<android.os.RemoteCallbackList: void finishBroadcast()>();
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw r6;
+
+     label14:
+        $r10 = r3.<com.android.server.ClipboardService$PerUserClipboard: android.os.RemoteCallbackList primaryClipListeners>;
+
+        virtualinvoke $r10.<android.os.RemoteCallbackList: void finishBroadcast()>();
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        exitmonitor r0;
+
+     label15:
+        return;
+
+     label16:
+        $r22 := @caughtexception;
+
+        goto label11;
+
+        catch java.lang.Throwable from label01 to label02 with label02;
+        catch java.lang.Throwable from label03 to label04 with label02;
+        catch java.lang.Throwable from label05 to label06 with label02;
+        catch java.lang.Throwable from label07 to label08 with label02;
+        catch android.os.RemoteException from label10 to label11 with label16;
+        catch java.lang.Throwable from label10 to label11 with label12;
+        catch java.lang.Throwable from label13 to label14 with label02;
+        catch java.lang.Throwable from label14 to label15 with label02;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.ClipboardService: java.lang.String TAG> = "ClipboardService";
+
+        return;
+    }
+}

@@ -1,0 +1,752 @@
+class com.android.server.sip.SipService$SipKeepAliveProcessCallback extends java.lang.Object implements java.lang.Runnable, com.android.server.sip.SipSessionGroup$KeepAliveProcessCallback
+{
+    private static final int MIN_INTERVAL;
+    private static final int NAT_MEASUREMENT_RETRY_INTERVAL;
+    private static final int PASS_THRESHOLD;
+    private static final boolean SKAI_DBG;
+    private static final java.lang.String SKAI_TAG;
+    private com.android.server.sip.SipService$SipSessionGroupExt mGroup;
+    private int mInterval;
+    private android.net.sip.SipProfile mLocalProfile;
+    private int mMaxInterval;
+    private int mMinInterval;
+    private int mPassCount;
+    private com.android.server.sip.SipSessionGroup$SipSessionImpl mSession;
+    final com.android.server.sip.SipService this$0;
+
+    public void <init>(com.android.server.sip.SipService, android.net.sip.SipProfile, int, int)
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        com.android.server.sip.SipService r1;
+        android.net.sip.SipProfile r2;
+        int i0, i1;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        r1 := @parameter0: com.android.server.sip.SipService;
+
+        r2 := @parameter1: android.net.sip.SipProfile;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0> = r1;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMaxInterval> = i1;
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMinInterval> = i0;
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: android.net.sip.SipProfile mLocalProfile> = r2;
+
+        return;
+    }
+
+    private boolean checkTermination()
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        int $i0, $i1, $i2;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        $i1 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMaxInterval>;
+
+        $i0 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMinInterval>;
+
+        $i2 = $i1 - $i0;
+
+        if $i2 >= 5 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private void log(java.lang.String)
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        r1 := @parameter0: java.lang.String;
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("SipKeepAliveProcessCallback", r1);
+
+        return;
+    }
+
+    private void loge(java.lang.String)
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        r1 := @parameter0: java.lang.String;
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("SipKeepAliveProcessCallback", r1);
+
+        return;
+    }
+
+    private void loge(java.lang.String, java.lang.Throwable)
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        java.lang.String r1;
+        java.lang.Throwable r2;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.Throwable;
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String,java.lang.Throwable)>("SipKeepAliveProcessCallback", r1, r2);
+
+        return;
+    }
+
+    private void restart()
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        com.android.server.sip.SipService r1;
+        java.lang.Throwable r2, $r11, r14;
+        javax.sip.SipException r3, $r12;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl $r4, $r9, $r10;
+        java.lang.StringBuilder $r6, $r7, r13;
+        int $i0, $i1;
+        java.lang.String $r8;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        r1 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        entermonitor r1;
+
+     label01:
+        $r4 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        if $r4 != null goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        r13 = new java.lang.StringBuilder;
+
+        specialinvoke r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("restart: interval=");
+
+        $i0 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mInterval>;
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void log(java.lang.String)>($r8);
+
+     label04:
+        $r9 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r9.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void stopKeepAliveProcess()>();
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mPassCount> = 0;
+
+        $r10 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        $i1 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mInterval>;
+
+        virtualinvoke $r10.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void startKeepAliveProcess(int,com.android.server.sip.SipSessionGroup$KeepAliveProcessCallback)>($i1, r0);
+
+     label05:
+        exitmonitor r1;
+
+     label06:
+        return;
+
+     label07:
+        $r11 := @caughtexception;
+
+        r2 = $r11;
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        throw r2;
+
+     label10:
+        $r12 := @caughtexception;
+
+        r3 = $r12;
+
+     label11:
+        r14 = (java.lang.Throwable) r3;
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void loge(java.lang.String,java.lang.Throwable)>("restart", r14);
+
+     label12:
+        goto label05;
+
+        catch java.lang.Throwable from label01 to label02 with label07;
+        catch java.lang.Throwable from label03 to label04 with label07;
+        catch javax.sip.SipException from label04 to label05 with label10;
+        catch java.lang.Throwable from label04 to label05 with label07;
+        catch java.lang.Throwable from label05 to label06 with label07;
+        catch java.lang.Throwable from label08 to label09 with label07;
+        catch java.lang.Throwable from label11 to label12 with label07;
+    }
+
+    private void restartLater()
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        com.android.server.sip.SipService r1, $r3, $r5;
+        java.lang.Throwable r2, $r7;
+        com.android.server.sip.SipWakeupTimer $r4, $r6;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        r1 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $r4 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeupTimer access$200(com.android.server.sip.SipService)>($r3);
+
+        virtualinvoke $r4.<com.android.server.sip.SipWakeupTimer: void cancel(java.lang.Runnable)>(r0);
+
+        $r5 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $r6 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeupTimer access$200(com.android.server.sip.SipService)>($r5);
+
+        virtualinvoke $r6.<com.android.server.sip.SipWakeupTimer: void set(int,java.lang.Runnable)>(120000, r0);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r2 = $r7;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void onError(int, java.lang.String)
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        int i0;
+        java.lang.String r1, $r7;
+        java.lang.StringBuilder $r2, $r3, $r4, $r5, $r6;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onError: errorCode=");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" desc=");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void loge(java.lang.String)>($r7);
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void restartLater()>();
+
+        return;
+    }
+
+    public void onResponse(boolean)
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        boolean z0, $z1;
+        com.android.server.sip.SipService r1, r3, $r5, $r11, $r14, $r15, $r20, $r23, $r24, $r27;
+        java.lang.Throwable r2, $r28;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i11, $i12, $i13, $i15, $i17;
+        java.lang.StringBuilder $r4, $r6, $r7, $r8, $r10, $r12, $r13, $r16, $r18, $r19, $r21, $r22, $r25;
+        java.lang.String $r9, $r17, $r26;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        entermonitor r1;
+
+        if z0 != 0 goto label13;
+
+     label01:
+        $i12 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mPassCount>;
+
+        i0 = 1 + $i12;
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mPassCount> = i0;
+
+     label02:
+        if i0 == 10 goto label05;
+
+     label03:
+        exitmonitor r1;
+
+     label04:
+        return;
+
+     label05:
+        $r15 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $i13 = staticinvoke <com.android.server.sip.SipService: int access$900(com.android.server.sip.SipService)>($r15);
+
+        if $i13 <= 0 goto label06;
+
+        $r27 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $r24 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $i17 = staticinvoke <com.android.server.sip.SipService: int access$900(com.android.server.sip.SipService)>($r24);
+
+        staticinvoke <com.android.server.sip.SipService: int access$1002(com.android.server.sip.SipService,int)>($r27, $i17);
+
+     label06:
+        r3 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        i1 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mInterval>;
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMinInterval> = i1;
+
+        staticinvoke <com.android.server.sip.SipService: int access$902(com.android.server.sip.SipService,int)>(r3, i1);
+
+        $r18 = new java.lang.StringBuilder;
+
+        specialinvoke $r18.<java.lang.StringBuilder: void <init>()>();
+
+        $r19 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onResponse: portChanged=");
+
+        $r21 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        $r22 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mKeepAliveInterval=");
+
+        $r20 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $i15 = staticinvoke <com.android.server.sip.SipService: int access$900(com.android.server.sip.SipService)>($r20);
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i15);
+
+        $r26 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void log(java.lang.String)>($r26);
+
+        $r23 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        staticinvoke <com.android.server.sip.SipService: void access$1100(com.android.server.sip.SipService)>($r23);
+
+     label07:
+        $z1 = specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: boolean checkTermination()>();
+
+        if $z1 == 0 goto label15;
+
+        virtualinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void stop()>();
+
+        $r11 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $i9 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMinInterval>;
+
+        staticinvoke <com.android.server.sip.SipService: int access$902(com.android.server.sip.SipService,int)>($r11, $i9);
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onResponse: checkTermination mKeepAliveInterval=");
+
+        $r14 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $i11 = staticinvoke <com.android.server.sip.SipService: int access$900(com.android.server.sip.SipService)>($r14);
+
+        $r16 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i11);
+
+        $r17 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void log(java.lang.String)>($r17);
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return;
+
+     label10:
+        $r28 := @caughtexception;
+
+        r2 = $r28;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        throw r2;
+
+     label13:
+        $i2 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mInterval>;
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMaxInterval> = $i2;
+
+     label14:
+        goto label07;
+
+     label15:
+        $i4 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMaxInterval>;
+
+        $i3 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMinInterval>;
+
+        $i5 = $i4 + $i3;
+
+        $i6 = $i5 / 2;
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mInterval> = $i6;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onResponse: mKeepAliveInterval=");
+
+        $r5 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $i7 = staticinvoke <com.android.server.sip.SipService: int access$900(com.android.server.sip.SipService)>($r5);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", new mInterval=");
+
+        $i8 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mInterval>;
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i8);
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void log(java.lang.String)>($r9);
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void restart()>();
+
+     label16:
+        goto label08;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label03 to label04 with label10;
+        catch java.lang.Throwable from label05 to label06 with label10;
+        catch java.lang.Throwable from label06 to label07 with label10;
+        catch java.lang.Throwable from label07 to label08 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+        catch java.lang.Throwable from label13 to label14 with label10;
+        catch java.lang.Throwable from label15 to label16 with label10;
+    }
+
+    public void run()
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        com.android.server.sip.SipService $r1;
+        com.android.server.sip.SipWakeupTimer $r2;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        $r1 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $r2 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeupTimer access$200(com.android.server.sip.SipService)>($r1);
+
+        virtualinvoke $r2.<com.android.server.sip.SipWakeupTimer: void cancel(java.lang.Runnable)>(r0);
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void restart()>();
+
+        return;
+    }
+
+    public void start()
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        com.android.server.sip.SipService r1, $r17, $r19, $r21;
+        java.lang.Throwable r2, r3, $r28, $r31;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl $r4, $r25, $r29;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        java.lang.StringBuilder $r5, $r6, $r7, $r8, $r9, $r11, $r12, $r13, $r14;
+        java.lang.String $r10, $r16, $r30;
+        boolean $z0;
+        com.android.server.sip.SipService$SipSessionGroupExt $r15, $r23, $r26;
+        android.net.sip.SipProfile $r18;
+        com.android.server.sip.SipWakeupTimer $r20;
+        com.android.server.sip.SipService$MyExecutor $r22;
+        android.content.Context $r24;
+        android.net.sip.ISipSession $r27;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        r1 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        entermonitor r1;
+
+     label01:
+        $r4 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        if $r4 == null goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        $i1 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMaxInterval>;
+
+        $i0 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMinInterval>;
+
+        $i2 = $i1 + $i0;
+
+        $i3 = $i2 / 2;
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mInterval> = $i3;
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mPassCount> = 0;
+
+        $i4 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mInterval>;
+
+        if $i4 < 10 goto label04;
+
+        $z0 = specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: boolean checkTermination()>();
+
+        if $z0 == 0 goto label09;
+
+     label04:
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("start: measurement aborted; interval=[");
+
+        $i5 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMinInterval>;
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(",");
+
+        $i6 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mMaxInterval>;
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i6);
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void log(java.lang.String)>($r10);
+
+        exitmonitor r1;
+
+     label05:
+        return;
+
+     label06:
+        $r28 := @caughtexception;
+
+        r2 = $r28;
+
+     label07:
+        exitmonitor r1;
+
+     label08:
+        throw r2;
+
+     label09:
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("start: interval=");
+
+        $i7 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mInterval>;
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void log(java.lang.String)>($r16);
+
+        $r15 = new com.android.server.sip.SipService$SipSessionGroupExt;
+
+        $r17 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $r18 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: android.net.sip.SipProfile mLocalProfile>;
+
+        specialinvoke $r15.<com.android.server.sip.SipService$SipSessionGroupExt: void <init>(com.android.server.sip.SipService,android.net.sip.SipProfile,android.app.PendingIntent,android.net.sip.ISipSessionListener)>($r17, $r18, null, null);
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService$SipSessionGroupExt mGroup> = $r15;
+
+        $r23 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService$SipSessionGroupExt mGroup>;
+
+        $r20 = new com.android.server.sip.SipWakeupTimer;
+
+        $r19 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $r24 = staticinvoke <com.android.server.sip.SipService: android.content.Context access$700(com.android.server.sip.SipService)>($r19);
+
+        $r21 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $r22 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipService$MyExecutor access$800(com.android.server.sip.SipService)>($r21);
+
+        specialinvoke $r20.<com.android.server.sip.SipWakeupTimer: void <init>(android.content.Context,java.util.concurrent.Executor)>($r24, $r22);
+
+        virtualinvoke $r23.<com.android.server.sip.SipService$SipSessionGroupExt: void setWakeupTimer(com.android.server.sip.SipWakeupTimer)>($r20);
+
+        $r26 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService$SipSessionGroupExt mGroup>;
+
+        $r27 = virtualinvoke $r26.<com.android.server.sip.SipService$SipSessionGroupExt: android.net.sip.ISipSession createSession(android.net.sip.ISipSessionListener)>(null);
+
+        $r25 = (com.android.server.sip.SipSessionGroup$SipSessionImpl) $r27;
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession> = $r25;
+
+        $r29 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        $i8 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: int mInterval>;
+
+        virtualinvoke $r29.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void startKeepAliveProcess(int,com.android.server.sip.SipSessionGroup$KeepAliveProcessCallback)>($i8, r0);
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        return;
+
+     label12:
+        $r31 := @caughtexception;
+
+        r3 = $r31;
+
+     label13:
+        $r30 = virtualinvoke r3.<java.lang.Throwable: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void onError(int,java.lang.String)>(-4, $r30);
+
+     label14:
+        goto label10;
+
+        catch java.lang.Throwable from label01 to label02 with label06;
+        catch java.lang.Throwable from label03 to label04 with label06;
+        catch java.lang.Throwable from label04 to label05 with label06;
+        catch java.lang.Throwable from label07 to label08 with label06;
+        catch java.lang.Throwable from label09 to label10 with label12;
+        catch java.lang.Throwable from label09 to label10 with label06;
+        catch java.lang.Throwable from label10 to label11 with label06;
+        catch java.lang.Throwable from label13 to label14 with label06;
+    }
+
+    public void stop()
+    {
+        com.android.server.sip.SipService$SipKeepAliveProcessCallback r0;
+        com.android.server.sip.SipService r1, $r5;
+        java.lang.Throwable r2, $r9;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl $r3, $r8;
+        com.android.server.sip.SipService$SipSessionGroupExt $r4, $r7;
+        com.android.server.sip.SipWakeupTimer $r6;
+
+        r0 := @this: com.android.server.sip.SipService$SipKeepAliveProcessCallback;
+
+        r1 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        if $r3 == null goto label2;
+
+        $r8 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r8.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void stopKeepAliveProcess()>();
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession> = null;
+
+     label2:
+        $r4 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService$SipSessionGroupExt mGroup>;
+
+        if $r4 == null goto label3;
+
+        $r7 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService$SipSessionGroupExt mGroup>;
+
+        virtualinvoke $r7.<com.android.server.sip.SipService$SipSessionGroupExt: void close()>();
+
+        r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService$SipSessionGroupExt mGroup> = null;
+
+     label3:
+        $r5 = r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: com.android.server.sip.SipService this$0>;
+
+        $r6 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeupTimer access$200(com.android.server.sip.SipService)>($r5);
+
+        virtualinvoke $r6.<com.android.server.sip.SipWakeupTimer: void cancel(java.lang.Runnable)>(r0);
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipKeepAliveProcessCallback: void log(java.lang.String)>("stop");
+
+        exitmonitor r1;
+
+     label4:
+        return;
+
+     label5:
+        $r9 := @caughtexception;
+
+        r2 = $r9;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label2 to label3 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.sip.SipService$SipKeepAliveProcessCallback: java.lang.String SKAI_TAG> = "SipKeepAliveProcessCallback";
+
+        <com.android.server.sip.SipService$SipKeepAliveProcessCallback: boolean SKAI_DBG> = 1;
+
+        <com.android.server.sip.SipService$SipKeepAliveProcessCallback: int PASS_THRESHOLD> = 10;
+
+        <com.android.server.sip.SipService$SipKeepAliveProcessCallback: int NAT_MEASUREMENT_RETRY_INTERVAL> = 120;
+
+        <com.android.server.sip.SipService$SipKeepAliveProcessCallback: int MIN_INTERVAL> = 5;
+
+        return;
+    }
+}

@@ -1,0 +1,4492 @@
+public class com.android.internal.telephony.cdma.CDMAPhone extends com.android.internal.telephony.PhoneBase
+{
+    static final int CANCEL_ECM_TIMER;
+    private static final boolean DBG;
+    private static final int DEFAULT_ECM_EXIT_TIMER_VALUE;
+    private static final int INVALID_SYSTEM_SELECTION_CODE;
+    private static final java.lang.String IS683A_FEATURE_CODE;
+    private static final int IS683A_FEATURE_CODE_NUM_DIGITS;
+    private static final int IS683A_SYS_SEL_CODE_NUM_DIGITS;
+    private static final int IS683A_SYS_SEL_CODE_OFFSET;
+    private static final int IS683_CONST_1900MHZ_A_BLOCK;
+    private static final int IS683_CONST_1900MHZ_B_BLOCK;
+    private static final int IS683_CONST_1900MHZ_C_BLOCK;
+    private static final int IS683_CONST_1900MHZ_D_BLOCK;
+    private static final int IS683_CONST_1900MHZ_E_BLOCK;
+    private static final int IS683_CONST_1900MHZ_F_BLOCK;
+    private static final int IS683_CONST_800MHZ_A_BAND;
+    private static final int IS683_CONST_800MHZ_B_BAND;
+    static final java.lang.String LOG_TAG;
+    static java.lang.String PROPERTY_CDMA_HOME_OPERATOR_NUMERIC;
+    static final int RESTART_ECM_TIMER;
+    private static final boolean VDBG;
+    static final java.lang.String VM_COUNT_CDMA;
+    private static final java.lang.String VM_NUMBER_CDMA;
+    private static java.util.regex.Pattern pOtaSpNumSchema;
+    com.android.internal.telephony.cdma.CdmaCallTracker mCT;
+    private java.lang.String mCarrierOtaSpNumSchema;
+    com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager mCdmaSSM;
+    int mCdmaSubscriptionSource;
+    private android.os.Registrant mEcmExitRespRegistrant;
+    private final android.os.RegistrantList mEcmTimerResetRegistrants;
+    private final android.os.RegistrantList mEriFileLoadedRegistrants;
+    com.android.internal.telephony.cdma.EriManager mEriManager;
+    private java.lang.String mEsn;
+    private java.lang.Runnable mExitEcmRunnable;
+    protected java.lang.String mImei;
+    protected java.lang.String mImeiSv;
+    private boolean mIsPhoneInEcmState;
+    private java.lang.String mMeid;
+    java.util.ArrayList mPendingMmis;
+    android.os.Registrant mPostDialHandler;
+    com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager mRuimPhoneBookInterfaceManager;
+    com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST;
+    com.android.internal.telephony.PhoneSubInfo mSubInfo;
+    private java.lang.String mVmNumber;
+    android.os.PowerManager$WakeLock mWakeLock;
+
+    static void <clinit>()
+    {
+        java.util.regex.Pattern $r0;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: java.lang.String VM_NUMBER_CDMA> = "vm_number_key_cdma";
+
+        <com.android.internal.telephony.cdma.CDMAPhone: java.lang.String VM_COUNT_CDMA> = "vm_count_key_cdma";
+
+        <com.android.internal.telephony.cdma.CDMAPhone: boolean VDBG> = 0;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int RESTART_ECM_TIMER> = 0;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: java.lang.String LOG_TAG> = "CDMAPhone";
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int IS683_CONST_800MHZ_B_BAND> = 1;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int IS683_CONST_800MHZ_A_BAND> = 0;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int IS683_CONST_1900MHZ_F_BLOCK> = 7;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int IS683_CONST_1900MHZ_E_BLOCK> = 6;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int IS683_CONST_1900MHZ_D_BLOCK> = 5;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int IS683_CONST_1900MHZ_C_BLOCK> = 4;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int IS683_CONST_1900MHZ_B_BLOCK> = 3;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int IS683_CONST_1900MHZ_A_BLOCK> = 2;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int IS683A_SYS_SEL_CODE_OFFSET> = 4;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int IS683A_SYS_SEL_CODE_NUM_DIGITS> = 2;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int IS683A_FEATURE_CODE_NUM_DIGITS> = 4;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: java.lang.String IS683A_FEATURE_CODE> = "*228";
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int INVALID_SYSTEM_SELECTION_CODE> = -1;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int DEFAULT_ECM_EXIT_TIMER_VALUE> = 300000;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: boolean DBG> = 1;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: int CANCEL_ECM_TIMER> = 1;
+
+        <com.android.internal.telephony.cdma.CDMAPhone: java.lang.String PROPERTY_CDMA_HOME_OPERATOR_NUMERIC> = "ro.cdma.home.operator.numeric";
+
+        $r0 = staticinvoke <java.util.regex.Pattern: java.util.regex.Pattern compile(java.lang.String)>("[,\\s]+");
+
+        <com.android.internal.telephony.cdma.CDMAPhone: java.util.regex.Pattern pOtaSpNumSchema> = $r0;
+
+        return;
+    }
+
+    public void <init>(android.content.Context, com.android.internal.telephony.CommandsInterface, com.android.internal.telephony.PhoneNotifier)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.content.Context r1;
+        com.android.internal.telephony.CommandsInterface r2;
+        com.android.internal.telephony.PhoneNotifier r3;
+        java.util.ArrayList $r4;
+        android.os.RegistrantList $r5, $r6;
+        com.android.internal.telephony.cdma.CDMAPhone$1 $r7;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.internal.telephony.CommandsInterface;
+
+        r3 := @parameter2: com.android.internal.telephony.PhoneNotifier;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneBase: void <init>(java.lang.String,com.android.internal.telephony.PhoneNotifier,android.content.Context,com.android.internal.telephony.CommandsInterface,boolean)>("CDMA", r3, r1, r2, 0);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mVmNumber> = null;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.ArrayList mPendingMmis> = $r4;
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: int mCdmaSubscriptionSource> = -1;
+
+        $r5 = new android.os.RegistrantList;
+
+        specialinvoke $r5.<android.os.RegistrantList: void <init>()>();
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mEriFileLoadedRegistrants> = $r5;
+
+        $r6 = new android.os.RegistrantList;
+
+        specialinvoke $r6.<android.os.RegistrantList: void <init>()>();
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mEcmTimerResetRegistrants> = $r6;
+
+        $r7 = new com.android.internal.telephony.cdma.CDMAPhone$1;
+
+        specialinvoke $r7.<com.android.internal.telephony.cdma.CDMAPhone$1: void <init>(com.android.internal.telephony.cdma.CDMAPhone)>(r0);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.Runnable mExitEcmRunnable> = $r7;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void initSstIcc()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void init(android.content.Context,com.android.internal.telephony.PhoneNotifier)>(r1, r3);
+
+        return;
+    }
+
+    public void <init>(android.content.Context, com.android.internal.telephony.CommandsInterface, com.android.internal.telephony.PhoneNotifier, boolean)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.content.Context r1;
+        com.android.internal.telephony.CommandsInterface r2;
+        com.android.internal.telephony.PhoneNotifier r3;
+        boolean z0;
+        java.util.ArrayList $r4;
+        android.os.RegistrantList $r5, $r6;
+        com.android.internal.telephony.cdma.CDMAPhone$1 $r7;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.internal.telephony.CommandsInterface;
+
+        r3 := @parameter2: com.android.internal.telephony.PhoneNotifier;
+
+        z0 := @parameter3: boolean;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneBase: void <init>(java.lang.String,com.android.internal.telephony.PhoneNotifier,android.content.Context,com.android.internal.telephony.CommandsInterface,boolean)>("CDMA", r3, r1, r2, z0);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mVmNumber> = null;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.ArrayList mPendingMmis> = $r4;
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: int mCdmaSubscriptionSource> = -1;
+
+        $r5 = new android.os.RegistrantList;
+
+        specialinvoke $r5.<android.os.RegistrantList: void <init>()>();
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mEriFileLoadedRegistrants> = $r5;
+
+        $r6 = new android.os.RegistrantList;
+
+        specialinvoke $r6.<android.os.RegistrantList: void <init>()>();
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mEcmTimerResetRegistrants> = $r6;
+
+        $r7 = new com.android.internal.telephony.cdma.CDMAPhone$1;
+
+        specialinvoke $r7.<com.android.internal.telephony.cdma.CDMAPhone$1: void <init>(com.android.internal.telephony.cdma.CDMAPhone)>(r0);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.Runnable mExitEcmRunnable> = $r7;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void initSstIcc()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void init(android.content.Context,com.android.internal.telephony.PhoneNotifier)>(r1, r3);
+
+        return;
+    }
+
+    private static boolean checkOtaSpNumBasedOnSysSelCode(int, java.lang.String[])
+    {
+        int i0, i1, i2, i3, i4, $i5, $i6, $i7, $i8;
+        java.lang.String[] r0;
+        java.lang.NumberFormatException r1, $r7;
+        boolean z0, $z1, $z2;
+        java.lang.String $r2, $r3, $r4, $r5, $r6;
+
+        i0 := @parameter0: int;
+
+        r0 := @parameter1: java.lang.String[];
+
+     label1:
+        $r2 = r0[1];
+
+        i1 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r2);
+
+     label2:
+        i2 = 0;
+
+     label3:
+        z0 = 0;
+
+        if i2 >= i1 goto label6;
+
+     label4:
+        $i5 = i2 + 2;
+
+        $r3 = r0[$i5];
+
+        $z1 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>($r3);
+
+        if $z1 != 0 goto label7;
+
+        $i6 = i2 + 3;
+
+        $r4 = r0[$i6];
+
+        $z2 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>($r4);
+
+        if $z2 != 0 goto label7;
+
+        $i7 = i2 + 2;
+
+        $r5 = r0[$i7];
+
+        i3 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r5);
+
+        $i8 = i2 + 3;
+
+        $r6 = r0[$i8];
+
+        i4 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r6);
+
+     label5:
+        if i0 < i3 goto label7;
+
+        if i0 > i4 goto label7;
+
+        z0 = 1;
+
+     label6:
+        return z0;
+
+     label7:
+        i2 = i2 + 1;
+
+        goto label3;
+
+     label8:
+        $r7 := @caughtexception;
+
+        r1 = $r7;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("CDMAPhone", "checkOtaSpNumBasedOnSysSelCode, error", r1);
+
+        return 0;
+
+        catch java.lang.NumberFormatException from label1 to label2 with label8;
+        catch java.lang.NumberFormatException from label4 to label5 with label8;
+    }
+
+    private static int extractSelCodeFromOtaSpNum(java.lang.String)
+    {
+        java.lang.String r0, $r4, $r5;
+        int i0, i1;
+        boolean $z0;
+        java.lang.StringBuilder $r1, $r2, $r3;
+
+        r0 := @parameter0: java.lang.String;
+
+        i0 = virtualinvoke r0.<java.lang.String: int length()>();
+
+        i1 = -1;
+
+        $z0 = virtualinvoke r0.<java.lang.String: boolean regionMatches(int,java.lang.String,int,int)>(0, "*228", 0, 4);
+
+        if $z0 == 0 goto label1;
+
+        if i0 < 6 goto label1;
+
+        $r5 = virtualinvoke r0.<java.lang.String: java.lang.String substring(int,int)>(4, 6);
+
+        i1 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r5);
+
+     label1:
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("extractSelCodeFromOtaSpNum ");
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", $r4);
+
+        return i1;
+    }
+
+    private void handleCdmaSubscriptionSource(int)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        int i0, $i1;
+        android.os.Message $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        i0 := @parameter0: int;
+
+        $i1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: int mCdmaSubscriptionSource>;
+
+        if i0 == $i1 goto label1;
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: int mCdmaSubscriptionSource> = i0;
+
+        if i0 != 1 goto label1;
+
+        $r1 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.Message obtainMessage(int)>(23);
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean sendMessage(android.os.Message)>($r1);
+
+     label1:
+        return;
+    }
+
+    private void handleEnterEmergencyCallbackMode(android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Message r1;
+        long l0;
+        java.lang.StringBuilder $r2, $r3, $r4;
+        boolean $z0, $z1;
+        java.lang.String $r5;
+        java.lang.Runnable $r6;
+        android.os.PowerManager$WakeLock $r7;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Message;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleEnterEmergencyCallbackMode,mIsPhoneInEcmState= ");
+
+        $z0 = r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsPhoneInEcmState>;
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", $r5);
+
+        $z1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsPhoneInEcmState>;
+
+        if $z1 != 0 goto label1;
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsPhoneInEcmState> = 1;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void sendEmergencyCallbackModeChange()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void setSystemProperty(java.lang.String,java.lang.String)>("ril.cdma.inecmmode", "true");
+
+        l0 = staticinvoke <android.os.SystemProperties: long getLong(java.lang.String,long)>("ro.cdma.ecmexittimer", 300000L);
+
+        $r6 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.Runnable mExitEcmRunnable>;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean postDelayed(java.lang.Runnable,long)>($r6, l0);
+
+        $r7 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r7.<android.os.PowerManager$WakeLock: void acquire()>();
+
+     label1:
+        return;
+    }
+
+    private void handleExitEmergencyCallbackMode(android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Message r1;
+        android.os.AsyncResult r2;
+        java.lang.Object $r3;
+        java.lang.StringBuilder $r4, $r5, $r7, $r8;
+        java.lang.Throwable $r6, $r12;
+        boolean $z0, $z1;
+        java.lang.String $r9;
+        java.lang.Runnable $r10;
+        android.os.Registrant $r11, $r14;
+        com.android.internal.telephony.dataconnection.DcTrackerBase $r13;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Message;
+
+        $r3 = r1.<android.os.Message: java.lang.Object obj>;
+
+        r2 = (android.os.AsyncResult) $r3;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleExitEmergencyCallbackMode,ar.exception , mIsPhoneInEcmState ");
+
+        $r6 = r2.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        $r7 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r6);
+
+        $z0 = r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsPhoneInEcmState>;
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", $r9);
+
+        $r10 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.Runnable mExitEcmRunnable>;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void removeCallbacks(java.lang.Runnable)>($r10);
+
+        $r11 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.Registrant mEcmExitRespRegistrant>;
+
+        if $r11 == null goto label1;
+
+        $r14 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.Registrant mEcmExitRespRegistrant>;
+
+        virtualinvoke $r14.<android.os.Registrant: void notifyRegistrant(android.os.AsyncResult)>(r2);
+
+     label1:
+        $r12 = r2.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        if $r12 != null goto label3;
+
+        $z1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsPhoneInEcmState>;
+
+        if $z1 == 0 goto label2;
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsPhoneInEcmState> = 0;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void setSystemProperty(java.lang.String,java.lang.String)>("ril.cdma.inecmmode", "false");
+
+     label2:
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void sendEmergencyCallbackModeChange()>();
+
+        $r13 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.dataconnection.DcTrackerBase mDcTracker>;
+
+        virtualinvoke $r13.<com.android.internal.telephony.dataconnection.DcTrackerBase: boolean setInternalDataEnabled(boolean)>(1);
+
+     label3:
+        return;
+    }
+
+    private boolean isCarrierOtaSpNum(java.lang.String)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1, $r4, $r5, $r8, $r10, $r13, $r15, $r18, $r19, $r20, $r22, $r24, $r26, $r27, $r28, $r29;
+        int i0, i1;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7;
+        java.util.regex.Matcher r2;
+        java.lang.String[] r3;
+        java.util.regex.Pattern $r6, $r17;
+        java.lang.StringBuilder $r7, $r9, $r11, $r12, $r14, $r16, $r21, $r23, $r25;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 = staticinvoke <com.android.internal.telephony.cdma.CDMAPhone: int extractSelCodeFromOtaSpNum(java.lang.String)>(r1);
+
+        if i0 != -1 goto label1;
+
+        return 0;
+
+     label1:
+        $r4 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mCarrierOtaSpNumSchema>;
+
+        $z1 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>($r4);
+
+        if $z1 != 0 goto label8;
+
+        $r6 = <com.android.internal.telephony.cdma.CDMAPhone: java.util.regex.Pattern pOtaSpNumSchema>;
+
+        $r5 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mCarrierOtaSpNumSchema>;
+
+        r2 = virtualinvoke $r6.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>($r5);
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("isCarrierOtaSpNum,schema");
+
+        $r8 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mCarrierOtaSpNumSchema>;
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", $r10);
+
+        $z2 = virtualinvoke r2.<java.util.regex.Matcher: boolean find()>();
+
+        if $z2 == 0 goto label7;
+
+        $r17 = <com.android.internal.telephony.cdma.CDMAPhone: java.util.regex.Pattern pOtaSpNumSchema>;
+
+        $r18 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mCarrierOtaSpNumSchema>;
+
+        r3 = virtualinvoke $r17.<java.util.regex.Pattern: java.lang.String[] split(java.lang.CharSequence)>($r18);
+
+        $r20 = r3[0];
+
+        $z4 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>($r20);
+
+        if $z4 != 0 goto label4;
+
+        $r29 = r3[0];
+
+        $z6 = virtualinvoke $r29.<java.lang.String: boolean equals(java.lang.Object)>("SELC");
+
+        if $z6 == 0 goto label4;
+
+        if i0 == -1 goto label3;
+
+        z0 = staticinvoke <com.android.internal.telephony.cdma.CDMAPhone: boolean checkOtaSpNumBasedOnSysSelCode(int,java.lang.String[])>(i0, r3);
+
+     label2:
+        return z0;
+
+     label3:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "isCarrierOtaSpNum,sysSelCodeInt is invalid");
+
+        z0 = 0;
+
+        goto label2;
+
+     label4:
+        $r19 = r3[0];
+
+        $z3 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>($r19);
+
+        if $z3 != 0 goto label6;
+
+        $r24 = r3[0];
+
+        $z5 = virtualinvoke $r24.<java.lang.String: boolean equals(java.lang.Object)>("FC");
+
+        if $z5 == 0 goto label6;
+
+        $r28 = r3[1];
+
+        i1 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r28);
+
+        $r27 = r3[2];
+
+        $z7 = virtualinvoke r1.<java.lang.String: boolean regionMatches(int,java.lang.String,int,int)>(0, $r27, 0, i1);
+
+        if $z7 == 0 goto label5;
+
+        z0 = 1;
+
+        goto label2;
+
+     label5:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "isCarrierOtaSpNum,not otasp number");
+
+        z0 = 0;
+
+        goto label2;
+
+     label6:
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("isCarrierOtaSpNum,ota schema not supported");
+
+        $r22 = r3[0];
+
+        $r25 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r22);
+
+        $r26 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", $r26);
+
+        z0 = 0;
+
+        goto label2;
+
+     label7:
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("isCarrierOtaSpNum,ota schema pattern not right");
+
+        $r13 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mCarrierOtaSpNumSchema>;
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r13);
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", $r15);
+
+        z0 = 0;
+
+        goto label2;
+
+     label8:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "isCarrierOtaSpNum,ota schema pattern empty");
+
+        z0 = 0;
+
+        goto label2;
+    }
+
+    private static boolean isIs683OtaSpDialStr(java.lang.String)
+    {
+        java.lang.String r0;
+        boolean z0, z1;
+        int $i0, $i1;
+
+        r0 := @parameter0: java.lang.String;
+
+        $i0 = virtualinvoke r0.<java.lang.String: int length()>();
+
+        if $i0 != 4 goto label2;
+
+        z0 = virtualinvoke r0.<java.lang.String: boolean equals(java.lang.Object)>("*228");
+
+        z1 = 0;
+
+        if z0 == 0 goto label1;
+
+        z1 = 1;
+
+     label1:
+        return z1;
+
+     label2:
+        $i1 = staticinvoke <com.android.internal.telephony.cdma.CDMAPhone: int extractSelCodeFromOtaSpNum(java.lang.String)>(r0);
+
+        tableswitch($i1)
+        {
+            case 0: goto label4;
+            case 1: goto label4;
+            case 2: goto label4;
+            case 3: goto label4;
+            case 4: goto label4;
+            case 5: goto label4;
+            case 6: goto label4;
+            case 7: goto label4;
+            default: goto label3;
+        };
+
+     label3:
+        return 0;
+
+     label4:
+        return 1;
+    }
+
+    private void processIccRecordEvents(int)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        int i0;
+        java.lang.StringBuilder $r1, $r2, $r3;
+        java.lang.String $r4;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        i0 := @parameter0: int;
+
+        tableswitch(i0)
+        {
+            case 0: goto label2;
+            default: goto label1;
+        };
+
+     label1:
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown icc records event code ");
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", $r4);
+
+        return;
+
+     label2:
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void notifyMessageWaitingIndicator()>();
+
+        return;
+    }
+
+    private void setIsoCountryProperty(java.lang.String)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1, r2, r5, $r6, $r10;
+        java.lang.StringIndexOutOfBoundsException r3, $r11;
+        java.lang.NumberFormatException r4, $r12;
+        boolean $z0;
+        int $i0;
+        java.lang.StringBuilder $r7, $r8, $r9;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>("setIsoCountryProperty: clear \'gsm.sim.operator.iso-country\'");
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void setSystemProperty(java.lang.String,java.lang.String)>("gsm.sim.operator.iso-country", "");
+
+        return;
+
+     label1:
+        r2 = "";
+
+     label2:
+        $r6 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int,int)>(0, 3);
+
+        $i0 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r6);
+
+        r5 = staticinvoke <com.android.internal.telephony.MccTable: java.lang.String countryCodeForMcc(int)>($i0);
+
+     label3:
+        r2 = r5;
+
+     label4:
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("setIsoCountryProperty: set \'gsm.sim.operator.iso-country\' to iso=");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>($r10);
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void setSystemProperty(java.lang.String,java.lang.String)>("gsm.sim.operator.iso-country", r2);
+
+        return;
+
+     label5:
+        $r12 := @caughtexception;
+
+        r4 = $r12;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void loge(java.lang.String,java.lang.Exception)>("setIsoCountryProperty: countryCodeForMcc error", r4);
+
+        goto label4;
+
+     label6:
+        $r11 := @caughtexception;
+
+        r3 = $r11;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void loge(java.lang.String,java.lang.Exception)>("setIsoCountryProperty: countryCodeForMcc error", r3);
+
+        goto label4;
+
+        catch java.lang.NumberFormatException from label2 to label3 with label5;
+        catch java.lang.StringIndexOutOfBoundsException from label2 to label3 with label6;
+    }
+
+    private void storeVoiceMailNumber(java.lang.String)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1;
+        android.content.SharedPreferences$Editor r2;
+        android.content.Context $r3;
+        android.content.SharedPreferences $r4;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r3 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.content.Context getContext()>();
+
+        $r4 = staticinvoke <android.preference.PreferenceManager: android.content.SharedPreferences getDefaultSharedPreferences(android.content.Context)>($r3);
+
+        r2 = interfaceinvoke $r4.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putString(java.lang.String,java.lang.String)>("vm_number_key_cdma", r1);
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    public void acceptCall() throws com.android.internal.telephony.CallStateException
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: void acceptCall()>();
+
+        return;
+    }
+
+    public void activateCellBroadcastSms(int, android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        int i0;
+        android.os.Message r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "[CDMAPhone] activateCellBroadcastSms() is obsolete; use SmsManager");
+
+        virtualinvoke r1.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public boolean canConference()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "canConference: not possible in CDMA");
+
+        return 0;
+    }
+
+    public boolean canTransfer()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "canTransfer: not possible in CDMA");
+
+        return 0;
+    }
+
+    public void clearDisconnected()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: void clearDisconnected()>();
+
+        return;
+    }
+
+    public void conference()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "conference: not possible in CDMA");
+
+        return;
+    }
+
+    public com.android.internal.telephony.Connection dial(java.lang.String) throws com.android.internal.telephony.CallStateException
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1, r2;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r3;
+        com.android.internal.telephony.Connection $r4;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = staticinvoke <android.telephony.PhoneNumberUtils: java.lang.String stripSeparators(java.lang.String)>(r1);
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        $r4 = virtualinvoke $r3.<com.android.internal.telephony.cdma.CdmaCallTracker: com.android.internal.telephony.Connection dial(java.lang.String)>(r2);
+
+        return $r4;
+    }
+
+    public com.android.internal.telephony.Connection dial(java.lang.String, com.android.internal.telephony.UUSInfo) throws com.android.internal.telephony.CallStateException
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1;
+        com.android.internal.telephony.UUSInfo r2;
+        com.android.internal.telephony.CallStateException $r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: com.android.internal.telephony.UUSInfo;
+
+        $r3 = new com.android.internal.telephony.CallStateException;
+
+        specialinvoke $r3.<com.android.internal.telephony.CallStateException: void <init>(java.lang.String)>("Sending UUS information NOT supported in CDMA!");
+
+        throw $r3;
+    }
+
+    public void disableLocationUpdates()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: void disableLocationUpdates()>();
+
+        return;
+    }
+
+    public void dispose()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.Object r1;
+        java.lang.Throwable r2, $r18;
+        com.android.internal.telephony.CommandsInterface $r3, $r4, $r5, $r7, $r8;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r6, $r13;
+        java.lang.Runnable $r9;
+        java.util.ArrayList $r10;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r11;
+        com.android.internal.telephony.dataconnection.DcTrackerBase $r12;
+        com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager $r14;
+        com.android.internal.telephony.PhoneSubInfo $r15;
+        com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager $r16;
+        com.android.internal.telephony.cdma.EriManager $r17;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 = <com.android.internal.telephony.PhoneProxy: java.lang.Object lockForRadioTechnologyChange>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.internal.telephony.PhoneBase: void dispose()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>("dispose");
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void unregisterForRuimRecordEvents()>();
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r3.<com.android.internal.telephony.CommandsInterface: void unregisterForAvailable(android.os.Handler)>(r0);
+
+        $r4 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r4.<com.android.internal.telephony.CommandsInterface: void unregisterForOffOrNotAvailable(android.os.Handler)>(r0);
+
+        $r5 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r5.<com.android.internal.telephony.CommandsInterface: void unregisterForOn(android.os.Handler)>(r0);
+
+        $r6 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        virtualinvoke $r6.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: void unregisterForNetworkAttached(android.os.Handler)>(r0);
+
+        $r7 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r7.<com.android.internal.telephony.CommandsInterface: void unSetOnSuppServiceNotification(android.os.Handler)>(r0);
+
+        $r8 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r8.<com.android.internal.telephony.CommandsInterface: void unregisterForExitEmergencyCallbackMode(android.os.Handler)>(r0);
+
+        $r9 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.Runnable mExitEcmRunnable>;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void removeCallbacks(java.lang.Runnable)>($r9);
+
+        $r10 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.ArrayList mPendingMmis>;
+
+        virtualinvoke $r10.<java.util.ArrayList: void clear()>();
+
+        $r11 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        virtualinvoke $r11.<com.android.internal.telephony.cdma.CdmaCallTracker: void dispose()>();
+
+        $r12 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.dataconnection.DcTrackerBase mDcTracker>;
+
+        virtualinvoke $r12.<com.android.internal.telephony.dataconnection.DcTrackerBase: void dispose()>();
+
+        $r13 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        virtualinvoke $r13.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: void dispose()>();
+
+        $r14 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager mCdmaSSM>;
+
+        virtualinvoke $r14.<com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager: void dispose(android.os.Handler)>(r0);
+
+        $r16 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager mRuimPhoneBookInterfaceManager>;
+
+        virtualinvoke $r16.<com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager: void dispose()>();
+
+        $r15 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.PhoneSubInfo mSubInfo>;
+
+        virtualinvoke $r15.<com.android.internal.telephony.PhoneSubInfo: void dispose()>();
+
+        $r17 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.EriManager mEriManager>;
+
+        virtualinvoke $r17.<com.android.internal.telephony.cdma.EriManager: void dispose()>();
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r18 := @caughtexception;
+
+        r2 = $r18;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        java.lang.StringBuilder $r4, $r5, $r7, $r9, $r10, $r12, $r14, $r15, $r16, $r18, $r21, $r23, $r24, $r25, $r26, $r28, $r31, $r32, $r33, $r34, $r37, $r38, $r39, $r41, $r44, $r45, $r46, $r48, $r49, $r51, $r52, $r54, $r55, $r57, $r59, $r61, $r63, $r64, $r65, $r66, $r67, $r69, $r71, $r72, $r74, $r75, $r76, $r77, $r78, $r79, $r81;
+        java.lang.String $r6, $r8, $r13, $r19, $r22, $r29, $r35, $r36, $r40, $r50, $r53, $r56, $r58, $r60, $r62, $r68, $r70, $r73, $r80, $r82;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r11;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r17;
+        com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager $r20;
+        java.util.ArrayList $r27;
+        com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager $r30;
+        int $i0, $i1, $i2;
+        com.android.internal.telephony.PhoneSubInfo $r42;
+        com.android.internal.telephony.cdma.EriManager $r43;
+        android.os.PowerManager$WakeLock $r47;
+        boolean $z0, $z1, $z2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("CDMAPhone extends:");
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneBase: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r1, r2, r3);
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mVmNumber=");
+
+        $r6 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mVmNumber>;
+
+        $r7 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r8);
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mCT=");
+
+        $r11 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r11);
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r13);
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r15 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mSST=");
+
+        $r17 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        $r16 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r17);
+
+        $r19 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r19);
+
+        $r18 = new java.lang.StringBuilder;
+
+        specialinvoke $r18.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mCdmaSSM=");
+
+        $r20 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager mCdmaSSM>;
+
+        $r23 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r20);
+
+        $r22 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r22);
+
+        $r25 = new java.lang.StringBuilder;
+
+        specialinvoke $r25.<java.lang.StringBuilder: void <init>()>();
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mPendingMmis=");
+
+        $r27 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.ArrayList mPendingMmis>;
+
+        $r26 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r27);
+
+        $r29 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r29);
+
+        $r28 = new java.lang.StringBuilder;
+
+        specialinvoke $r28.<java.lang.StringBuilder: void <init>()>();
+
+        $r31 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mRuimPhoneBookInterfaceManager=");
+
+        $r30 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager mRuimPhoneBookInterfaceManager>;
+
+        $r34 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r30);
+
+        $r35 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r35);
+
+        $r32 = new java.lang.StringBuilder;
+
+        specialinvoke $r32.<java.lang.StringBuilder: void <init>()>();
+
+        $r33 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mCdmaSubscriptionSource=");
+
+        $i0 = r0.<com.android.internal.telephony.cdma.CDMAPhone: int mCdmaSubscriptionSource>;
+
+        $r38 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r36 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r36);
+
+        $r37 = new java.lang.StringBuilder;
+
+        specialinvoke $r37.<java.lang.StringBuilder: void <init>()>();
+
+        $r41 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mSubInfo=");
+
+        $r42 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.PhoneSubInfo mSubInfo>;
+
+        $r39 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r42);
+
+        $r40 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r40);
+
+        $r45 = new java.lang.StringBuilder;
+
+        specialinvoke $r45.<java.lang.StringBuilder: void <init>()>();
+
+        $r46 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mEriManager=");
+
+        $r43 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.EriManager mEriManager>;
+
+        $r44 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r43);
+
+        $r50 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r50);
+
+        $r49 = new java.lang.StringBuilder;
+
+        specialinvoke $r49.<java.lang.StringBuilder: void <init>()>();
+
+        $r48 = virtualinvoke $r49.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mWakeLock=");
+
+        $r47 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.PowerManager$WakeLock mWakeLock>;
+
+        $r54 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r47);
+
+        $r53 = virtualinvoke $r54.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r53);
+
+        $r52 = new java.lang.StringBuilder;
+
+        specialinvoke $r52.<java.lang.StringBuilder: void <init>()>();
+
+        $r51 = virtualinvoke $r52.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mIsPhoneInEcmState=");
+
+        $z0 = r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsPhoneInEcmState>;
+
+        $r57 = virtualinvoke $r51.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r56 = virtualinvoke $r57.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r56);
+
+        $r55 = new java.lang.StringBuilder;
+
+        specialinvoke $r55.<java.lang.StringBuilder: void <init>()>();
+
+        $r61 = virtualinvoke $r55.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mCarrierOtaSpNumSchema=");
+
+        $r60 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mCarrierOtaSpNumSchema>;
+
+        $r59 = virtualinvoke $r61.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r60);
+
+        $r58 = virtualinvoke $r59.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r58);
+
+        $r65 = new java.lang.StringBuilder;
+
+        specialinvoke $r65.<java.lang.StringBuilder: void <init>()>();
+
+        $r66 = virtualinvoke $r65.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" getCdmaEriIconIndex()=");
+
+        $i2 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: int getCdmaEriIconIndex()>();
+
+        $r67 = virtualinvoke $r66.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r62 = virtualinvoke $r67.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r62);
+
+        $r63 = new java.lang.StringBuilder;
+
+        specialinvoke $r63.<java.lang.StringBuilder: void <init>()>();
+
+        $r64 = virtualinvoke $r63.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" getCdmaEriIconMode()=");
+
+        $i1 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: int getCdmaEriIconMode()>();
+
+        $r72 = virtualinvoke $r64.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r73 = virtualinvoke $r72.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r73);
+
+        $r74 = new java.lang.StringBuilder;
+
+        specialinvoke $r74.<java.lang.StringBuilder: void <init>()>();
+
+        $r75 = virtualinvoke $r74.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" getCdmaEriText()=");
+
+        $r68 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String getCdmaEriText()>();
+
+        $r69 = virtualinvoke $r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r68);
+
+        $r70 = virtualinvoke $r69.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r70);
+
+        $r71 = new java.lang.StringBuilder;
+
+        specialinvoke $r71.<java.lang.StringBuilder: void <init>()>();
+
+        $r79 = virtualinvoke $r71.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" isMinInfoReady()=");
+
+        $z2 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean isMinInfoReady()>();
+
+        $r81 = virtualinvoke $r79.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z2);
+
+        $r80 = virtualinvoke $r81.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r80);
+
+        $r77 = new java.lang.StringBuilder;
+
+        specialinvoke $r77.<java.lang.StringBuilder: void <init>()>();
+
+        $r76 = virtualinvoke $r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" isCspPlmnEnabled()=");
+
+        $z1 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean isCspPlmnEnabled()>();
+
+        $r78 = virtualinvoke $r76.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        $r82 = virtualinvoke $r78.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r82);
+
+        return;
+    }
+
+    public void enableEnhancedVoicePrivacy(boolean, android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        boolean z0;
+        android.os.Message r1;
+        com.android.internal.telephony.CommandsInterface $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        z0 := @parameter0: boolean;
+
+        r1 := @parameter1: android.os.Message;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r2.<com.android.internal.telephony.CommandsInterface: void setPreferredVoicePrivacy(boolean,android.os.Message)>(z0, r1);
+
+        return;
+    }
+
+    public void enableLocationUpdates()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: void enableLocationUpdates()>();
+
+        return;
+    }
+
+    public void exitEmergencyCallbackMode()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.PowerManager$WakeLock $r1, $r4;
+        boolean $z0;
+        com.android.internal.telephony.CommandsInterface $r2;
+        android.os.Message $r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.PowerManager$WakeLock mWakeLock>;
+
+        $z0 = virtualinvoke $r1.<android.os.PowerManager$WakeLock: boolean isHeld()>();
+
+        if $z0 == 0 goto label1;
+
+        $r4 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r4.<android.os.PowerManager$WakeLock: void release()>();
+
+     label1:
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        $r3 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.Message obtainMessage(int)>(26);
+
+        interfaceinvoke $r2.<com.android.internal.telephony.CommandsInterface: void exitEmergencyCallbackMode(android.os.Message)>($r3);
+
+        return;
+    }
+
+    public void explicitCallTransfer()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "explicitCallTransfer: not possible in CDMA");
+
+        return;
+    }
+
+    protected void finalize()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.PowerManager$WakeLock $r1, $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "CDMAPhone finalized");
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.PowerManager$WakeLock mWakeLock>;
+
+        $z0 = virtualinvoke $r1.<android.os.PowerManager$WakeLock: boolean isHeld()>();
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "UNEXPECTED; mWakeLock is held when finalizing.");
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r2.<android.os.PowerManager$WakeLock: void release()>();
+
+     label1:
+        return;
+    }
+
+    public void getAvailableNetworks(android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Message r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "getAvailableNetworks: not possible in CDMA");
+
+        return;
+    }
+
+    public volatile com.android.internal.telephony.Call getBackgroundCall()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCall $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCall getBackgroundCall()>();
+
+        return $r1;
+    }
+
+    public com.android.internal.telephony.cdma.CdmaCall getBackgroundCall()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+        com.android.internal.telephony.cdma.CdmaCall $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        $r2 = $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: com.android.internal.telephony.cdma.CdmaCall mBackgroundCall>;
+
+        return $r2;
+    }
+
+    public boolean getCallForwardingIndicator()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "getCallForwardingIndicator: not possible in CDMA");
+
+        return 0;
+    }
+
+    public void getCallForwardingOption(int, android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        int i0;
+        android.os.Message r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "getCallForwardingOption: not possible in CDMA");
+
+        return;
+    }
+
+    public com.android.internal.telephony.CallTracker getCallTracker()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        return $r1;
+    }
+
+    public void getCallWaiting(android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Message r1;
+        com.android.internal.telephony.CommandsInterface $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Message;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r2.<com.android.internal.telephony.CommandsInterface: void queryCallWaiting(int,android.os.Message)>(1, r1);
+
+        return;
+    }
+
+    public int getCdmaEriIconIndex()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.telephony.ServiceState $r1;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.telephony.ServiceState getServiceState()>();
+
+        $i0 = virtualinvoke $r1.<android.telephony.ServiceState: int getCdmaEriIconIndex()>();
+
+        return $i0;
+    }
+
+    public int getCdmaEriIconMode()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.telephony.ServiceState $r1;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.telephony.ServiceState getServiceState()>();
+
+        $i0 = virtualinvoke $r1.<android.telephony.ServiceState: int getCdmaEriIconMode()>();
+
+        return $i0;
+    }
+
+    public java.lang.String getCdmaEriText()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        int i0, i1;
+        android.telephony.ServiceState $r1, $r2;
+        com.android.internal.telephony.cdma.EriManager $r3;
+        java.lang.String $r4;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.telephony.ServiceState getServiceState()>();
+
+        i0 = virtualinvoke $r1.<android.telephony.ServiceState: int getCdmaRoamingIndicator()>();
+
+        $r2 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.telephony.ServiceState getServiceState()>();
+
+        i1 = virtualinvoke $r2.<android.telephony.ServiceState: int getCdmaDefaultRoamingIndicator()>();
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.EriManager mEriManager>;
+
+        $r4 = virtualinvoke $r3.<com.android.internal.telephony.cdma.EriManager: java.lang.String getCdmaEriText(int,int)>(i0, i1);
+
+        return $r4;
+    }
+
+    public java.lang.String getCdmaMin()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+        java.lang.String $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        $r2 = virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: java.lang.String getCdmaMin()>();
+
+        return $r2;
+    }
+
+    public java.lang.String getCdmaPrlVersion()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+        java.lang.String $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        $r2 = virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: java.lang.String getPrlVersion()>();
+
+        return $r2;
+    }
+
+    public void getCellBroadcastSmsConfig(android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Message r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "[CDMAPhone] getCellBroadcastSmsConfig() is obsolete; use SmsManager");
+
+        virtualinvoke r1.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public android.telephony.CellLocation getCellLocation()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.telephony.cdma.CdmaCellLocation r1, r2, $r6;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r3;
+        android.content.Context $r4;
+        android.content.ContentResolver $r5;
+        int $i0, $i1, $i2, $i3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        r1 = $r3.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: android.telephony.cdma.CdmaCellLocation mCellLoc>;
+
+        $r4 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.content.Context getContext()>();
+
+        $r5 = virtualinvoke $r4.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i0 = staticinvoke <android.provider.Settings$Secure: int getInt(android.content.ContentResolver,java.lang.String,int)>($r5, "location_mode", 0);
+
+        if $i0 != 0 goto label1;
+
+        $r6 = new android.telephony.cdma.CdmaCellLocation;
+
+        specialinvoke $r6.<android.telephony.cdma.CdmaCellLocation: void <init>()>();
+
+        r2 = $r6;
+
+        $i1 = virtualinvoke r1.<android.telephony.cdma.CdmaCellLocation: int getBaseStationId()>();
+
+        $i2 = virtualinvoke r1.<android.telephony.cdma.CdmaCellLocation: int getSystemId()>();
+
+        $i3 = virtualinvoke r1.<android.telephony.cdma.CdmaCellLocation: int getNetworkId()>();
+
+        virtualinvoke r2.<android.telephony.cdma.CdmaCellLocation: void setCellLocationData(int,int,int,int,int)>($i1, 2147483647, 2147483647, $i2, $i3);
+
+        r1 = r2;
+
+     label1:
+        return r1;
+    }
+
+    public com.android.internal.telephony.Phone$DataActivityState getDataActivityState()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.Phone$DataActivityState r1, $r6, $r7, $r8, $r9;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r2;
+        int $i0, $i1, $i2;
+        com.android.internal.telephony.dataconnection.DcTrackerBase $r3;
+        int[] $r4;
+        com.android.internal.telephony.DctConstants$Activity $r5;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 = <com.android.internal.telephony.Phone$DataActivityState: com.android.internal.telephony.Phone$DataActivityState NONE>;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        $i0 = virtualinvoke $r2.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: int getCurrentDataConnectionState()>();
+
+        if $i0 != 0 goto label2;
+
+        $r4 = <com.android.internal.telephony.cdma.CDMAPhone$2: int[] $SwitchMap$com$android$internal$telephony$DctConstants$Activity>;
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.dataconnection.DcTrackerBase mDcTracker>;
+
+        $r5 = virtualinvoke $r3.<com.android.internal.telephony.dataconnection.DcTrackerBase: com.android.internal.telephony.DctConstants$Activity getActivity()>();
+
+        $i1 = virtualinvoke $r5.<com.android.internal.telephony.DctConstants$Activity: int ordinal()>();
+
+        $i2 = $r4[$i1];
+
+        tableswitch($i2)
+        {
+            case 1: goto label3;
+            case 2: goto label4;
+            case 3: goto label5;
+            case 4: goto label6;
+            default: goto label1;
+        };
+
+     label1:
+        r1 = <com.android.internal.telephony.Phone$DataActivityState: com.android.internal.telephony.Phone$DataActivityState NONE>;
+
+     label2:
+        return r1;
+
+     label3:
+        $r9 = <com.android.internal.telephony.Phone$DataActivityState: com.android.internal.telephony.Phone$DataActivityState DATAIN>;
+
+        return $r9;
+
+     label4:
+        $r8 = <com.android.internal.telephony.Phone$DataActivityState: com.android.internal.telephony.Phone$DataActivityState DATAOUT>;
+
+        return $r8;
+
+     label5:
+        $r7 = <com.android.internal.telephony.Phone$DataActivityState: com.android.internal.telephony.Phone$DataActivityState DATAINANDOUT>;
+
+        return $r7;
+
+     label6:
+        $r6 = <com.android.internal.telephony.Phone$DataActivityState: com.android.internal.telephony.Phone$DataActivityState DORMANT>;
+
+        return $r6;
+    }
+
+    public void getDataCallList(android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Message r1;
+        com.android.internal.telephony.CommandsInterface $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Message;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r2.<com.android.internal.telephony.CommandsInterface: void getDataCallList(android.os.Message)>(r1);
+
+        return;
+    }
+
+    public com.android.internal.telephony.PhoneConstants$DataState getDataConnectionState(java.lang.String)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1, $r11;
+        com.android.internal.telephony.PhoneConstants$DataState r2;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r3, $r4, $r19;
+        int $i0, $i1, $i2;
+        com.android.internal.telephony.dataconnection.DcTrackerBase $r5, $r12, $r14;
+        boolean $z0, $z1, $z2;
+        java.lang.StringBuilder $r6, $r7, $r8, $r9, $r10;
+        int[] $r13;
+        com.android.internal.telephony.DctConstants$State $r15;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r16;
+        com.android.internal.telephony.PhoneConstants$State $r17, $r18;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = <com.android.internal.telephony.PhoneConstants$DataState: com.android.internal.telephony.PhoneConstants$DataState DISCONNECTED>;
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        if $r3 != null goto label02;
+
+        r2 = <com.android.internal.telephony.PhoneConstants$DataState: com.android.internal.telephony.PhoneConstants$DataState DISCONNECTED>;
+
+     label01:
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("getDataConnectionState apnType=");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ret=");
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>($r11);
+
+        return r2;
+
+     label02:
+        $r4 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        $i0 = virtualinvoke $r4.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: int getCurrentDataConnectionState()>();
+
+        if $i0 == 0 goto label03;
+
+        r2 = <com.android.internal.telephony.PhoneConstants$DataState: com.android.internal.telephony.PhoneConstants$DataState DISCONNECTED>;
+
+        goto label01;
+
+     label03:
+        $r5 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.dataconnection.DcTrackerBase mDcTracker>;
+
+        $z0 = virtualinvoke $r5.<com.android.internal.telephony.dataconnection.DcTrackerBase: boolean isApnTypeEnabled(java.lang.String)>(r1);
+
+        if $z0 == 0 goto label04;
+
+        $r12 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.dataconnection.DcTrackerBase mDcTracker>;
+
+        $z1 = virtualinvoke $r12.<com.android.internal.telephony.dataconnection.DcTrackerBase: boolean isApnTypeActive(java.lang.String)>(r1);
+
+        if $z1 != 0 goto label05;
+
+     label04:
+        r2 = <com.android.internal.telephony.PhoneConstants$DataState: com.android.internal.telephony.PhoneConstants$DataState DISCONNECTED>;
+
+        goto label01;
+
+     label05:
+        $r13 = <com.android.internal.telephony.cdma.CDMAPhone$2: int[] $SwitchMap$com$android$internal$telephony$DctConstants$State>;
+
+        $r14 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.dataconnection.DcTrackerBase mDcTracker>;
+
+        $r15 = virtualinvoke $r14.<com.android.internal.telephony.dataconnection.DcTrackerBase: com.android.internal.telephony.DctConstants$State getState(java.lang.String)>(r1);
+
+        $i1 = virtualinvoke $r15.<com.android.internal.telephony.DctConstants$State: int ordinal()>();
+
+        $i2 = $r13[$i1];
+
+        tableswitch($i2)
+        {
+            case 1: goto label07;
+            case 2: goto label07;
+            case 3: goto label07;
+            case 4: goto label08;
+            case 5: goto label08;
+            case 6: goto label10;
+            case 7: goto label10;
+            default: goto label06;
+        };
+
+     label06:
+        goto label01;
+
+     label07:
+        r2 = <com.android.internal.telephony.PhoneConstants$DataState: com.android.internal.telephony.PhoneConstants$DataState DISCONNECTED>;
+
+        goto label01;
+
+     label08:
+        $r16 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        $r17 = $r16.<com.android.internal.telephony.cdma.CdmaCallTracker: com.android.internal.telephony.PhoneConstants$State mState>;
+
+        $r18 = <com.android.internal.telephony.PhoneConstants$State: com.android.internal.telephony.PhoneConstants$State IDLE>;
+
+        if $r17 == $r18 goto label09;
+
+        $r19 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        $z2 = virtualinvoke $r19.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: boolean isConcurrentVoiceAndDataAllowed()>();
+
+        if $z2 != 0 goto label09;
+
+        r2 = <com.android.internal.telephony.PhoneConstants$DataState: com.android.internal.telephony.PhoneConstants$DataState SUSPENDED>;
+
+        goto label01;
+
+     label09:
+        r2 = <com.android.internal.telephony.PhoneConstants$DataState: com.android.internal.telephony.PhoneConstants$DataState CONNECTED>;
+
+        goto label01;
+
+     label10:
+        r2 = <com.android.internal.telephony.PhoneConstants$DataState: com.android.internal.telephony.PhoneConstants$DataState CONNECTING>;
+
+        goto label01;
+    }
+
+    public boolean getDataRoamingEnabled()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.dataconnection.DcTrackerBase $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.dataconnection.DcTrackerBase mDcTracker>;
+
+        $z0 = virtualinvoke $r1.<com.android.internal.telephony.dataconnection.DcTrackerBase: boolean getDataOnRoamingEnabled()>();
+
+        return $z0;
+    }
+
+    public java.lang.String getDeviceId()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String getMeid()>();
+
+        if r1 == null goto label1;
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean matches(java.lang.String)>("^0*$");
+
+        if $z0 == 0 goto label2;
+
+     label1:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "getDeviceId(): MEID is not initialized use ESN");
+
+        r1 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String getEsn()>();
+
+     label2:
+        return r1;
+    }
+
+    public java.lang.String getDeviceSvn()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "getDeviceSvn(): return 0");
+
+        return "0";
+    }
+
+    public void getEnhancedVoicePrivacy(android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Message r1;
+        com.android.internal.telephony.CommandsInterface $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Message;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r2.<com.android.internal.telephony.CommandsInterface: void getPreferredVoicePrivacy(android.os.Message)>(r1);
+
+        return;
+    }
+
+    public java.lang.String getEsn()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mEsn>;
+
+        return $r1;
+    }
+
+    public volatile com.android.internal.telephony.Call getForegroundCall()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCall $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCall getForegroundCall()>();
+
+        return $r1;
+    }
+
+    public com.android.internal.telephony.cdma.CdmaCall getForegroundCall()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+        com.android.internal.telephony.cdma.CdmaCall $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        $r2 = $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: com.android.internal.telephony.cdma.CdmaCall mForegroundCall>;
+
+        return $r2;
+    }
+
+    public java.lang.String getGroupIdLevel1()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "GID1 is not available in CDMA");
+
+        return null;
+    }
+
+    public com.android.internal.telephony.IccPhoneBookInterfaceManager getIccPhoneBookInterfaceManager()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager mRuimPhoneBookInterfaceManager>;
+
+        return $r1;
+    }
+
+    public java.lang.String getIccSerialNumber()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.uicc.IccRecords r1;
+        java.util.concurrent.atomic.AtomicReference $r2;
+        java.lang.Object $r3;
+        java.lang.String $r4;
+        com.android.internal.telephony.uicc.UiccController $r5;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mIccRecords>;
+
+        $r3 = virtualinvoke $r2.<java.util.concurrent.atomic.AtomicReference: java.lang.Object get()>();
+
+        r1 = (com.android.internal.telephony.uicc.IccRecords) $r3;
+
+        if r1 != null goto label1;
+
+        $r5 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.uicc.UiccController mUiccController>;
+
+        r1 = virtualinvoke $r5.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.IccRecords getIccRecords(int)>(1);
+
+     label1:
+        if r1 == null goto label2;
+
+        $r4 = virtualinvoke r1.<com.android.internal.telephony.uicc.IccRecords: java.lang.String getIccId()>();
+
+        return $r4;
+
+     label2:
+        return null;
+    }
+
+    public java.lang.String getImei()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "IMEI is not available in CDMA");
+
+        return null;
+    }
+
+    public java.lang.String getLine1AlphaTag()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "getLine1AlphaTag: not possible in CDMA");
+
+        return null;
+    }
+
+    public java.lang.String getLine1Number()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+        java.lang.String $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        $r2 = virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: java.lang.String getMdnNumber()>();
+
+        return $r2;
+    }
+
+    public java.lang.String getMeid()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mMeid>;
+
+        return $r1;
+    }
+
+    public boolean getMessageWaitingIndicator()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $i0 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: int getVoiceMessageCount()>();
+
+        if $i0 <= 0 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    public boolean getMute()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        $z0 = virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: boolean getMute()>();
+
+        return $z0;
+    }
+
+    public void getNeighboringCids(android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Message r1;
+        com.android.internal.telephony.CommandException r2, $r3;
+        com.android.internal.telephony.CommandException$Error $r4;
+        android.os.AsyncResult $r5;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Message;
+
+        if r1 == null goto label1;
+
+        $r3 = new com.android.internal.telephony.CommandException;
+
+        $r4 = <com.android.internal.telephony.CommandException$Error: com.android.internal.telephony.CommandException$Error REQUEST_NOT_SUPPORTED>;
+
+        specialinvoke $r3.<com.android.internal.telephony.CommandException: void <init>(com.android.internal.telephony.CommandException$Error)>($r4);
+
+        r2 = $r3;
+
+        $r5 = staticinvoke <android.os.AsyncResult: android.os.AsyncResult forMessage(android.os.Message)>(r1);
+
+        $r5.<android.os.AsyncResult: java.lang.Throwable exception> = r2;
+
+        virtualinvoke r1.<android.os.Message: void sendToTarget()>();
+
+     label1:
+        return;
+    }
+
+    public void getOutgoingCallerIdDisplay(android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Message r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "getOutgoingCallerIdDisplay: not possible in CDMA");
+
+        return;
+    }
+
+    public java.util.List getPendingMmiCodes()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.util.ArrayList $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.ArrayList mPendingMmis>;
+
+        return $r1;
+    }
+
+    public com.android.internal.telephony.PhoneSubInfo getPhoneSubInfo()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.PhoneSubInfo $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.PhoneSubInfo mSubInfo>;
+
+        return $r1;
+    }
+
+    public int getPhoneType()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        return 2;
+    }
+
+    public volatile com.android.internal.telephony.Call getRingingCall()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCall $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCall getRingingCall()>();
+
+        return $r1;
+    }
+
+    public com.android.internal.telephony.cdma.CdmaCall getRingingCall()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+        com.android.internal.telephony.cdma.CdmaCall $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        $r2 = $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: com.android.internal.telephony.cdma.CdmaCall mRingingCall>;
+
+        return $r2;
+    }
+
+    public android.telephony.ServiceState getServiceState()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+        android.telephony.ServiceState $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        $r2 = $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: android.telephony.ServiceState mSS>;
+
+        return $r2;
+    }
+
+    public com.android.internal.telephony.ServiceStateTracker getServiceStateTracker()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        return $r1;
+    }
+
+    public com.android.internal.telephony.PhoneConstants$State getState()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+        com.android.internal.telephony.PhoneConstants$State $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        $r2 = $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: com.android.internal.telephony.PhoneConstants$State mState>;
+
+        return $r2;
+    }
+
+    public java.lang.String getSubscriberId()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+        java.lang.String $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        $r2 = virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: java.lang.String getImsi()>();
+
+        return $r2;
+    }
+
+    public java.lang.String getVoiceMailAlphaTag()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1;
+        android.content.Context $r2;
+        java.lang.CharSequence $r3;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 = "";
+
+        $i0 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i0 != 0 goto label1;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.CharSequence getText(int)>(17039364);
+
+        r1 = virtualinvoke $r3.<java.lang.Object: java.lang.String toString()>();
+
+     label1:
+        return r1;
+    }
+
+    public java.lang.String getVoiceMailNumber()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.content.SharedPreferences r1;
+        android.content.Context $r2, $r3;
+        android.content.res.Resources $r4;
+        boolean $z0;
+        java.lang.String $r5, $r6, $r7;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r2 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.content.Context getContext()>();
+
+        r1 = staticinvoke <android.preference.PreferenceManager: android.content.SharedPreferences getDefaultSharedPreferences(android.content.Context)>($r2);
+
+        $r3 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.content.Context getContext()>();
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $z0 = virtualinvoke $r4.<android.content.res.Resources: boolean getBoolean(int)>(17891391);
+
+        if $z0 == 0 goto label1;
+
+        $r6 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String getLine1Number()>();
+
+        $r7 = interfaceinvoke r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("vm_number_key_cdma", $r6);
+
+        return $r7;
+
+     label1:
+        $r5 = interfaceinvoke r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("vm_number_key_cdma", "*86");
+
+        return $r5;
+    }
+
+    public int getVoiceMessageCount()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.uicc.IccRecords r1;
+        int i0;
+        java.util.concurrent.atomic.AtomicReference $r2;
+        java.lang.Object $r3;
+        android.content.Context $r4;
+        android.content.SharedPreferences $r5;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mIccRecords>;
+
+        $r3 = virtualinvoke $r2.<java.util.concurrent.atomic.AtomicReference: java.lang.Object get()>();
+
+        r1 = (com.android.internal.telephony.uicc.IccRecords) $r3;
+
+        if r1 == null goto label3;
+
+        i0 = virtualinvoke r1.<com.android.internal.telephony.uicc.IccRecords: int getVoiceMessageCount()>();
+
+     label1:
+        if i0 != 0 goto label2;
+
+        $r4 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.content.Context getContext()>();
+
+        $r5 = staticinvoke <android.preference.PreferenceManager: android.content.SharedPreferences getDefaultSharedPreferences(android.content.Context)>($r4);
+
+        i0 = interfaceinvoke $r5.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("vm_count_key_cdma", 0);
+
+     label2:
+        return i0;
+
+     label3:
+        i0 = 0;
+
+        goto label1;
+    }
+
+    public boolean handleInCallMmiCommands(java.lang.String)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "method handleInCallMmiCommands is NOT supported in CDMA!");
+
+        return 0;
+    }
+
+    public void handleMessage(android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Message r1, r3, $r42, $r44;
+        android.os.AsyncResult r2, r4, r6, $r7;
+        java.lang.String[] r5, $r17;
+        int $i0, $i2, $i3, $i11, $i13;
+        boolean $z0, $z2;
+        java.lang.Object $r8, $r10, $r12, $r13, $r22, $r24, $r25, $r30, $r33, $r36;
+        java.lang.Integer $r9;
+        com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager $r11, $r38;
+        java.lang.Throwable $r14, $r19, $r23, $r29;
+        java.lang.String $r15, $r16, $r18, $r21, $r27, $r31, $r35, $r48;
+        java.lang.Class $r20;
+        java.lang.StringBuilder $r28, $r32, $r34, $r39, $r40, $r41, $r45, $r46, $r47;
+        com.android.internal.telephony.CommandsInterface $r37, $r43;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Message;
+
+        $z0 = r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsTheCurrentActivePhone>;
+
+        if $z0 != 0 goto label02;
+
+        $r45 = new java.lang.StringBuilder;
+
+        specialinvoke $r45.<java.lang.StringBuilder: void <init>()>();
+
+        $r39 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received message ");
+
+        $r40 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r41 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("[");
+
+        $i13 = r1.<android.os.Message: int what>;
+
+        $r46 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i13);
+
+        $r47 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("] while being destroyed. Ignoring.");
+
+        $r48 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", $r48);
+
+     label01:
+        return;
+
+     label02:
+        $i0 = r1.<android.os.Message: int what>;
+
+        tableswitch($i0)
+        {
+            case 1: goto label04;
+            case 2: goto label14;
+            case 3: goto label03;
+            case 4: goto label03;
+            case 5: goto label12;
+            case 6: goto label05;
+            case 7: goto label03;
+            case 8: goto label11;
+            case 9: goto label03;
+            case 10: goto label03;
+            case 11: goto label03;
+            case 12: goto label03;
+            case 13: goto label03;
+            case 14: goto label03;
+            case 15: goto label03;
+            case 16: goto label03;
+            case 17: goto label03;
+            case 18: goto label03;
+            case 19: goto label15;
+            case 20: goto label17;
+            case 21: goto label06;
+            case 22: goto label10;
+            case 23: goto label16;
+            case 24: goto label03;
+            case 25: goto label07;
+            case 26: goto label09;
+            case 27: goto label13;
+            case 28: goto label03;
+            case 29: goto label08;
+            default: goto label03;
+        };
+
+     label03:
+        specialinvoke r0.<com.android.internal.telephony.PhoneBase: void handleMessage(android.os.Message)>(r1);
+
+        return;
+
+     label04:
+        $r37 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        $r42 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.Message obtainMessage(int)>(6);
+
+        interfaceinvoke $r37.<com.android.internal.telephony.CommandsInterface: void getBasebandVersion(android.os.Message)>($r42);
+
+        $r43 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        $r44 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.Message obtainMessage(int)>(21);
+
+        interfaceinvoke $r43.<com.android.internal.telephony.CommandsInterface: void getDeviceIdentity(android.os.Message)>($r44);
+
+        return;
+
+     label05:
+        $r30 = r1.<android.os.Message: java.lang.Object obj>;
+
+        r6 = (android.os.AsyncResult) $r30;
+
+        $r29 = r6.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        if $r29 != null goto label01;
+
+        $r28 = new java.lang.StringBuilder;
+
+        specialinvoke $r28.<java.lang.StringBuilder: void <init>()>();
+
+        $r34 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Baseband version: ");
+
+        $r33 = r6.<android.os.AsyncResult: java.lang.Object result>;
+
+        $r32 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r33);
+
+        $r31 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", $r31);
+
+        $r36 = r6.<android.os.AsyncResult: java.lang.Object result>;
+
+        $r35 = (java.lang.String) $r36;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void setSystemProperty(java.lang.String,java.lang.String)>("gsm.version.baseband", $r35);
+
+        return;
+
+     label06:
+        $r12 = r1.<android.os.Message: java.lang.Object obj>;
+
+        r4 = (android.os.AsyncResult) $r12;
+
+        $r14 = r4.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        if $r14 != null goto label01;
+
+        $r13 = r4.<android.os.AsyncResult: java.lang.Object result>;
+
+        $r17 = (java.lang.String[]) $r13;
+
+        r5 = (java.lang.String[]) $r17;
+
+        $r18 = r5[0];
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mImei> = $r18;
+
+        $r15 = r5[1];
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mImeiSv> = $r15;
+
+        $r16 = r5[2];
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mEsn> = $r16;
+
+        $r21 = r5[3];
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mMeid> = $r21;
+
+        return;
+
+     label07:
+        specialinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void handleEnterEmergencyCallbackMode(android.os.Message)>(r1);
+
+        return;
+
+     label08:
+        $r8 = r1.<android.os.Message: java.lang.Object obj>;
+
+        $r7 = (android.os.AsyncResult) $r8;
+
+        $r10 = $r7.<android.os.AsyncResult: java.lang.Object result>;
+
+        $r9 = (java.lang.Integer) $r10;
+
+        $i2 = virtualinvoke $r9.<java.lang.Integer: int intValue()>();
+
+        specialinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void processIccRecordEvents(int)>($i2);
+
+        return;
+
+     label09:
+        specialinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void handleExitEmergencyCallbackMode(android.os.Message)>(r1);
+
+        return;
+
+     label10:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "Event EVENT_RUIM_RECORDS_LOADED Received");
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean updateCurrentCarrierInProvider()>();
+
+        return;
+
+     label11:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "Event EVENT_RADIO_OFF_OR_NOT_AVAILABLE Received");
+
+        return;
+
+     label12:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "Event EVENT_RADIO_ON Received");
+
+        $r38 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager mCdmaSSM>;
+
+        $i11 = virtualinvoke $r38.<com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager: int getCdmaSubscriptionSource()>();
+
+        specialinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void handleCdmaSubscriptionSource(int)>($i11);
+
+        return;
+
+     label13:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "EVENT_CDMA_SUBSCRIPTION_SOURCE_CHANGED");
+
+        $r11 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager mCdmaSSM>;
+
+        $i3 = virtualinvoke $r11.<com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager: int getCdmaSubscriptionSource()>();
+
+        specialinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void handleCdmaSubscriptionSource(int)>($i3);
+
+        return;
+
+     label14:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "Event EVENT_SSN Received");
+
+        return;
+
+     label15:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "Event EVENT_REGISTERED_TO_NETWORK Received");
+
+        return;
+
+     label16:
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "Event EVENT_NV_READY Received");
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void prepareEri()>();
+
+        return;
+
+     label17:
+        $r22 = r1.<android.os.Message: java.lang.Object obj>;
+
+        r2 = (android.os.AsyncResult) $r22;
+
+        $r20 = class "com/android/internal/telephony/uicc/IccException";
+
+        $r19 = r2.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        $z2 = virtualinvoke $r20.<java.lang.Class: boolean isInstance(java.lang.Object)>($r19);
+
+        if $z2 == 0 goto label18;
+
+        $r27 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mVmNumber>;
+
+        specialinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void storeVoiceMailNumber(java.lang.String)>($r27);
+
+        r2.<android.os.AsyncResult: java.lang.Throwable exception> = null;
+
+     label18:
+        $r25 = r2.<android.os.AsyncResult: java.lang.Object userObj>;
+
+        r3 = (android.os.Message) $r25;
+
+        if r3 == null goto label01;
+
+        $r24 = r2.<android.os.AsyncResult: java.lang.Object result>;
+
+        $r23 = r2.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        staticinvoke <android.os.AsyncResult: android.os.AsyncResult forMessage(android.os.Message,java.lang.Object,java.lang.Throwable)>(r3, $r24, $r23);
+
+        virtualinvoke r3.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public boolean handlePinMmi(java.lang.String)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1;
+        com.android.internal.telephony.cdma.CdmaMmiCode r2;
+        java.util.concurrent.atomic.AtomicReference $r3;
+        java.lang.Object $r4;
+        com.android.internal.telephony.uicc.UiccCardApplication $r5;
+        boolean $z0;
+        java.util.ArrayList $r6;
+        android.os.AsyncResult $r7;
+        android.os.RegistrantList $r8;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mUiccApplication>;
+
+        $r4 = virtualinvoke $r3.<java.util.concurrent.atomic.AtomicReference: java.lang.Object get()>();
+
+        $r5 = (com.android.internal.telephony.uicc.UiccCardApplication) $r4;
+
+        r2 = staticinvoke <com.android.internal.telephony.cdma.CdmaMmiCode: com.android.internal.telephony.cdma.CdmaMmiCode newFromDialString(java.lang.String,com.android.internal.telephony.cdma.CDMAPhone,com.android.internal.telephony.uicc.UiccCardApplication)>(r1, r0, $r5);
+
+        if r2 != null goto label1;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "Mmi is NULL!");
+
+        return 0;
+
+     label1:
+        $z0 = virtualinvoke r2.<com.android.internal.telephony.cdma.CdmaMmiCode: boolean isPinPukCommand()>();
+
+        if $z0 == 0 goto label2;
+
+        $r6 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.ArrayList mPendingMmis>;
+
+        virtualinvoke $r6.<java.util.ArrayList: boolean add(java.lang.Object)>(r2);
+
+        $r8 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mMmiRegistrants>;
+
+        $r7 = new android.os.AsyncResult;
+
+        specialinvoke $r7.<android.os.AsyncResult: void <init>(java.lang.Object,java.lang.Object,java.lang.Throwable)>(null, r2, null);
+
+        virtualinvoke $r8.<android.os.RegistrantList: void notifyRegistrants(android.os.AsyncResult)>($r7);
+
+        virtualinvoke r2.<com.android.internal.telephony.cdma.CdmaMmiCode: void processCode()>();
+
+        return 1;
+
+     label2:
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "Unrecognized mmi!");
+
+        return 0;
+    }
+
+    void handleTimerInEmergencyCallbackMode(int)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        int i0;
+        long l1;
+        java.lang.StringBuilder $r1, $r2, $r3;
+        java.lang.String $r4;
+        java.lang.Runnable $r5, $r8;
+        java.lang.Boolean $r6, $r10;
+        android.os.RegistrantList $r7, $r9;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        i0 := @parameter0: int;
+
+        tableswitch(i0)
+        {
+            case 0: goto label3;
+            case 1: goto label2;
+            default: goto label1;
+        };
+
+     label1:
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleTimerInEmergencyCallbackMode, unsupported action ");
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", $r4);
+
+        return;
+
+     label2:
+        $r5 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.Runnable mExitEcmRunnable>;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void removeCallbacks(java.lang.Runnable)>($r5);
+
+        $r7 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mEcmTimerResetRegistrants>;
+
+        $r6 = <java.lang.Boolean: java.lang.Boolean TRUE>;
+
+        virtualinvoke $r7.<android.os.RegistrantList: void notifyResult(java.lang.Object)>($r6);
+
+        return;
+
+     label3:
+        l1 = staticinvoke <android.os.SystemProperties: long getLong(java.lang.String,long)>("ro.cdma.ecmexittimer", 300000L);
+
+        $r8 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.Runnable mExitEcmRunnable>;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean postDelayed(java.lang.Runnable,long)>($r8, l1);
+
+        $r9 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mEcmTimerResetRegistrants>;
+
+        $r10 = <java.lang.Boolean: java.lang.Boolean FALSE>;
+
+        virtualinvoke $r9.<android.os.RegistrantList: void notifyResult(java.lang.Object)>($r10);
+
+        return;
+    }
+
+    protected void init(android.content.Context, com.android.internal.telephony.PhoneNotifier)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.content.Context r1;
+        com.android.internal.telephony.PhoneNotifier r2;
+        java.lang.String r3, r4, $r23, $r24, $r25, $r26, $r31, $r43, $r46;
+        com.android.internal.telephony.CommandsInterface $r5, $r7, $r13, $r14, $r15, $r17, $r18, $r19, $r45;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r6;
+        com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager $r8;
+        com.android.internal.telephony.dataconnection.DcTracker $r9;
+        com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager $r10;
+        com.android.internal.telephony.PhoneSubInfo $r11;
+        com.android.internal.telephony.cdma.EriManager $r12;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r16;
+        android.os.PowerManager $r20;
+        java.lang.Object $r21;
+        android.os.PowerManager$WakeLock $r22;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.StringBuilder $r27, $r28, $r29, $r30, $r33, $r34, $r36, $r37, $r38, $r39, $r40, $r41, $r42, $r47;
+        com.android.internal.telephony.uicc.UiccController $r32;
+        com.android.internal.telephony.uicc.UiccCardApplication $r35;
+        android.os.Message $r44;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.internal.telephony.PhoneNotifier;
+
+        $r5 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r5.<com.android.internal.telephony.CommandsInterface: void setPhoneType(int)>(2);
+
+        $r6 = new com.android.internal.telephony.cdma.CdmaCallTracker;
+
+        specialinvoke $r6.<com.android.internal.telephony.cdma.CdmaCallTracker: void <init>(com.android.internal.telephony.cdma.CDMAPhone)>(r0);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT> = $r6;
+
+        $r7 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        $r8 = staticinvoke <com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager: com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager getInstance(android.content.Context,com.android.internal.telephony.CommandsInterface,android.os.Handler,int,java.lang.Object)>(r1, $r7, r0, 27, null);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager mCdmaSSM> = $r8;
+
+        $r9 = new com.android.internal.telephony.dataconnection.DcTracker;
+
+        specialinvoke $r9.<com.android.internal.telephony.dataconnection.DcTracker: void <init>(com.android.internal.telephony.PhoneBase)>(r0);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.dataconnection.DcTrackerBase mDcTracker> = $r9;
+
+        $r10 = new com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager;
+
+        specialinvoke $r10.<com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager: void <init>(com.android.internal.telephony.cdma.CDMAPhone)>(r0);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager mRuimPhoneBookInterfaceManager> = $r10;
+
+        $r11 = new com.android.internal.telephony.PhoneSubInfo;
+
+        specialinvoke $r11.<com.android.internal.telephony.PhoneSubInfo: void <init>(com.android.internal.telephony.Phone)>(r0);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.PhoneSubInfo mSubInfo> = $r11;
+
+        $r12 = new com.android.internal.telephony.cdma.EriManager;
+
+        specialinvoke $r12.<com.android.internal.telephony.cdma.EriManager: void <init>(com.android.internal.telephony.PhoneBase,android.content.Context,int)>(r0, r1, 0);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.EriManager mEriManager> = $r12;
+
+        $r13 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r13.<com.android.internal.telephony.CommandsInterface: void registerForAvailable(android.os.Handler,int,java.lang.Object)>(r0, 1, null);
+
+        $r14 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r14.<com.android.internal.telephony.CommandsInterface: void registerForOffOrNotAvailable(android.os.Handler,int,java.lang.Object)>(r0, 8, null);
+
+        $r15 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r15.<com.android.internal.telephony.CommandsInterface: void registerForOn(android.os.Handler,int,java.lang.Object)>(r0, 5, null);
+
+        $r17 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r17.<com.android.internal.telephony.CommandsInterface: void setOnSuppServiceNotification(android.os.Handler,int,java.lang.Object)>(r0, 2, null);
+
+        $r16 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        virtualinvoke $r16.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: void registerForNetworkAttached(android.os.Handler,int,java.lang.Object)>(r0, 19, null);
+
+        $r19 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r19.<com.android.internal.telephony.CommandsInterface: void setEmergencyCallbackMode(android.os.Handler,int,java.lang.Object)>(r0, 25, null);
+
+        $r18 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r18.<com.android.internal.telephony.CommandsInterface: void registerForExitEmergencyCallbackMode(android.os.Handler,int,java.lang.Object)>(r0, 26, null);
+
+        $r21 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r20 = (android.os.PowerManager) $r21;
+
+        $r22 = virtualinvoke $r20.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, "CDMAPhone");
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.PowerManager$WakeLock mWakeLock> = $r22;
+
+        $r24 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>(2);
+
+        staticinvoke <android.os.SystemProperties: void set(java.lang.String,java.lang.String)>("gsm.current.phone-type", $r24);
+
+        $r23 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String,java.lang.String)>("ril.cdma.inecmmode", "false");
+
+        $z1 = virtualinvoke $r23.<java.lang.String: boolean equals(java.lang.Object)>("true");
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsPhoneInEcmState> = $z1;
+
+        $z0 = r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsPhoneInEcmState>;
+
+        if $z0 == 0 goto label1;
+
+        $r45 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        $r44 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.Message obtainMessage(int)>(26);
+
+        interfaceinvoke $r45.<com.android.internal.telephony.CommandsInterface: void exitEmergencyCallbackMode(android.os.Message)>($r44);
+
+     label1:
+        $r25 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String,java.lang.String)>("ro.cdma.otaspnumschema", "");
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mCarrierOtaSpNumSchema> = $r25;
+
+        r3 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("ro.cdma.home.operator.alpha");
+
+        $r26 = <com.android.internal.telephony.cdma.CDMAPhone: java.lang.String PROPERTY_CDMA_HOME_OPERATOR_NUMERIC>;
+
+        r4 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>($r26);
+
+        $r29 = new java.lang.StringBuilder;
+
+        specialinvoke $r29.<java.lang.StringBuilder: void <init>()>();
+
+        $r30 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("init: operatorAlpha=\'");
+
+        $r27 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r28 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\' operatorNumeric=\'");
+
+        $r33 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        $r34 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\'");
+
+        $r31 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>($r31);
+
+        $r32 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.uicc.UiccController mUiccController>;
+
+        $r35 = virtualinvoke $r32.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccCardApplication getUiccCardApplication(int)>(1);
+
+        if $r35 != null goto label4;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>("init: APP_FAM_3GPP == NULL");
+
+        $z2 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r3);
+
+        if $z2 != 0 goto label2;
+
+        $r42 = new java.lang.StringBuilder;
+
+        specialinvoke $r42.<java.lang.StringBuilder: void <init>()>();
+
+        $r41 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("init: set \'gsm.sim.operator.alpha\' to operator=\'");
+
+        $r40 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r47 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\'");
+
+        $r46 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>($r46);
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void setSystemProperty(java.lang.String,java.lang.String)>("gsm.sim.operator.alpha", r3);
+
+     label2:
+        $z3 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r4);
+
+        if $z3 != 0 goto label3;
+
+        $r38 = new java.lang.StringBuilder;
+
+        specialinvoke $r38.<java.lang.StringBuilder: void <init>()>();
+
+        $r39 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("init: set \'gsm.sim.operator.numeric\' to operator=\'");
+
+        $r36 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        $r37 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\'");
+
+        $r43 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>($r43);
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void setSystemProperty(java.lang.String,java.lang.String)>("gsm.sim.operator.numeric", r4);
+
+     label3:
+        specialinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void setIsoCountryProperty(java.lang.String)>(r4);
+
+     label4:
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean updateCurrentCarrierInProvider(java.lang.String)>(r4);
+
+        interfaceinvoke r2.<com.android.internal.telephony.PhoneNotifier: void notifyMessageWaitingChanged(com.android.internal.telephony.Phone)>(r0);
+
+        return;
+    }
+
+    protected void initSstIcc()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = new com.android.internal.telephony.cdma.CdmaServiceStateTracker;
+
+        specialinvoke $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: void <init>(com.android.internal.telephony.cdma.CDMAPhone)>(r0);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST> = $r1;
+
+        return;
+    }
+
+    public boolean isEriFileLoaded()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.EriManager $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.EriManager mEriManager>;
+
+        $z0 = virtualinvoke $r1.<com.android.internal.telephony.cdma.EriManager: boolean isEriFileLoaded()>();
+
+        return $z0;
+    }
+
+    boolean isInCall()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.Call$State r1, r2, r3;
+        com.android.internal.telephony.cdma.CdmaCall $r4, $r5, $r6;
+        boolean $z0, $z1, $z2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r4 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCall getForegroundCall()>();
+
+        r1 = virtualinvoke $r4.<com.android.internal.telephony.cdma.CdmaCall: com.android.internal.telephony.Call$State getState()>();
+
+        $r5 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCall getBackgroundCall()>();
+
+        r2 = virtualinvoke $r5.<com.android.internal.telephony.cdma.CdmaCall: com.android.internal.telephony.Call$State getState()>();
+
+        $r6 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCall getRingingCall()>();
+
+        r3 = virtualinvoke $r6.<com.android.internal.telephony.cdma.CdmaCall: com.android.internal.telephony.Call$State getState()>();
+
+        $z0 = virtualinvoke r1.<com.android.internal.telephony.Call$State: boolean isAlive()>();
+
+        if $z0 != 0 goto label1;
+
+        $z1 = virtualinvoke r2.<com.android.internal.telephony.Call$State: boolean isAlive()>();
+
+        if $z1 != 0 goto label1;
+
+        $z2 = virtualinvoke r3.<com.android.internal.telephony.Call$State: boolean isAlive()>();
+
+        if $z2 == 0 goto label2;
+
+     label1:
+        return 1;
+
+     label2:
+        return 0;
+    }
+
+    public boolean isInEcm()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $z0 = r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsPhoneInEcmState>;
+
+        return $z0;
+    }
+
+    public boolean isInEmergencyCall()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        $z0 = virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: boolean isInEmergencyCall()>();
+
+        return $z0;
+    }
+
+    public boolean isMinInfoReady()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        $z0 = virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: boolean isMinInfoReady()>();
+
+        return $z0;
+    }
+
+    public boolean isOtaSpNumber(java.lang.String)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1, r2, $r6;
+        boolean z0;
+        java.lang.StringBuilder $r3, $r4, $r5;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = staticinvoke <android.telephony.PhoneNumberUtils: java.lang.String extractNetworkPortionAlt(java.lang.String)>(r1);
+
+        z0 = 0;
+
+        if r2 == null goto label1;
+
+        z0 = staticinvoke <com.android.internal.telephony.cdma.CDMAPhone: boolean isIs683OtaSpDialStr(java.lang.String)>(r2);
+
+        if z0 != 0 goto label1;
+
+        z0 = specialinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean isCarrierOtaSpNum(java.lang.String)>(r2);
+
+     label1:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("isOtaSpNumber ");
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", $r6);
+
+        return z0;
+    }
+
+    protected void log(java.lang.String)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", r1);
+
+        return;
+    }
+
+    protected void loge(java.lang.String, java.lang.Exception)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1;
+        java.lang.Exception r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.Exception;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("CDMAPhone", r1, r2);
+
+        return;
+    }
+
+    public boolean needsOtaServiceProvisioning()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        $i0 = virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: int getOtasp()>();
+
+        if $i0 == 3 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    void notifyDisconnect(com.android.internal.telephony.Connection)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.Connection r1;
+        android.os.RegistrantList $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: com.android.internal.telephony.Connection;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mDisconnectRegistrants>;
+
+        virtualinvoke $r2.<android.os.RegistrantList: void notifyResult(java.lang.Object)>(r1);
+
+        return;
+    }
+
+    void notifyLocationChanged()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.PhoneNotifier $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.PhoneNotifier mNotifier>;
+
+        interfaceinvoke $r1.<com.android.internal.telephony.PhoneNotifier: void notifyCellLocation(com.android.internal.telephony.Phone)>(r0);
+
+        return;
+    }
+
+    void notifyNewRingingConnection(com.android.internal.telephony.Connection)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.Connection r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: com.android.internal.telephony.Connection;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneBase: void notifyNewRingingConnectionP(com.android.internal.telephony.Connection)>(r1);
+
+        return;
+    }
+
+    void notifyPhoneStateChanged()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.PhoneNotifier $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.PhoneNotifier mNotifier>;
+
+        interfaceinvoke $r1.<com.android.internal.telephony.PhoneNotifier: void notifyPhoneState(com.android.internal.telephony.Phone)>(r0);
+
+        return;
+    }
+
+    void notifyPreciseCallStateChanged()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneBase: void notifyPreciseCallStateChangedP()>();
+
+        return;
+    }
+
+    void notifyServiceStateChanged(android.telephony.ServiceState)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.telephony.ServiceState r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.telephony.ServiceState;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneBase: void notifyServiceStateChangedP(android.telephony.ServiceState)>(r1);
+
+        return;
+    }
+
+    void notifyUnknownConnection()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.RegistrantList $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mUnknownConnectionRegistrants>;
+
+        virtualinvoke $r1.<android.os.RegistrantList: void notifyResult(java.lang.Object)>(r0);
+
+        return;
+    }
+
+    void onMMIDone(com.android.internal.telephony.cdma.CdmaMmiCode)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaMmiCode r1;
+        java.util.ArrayList $r2;
+        boolean $z0;
+        android.os.AsyncResult $r3;
+        android.os.RegistrantList $r4;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: com.android.internal.telephony.cdma.CdmaMmiCode;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.ArrayList mPendingMmis>;
+
+        $z0 = virtualinvoke $r2.<java.util.ArrayList: boolean remove(java.lang.Object)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        $r4 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mMmiCompleteRegistrants>;
+
+        $r3 = new android.os.AsyncResult;
+
+        specialinvoke $r3.<android.os.AsyncResult: void <init>(java.lang.Object,java.lang.Object,java.lang.Throwable)>(null, r1, null);
+
+        virtualinvoke $r4.<android.os.RegistrantList: void notifyRegistrants(android.os.AsyncResult)>($r3);
+
+     label1:
+        return;
+    }
+
+    protected void onUpdateIccAvailability()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.uicc.UiccCardApplication r1, r2;
+        com.android.internal.telephony.uicc.UiccController $r3, $r4, $r19;
+        java.util.concurrent.atomic.AtomicReference $r5, $r7, $r8, $r10, $r14, $r15, $r18;
+        java.lang.Object $r6, $r12, $r16;
+        com.android.internal.telephony.uicc.IccRecords $r9, $r13;
+        com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager $r11, $r17;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.uicc.UiccController mUiccController>;
+
+        if $r3 != null goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r4 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.uicc.UiccController mUiccController>;
+
+        r1 = virtualinvoke $r4.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccCardApplication getUiccCardApplication(int)>(2);
+
+        if r1 != null goto label3;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>("can\'t find 3GPP2 application; trying APP_FAM_3GPP");
+
+        $r19 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.uicc.UiccController mUiccController>;
+
+        r1 = virtualinvoke $r19.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccCardApplication getUiccCardApplication(int)>(1);
+
+     label3:
+        $r5 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mUiccApplication>;
+
+        $r6 = virtualinvoke $r5.<java.util.concurrent.atomic.AtomicReference: java.lang.Object get()>();
+
+        r2 = (com.android.internal.telephony.uicc.UiccCardApplication) $r6;
+
+        if r2 == r1 goto label1;
+
+        if r2 == null goto label5;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>("Removing stale icc objects.");
+
+        $r14 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mIccRecords>;
+
+        $r16 = virtualinvoke $r14.<java.util.concurrent.atomic.AtomicReference: java.lang.Object get()>();
+
+        if $r16 == null goto label4;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void unregisterForRuimRecordEvents()>();
+
+        $r17 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager mRuimPhoneBookInterfaceManager>;
+
+        virtualinvoke $r17.<com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager: void updateIccRecords(com.android.internal.telephony.uicc.IccRecords)>(null);
+
+     label4:
+        $r15 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mIccRecords>;
+
+        virtualinvoke $r15.<java.util.concurrent.atomic.AtomicReference: void set(java.lang.Object)>(null);
+
+        $r18 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mUiccApplication>;
+
+        virtualinvoke $r18.<java.util.concurrent.atomic.AtomicReference: void set(java.lang.Object)>(null);
+
+     label5:
+        if r1 == null goto label1;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>("New Uicc application found");
+
+        $r7 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mUiccApplication>;
+
+        virtualinvoke $r7.<java.util.concurrent.atomic.AtomicReference: void set(java.lang.Object)>(r1);
+
+        $r8 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mIccRecords>;
+
+        $r9 = virtualinvoke r1.<com.android.internal.telephony.uicc.UiccCardApplication: com.android.internal.telephony.uicc.IccRecords getIccRecords()>();
+
+        virtualinvoke $r8.<java.util.concurrent.atomic.AtomicReference: void set(java.lang.Object)>($r9);
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void registerForRuimRecordEvents()>();
+
+        $r11 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager mRuimPhoneBookInterfaceManager>;
+
+        $r10 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mIccRecords>;
+
+        $r12 = virtualinvoke $r10.<java.util.concurrent.atomic.AtomicReference: java.lang.Object get()>();
+
+        $r13 = (com.android.internal.telephony.uicc.IccRecords) $r12;
+
+        virtualinvoke $r11.<com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager: void updateIccRecords(com.android.internal.telephony.uicc.IccRecords)>($r13);
+
+        return;
+    }
+
+    public void prepareEri()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.EriManager $r1, $r2;
+        boolean $z0;
+        android.os.RegistrantList $r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.EriManager mEriManager>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.cdma.EriManager: void loadEriFile()>();
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.EriManager mEriManager>;
+
+        $z0 = virtualinvoke $r2.<com.android.internal.telephony.cdma.EriManager: boolean isEriFileLoaded()>();
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>("ERI read, notify registrants");
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mEriFileLoadedRegistrants>;
+
+        virtualinvoke $r3.<android.os.RegistrantList: void notifyRegistrants()>();
+
+     label1:
+        return;
+    }
+
+    public void registerForCallWaiting(android.os.Handler, int, java.lang.Object)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        int i0;
+        java.lang.Object r2;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.Object;
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        virtualinvoke $r3.<com.android.internal.telephony.cdma.CdmaCallTracker: void registerForCallWaiting(android.os.Handler,int,java.lang.Object)>(r1, i0, r2);
+
+        return;
+    }
+
+    public void registerForCdmaOtaStatusChange(android.os.Handler, int, java.lang.Object)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        int i0;
+        java.lang.Object r2;
+        com.android.internal.telephony.CommandsInterface $r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.Object;
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r3.<com.android.internal.telephony.CommandsInterface: void registerForCdmaOtaProvision(android.os.Handler,int,java.lang.Object)>(r1, i0, r2);
+
+        return;
+    }
+
+    public void registerForEcmTimerReset(android.os.Handler, int, java.lang.Object)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        int i0;
+        java.lang.Object r2;
+        android.os.RegistrantList $r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.Object;
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mEcmTimerResetRegistrants>;
+
+        virtualinvoke $r3.<android.os.RegistrantList: void addUnique(android.os.Handler,int,java.lang.Object)>(r1, i0, r2);
+
+        return;
+    }
+
+    public void registerForEriFileLoaded(android.os.Handler, int, java.lang.Object)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        int i0;
+        java.lang.Object r2;
+        android.os.Registrant r3, $r4;
+        android.os.RegistrantList $r5;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.Object;
+
+        $r4 = new android.os.Registrant;
+
+        specialinvoke $r4.<android.os.Registrant: void <init>(android.os.Handler,int,java.lang.Object)>(r1, i0, r2);
+
+        r3 = $r4;
+
+        $r5 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mEriFileLoadedRegistrants>;
+
+        virtualinvoke $r5.<android.os.RegistrantList: void add(android.os.Registrant)>(r3);
+
+        return;
+    }
+
+    protected void registerForRuimRecordEvents()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.uicc.IccRecords r1;
+        java.util.concurrent.atomic.AtomicReference $r2;
+        java.lang.Object $r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mIccRecords>;
+
+        $r3 = virtualinvoke $r2.<java.util.concurrent.atomic.AtomicReference: java.lang.Object get()>();
+
+        r1 = (com.android.internal.telephony.uicc.IccRecords) $r3;
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        virtualinvoke r1.<com.android.internal.telephony.uicc.IccRecords: void registerForRecordsEvents(android.os.Handler,int,java.lang.Object)>(r0, 29, null);
+
+        virtualinvoke r1.<com.android.internal.telephony.uicc.IccRecords: void registerForRecordsLoaded(android.os.Handler,int,java.lang.Object)>(r0, 22, null);
+
+        return;
+    }
+
+    public void registerForSubscriptionInfoReady(android.os.Handler, int, java.lang.Object)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        int i0;
+        java.lang.Object r2;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.Object;
+
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        virtualinvoke $r3.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: void registerForSubscriptionInfoReady(android.os.Handler,int,java.lang.Object)>(r1, i0, r2);
+
+        return;
+    }
+
+    public void registerForSuppServiceNotification(android.os.Handler, int, java.lang.Object)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        int i0;
+        java.lang.Object r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.Object;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "method registerForSuppServiceNotification is NOT supported in CDMA!");
+
+        return;
+    }
+
+    public void rejectCall() throws com.android.internal.telephony.CallStateException
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: void rejectCall()>();
+
+        return;
+    }
+
+    public void removeReferences()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>("removeReferences");
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.RuimPhoneBookInterfaceManager mRuimPhoneBookInterfaceManager> = null;
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.PhoneSubInfo mSubInfo> = null;
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT> = null;
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST> = null;
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.EriManager mEriManager> = null;
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.Runnable mExitEcmRunnable> = null;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneBase: void removeReferences()>();
+
+        return;
+    }
+
+    public void selectNetworkManually(com.android.internal.telephony.OperatorInfo, android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.OperatorInfo r1;
+        android.os.Message r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: com.android.internal.telephony.OperatorInfo;
+
+        r2 := @parameter1: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "selectNetworkManually: not possible in CDMA");
+
+        return;
+    }
+
+    public void sendBurstDtmf(java.lang.String, int, int, android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1, $r11;
+        int i0, i1, i2, $i3;
+        android.os.Message r2;
+        boolean z0, $z1;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r3;
+        com.android.internal.telephony.PhoneConstants$State $r4, $r5;
+        com.android.internal.telephony.CommandsInterface $r6;
+        char $c4, $c5;
+        java.lang.StringBuilder $r7, $r8, $r9, $r10;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: android.os.Message;
+
+        z0 = 1;
+
+        i2 = 0;
+
+     label1:
+        $i3 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if i2 >= $i3 goto label2;
+
+        $c4 = virtualinvoke r1.<java.lang.String: char charAt(int)>(i2);
+
+        $z1 = staticinvoke <android.telephony.PhoneNumberUtils: boolean is12Key(char)>($c4);
+
+        if $z1 != 0 goto label4;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sendDtmf called with invalid character \'");
+
+        $c5 = virtualinvoke r1.<java.lang.String: char charAt(int)>(i2);
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>($c5);
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\'");
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", $r11);
+
+        z0 = 0;
+
+     label2:
+        $r3 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        $r5 = $r3.<com.android.internal.telephony.cdma.CdmaCallTracker: com.android.internal.telephony.PhoneConstants$State mState>;
+
+        $r4 = <com.android.internal.telephony.PhoneConstants$State: com.android.internal.telephony.PhoneConstants$State OFFHOOK>;
+
+        if $r5 != $r4 goto label3;
+
+        if z0 == 0 goto label3;
+
+        $r6 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r6.<com.android.internal.telephony.CommandsInterface: void sendBurstDtmf(java.lang.String,int,int,android.os.Message)>(r1, i0, i1, r2);
+
+     label3:
+        return;
+
+     label4:
+        i2 = i2 + 1;
+
+        goto label1;
+    }
+
+    public void sendDtmf(char)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        char c0;
+        boolean $z0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+        com.android.internal.telephony.PhoneConstants$State $r2, $r3;
+        com.android.internal.telephony.CommandsInterface $r4;
+        java.lang.StringBuilder $r5, $r6, $r7, $r8;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        c0 := @parameter0: char;
+
+        $z0 = staticinvoke <android.telephony.PhoneNumberUtils: boolean is12Key(char)>(c0);
+
+        if $z0 != 0 goto label2;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sendDtmf called with invalid character \'");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(c0);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\'");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", $r9);
+
+     label1:
+        return;
+
+     label2:
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        $r3 = $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: com.android.internal.telephony.PhoneConstants$State mState>;
+
+        $r2 = <com.android.internal.telephony.PhoneConstants$State: com.android.internal.telephony.PhoneConstants$State OFFHOOK>;
+
+        if $r3 != $r2 goto label1;
+
+        $r4 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r4.<com.android.internal.telephony.CommandsInterface: void sendDtmf(char,android.os.Message)>(c0, null);
+
+        return;
+    }
+
+    void sendEmergencyCallbackModeChange()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.content.Intent r1, $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.EMERGENCY_CALLBACK_MODE_CHANGED");
+
+        r1 = $r2;
+
+        $z0 = r0.<com.android.internal.telephony.cdma.CDMAPhone: boolean mIsPhoneInEcmState>;
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,boolean)>("phoneinECMState", $z0);
+
+        staticinvoke <android.app.ActivityManagerNative: void broadcastStickyIntent(android.content.Intent,java.lang.String,int)>(r1, null, -1);
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("CDMAPhone", "sendEmergencyCallbackModeChange");
+
+        return;
+    }
+
+    public void sendUssdResponse(java.lang.String)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "sendUssdResponse: not possible in CDMA");
+
+        return;
+    }
+
+    public void setCallForwardingOption(int, int, java.lang.String, int, android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        int i0, i1, i2;
+        java.lang.String r1;
+        android.os.Message r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        i2 := @parameter3: int;
+
+        r2 := @parameter4: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "setCallForwardingOption: not possible in CDMA");
+
+        return;
+    }
+
+    public void setCallWaiting(boolean, android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        boolean z0;
+        android.os.Message r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        z0 := @parameter0: boolean;
+
+        r1 := @parameter1: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "method setCallWaiting is NOT supported in CDMA!");
+
+        return;
+    }
+
+    public void setCellBroadcastSmsConfig(int[], android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        int[] r1;
+        android.os.Message r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: int[];
+
+        r2 := @parameter1: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "[CDMAPhone] setCellBroadcastSmsConfig() is obsolete; use SmsManager");
+
+        virtualinvoke r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void setDataRoamingEnabled(boolean)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        boolean z0;
+        com.android.internal.telephony.dataconnection.DcTrackerBase $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.dataconnection.DcTrackerBase mDcTracker>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.dataconnection.DcTrackerBase: void setDataOnRoamingEnabled(boolean)>(z0);
+
+        return;
+    }
+
+    public void setLine1Number(java.lang.String, java.lang.String, android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1, r2;
+        android.os.Message r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "setLine1Number: not possible in CDMA");
+
+        return;
+    }
+
+    public void setMute(boolean)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        boolean z0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: void setMute(boolean)>(z0);
+
+        return;
+    }
+
+    public void setNetworkSelectionModeAutomatic(android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Message r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "method setNetworkSelectionModeAutomatic is NOT supported in CDMA!");
+
+        return;
+    }
+
+    public void setOnEcbModeExitResponse(android.os.Handler, int, java.lang.Object)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        int i0;
+        java.lang.Object r2;
+        android.os.Registrant $r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.Object;
+
+        $r3 = new android.os.Registrant;
+
+        specialinvoke $r3.<android.os.Registrant: void <init>(android.os.Handler,int,java.lang.Object)>(r1, i0, r2);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.Registrant mEcmExitRespRegistrant> = $r3;
+
+        return;
+    }
+
+    public void setOnPostDialCharacter(android.os.Handler, int, java.lang.Object)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        int i0;
+        java.lang.Object r2;
+        android.os.Registrant $r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.Object;
+
+        $r3 = new android.os.Registrant;
+
+        specialinvoke $r3.<android.os.Registrant: void <init>(android.os.Handler,int,java.lang.Object)>(r1, i0, r2);
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.Registrant mPostDialHandler> = $r3;
+
+        return;
+    }
+
+    public void setOutgoingCallerIdDisplay(int, android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        int i0;
+        android.os.Message r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.os.Message;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "setOutgoingCallerIdDisplay: not possible in CDMA");
+
+        return;
+    }
+
+    public void setRadioPower(boolean)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        boolean z0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: void setRadioPower(boolean)>(z0);
+
+        return;
+    }
+
+    public final void setSystemProperty(java.lang.String, java.lang.String)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1, r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneBase: void setSystemProperty(java.lang.String,java.lang.String)>(r1, r2);
+
+        return;
+    }
+
+    public void setVoiceMailNumber(java.lang.String, java.lang.String, android.os.Message)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1, r2, $r8;
+        android.os.Message r3, r4;
+        com.android.internal.telephony.uicc.IccRecords r5;
+        java.util.concurrent.atomic.AtomicReference $r6;
+        java.lang.Object $r7;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: android.os.Message;
+
+        r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mVmNumber> = r2;
+
+        r4 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(20, 0, 0, r3);
+
+        $r6 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mIccRecords>;
+
+        $r7 = virtualinvoke $r6.<java.util.concurrent.atomic.AtomicReference: java.lang.Object get()>();
+
+        r5 = (com.android.internal.telephony.uicc.IccRecords) $r7;
+
+        if r5 == null goto label1;
+
+        $r8 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.lang.String mVmNumber>;
+
+        virtualinvoke r5.<com.android.internal.telephony.uicc.IccRecords: void setVoiceMailNumber(java.lang.String,java.lang.String,android.os.Message)>(r1, $r8, r4);
+
+     label1:
+        return;
+    }
+
+    public void startDtmf(char)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        char c0;
+        boolean $z0;
+        com.android.internal.telephony.CommandsInterface $r1;
+        java.lang.StringBuilder $r2, $r3, $r4, $r5;
+        java.lang.String $r6;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        c0 := @parameter0: char;
+
+        $z0 = staticinvoke <android.telephony.PhoneNumberUtils: boolean is12Key(char)>(c0);
+
+        if $z0 != 0 goto label1;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("startDtmf called with invalid character \'");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(c0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\'");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", $r6);
+
+        return;
+
+     label1:
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r1.<com.android.internal.telephony.CommandsInterface: void startDtmf(char,android.os.Message)>(c0, null);
+
+        return;
+    }
+
+    public void stopDtmf()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.CommandsInterface $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r1.<com.android.internal.telephony.CommandsInterface: void stopDtmf(android.os.Message)>(null);
+
+        return;
+    }
+
+    public void switchHoldingAndActive() throws com.android.internal.telephony.CallStateException
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaCallTracker: void switchWaitingOrHoldingAndActive()>();
+
+        return;
+    }
+
+    public void unregisterForCallWaiting(android.os.Handler)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        com.android.internal.telephony.cdma.CdmaCallTracker $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaCallTracker mCT>;
+
+        virtualinvoke $r2.<com.android.internal.telephony.cdma.CdmaCallTracker: void unregisterForCallWaiting(android.os.Handler)>(r1);
+
+        return;
+    }
+
+    public void unregisterForCdmaOtaStatusChange(android.os.Handler)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        com.android.internal.telephony.CommandsInterface $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r2.<com.android.internal.telephony.CommandsInterface: void unregisterForCdmaOtaProvision(android.os.Handler)>(r1);
+
+        return;
+    }
+
+    public void unregisterForEcmTimerReset(android.os.Handler)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        android.os.RegistrantList $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mEcmTimerResetRegistrants>;
+
+        virtualinvoke $r2.<android.os.RegistrantList: void remove(android.os.Handler)>(r1);
+
+        return;
+    }
+
+    public void unregisterForEriFileLoaded(android.os.Handler)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        android.os.RegistrantList $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.RegistrantList mEriFileLoadedRegistrants>;
+
+        virtualinvoke $r2.<android.os.RegistrantList: void remove(android.os.Handler)>(r1);
+
+        return;
+    }
+
+    protected void unregisterForRuimRecordEvents()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.uicc.IccRecords r1;
+        java.util.concurrent.atomic.AtomicReference $r2;
+        java.lang.Object $r3;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: java.util.concurrent.atomic.AtomicReference mIccRecords>;
+
+        $r3 = virtualinvoke $r2.<java.util.concurrent.atomic.AtomicReference: java.lang.Object get()>();
+
+        r1 = (com.android.internal.telephony.uicc.IccRecords) $r3;
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        virtualinvoke r1.<com.android.internal.telephony.uicc.IccRecords: void unregisterForRecordsEvents(android.os.Handler)>(r0);
+
+        virtualinvoke r1.<com.android.internal.telephony.uicc.IccRecords: void unregisterForRecordsLoaded(android.os.Handler)>(r0);
+
+        return;
+    }
+
+    public void unregisterForSubscriptionInfoReady(android.os.Handler)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        virtualinvoke $r2.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: void unregisterForSubscriptionInfoReady(android.os.Handler)>(r1);
+
+        return;
+    }
+
+    public void unregisterForSuppServiceNotification(android.os.Handler)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("CDMAPhone", "method unregisterForSuppServiceNotification is NOT supported in CDMA!");
+
+        return;
+    }
+
+    public void unsetOnEcbModeExitResponse(android.os.Handler)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        android.os.Handler r1;
+        android.os.Registrant $r2;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: android.os.Handler;
+
+        $r2 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.os.Registrant mEcmExitRespRegistrant>;
+
+        virtualinvoke $r2.<android.os.Registrant: void clear()>();
+
+        return;
+    }
+
+    boolean updateCurrentCarrierInProvider()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        return 1;
+    }
+
+    boolean updateCurrentCarrierInProvider(java.lang.String)
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        java.lang.String r1, $r10;
+        boolean z0, z1;
+        android.database.SQLException r2, $r15;
+        android.net.Uri r3, $r5;
+        android.content.ContentValues r4, r16;
+        java.lang.StringBuilder $r8, $r9, r17;
+        android.content.ContentResolver $r11;
+        android.content.Context $r12, $r13;
+        java.lang.Throwable r18;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        r1 := @parameter0: java.lang.String;
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>("CDMAPhone: updateCurrentCarrierInProvider called");
+
+        z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        z1 = 0;
+
+        if z0 != 0 goto label3;
+
+     label1:
+        $r5 = <android.provider.Telephony$Carriers: android.net.Uri CONTENT_URI>;
+
+        r3 = staticinvoke <android.net.Uri: android.net.Uri withAppendedPath(android.net.Uri,java.lang.String)>($r5, "current");
+
+        r16 = new android.content.ContentValues;
+
+        specialinvoke r16.<android.content.ContentValues: void <init>()>();
+
+        r4 = r16;
+
+        virtualinvoke r4.<android.content.ContentValues: void put(java.lang.String,java.lang.String)>("numeric", r1);
+
+        r17 = new java.lang.StringBuilder;
+
+        specialinvoke r17.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateCurrentCarrierInProvider from system: numeric=");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: void log(java.lang.String)>($r10);
+
+        $r12 = virtualinvoke r0.<com.android.internal.telephony.cdma.CDMAPhone: android.content.Context getContext()>();
+
+        $r11 = virtualinvoke $r12.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        virtualinvoke $r11.<android.content.ContentResolver: android.net.Uri insert(android.net.Uri,android.content.ContentValues)>(r3, r4);
+
+        $r13 = r0.<com.android.internal.telephony.cdma.CDMAPhone: android.content.Context mContext>;
+
+        staticinvoke <com.android.internal.telephony.MccTable: void updateMccMncConfiguration(android.content.Context,java.lang.String,boolean)>($r13, r1, 0);
+
+     label2:
+        z1 = 1;
+
+     label3:
+        return z1;
+
+     label4:
+        $r15 := @caughtexception;
+
+        r2 = $r15;
+
+        r18 = (java.lang.Throwable) r2;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("CDMAPhone", "Can\'t store current operator", r18);
+
+        return 0;
+
+        catch android.database.SQLException from label1 to label2 with label4;
+    }
+
+    public void updateServiceLocation()
+    {
+        com.android.internal.telephony.cdma.CDMAPhone r0;
+        com.android.internal.telephony.cdma.CdmaServiceStateTracker $r1;
+
+        r0 := @this: com.android.internal.telephony.cdma.CDMAPhone;
+
+        $r1 = r0.<com.android.internal.telephony.cdma.CDMAPhone: com.android.internal.telephony.cdma.CdmaServiceStateTracker mSST>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.cdma.CdmaServiceStateTracker: void enableSingleLocationUpdate()>();
+
+        return;
+    }
+}
