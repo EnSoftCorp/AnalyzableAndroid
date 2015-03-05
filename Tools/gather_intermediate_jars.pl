@@ -1,16 +1,25 @@
 #!/usr/bin/perl
 
-# THE PATH YOU WANT TO SAVE JARS TO
-$JAR_OUTPUT_DIRECTORY="jars";
-unless(-e $JAR_OUTPUT_DIRECTORY or mkdir $JAR_OUTPUT_DIRECTORY) {
-  die "Unable to create  directory $JAR_OUTPUT_DIRECTORY";
-}
+# get the user name
+$USER =  $ENV{'USER'};
 
 # YOU PROBABLY NEED TO UPDATE THIS PATH!
-$SOURCE_DIRECTORY="/home/android/Desktop/WORKING_DIRECTORY";
+$SOURCE_DIRECTORY="/home/$USER/Desktop/WORKING_DIRECTORY";
+unless(-e $SOURCE_DIRECTORY) {
+  die "Unable to find Android Source directory $SOURCE_DIRECTORY";
+}
+
+# THE PATH YOU WANT TO SAVE JARS TO, YOU MAY WANT TO CHANGE THIS!
+$JAR_OUTPUT_DIRECTORY="jars";
+unless(-e $JAR_OUTPUT_DIRECTORY or mkdir $JAR_OUTPUT_DIRECTORY) {
+  die "Unable to create directory $JAR_OUTPUT_DIRECTORY";
+}
 
 # YOU MAY NEED TO UPDATE THIS PATH IF YOU CHANGED THE DEFAULT ANDROID BUILD CONFIGURATION!
 $BUILD_OUTPUT_DIRECTORY="$SOURCE_DIRECTORY/out/target";
+unless(-e $BUILD_OUTPUT_DIRECTORY) {
+  die "Unable to find Android build output directory $BUILD_OUTPUT_DIRECTORY, did you remember to build Android?";
+}
 
 # Defines various build output paths
 $INSTALLED="$BUILD_OUTPUT_DIRECTORY/product/generic/installed-files.txt";
