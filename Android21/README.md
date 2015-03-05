@@ -103,7 +103,11 @@ You may need to set ANDROID\_JAVA\_HOME environment variable so that build/core/
 `make -j8`
 
 ## 8) Save and organize captured source
-Zip up and save the fake javac output directory (aka spy directory).  Using the OrganizeJava program, you can feed the spy directory in as input and output a directory organized by the Java source files packages.  From here you will need to do some manual massaging to get the source to compile as an eclipse project.
+Zip up and save the fake javac output directory (aka spy directory).  Using the OrganizeJava program, you can feed the spy directory in as input and output a directory organized by the Java source files packages.  From here you will need to do some manual massaging to get the source to compile as an eclipse project.  Best strategy ended up being to pull all sources (without ignoring any packages) and then manually pruning out unrelated packages and test code.  One odd thing was in he camera and the wallpaper packages the source was intentionally causing a few package collisions to replace base class functionalities, which made for a few very confusing cases to resolve until I realized what was happening.
+
+# Building bytecode (Jimple) project
+
+Download and run the [gather_intermediate_jars.pl](https://github.com/EnSoftCorp/AnalyzableAndroid/blob/master/Tools/gather_intermediate_jars.pl) script (you probably need to make the script executable).  The script outputs a directory called "jars" in the same directory that it is run from.  Create an empty Eclipse project and delete all the current jars including the runtime libraries.  Then create a folder called "lib" and place the "jars" folder jars in the "lib" folder.  Add the newly added jars to the project's class path.  Also create a "data" folder and added the "out/target/product/generic/installed-files.txt/installed-files.txt" file installation list for future reference.
 
 # PScout
 
