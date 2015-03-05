@@ -32,14 +32,21 @@ while (<FILE>) {
         # copy out system app libraries (prioritizing non-debug builds)
         if ($_ =~ m/  \/system\/app\/(.*).apk/) {
 		$APP = $1; # file path like "Calendar/Calendar"
-                @APP_PARTS = split m%/%, $APP; # splits on /
-                $APP = shift @APP_PARTS; # grabs first array element, ie "Calendar"
 		if (-e "$SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar") {
 			system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar $JAR_OUTPUT_DIRECTORY/$APP.jar");
 		} elsif (-e "$SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes-full-debug.jar") {
 			system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes-full-debug.jar $JAR_OUTPUT_DIRECTORY/$APP.jar");
 		} else {
-			print "Could not find compiled classes for $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar!\n";
+			# newer Android builds removed the subdirectory
+			@APP_PARTS = split m%/%, $APP; # splits on /
+                	$APP = shift @APP_PARTS; # grabs first array element, ie "Calendar"
+			if (-e "$SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar") {
+				system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar $JAR_OUTPUT_DIRECTORY/$APP.jar");
+			} elsif (-e "$SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes-full-debug.jar") {
+				system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes-full-debug.jar $JAR_OUTPUT_DIRECTORY/$APP.jar");
+			} else {
+				print "Could not find compiled classes for $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar!\n";
+			}
 		}
 	}
         # copy out the framework libraries (prioritize non-debug builds)
