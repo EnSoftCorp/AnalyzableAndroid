@@ -62,7 +62,7 @@ make -j24
 9) Confirm that all packages/types in the Android API appear to be present
 
 ## Building bytecode Eclipse project
-Edit and run the [gatherjars.sh](https://github.com/EnSoftCorp/AnalyzableAndroid/blob/master/Tools/gatherjars.sh) script to gather Android jars.  Then create an empty Eclipse project, remove all existing project Jars, and add the gathered Jars to the project.
+Edit and run the [gatherjars.sh](https://github.com/EnSoftCorp/AnalyzableAndroid/blob/master/Tools/gatherjars.sh) or [gather_intermediate_jars.pl](https://github.com/EnSoftCorp/AnalyzableAndroid/blob/master/Tools/gather_intermediate_jars.pl) (for newer builds including ART optimizations) script to gather Android jars.  Then create an empty Eclipse project, remove all existing project Jars, and add the gathered Jars to the project.
 
 ## Running PScout
 
