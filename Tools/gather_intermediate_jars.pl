@@ -29,8 +29,8 @@ $JAVA_LIBRARIES_DIRECTORY="$BUILD_OUTPUT_DIRECTORY/common/obj/JAVA_LIBRARIES";
 open FILE, "<$INSTALLED" or die $!;
 while (<FILE>) {
 	chomp($_);
-        # copy out system app libraries (prioritizing non-debug builds)
-        if ($_ =~ m/  \/system\/app\/(.*).apk/) {
+	# copy out system app libraries (prioritizing non-debug builds)
+	if ($_ =~ m/  \/system\/app\/(.*).apk/) {
 		$APP = $1; # file path like "Calendar/Calendar"
 		if (-e "$SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar") {
 			system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar $JAR_OUTPUT_DIRECTORY/$APP.jar");
