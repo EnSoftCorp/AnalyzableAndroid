@@ -73,3 +73,28 @@ PScout wants to run over the `full-eng` build of Android, so you will probably h
 Follow PScout directions at [https://github.com/dweinstein/pscout/blob/master/README.txt](https://github.com/dweinstein/pscout/blob/master/README.txt).
 
 PScout results can be used in the [Android Essentials Toolbox project](https://github.com/EnSoftCorp/android-essentials-toolbox).
+
+## Android Source Cheatsheet
+
+|    **Code name**   	|  **Version**  	|    **API Level**    	| **Last Release Branch** 	|   **Build OS**   	| **Java Version** 	|
+|:------------------:	|:-------------:	|:-------------------:	|:-----------------------:	|:----------------:	|:----------------:	|
+| Lollipop           	| 5.0           	| API level 21        	| android-5.0.2_r1        	| Ubuntu 14.04     	| 7                	|
+| KitKat             	| 4.4 - 4.4.4   	| API level 19        	| android-4.4.4_r2        	| Ubuntu 14.04     	| 6                	|
+| Jelly Bean         	| 4.3.x         	| API level 18        	| android-4.3.1_r1        	| Ubuntu 14.04     	| 6                	|
+| Jelly Bean         	| 4.2.x         	| API level 17        	| android-4.2.2_r1.2      	| Ubuntu 12.04  	| 6                	|
+| Jelly Bean         	| 4.1.x         	| API level 16        	| android-4.1.2_r2.1      	| ?                	| 6                	|
+| Ice Cream Sandwich 	| 4.0.3 - 4.0.4 	| API level 15, NDK 8 	| android-4.0.4_r2.1      	| ?                	| 6                	|
+| Ice Cream Sandwich 	| 4.0.1 - 4.0.2 	| API level 14, NDK 7 	| android-4.0.2_r1        	| ?                	| 6                	|
+| Honeycomb          	| 3.2.x         	| API level 13        	| android-3.2.6_r1        	| ?                	| 6                	|
+| Honeycomb          	| 3.1           	| API level 12, NDK 6 	| android-3.1_r1          	| ?                	| 6                	|
+| Honeycomb          	| 3.0           	| API level 11        	| android-3.0_r1.3        	| ?                	| 6                	|
+| Gingerbread        	| 2.3.3 - 2.3.7 	| API level 10        	| android-2.3.7_r1        	| ?                	| 6                	|
+| Gingerbread        	| 2.3 - 2.3.2   	| API level 9, NDK 5  	| android-2.3.2_r1        	| ?                	| 6                	|
+| Froyo              	| 2.2.x         	| API level 8, NDK 4  	| android-2.2.3_r2        	| ?                	| 5                	|
+| Eclair             	| 2.1           	| API level 7, NDK 3  	| android-2.1_r2.1p2      	| ?                	| 5                	|
+| Eclair             	| 2.0.1         	| API level 6         	| android-2.0.1_r1        	| ?                	| 5                	|
+| Eclair             	| 2.0           	| API level 5         	| android-2.0_r1          	| ?                	| 5                	|
+| Donut              	| 1.6           	| API level 4, NDK 2  	| android-1.6_r1.5        	| ?                	| 5                	|
+| Cupcake            	| 1.5           	| API level 3, NDK 1  	| ?                       	| ?                	| 5                	|
+| (no code name)     	| 1.1           	| API level 2         	| ?                       	| ?                	| ?                	|
+| (no code name)     	| 1.0           	| API level 1         	| ?                       	| ?                	| ?                	|
