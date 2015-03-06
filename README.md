@@ -80,7 +80,7 @@ PScout results can be used in the [Android Essentials Toolbox project](https://g
 |:------------------:	|:-------------:	|:-------------------:	|:-----------------------:	|:----------------:	|:----------------:	|
 | Lollipop           	| 5.0           	| API level 21        	| android-5.0.2_r1        	| Ubuntu 14.04     	| 7                	|
 | KitKat             	| 4.4 - 4.4.4   	| API level 19        	| android-4.4.4_r2        	| Ubuntu 14.04     	| 6                	|
-| Jelly Bean         	| 4.3.x         	| API level 18        	| android-4.3.1_r1        	| Ubuntu 14.04     	| 6                	|
+| Jelly Bean         	| 4.3.x         	| API level 18        	| android-4.3.1_r1        	| Ubuntu 12.04     	| 6                	|
 | Jelly Bean         	| 4.2.x         	| API level 17        	| android-4.2.2_r1.2      	| Ubuntu 12.04  	| 6                	|
 | Jelly Bean         	| 4.1.x         	| API level 16        	| android-4.1.2_r2.1      	| ?                	| 6                	|
 | Ice Cream Sandwich 	| 4.0.3 - 4.0.4 	| API level 15, NDK 8 	| android-4.0.4_r2.1      	| ?                	| 6                	|
