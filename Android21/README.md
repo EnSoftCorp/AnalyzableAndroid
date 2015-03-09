@@ -113,7 +113,7 @@ Download and run the [gather_intermediate_jars.pl](https://github.com/EnSoftCorp
 
 ## Install dependencies 
 
-Use source at: [https://github.com/dweinstein/pscout](https://github.com/dweinstein/pscout)
+Use source at: [https://github.com/benjholla/pscout](https://github.com/benjholla/pscout)
 
 `sudo apt-get install libexpat1-dev`
 
@@ -122,6 +122,8 @@ Use source at: [https://github.com/dweinstein/pscout](https://github.com/dweinst
 `sudo perl -MCPAN -e shell`
 
 `install XML::Simple` (should already be installed, for some reason doing this directly failed earlier)
+
+`exit` (type exit to quit the shell)
 
 ## Setup environment
 
@@ -139,7 +141,7 @@ Move out of Android build directory and download PScout.
 
 ` cd ..`
 
-`git clone https://github.com/dweinstein/pscout`
+`git clone https://github.com/benjholla/pscout`
 
 `cd pscout`
 
@@ -170,6 +172,6 @@ See [https://github.com/EnSoftCorp/android-essentials-toolbox/blob/master/Androi
 
 Run from Eclipse or command line with the following arguments.
 
-args[0] = /path/to/allmappings
+args[0] = /path/to/publishedapimapping
 
 args[1] = 21
