@@ -69,7 +69,7 @@ Make sure javac has unix style line endings and not Windows!  It will fail other
 
 After following one of the techniques below, verify that the javac commands are being intercepted by running `javac -help` and checking that the command is logged in the javac.txt file at the base directory (defined in the script).  If the directory does not exist you may need to created it.
 
-After setting up technique 1 or 2, make sure `make clean` still gets logged to the spy directory before proceeding (it should log `javac -v` when it displays the version).
+After setting up technique 1 or 2, make sure `make clean` gets logged to the spy directory before proceeding (it should log `javac -v` when it displays the version).
 
 ### Technique 1 (replace javac system link)
 `sudo mv /usr/bin/javac /usr/bin/javac2`
