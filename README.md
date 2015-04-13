@@ -78,7 +78,7 @@ PScout results can be used in the [Android Essentials Toolbox project](https://g
 
 |    **Code name**   	|  **Version**  	|    **API Level**    	| **Last Release Branch** 	|   **Build OS**   	| **Java Version** 	|
 |:------------------:	|:-------------:	|:-------------------:	|:-----------------------:	|:----------------:	|:----------------:	|
-| Lollipop           	| 5.1           	| API level 22        	| android-5.1.0_r3        	| Ubuntu 14.04     	| 7                	|
+| Lollipop           	| 5.1           	| [API level 22](https://github.com/EnSoftCorp/AnalyzableAndroid/tree/master/Android22)        	| android-5.1.0_r3        	| Ubuntu 14.04     	| 7                	|
 | Lollipop           	| 5.0           	| [API level 21](https://github.com/EnSoftCorp/AnalyzableAndroid/tree/master/Android21)        	| android-5.0.2_r1        	| Ubuntu 14.04     	| 7                	|
 | -                 	| -             	| API level 20        	| -                     	| -     	        | -                	|
 | KitKat             	| 4.4 - 4.4.4   	| [API level 19](https://github.com/EnSoftCorp/AnalyzableAndroid/tree/master/Android19)        	| android-4.4.4_r2        	| Ubuntu 14.04     	| 6                	|
