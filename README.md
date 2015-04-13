@@ -79,11 +79,11 @@ PScout results can be used in the [Android Essentials Toolbox project](https://g
 |    **Code name**   	|  **Version**  	|    **API Level**    	| **Last Release Branch** 	|   **Build OS**   	| **Java Version** 	|
 |:------------------:	|:-------------:	|:-------------------:	|:-----------------------:	|:----------------:	|:----------------:	|
 | Lollipop           	| 5.1           	| API level 22        	| android-5.1.0_r3        	| Ubuntu 14.04     	| 7                	|
-| Lollipop           	| 5.0           	| API level 21        	| android-5.0.2_r1        	| Ubuntu 14.04     	| 7                	|
-| -           	| -           	| API level 20        	| -        	| -     	| -                	|
-| KitKat             	| 4.4 - 4.4.4   	| API level 19        	| android-4.4.4_r2        	| Ubuntu 14.04     	| 6                	|
-| Jelly Bean         	| 4.3.x         	| API level 18        	| android-4.3.1_r1        	| Ubuntu 12.04     	| 6                	|
-| Jelly Bean         	| 4.2.x         	| API level 17        	| android-4.2.2_r1.2      	| Ubuntu 12.04  	| 6                	|
+| Lollipop           	| 5.0           	| [API level 21](https://github.com/EnSoftCorp/AnalyzableAndroid/tree/master/Android21)        	| android-5.0.2_r1        	| Ubuntu 14.04     	| 7                	|
+| -                 	| -             	| API level 20        	| -                     	| -     	        | -                	|
+| KitKat             	| 4.4 - 4.4.4   	| [API level 19](https://github.com/EnSoftCorp/AnalyzableAndroid/tree/master/Android19)        	| android-4.4.4_r2        	| Ubuntu 14.04     	| 6                	|
+| Jelly Bean         	| 4.3.x         	| [API level 18](https://github.com/EnSoftCorp/AnalyzableAndroid/tree/master/Android18)        	| android-4.3.1_r1        	| Ubuntu 12.04     	| 6                	|
+| Jelly Bean         	| 4.2.x         	| [API level 17](https://github.com/EnSoftCorp/AnalyzableAndroid/tree/master/Android17)        	| android-4.2.2_r1.2      	| Ubuntu 12.04  	| 6                	|
 | Jelly Bean         	| 4.1.x         	| API level 16        	| android-4.1.2_r2.1      	| ?                	| 6                	|
 | Ice Cream Sandwich 	| 4.0.3 - 4.0.4 	| API level 15, NDK 8 	| android-4.0.4_r2.1      	| ?                	| 6                	|
 | Ice Cream Sandwich 	| 4.0.1 - 4.0.2 	| API level 14, NDK 7 	| android-4.0.2_r1        	| ?                	| 6                	|
