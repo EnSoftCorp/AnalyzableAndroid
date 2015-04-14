@@ -69,7 +69,7 @@ Make sure javac has unix style line endings and not Windows!  It will fail other
 
 After following one of the techniques below, verify that the javac commands are being intercepted by running `javac -help` and checking that the command is logged in the javac.txt file at the base directory (defined in the script).  If the directory does not exist you may need to created it.
 
-After setting up technique 1 or 2, make sure `make clean` gets logged to the spy directory before proceeding (it should log `javac -v` when it displays the version).
+After setting up technique 1 or 2, make sure `make clean` gets logged to the spy directory before proceeding (it should log `javac -version` when it displays the version).
 
 ### Technique 1 (replace javac system link)
 `sudo mv /usr/lib/jvm/java-7-openjdk-amd64/bin/javac /usr/lib/jvm/java-7-openjdk-amd64/bin/javac2`
@@ -82,7 +82,7 @@ Edit the last line of the fake javac to point to `/usr/lib/jvm/java-7-openjdk-am
 
 Edit build/core/find-jdk-tools-jar.sh to run `which javac2` instead of `which javac`.
 
-Run `make clean` and verify that javac is capturing.  The `make clean` command calls `javac -v` to get the version.  If this doesn't happen try restarting the terminal in case some environment variables or something got cached.
+Run `make clean` and verify that javac is capturing.  The `make clean` command calls `javac -version` to get the version.  If this doesn't happen try restarting the terminal in case some environment variables or something got cached.
 
 ### Technique 2 (be the first javac on path)
 
