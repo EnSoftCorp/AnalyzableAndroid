@@ -72,11 +72,13 @@ After following one of the techniques below, verify that the javac commands are 
 After setting up technique 1 or 2, make sure `make clean` gets logged to the spy directory before proceeding (it should log `javac -v` when it displays the version).
 
 ### Technique 1 (replace javac system link)
-`sudo mv /usr/bin/javac /usr/bin/javac2`
+`sudo mv /usr/lib/jvm/java-7-openjdk-amd64/bin/javac /usr/lib/jvm/java-7-openjdk-amd64/bin/javac2`
 
-`sudo cp Tools/javac /usr/bin/javac`
+Edit the last line of the fake javac to point to `/usr/lib/jvm/java-7-openjdk-amd64/bin/javac`
 
-`sudo chmod 777 /usr/bin/javac`
+`sudo cp Tools/javac /usr/lib/jvm/java-7-openjdk-amd64/bin/javac`
+
+`sudo chmod 777 /usr/lib/jvm/java-7-openjdk-amd64/bin/javac`
 
 Edit build/core/find-jdk-tools-jar.sh to run `which javac2` instead of `which javac`.
 
