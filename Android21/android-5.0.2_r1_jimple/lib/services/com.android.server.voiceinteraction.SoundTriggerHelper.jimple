@@ -1,0 +1,1706 @@
+public class com.android.server.voiceinteraction.SoundTriggerHelper extends java.lang.Object implements android.hardware.soundtrigger.SoundTrigger$StatusListener
+{
+    static final java.lang.String TAG;
+    static final boolean DBG;
+    public static final int STATUS_ERROR;
+    public static final int STATUS_OK;
+    private static final int INVALID_VALUE;
+    final android.hardware.soundtrigger.SoundTrigger$ModuleProperties moduleProperties;
+    private android.hardware.soundtrigger.SoundTriggerModule mModule;
+    private final java.lang.Object mLock;
+    private final android.content.Context mContext;
+    private final android.telephony.TelephonyManager mTelephonyManager;
+    private final android.telephony.PhoneStateListener mPhoneStateListener;
+    private final android.os.PowerManager mPowerManager;
+    private android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener;
+    private int mKeyphraseId;
+    private int mCurrentSoundModelHandle;
+    private java.util.UUID mCurrentSoundModelUuid;
+    private android.hardware.soundtrigger.SoundTrigger$RecognitionConfig mRecognitionConfig;
+    private boolean mRequested;
+    private boolean mCallActive;
+    private boolean mIsPowerSaveMode;
+    private boolean mServiceDisabled;
+    private boolean mStarted;
+    private com.android.server.voiceinteraction.SoundTriggerHelper$PowerSaveModeListener mPowerSaveModeListener;
+
+    void <init>(android.content.Context)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        android.content.Context r1;
+        java.util.ArrayList r2, $r4;
+        int i0, $i1, $i2;
+        java.lang.Object $r3, $r5, $r7, $r17;
+        android.telephony.TelephonyManager $r6;
+        android.os.PowerManager $r8;
+        com.android.server.voiceinteraction.SoundTriggerHelper$MyCallStateListener $r9;
+        java.lang.StringBuilder $r10, $r11, $r12, $r13, $r15;
+        java.lang.String $r14;
+        android.hardware.soundtrigger.SoundTrigger$ModuleProperties $r16;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r3 = new java.lang.Object;
+
+        specialinvoke $r3.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.lang.Object mLock> = $r3;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mKeyphraseId> = -2147483648;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle> = -2147483648;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.util.UUID mCurrentSoundModelUuid> = null;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$RecognitionConfig mRecognitionConfig> = null;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mRequested> = 0;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mCallActive> = 0;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mIsPowerSaveMode> = 0;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mServiceDisabled> = 0;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mStarted> = 0;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r2 = $r4;
+
+        i0 = staticinvoke <android.hardware.soundtrigger.SoundTrigger: int listModules(java.util.ArrayList)>(r2);
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.content.Context mContext> = r1;
+
+        $r5 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("phone");
+
+        $r6 = (android.telephony.TelephonyManager) $r5;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.telephony.TelephonyManager mTelephonyManager> = $r6;
+
+        $r7 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r8 = (android.os.PowerManager) $r7;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.os.PowerManager mPowerManager> = $r8;
+
+        $r9 = new com.android.server.voiceinteraction.SoundTriggerHelper$MyCallStateListener;
+
+        specialinvoke $r9.<com.android.server.voiceinteraction.SoundTriggerHelper$MyCallStateListener: void <init>(com.android.server.voiceinteraction.SoundTriggerHelper)>(r0);
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.telephony.PhoneStateListener mPhoneStateListener> = $r9;
+
+        if i0 != 0 goto label1;
+
+        $i2 = virtualinvoke r2.<java.util.ArrayList: int size()>();
+
+        if $i2 != 0 goto label2;
+
+     label1:
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("listModules status=");
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", # of modules=");
+
+        $i1 = virtualinvoke r2.<java.util.ArrayList: int size()>();
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", $r14);
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$ModuleProperties moduleProperties> = null;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule> = null;
+
+        goto label3;
+
+     label2:
+        $r17 = virtualinvoke r2.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        $r16 = (android.hardware.soundtrigger.SoundTrigger$ModuleProperties) $r17;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$ModuleProperties moduleProperties> = $r16;
+
+     label3:
+        return;
+    }
+
+    int startRecognition(int, android.hardware.soundtrigger.SoundTrigger$KeyphraseSoundModel, android.hardware.soundtrigger.IRecognitionStatusCallback, android.hardware.soundtrigger.SoundTrigger$RecognitionConfig)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i11, $i13, $i16, i18;
+        android.hardware.soundtrigger.SoundTrigger$KeyphraseSoundModel r1;
+        android.hardware.soundtrigger.IRecognitionStatusCallback r2, $r10, $r18, $r21;
+        android.hardware.soundtrigger.SoundTrigger$RecognitionConfig r3;
+        java.lang.Object r4, $r7;
+        int[] r5, $r11;
+        java.lang.Throwable r6, $r42;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        android.hardware.soundtrigger.SoundTrigger$ModuleProperties $r8, $r31;
+        android.hardware.soundtrigger.SoundTriggerModule $r9, $r12, $r26, $r30, $r32;
+        java.util.UUID $r13, $r20, $r22, $r24;
+        java.lang.StringBuilder $r14, $r15, $r16, $r25, $r28, $r29;
+        java.lang.String $r17, $r27;
+        android.os.IBinder $r19, $r23;
+        android.telephony.PhoneStateListener $r33;
+        android.telephony.TelephonyManager $r34, $r39;
+        com.android.server.voiceinteraction.SoundTriggerHelper$PowerSaveModeListener $r35, $r38, $r40;
+        android.content.IntentFilter $r36;
+        android.content.Context $r37;
+        android.os.PowerManager $r41;
+        android.os.RemoteException $r44, r45;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.hardware.soundtrigger.SoundTrigger$KeyphraseSoundModel;
+
+        r2 := @parameter2: android.hardware.soundtrigger.IRecognitionStatusCallback;
+
+        r3 := @parameter3: android.hardware.soundtrigger.SoundTrigger$RecognitionConfig;
+
+        if r1 == null goto label01;
+
+        if r2 == null goto label01;
+
+        if r3 != null goto label02;
+
+     label01:
+        return -2147483648;
+
+     label02:
+        $r7 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.lang.Object mLock>;
+
+        r4 = $r7;
+
+        entermonitor $r7;
+
+     label03:
+        $z0 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mStarted>;
+
+        if $z0 != 0 goto label07;
+
+        $r34 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.telephony.TelephonyManager mTelephonyManager>;
+
+        $i16 = virtualinvoke $r34.<android.telephony.TelephonyManager: int getCallState()>();
+
+        if $i16 == 0 goto label04;
+
+        $z4 = 1;
+
+        goto label05;
+
+     label04:
+        $z4 = 0;
+
+     label05:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mCallActive> = $z4;
+
+        $r39 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.telephony.TelephonyManager mTelephonyManager>;
+
+        $r33 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.telephony.PhoneStateListener mPhoneStateListener>;
+
+        virtualinvoke $r39.<android.telephony.TelephonyManager: void listen(android.telephony.PhoneStateListener,int)>($r33, 32);
+
+        $r40 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: com.android.server.voiceinteraction.SoundTriggerHelper$PowerSaveModeListener mPowerSaveModeListener>;
+
+        if $r40 != null goto label06;
+
+        $r35 = new com.android.server.voiceinteraction.SoundTriggerHelper$PowerSaveModeListener;
+
+        specialinvoke $r35.<com.android.server.voiceinteraction.SoundTriggerHelper$PowerSaveModeListener: void <init>(com.android.server.voiceinteraction.SoundTriggerHelper)>(r0);
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: com.android.server.voiceinteraction.SoundTriggerHelper$PowerSaveModeListener mPowerSaveModeListener> = $r35;
+
+        $r37 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.content.Context mContext>;
+
+        $r38 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: com.android.server.voiceinteraction.SoundTriggerHelper$PowerSaveModeListener mPowerSaveModeListener>;
+
+        $r36 = new android.content.IntentFilter;
+
+        specialinvoke $r36.<android.content.IntentFilter: void <init>(java.lang.String)>("android.os.action.POWER_SAVE_MODE_CHANGED");
+
+        virtualinvoke $r37.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r38, $r36);
+
+     label06:
+        $r41 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.os.PowerManager mPowerManager>;
+
+        $z3 = virtualinvoke $r41.<android.os.PowerManager: boolean isPowerSaveMode()>();
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mIsPowerSaveMode> = $z3;
+
+     label07:
+        $r8 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$ModuleProperties moduleProperties>;
+
+        if $r8 != null goto label09;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Attempting startRecognition without the capability");
+
+        exitmonitor r4;
+
+     label08:
+        return -2147483648;
+
+     label09:
+        $r9 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        if $r9 != null goto label11;
+
+        $r31 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$ModuleProperties moduleProperties>;
+
+        $i13 = $r31.<android.hardware.soundtrigger.SoundTrigger$ModuleProperties: int id>;
+
+        $r30 = staticinvoke <android.hardware.soundtrigger.SoundTrigger: android.hardware.soundtrigger.SoundTriggerModule attachModule(int,android.hardware.soundtrigger.SoundTrigger$StatusListener,android.os.Handler)>($i13, r0, null);
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule> = $r30;
+
+        $r32 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        if $r32 != null goto label11;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "startRecognition cannot attach to sound trigger module");
+
+        exitmonitor r4;
+
+     label10:
+        return -2147483648;
+
+     label11:
+        $i3 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle>;
+
+        if $i3 == -2147483648 goto label14;
+
+        $r24 = r1.<android.hardware.soundtrigger.SoundTrigger$KeyphraseSoundModel: java.util.UUID uuid>;
+
+        $r22 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.util.UUID mCurrentSoundModelUuid>;
+
+        $z1 = virtualinvoke $r24.<java.util.UUID: boolean equals(java.lang.Object)>($r22);
+
+        if $z1 == 0 goto label12;
+
+        $z2 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mStarted>;
+
+        if $z2 == 0 goto label14;
+
+     label12:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Unloading previous sound model");
+
+        $r26 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        $i11 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle>;
+
+        i1 = virtualinvoke $r26.<android.hardware.soundtrigger.SoundTriggerModule: int unloadSoundModel(int)>($i11);
+
+        if i1 == 0 goto label13;
+
+        $r25 = new java.lang.StringBuilder;
+
+        specialinvoke $r25.<java.lang.StringBuilder: void <init>()>();
+
+        $r29 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("unloadSoundModel call failed with ");
+
+        $r28 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r27 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", $r27);
+
+     label13:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle> = -2147483648;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.util.UUID mCurrentSoundModelUuid> = null;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mStarted> = 0;
+
+     label14:
+        $r10 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        if $r10 == null goto label19;
+
+        $r18 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        $r19 = interfaceinvoke $r18.<android.hardware.soundtrigger.IRecognitionStatusCallback: android.os.IBinder asBinder()>();
+
+        $r23 = interfaceinvoke r2.<android.hardware.soundtrigger.IRecognitionStatusCallback: android.os.IBinder asBinder()>();
+
+        if $r19 == $r23 goto label19;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Canceling previous recognition");
+
+     label15:
+        $r21 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        interfaceinvoke $r21.<android.hardware.soundtrigger.IRecognitionStatusCallback: void onError(int)>(-2147483648);
+
+     label16:
+        goto label18;
+
+     label17:
+        $r44 := @caughtexception;
+
+        r45 = $r44;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("SoundTriggerHelper", "RemoteException in onDetectionStopped", r45);
+
+     label18:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener> = null;
+
+     label19:
+        i18 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle>;
+
+        $i4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle>;
+
+        if $i4 == -2147483648 goto label20;
+
+        $r20 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.util.UUID mCurrentSoundModelUuid>;
+
+        if $r20 != null goto label25;
+
+     label20:
+        $r11 = newarray (int)[1];
+
+        $r11[0] = -2147483648;
+
+        r5 = $r11;
+
+        $r12 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        i2 = virtualinvoke $r12.<android.hardware.soundtrigger.SoundTriggerModule: int loadSoundModel(android.hardware.soundtrigger.SoundTrigger$SoundModel,int[])>(r1, r5);
+
+        if i2 == 0 goto label22;
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("loadSoundModel call failed with ");
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r17 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", $r17);
+
+        exitmonitor r4;
+
+     label21:
+        return i2;
+
+     label22:
+        $i5 = r5[0];
+
+        if $i5 != -2147483648 goto label24;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "loadSoundModel call returned invalid sound model handle");
+
+        exitmonitor r4;
+
+     label23:
+        return -2147483648;
+
+     label24:
+        i18 = r5[0];
+
+     label25:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mRequested> = 1;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mKeyphraseId> = i0;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle> = i18;
+
+        $r13 = r1.<android.hardware.soundtrigger.SoundTrigger$KeyphraseSoundModel: java.util.UUID uuid>;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.util.UUID mCurrentSoundModelUuid> = $r13;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$RecognitionConfig mRecognitionConfig> = r3;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener> = r2;
+
+        $i6 = specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int updateRecognitionLocked(boolean)>(0);
+
+        exitmonitor r4;
+
+     label26:
+        return $i6;
+
+     label27:
+        $r42 := @caughtexception;
+
+        r6 = $r42;
+
+        exitmonitor r4;
+
+     label28:
+        throw r6;
+
+        catch android.os.RemoteException from label15 to label16 with label17;
+        catch java.lang.Throwable from label03 to label08 with label27;
+        catch java.lang.Throwable from label09 to label10 with label27;
+        catch java.lang.Throwable from label11 to label21 with label27;
+        catch java.lang.Throwable from label22 to label23 with label27;
+        catch java.lang.Throwable from label24 to label26 with label27;
+        catch java.lang.Throwable from label27 to label28 with label27;
+    }
+
+    int stopRecognition(int, android.hardware.soundtrigger.IRecognitionStatusCallback)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        int i0, i1, $i3, i7;
+        android.hardware.soundtrigger.IRecognitionStatusCallback r1, $r7, $r8;
+        java.lang.Object r2, $r4;
+        java.lang.Throwable r3, $r16;
+        android.hardware.soundtrigger.SoundTrigger$ModuleProperties $r5;
+        android.hardware.soundtrigger.SoundTriggerModule $r6, $r11;
+        android.os.IBinder $r9, $r10;
+        java.lang.StringBuilder $r12, $r13, $r14;
+        java.lang.String $r15;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.hardware.soundtrigger.IRecognitionStatusCallback;
+
+        if r1 != null goto label01;
+
+        return -2147483648;
+
+     label01:
+        $r4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.lang.Object mLock>;
+
+        r2 = $r4;
+
+        entermonitor $r4;
+
+     label02:
+        $r5 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$ModuleProperties moduleProperties>;
+
+        if $r5 == null goto label03;
+
+        $r6 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        if $r6 != null goto label05;
+
+     label03:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Attempting stopRecognition without the capability");
+
+        exitmonitor r2;
+
+     label04:
+        return -2147483648;
+
+     label05:
+        $r7 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        if $r7 != null goto label07;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Attempting stopRecognition without a successful startRecognition");
+
+        exitmonitor r2;
+
+     label06:
+        return -2147483648;
+
+     label07:
+        $r8 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        $r9 = interfaceinvoke $r8.<android.hardware.soundtrigger.IRecognitionStatusCallback: android.os.IBinder asBinder()>();
+
+        $r10 = interfaceinvoke r1.<android.hardware.soundtrigger.IRecognitionStatusCallback: android.os.IBinder asBinder()>();
+
+        if $r9 == $r10 goto label09;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Attempting stopRecognition for another recognition");
+
+        exitmonitor r2;
+
+     label08:
+        return -2147483648;
+
+     label09:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mRequested> = 0;
+
+        i1 = specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int updateRecognitionLocked(boolean)>(0);
+
+        if i1 == 0 goto label11;
+
+        exitmonitor r2;
+
+     label10:
+        return i1;
+
+     label11:
+        $r11 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        $i3 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle>;
+
+        i7 = virtualinvoke $r11.<android.hardware.soundtrigger.SoundTriggerModule: int unloadSoundModel(int)>($i3);
+
+        if i7 == 0 goto label12;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("unloadSoundModel call failed with ");
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i7);
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", $r15);
+
+     label12:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void internalClearStateLocked()>();
+
+        exitmonitor r2;
+
+     label13:
+        return i7;
+
+     label14:
+        $r16 := @caughtexception;
+
+        r3 = $r16;
+
+        exitmonitor r2;
+
+     label15:
+        throw r3;
+
+        catch java.lang.Throwable from label02 to label04 with label14;
+        catch java.lang.Throwable from label05 to label06 with label14;
+        catch java.lang.Throwable from label07 to label08 with label14;
+        catch java.lang.Throwable from label09 to label10 with label14;
+        catch java.lang.Throwable from label11 to label13 with label14;
+        catch java.lang.Throwable from label14 to label15 with label14;
+    }
+
+    void stopAllRecognitions()
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r11;
+        android.hardware.soundtrigger.SoundTrigger$ModuleProperties $r4;
+        android.hardware.soundtrigger.SoundTriggerModule $r5, $r6;
+        int $i1, $i2, i4;
+        java.lang.StringBuilder $r7, $r8, $r9;
+        java.lang.String $r10;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        $r3 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label01:
+        $r4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$ModuleProperties moduleProperties>;
+
+        if $r4 == null goto label02;
+
+        $r5 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        if $r5 != null goto label04;
+
+     label02:
+        exitmonitor r1;
+
+     label03:
+        return;
+
+     label04:
+        $i1 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle>;
+
+        if $i1 != -2147483648 goto label06;
+
+        exitmonitor r1;
+
+     label05:
+        return;
+
+     label06:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mRequested> = 0;
+
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int updateRecognitionLocked(boolean)>(0);
+
+        $r6 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        $i2 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle>;
+
+        i4 = virtualinvoke $r6.<android.hardware.soundtrigger.SoundTriggerModule: int unloadSoundModel(int)>($i2);
+
+        if i4 == 0 goto label07;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("unloadSoundModel call failed with ");
+
+        $r8 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i4);
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", $r10);
+
+     label07:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void internalClearStateLocked()>();
+
+        exitmonitor r1;
+
+     label08:
+        goto label11;
+
+     label09:
+        $r11 := @caughtexception;
+
+        r2 = $r11;
+
+        exitmonitor r1;
+
+     label10:
+        throw r2;
+
+     label11:
+        return;
+
+        catch java.lang.Throwable from label01 to label03 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label06 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    public void onRecognition(android.hardware.soundtrigger.SoundTrigger$RecognitionEvent)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        android.hardware.soundtrigger.SoundTrigger$RecognitionEvent r1;
+        java.lang.Object r2, $r4;
+        java.lang.Throwable r3, $r7;
+        boolean $z0;
+        android.hardware.soundtrigger.IRecognitionStatusCallback $r5;
+        int $i1;
+        android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionEvent $r6;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        r1 := @parameter0: android.hardware.soundtrigger.SoundTrigger$RecognitionEvent;
+
+        if r1 == null goto label01;
+
+        $z0 = r1 instanceof android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionEvent;
+
+        if $z0 != 0 goto label02;
+
+     label01:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Invalid recognition event!");
+
+        return;
+
+     label02:
+        $r4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.lang.Object mLock>;
+
+        r2 = $r4;
+
+        entermonitor $r4;
+
+     label03:
+        $r5 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        if $r5 != null goto label05;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "received onRecognition event without any listener for it");
+
+        exitmonitor r2;
+
+     label04:
+        return;
+
+     label05:
+        $i1 = r1.<android.hardware.soundtrigger.SoundTrigger$RecognitionEvent: int status>;
+
+        tableswitch($i1)
+        {
+            case 0: goto label08;
+            case 1: goto label06;
+            case 2: goto label07;
+            default: goto label09;
+        };
+
+     label06:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void onRecognitionAbortLocked()>();
+
+        goto label09;
+
+     label07:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void onRecognitionFailureLocked()>();
+
+        goto label09;
+
+     label08:
+        $r6 = (android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionEvent) r1;
+
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void onRecognitionSuccessLocked(android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionEvent)>($r6);
+
+     label09:
+        exitmonitor r2;
+
+     label10:
+        goto label13;
+
+     label11:
+        $r7 := @caughtexception;
+
+        r3 = $r7;
+
+        exitmonitor r2;
+
+     label12:
+        throw r3;
+
+     label13:
+        return;
+
+        catch java.lang.Throwable from label03 to label04 with label11;
+        catch java.lang.Throwable from label05 to label10 with label11;
+        catch java.lang.Throwable from label11 to label12 with label11;
+    }
+
+    public void onSoundModelUpdate(android.hardware.soundtrigger.SoundTrigger$SoundModelEvent)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        android.hardware.soundtrigger.SoundTrigger$SoundModelEvent r1;
+        java.lang.Object r2, $r4;
+        java.lang.Throwable r3, $r5;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        r1 := @parameter0: android.hardware.soundtrigger.SoundTrigger$SoundModelEvent;
+
+        if r1 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Invalid sound model event!");
+
+        return;
+
+     label1:
+        $r4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.lang.Object mLock>;
+
+        r2 = $r4;
+
+        entermonitor $r4;
+
+     label2:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void onSoundModelUpdatedLocked(android.hardware.soundtrigger.SoundTrigger$SoundModelEvent)>(r1);
+
+        exitmonitor r2;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r5 := @caughtexception;
+
+        r3 = $r5;
+
+        exitmonitor r2;
+
+     label5:
+        throw r3;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public void onServiceStateChange(int)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        int i0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        i0 := @parameter0: int;
+
+        $r3 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        if 1 != i0 goto label2;
+
+        $z0 = 1;
+
+        goto label3;
+
+     label2:
+        $z0 = 0;
+
+     label3:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void onServiceStateChangedLocked(boolean)>($z0);
+
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public void onServiceDied()
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("SoundTriggerHelper", "onServiceDied!!");
+
+        $r3 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void onServiceDiedLocked()>();
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private void onCallStateChangedLocked(boolean)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        boolean z0, $z1;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mCallActive>;
+
+        if $z1 != z0 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mCallActive> = z0;
+
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int updateRecognitionLocked(boolean)>(1);
+
+        return;
+    }
+
+    private void onPowerSaveModeChangedLocked(boolean)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        boolean z0, $z1;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mIsPowerSaveMode>;
+
+        if $z1 != z0 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mIsPowerSaveMode> = z0;
+
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int updateRecognitionLocked(boolean)>(1);
+
+        return;
+    }
+
+    private void onSoundModelUpdatedLocked(android.hardware.soundtrigger.SoundTrigger$SoundModelEvent)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        android.hardware.soundtrigger.SoundTrigger$SoundModelEvent r1;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        r1 := @parameter0: android.hardware.soundtrigger.SoundTrigger$SoundModelEvent;
+
+        return;
+    }
+
+    private void onServiceStateChangedLocked(boolean)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        boolean z0, $z1;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mServiceDisabled>;
+
+        if z0 != $z1 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mServiceDisabled> = z0;
+
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int updateRecognitionLocked(boolean)>(1);
+
+        return;
+    }
+
+    private void onRecognitionAbortLocked()
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Recognition aborted");
+
+        return;
+    }
+
+    private void onRecognitionFailureLocked()
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        android.os.RemoteException r1, $r5;
+        java.lang.Throwable r2, $r6;
+        android.hardware.soundtrigger.IRecognitionStatusCallback $r3, $r4;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Recognition failure");
+
+     label1:
+        $r3 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        if $r3 == null goto label2;
+
+        $r4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        interfaceinvoke $r4.<android.hardware.soundtrigger.IRecognitionStatusCallback: void onError(int)>(-2147483648);
+
+     label2:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void internalClearStateLocked()>();
+
+        goto label7;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r1 = $r5;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("SoundTriggerHelper", "RemoteException in onError", r1);
+
+     label4:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void internalClearStateLocked()>();
+
+        goto label7;
+
+     label5:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+     label6:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void internalClearStateLocked()>();
+
+        throw r2;
+
+     label7:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private void onRecognitionSuccessLocked(android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionEvent)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionEvent r1;
+        android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionExtra[] r2;
+        android.os.RemoteException r3, $r8;
+        int $i2, $i3, $i4;
+        android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionExtra $r4;
+        android.hardware.soundtrigger.IRecognitionStatusCallback $r5, $r7;
+        android.hardware.soundtrigger.SoundTrigger$RecognitionConfig $r6;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        r1 := @parameter0: android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionEvent;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Recognition success");
+
+        r2 = r1.<android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionEvent: android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionExtra[] keyphraseExtras>;
+
+        if r2 == null goto label1;
+
+        $i2 = lengthof r2;
+
+        if $i2 != 0 goto label2;
+
+     label1:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "Invalid keyphrase recognition event!");
+
+        return;
+
+     label2:
+        $i4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mKeyphraseId>;
+
+        $r4 = r2[0];
+
+        $i3 = $r4.<android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionExtra: int id>;
+
+        if $i4 == $i3 goto label3;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", "received onRecognition event for a different keyphrase");
+
+        return;
+
+     label3:
+        $r5 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        if $r5 == null goto label4;
+
+        $r7 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        interfaceinvoke $r7.<android.hardware.soundtrigger.IRecognitionStatusCallback: void onDetected(android.hardware.soundtrigger.SoundTrigger$KeyphraseRecognitionEvent)>(r1);
+
+     label4:
+        goto label6;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r3 = $r8;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("SoundTriggerHelper", "RemoteException in onDetected", r3);
+
+     label6:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mStarted> = 0;
+
+        $r6 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$RecognitionConfig mRecognitionConfig>;
+
+        $z0 = $r6.<android.hardware.soundtrigger.SoundTrigger$RecognitionConfig: boolean allowMultipleTriggers>;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mRequested> = $z0;
+
+        $z1 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mRequested>;
+
+        if $z1 == 0 goto label7;
+
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int updateRecognitionLocked(boolean)>(1);
+
+     label7:
+        return;
+
+        catch android.os.RemoteException from label3 to label4 with label5;
+    }
+
+    private void onServiceDiedLocked()
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        android.os.RemoteException r1, $r7;
+        java.lang.Throwable r2, $r10;
+        android.hardware.soundtrigger.IRecognitionStatusCallback $r3, $r6;
+        android.hardware.soundtrigger.SoundTriggerModule $r4, $r5, $r8, $r9, $r11, $r12;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+     label1:
+        $r3 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        if $r3 == null goto label2;
+
+        $r6 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        interfaceinvoke $r6.<android.hardware.soundtrigger.IRecognitionStatusCallback: void onError(int)>(-32);
+
+     label2:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void internalClearStateLocked()>();
+
+        $r4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        if $r4 == null goto label8;
+
+        $r5 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        virtualinvoke $r5.<android.hardware.soundtrigger.SoundTriggerModule: void detach()>();
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule> = null;
+
+        goto label8;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r1 = $r7;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("SoundTriggerHelper", "RemoteException in onError", r1);
+
+     label4:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void internalClearStateLocked()>();
+
+        $r8 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        if $r8 == null goto label8;
+
+        $r9 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        virtualinvoke $r9.<android.hardware.soundtrigger.SoundTriggerModule: void detach()>();
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule> = null;
+
+        goto label8;
+
+     label5:
+        $r10 := @caughtexception;
+
+        r2 = $r10;
+
+     label6:
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void internalClearStateLocked()>();
+
+        $r11 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        if $r11 == null goto label7;
+
+        $r12 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        virtualinvoke $r12.<android.hardware.soundtrigger.SoundTriggerModule: void detach()>();
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule> = null;
+
+     label7:
+        throw r2;
+
+     label8:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private int updateRecognitionLocked(boolean)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7;
+        int i0, $i1, $i2, $i4, i10;
+        android.os.RemoteException r1, $r20, $r21, $r22, $r23, r24, r25, r26;
+        android.hardware.soundtrigger.SoundTriggerModule $r2, $r5, $r13;
+        android.hardware.soundtrigger.SoundTrigger$ModuleProperties $r3;
+        android.hardware.soundtrigger.IRecognitionStatusCallback $r4, $r6, $r11, $r15, $r19;
+        java.lang.StringBuilder $r7, $r8, $r10, $r14, $r16, $r18;
+        java.lang.String $r9, $r17;
+        android.hardware.soundtrigger.SoundTrigger$RecognitionConfig $r12;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        z0 := @parameter0: boolean;
+
+        $r2 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        if $r2 == null goto label01;
+
+        $r3 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$ModuleProperties moduleProperties>;
+
+        if $r3 == null goto label01;
+
+        $i1 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle>;
+
+        if $i1 == -2147483648 goto label01;
+
+        $r4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        if $r4 != null goto label02;
+
+     label01:
+        return 0;
+
+     label02:
+        $z2 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mRequested>;
+
+        if $z2 == 0 goto label03;
+
+        $z4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mCallActive>;
+
+        if $z4 != 0 goto label03;
+
+        $z5 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mServiceDisabled>;
+
+        if $z5 != 0 goto label03;
+
+        $z6 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mIsPowerSaveMode>;
+
+        if $z6 != 0 goto label03;
+
+        $z7 = 1;
+
+        goto label04;
+
+     label03:
+        $z7 = 0;
+
+     label04:
+        z1 = $z7;
+
+        $z3 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mStarted>;
+
+        if z1 != $z3 goto label05;
+
+        return 0;
+
+     label05:
+        if z1 == 0 goto label14;
+
+        $r13 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        $i4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle>;
+
+        $r12 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$RecognitionConfig mRecognitionConfig>;
+
+        i0 = virtualinvoke $r13.<android.hardware.soundtrigger.SoundTriggerModule: int startRecognition(int,android.hardware.soundtrigger.SoundTrigger$RecognitionConfig)>($i4, $r12);
+
+        if i0 == 0 goto label09;
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("startRecognition failed with ");
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", $r17);
+
+        if z0 == 0 goto label13;
+
+     label06:
+        $r19 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        interfaceinvoke $r19.<android.hardware.soundtrigger.IRecognitionStatusCallback: void onError(int)>(i0);
+
+     label07:
+        goto label13;
+
+     label08:
+        $r20 := @caughtexception;
+
+        r1 = $r20;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("SoundTriggerHelper", "RemoteException in onError", r1);
+
+        goto label13;
+
+     label09:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mStarted> = 1;
+
+        if z0 == 0 goto label13;
+
+     label10:
+        $r15 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        interfaceinvoke $r15.<android.hardware.soundtrigger.IRecognitionStatusCallback: void onRecognitionResumed()>();
+
+     label11:
+        goto label13;
+
+     label12:
+        $r21 := @caughtexception;
+
+        r24 = $r21;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("SoundTriggerHelper", "RemoteException in onRecognitionResumed", r24);
+
+     label13:
+        return i0;
+
+     label14:
+        $r5 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTriggerModule mModule>;
+
+        $i2 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle>;
+
+        i10 = virtualinvoke $r5.<android.hardware.soundtrigger.SoundTriggerModule: int stopRecognition(int)>($i2);
+
+        if i10 == 0 goto label18;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("stopRecognition call failed with ");
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i10);
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SoundTriggerHelper", $r9);
+
+        if z0 == 0 goto label22;
+
+     label15:
+        $r11 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        interfaceinvoke $r11.<android.hardware.soundtrigger.IRecognitionStatusCallback: void onError(int)>(i10);
+
+     label16:
+        goto label22;
+
+     label17:
+        $r22 := @caughtexception;
+
+        r25 = $r22;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("SoundTriggerHelper", "RemoteException in onError", r25);
+
+        goto label22;
+
+     label18:
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mStarted> = 0;
+
+        if z0 == 0 goto label22;
+
+     label19:
+        $r6 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        interfaceinvoke $r6.<android.hardware.soundtrigger.IRecognitionStatusCallback: void onRecognitionPaused()>();
+
+     label20:
+        goto label22;
+
+     label21:
+        $r23 := @caughtexception;
+
+        r26 = $r23;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("SoundTriggerHelper", "RemoteException in onRecognitionPaused", r26);
+
+     label22:
+        return i10;
+
+        catch android.os.RemoteException from label06 to label07 with label08;
+        catch android.os.RemoteException from label10 to label11 with label12;
+        catch android.os.RemoteException from label15 to label16 with label17;
+        catch android.os.RemoteException from label19 to label20 with label21;
+    }
+
+    private void internalClearStateLocked()
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        android.telephony.PhoneStateListener $r1;
+        android.telephony.TelephonyManager $r2;
+        com.android.server.voiceinteraction.SoundTriggerHelper$PowerSaveModeListener $r3, $r4;
+        android.content.Context $r5;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mStarted> = 0;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mRequested> = 0;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mKeyphraseId> = -2147483648;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle> = -2147483648;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.util.UUID mCurrentSoundModelUuid> = null;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$RecognitionConfig mRecognitionConfig> = null;
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener> = null;
+
+        $r2 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.telephony.TelephonyManager mTelephonyManager>;
+
+        $r1 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.telephony.PhoneStateListener mPhoneStateListener>;
+
+        virtualinvoke $r2.<android.telephony.TelephonyManager: void listen(android.telephony.PhoneStateListener,int)>($r1, 0);
+
+        $r3 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: com.android.server.voiceinteraction.SoundTriggerHelper$PowerSaveModeListener mPowerSaveModeListener>;
+
+        if $r3 == null goto label1;
+
+        $r5 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.content.Context mContext>;
+
+        $r4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: com.android.server.voiceinteraction.SoundTriggerHelper$PowerSaveModeListener mPowerSaveModeListener>;
+
+        virtualinvoke $r5.<android.content.Context: void unregisterReceiver(android.content.BroadcastReceiver)>($r4);
+
+        r0.<com.android.server.voiceinteraction.SoundTriggerHelper: com.android.server.voiceinteraction.SoundTriggerHelper$PowerSaveModeListener mPowerSaveModeListener> = null;
+
+     label1:
+        return;
+    }
+
+    void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        java.lang.Object r4, $r6, $r8, $r13;
+        java.lang.Throwable r5, $r14;
+        android.hardware.soundtrigger.SoundTrigger$ModuleProperties $r7;
+        int $i0, $i1;
+        java.util.UUID $r9;
+        java.io.Serializable $r10;
+        android.hardware.soundtrigger.IRecognitionStatusCallback $r11, $r12;
+        boolean $z0, $z1, $z2, $z3, $z4;
+
+        r0 := @this: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        $r6 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.lang.Object mLock>;
+
+        r4 = $r6;
+
+        entermonitor $r6;
+
+     label01:
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  module properties=");
+
+        $r7 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$ModuleProperties moduleProperties>;
+
+        if $r7 != null goto label02;
+
+        $r8 = "null";
+
+        goto label03;
+
+     label02:
+        $r8 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.SoundTrigger$ModuleProperties moduleProperties>;
+
+     label03:
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.Object)>($r8);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  keyphrase ID=");
+
+        $i0 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mKeyphraseId>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(int)>($i0);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  sound model handle=");
+
+        $i1 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: int mCurrentSoundModelHandle>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(int)>($i1);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  sound model UUID=");
+
+        $r9 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.util.UUID mCurrentSoundModelUuid>;
+
+        if $r9 != null goto label04;
+
+        $r10 = "null";
+
+        goto label05;
+
+     label04:
+        $r10 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.util.UUID mCurrentSoundModelUuid>;
+
+     label05:
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.Object)>($r10);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  current listener=");
+
+        $r11 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        if $r11 != null goto label06;
+
+        $r13 = "null";
+
+        goto label07;
+
+     label06:
+        $r12 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.hardware.soundtrigger.IRecognitionStatusCallback mActiveListener>;
+
+        $r13 = interfaceinvoke $r12.<android.hardware.soundtrigger.IRecognitionStatusCallback: android.os.IBinder asBinder()>();
+
+     label07:
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.Object)>($r13);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  requested=");
+
+        $z1 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mRequested>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(boolean)>($z1);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  started=");
+
+        $z0 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mStarted>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(boolean)>($z0);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  call active=");
+
+        $z3 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mCallActive>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(boolean)>($z3);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  power save mode active=");
+
+        $z2 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mIsPowerSaveMode>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(boolean)>($z2);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  service disabled=");
+
+        $z4 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: boolean mServiceDisabled>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(boolean)>($z4);
+
+        exitmonitor r4;
+
+     label08:
+        goto label11;
+
+     label09:
+        $r14 := @caughtexception;
+
+        r5 = $r14;
+
+        exitmonitor r4;
+
+     label10:
+        throw r5;
+
+     label11:
+        return;
+
+        catch java.lang.Throwable from label01 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    static java.lang.Object access$000(com.android.server.voiceinteraction.SoundTriggerHelper)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        $r1 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static void access$100(com.android.server.voiceinteraction.SoundTriggerHelper, boolean)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void onCallStateChangedLocked(boolean)>(z0);
+
+        return;
+    }
+
+    static android.os.PowerManager access$200(com.android.server.voiceinteraction.SoundTriggerHelper)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        android.os.PowerManager $r1;
+
+        r0 := @parameter0: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        $r1 = r0.<com.android.server.voiceinteraction.SoundTriggerHelper: android.os.PowerManager mPowerManager>;
+
+        return $r1;
+    }
+
+    static void access$300(com.android.server.voiceinteraction.SoundTriggerHelper, boolean)
+    {
+        com.android.server.voiceinteraction.SoundTriggerHelper r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.voiceinteraction.SoundTriggerHelper;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.voiceinteraction.SoundTriggerHelper: void onPowerSaveModeChangedLocked(boolean)>(z0);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.voiceinteraction.SoundTriggerHelper: int INVALID_VALUE> = -2147483648;
+
+        <com.android.server.voiceinteraction.SoundTriggerHelper: int STATUS_OK> = 0;
+
+        <com.android.server.voiceinteraction.SoundTriggerHelper: int STATUS_ERROR> = -2147483648;
+
+        <com.android.server.voiceinteraction.SoundTriggerHelper: boolean DBG> = 0;
+
+        <com.android.server.voiceinteraction.SoundTriggerHelper: java.lang.String TAG> = "SoundTriggerHelper";
+
+        return;
+    }
+}

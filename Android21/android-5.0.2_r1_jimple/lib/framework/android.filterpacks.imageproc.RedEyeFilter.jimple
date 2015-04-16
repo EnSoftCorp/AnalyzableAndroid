@@ -1,0 +1,414 @@
+public class android.filterpacks.imageproc.RedEyeFilter extends android.filterfw.core.Filter
+{
+    private static final float RADIUS_RATIO;
+    private static final float MIN_RADIUS;
+    private static final float DEFAULT_RED_INTENSITY;
+    private float[] mCenters;
+    private int mTileSize;
+    private android.filterfw.core.Frame mRedEyeFrame;
+    private android.graphics.Bitmap mRedEyeBitmap;
+    private final android.graphics.Canvas mCanvas;
+    private final android.graphics.Paint mPaint;
+    private float mRadius;
+    private int mWidth;
+    private int mHeight;
+    private android.filterfw.core.Program mProgram;
+    private int mTarget;
+    private final java.lang.String mRedEyeShader;
+
+    public void <init>(java.lang.String)
+    {
+        android.filterpacks.imageproc.RedEyeFilter r0;
+        java.lang.String r1;
+        android.graphics.Canvas $r2;
+        android.graphics.Paint $r3;
+
+        r0 := @this: android.filterpacks.imageproc.RedEyeFilter;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<android.filterfw.core.Filter: void <init>(java.lang.String)>(r1);
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: int mTileSize> = 640;
+
+        $r2 = new android.graphics.Canvas;
+
+        specialinvoke $r2.<android.graphics.Canvas: void <init>()>();
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: android.graphics.Canvas mCanvas> = $r2;
+
+        $r3 = new android.graphics.Paint;
+
+        specialinvoke $r3.<android.graphics.Paint: void <init>()>();
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: android.graphics.Paint mPaint> = $r3;
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: int mWidth> = 0;
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: int mHeight> = 0;
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: int mTarget> = 0;
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: java.lang.String mRedEyeShader> = "precision mediump float;\nuniform sampler2D tex_sampler_0;\nuniform sampler2D tex_sampler_1;\nuniform float intensity;\nvarying vec2 v_texcoord;\nvoid main() {\n  vec4 color = texture2D(tex_sampler_0, v_texcoord);\n  vec4 mask = texture2D(tex_sampler_1, v_texcoord);\n  if (mask.a > 0.0) {\n    float green_blue = color.g + color.b;\n    float red_intensity = color.r / green_blue;\n    if (red_intensity > intensity) {\n      color.r = 0.5 * green_blue;\n    }\n  }\n  gl_FragColor = color;\n}\n";
+
+        return;
+    }
+
+    public void setupPorts()
+    {
+        android.filterpacks.imageproc.RedEyeFilter r0;
+        android.filterfw.core.MutableFrameFormat $r1;
+
+        r0 := @this: android.filterpacks.imageproc.RedEyeFilter;
+
+        $r1 = staticinvoke <android.filterfw.format.ImageFormat: android.filterfw.core.MutableFrameFormat create(int)>(3);
+
+        virtualinvoke r0.<android.filterpacks.imageproc.RedEyeFilter: void addMaskedInputPort(java.lang.String,android.filterfw.core.FrameFormat)>("image", $r1);
+
+        virtualinvoke r0.<android.filterpacks.imageproc.RedEyeFilter: void addOutputBasedOnInput(java.lang.String,java.lang.String)>("image", "image");
+
+        return;
+    }
+
+    public android.filterfw.core.FrameFormat getOutputFormat(java.lang.String, android.filterfw.core.FrameFormat)
+    {
+        android.filterpacks.imageproc.RedEyeFilter r0;
+        java.lang.String r1;
+        android.filterfw.core.FrameFormat r2;
+
+        r0 := @this: android.filterpacks.imageproc.RedEyeFilter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: android.filterfw.core.FrameFormat;
+
+        return r2;
+    }
+
+    public void initProgram(android.filterfw.core.FilterContext, int)
+    {
+        android.filterpacks.imageproc.RedEyeFilter r0;
+        android.filterfw.core.FilterContext r1;
+        int i0, $i1;
+        android.filterfw.core.ShaderProgram r2, $r3;
+        android.filterfw.core.Program $r4;
+        java.lang.Float $r5;
+        java.lang.RuntimeException $r6;
+        java.lang.StringBuilder $r7, $r8, $r9, $r10;
+        java.lang.String $r11;
+
+        r0 := @this: android.filterpacks.imageproc.RedEyeFilter;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        i0 := @parameter1: int;
+
+        lookupswitch(i0)
+        {
+            case 3: goto label1;
+            default: goto label2;
+        };
+
+     label1:
+        $r3 = new android.filterfw.core.ShaderProgram;
+
+        specialinvoke $r3.<android.filterfw.core.ShaderProgram: void <init>(android.filterfw.core.FilterContext,java.lang.String)>(r1, "precision mediump float;\nuniform sampler2D tex_sampler_0;\nuniform sampler2D tex_sampler_1;\nuniform float intensity;\nvarying vec2 v_texcoord;\nvoid main() {\n  vec4 color = texture2D(tex_sampler_0, v_texcoord);\n  vec4 mask = texture2D(tex_sampler_1, v_texcoord);\n  if (mask.a > 0.0) {\n    float green_blue = color.g + color.b;\n    float red_intensity = color.r / green_blue;\n    if (red_intensity > intensity) {\n      color.r = 0.5 * green_blue;\n    }\n  }\n  gl_FragColor = color;\n}\n");
+
+        r2 = $r3;
+
+        $i1 = r0.<android.filterpacks.imageproc.RedEyeFilter: int mTileSize>;
+
+        virtualinvoke r2.<android.filterfw.core.ShaderProgram: void setMaximumTileSize(int)>($i1);
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: android.filterfw.core.Program mProgram> = r2;
+
+        $r4 = r0.<android.filterpacks.imageproc.RedEyeFilter: android.filterfw.core.Program mProgram>;
+
+        $r5 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>(1.3F);
+
+        virtualinvoke $r4.<android.filterfw.core.Program: void setHostValue(java.lang.String,java.lang.Object)>("intensity", $r5);
+
+        goto label3;
+
+     label2:
+        $r6 = new java.lang.RuntimeException;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Filter RedEye does not support frames of target ");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("!");
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r6.<java.lang.RuntimeException: void <init>(java.lang.String)>($r11);
+
+        throw $r6;
+
+     label3:
+        r0.<android.filterpacks.imageproc.RedEyeFilter: int mTarget> = i0;
+
+        return;
+    }
+
+    public void process(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.imageproc.RedEyeFilter r0;
+        android.filterfw.core.FilterContext r1;
+        android.filterfw.core.Frame r2, r4, $r8, $r13;
+        android.filterfw.core.FrameFormat r3;
+        android.filterfw.core.Frame[] r5, $r9;
+        android.filterfw.core.FrameManager $r6;
+        android.filterfw.core.Program $r7, $r11;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+
+        r0 := @this: android.filterpacks.imageproc.RedEyeFilter;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        r2 = virtualinvoke r0.<android.filterpacks.imageproc.RedEyeFilter: android.filterfw.core.Frame pullInput(java.lang.String)>("image");
+
+        r3 = virtualinvoke r2.<android.filterfw.core.Frame: android.filterfw.core.FrameFormat getFormat()>();
+
+        $r6 = virtualinvoke r1.<android.filterfw.core.FilterContext: android.filterfw.core.FrameManager getFrameManager()>();
+
+        r4 = virtualinvoke $r6.<android.filterfw.core.FrameManager: android.filterfw.core.Frame newFrame(android.filterfw.core.FrameFormat)>(r3);
+
+        $r7 = r0.<android.filterpacks.imageproc.RedEyeFilter: android.filterfw.core.Program mProgram>;
+
+        if $r7 == null goto label1;
+
+        $i8 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getTarget()>();
+
+        $i7 = r0.<android.filterpacks.imageproc.RedEyeFilter: int mTarget>;
+
+        if $i8 == $i7 goto label2;
+
+     label1:
+        $i0 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getTarget()>();
+
+        virtualinvoke r0.<android.filterpacks.imageproc.RedEyeFilter: void initProgram(android.filterfw.core.FilterContext,int)>(r1, $i0);
+
+     label2:
+        $i1 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getWidth()>();
+
+        $i2 = r0.<android.filterpacks.imageproc.RedEyeFilter: int mWidth>;
+
+        if $i1 != $i2 goto label3;
+
+        $i6 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getHeight()>();
+
+        $i5 = r0.<android.filterpacks.imageproc.RedEyeFilter: int mHeight>;
+
+        if $i6 == $i5 goto label4;
+
+     label3:
+        $i3 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getWidth()>();
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: int mWidth> = $i3;
+
+        $i4 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getHeight()>();
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: int mHeight> = $i4;
+
+     label4:
+        specialinvoke r0.<android.filterpacks.imageproc.RedEyeFilter: void createRedEyeFrame(android.filterfw.core.FilterContext)>(r1);
+
+        $r9 = newarray (android.filterfw.core.Frame)[2];
+
+        $r9[0] = r2;
+
+        $r8 = r0.<android.filterpacks.imageproc.RedEyeFilter: android.filterfw.core.Frame mRedEyeFrame>;
+
+        $r9[1] = $r8;
+
+        r5 = $r9;
+
+        $r11 = r0.<android.filterpacks.imageproc.RedEyeFilter: android.filterfw.core.Program mProgram>;
+
+        virtualinvoke $r11.<android.filterfw.core.Program: void process(android.filterfw.core.Frame[],android.filterfw.core.Frame)>(r5, r4);
+
+        virtualinvoke r0.<android.filterpacks.imageproc.RedEyeFilter: void pushOutput(java.lang.String,android.filterfw.core.Frame)>("image", r4);
+
+        virtualinvoke r4.<android.filterfw.core.Frame: android.filterfw.core.Frame release()>();
+
+        $r13 = r0.<android.filterpacks.imageproc.RedEyeFilter: android.filterfw.core.Frame mRedEyeFrame>;
+
+        virtualinvoke $r13.<android.filterfw.core.Frame: android.filterfw.core.Frame release()>();
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: android.filterfw.core.Frame mRedEyeFrame> = null;
+
+        return;
+    }
+
+    public void fieldPortValueUpdated(java.lang.String, android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.imageproc.RedEyeFilter r0;
+        java.lang.String r1;
+        android.filterfw.core.FilterContext r2;
+        android.filterfw.core.Program $r3;
+
+        r0 := @this: android.filterpacks.imageproc.RedEyeFilter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: android.filterfw.core.FilterContext;
+
+        $r3 = r0.<android.filterpacks.imageproc.RedEyeFilter: android.filterfw.core.Program mProgram>;
+
+        if $r3 == null goto label1;
+
+        specialinvoke r0.<android.filterpacks.imageproc.RedEyeFilter: void updateProgramParams()>();
+
+     label1:
+        return;
+    }
+
+    private void createRedEyeFrame(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.imageproc.RedEyeFilter r0;
+        android.filterfw.core.FilterContext r1;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7;
+        android.graphics.Bitmap r2;
+        android.graphics.Bitmap$Config $r3;
+        android.graphics.Canvas $r4, $r13;
+        android.graphics.Paint $r5, $r12;
+        float $f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9;
+        float[] $r6, $r10, $r11;
+        android.filterfw.core.FrameManager $r7;
+        android.filterfw.core.Frame $r8, $r9;
+        android.filterfw.core.MutableFrameFormat r14;
+
+        r0 := @this: android.filterpacks.imageproc.RedEyeFilter;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        $i3 = r0.<android.filterpacks.imageproc.RedEyeFilter: int mWidth>;
+
+        i0 = $i3 / 2;
+
+        $i4 = r0.<android.filterpacks.imageproc.RedEyeFilter: int mHeight>;
+
+        i1 = $i4 / 2;
+
+        $r3 = <android.graphics.Bitmap$Config: android.graphics.Bitmap$Config ARGB_8888>;
+
+        r2 = staticinvoke <android.graphics.Bitmap: android.graphics.Bitmap createBitmap(int,int,android.graphics.Bitmap$Config)>(i0, i1, $r3);
+
+        $r4 = r0.<android.filterpacks.imageproc.RedEyeFilter: android.graphics.Canvas mCanvas>;
+
+        virtualinvoke $r4.<android.graphics.Canvas: void setBitmap(android.graphics.Bitmap)>(r2);
+
+        $r5 = r0.<android.filterpacks.imageproc.RedEyeFilter: android.graphics.Paint mPaint>;
+
+        virtualinvoke $r5.<android.graphics.Paint: void setColor(int)>(-1);
+
+        $i5 = staticinvoke <java.lang.Math: int min(int,int)>(i0, i1);
+
+        $f0 = (float) $i5;
+
+        $f2 = 0.06F * $f0;
+
+        $f1 = staticinvoke <java.lang.Math: float max(float,float)>(10.0F, $f2);
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: float mRadius> = $f1;
+
+        i2 = 0;
+
+     label1:
+        $r6 = r0.<android.filterpacks.imageproc.RedEyeFilter: float[] mCenters>;
+
+        $i6 = lengthof $r6;
+
+        if i2 >= $i6 goto label2;
+
+        $r13 = r0.<android.filterpacks.imageproc.RedEyeFilter: android.graphics.Canvas mCanvas>;
+
+        $r10 = r0.<android.filterpacks.imageproc.RedEyeFilter: float[] mCenters>;
+
+        $f4 = $r10[i2];
+
+        $f3 = (float) i0;
+
+        $f7 = $f4 * $f3;
+
+        $r11 = r0.<android.filterpacks.imageproc.RedEyeFilter: float[] mCenters>;
+
+        $i7 = i2 + 1;
+
+        $f6 = $r11[$i7];
+
+        $f5 = (float) i1;
+
+        $f9 = $f6 * $f5;
+
+        $f8 = r0.<android.filterpacks.imageproc.RedEyeFilter: float mRadius>;
+
+        $r12 = r0.<android.filterpacks.imageproc.RedEyeFilter: android.graphics.Paint mPaint>;
+
+        virtualinvoke $r13.<android.graphics.Canvas: void drawCircle(float,float,float,android.graphics.Paint)>($f7, $f9, $f8, $r12);
+
+        i2 = i2 + 2;
+
+        goto label1;
+
+     label2:
+        r14 = staticinvoke <android.filterfw.format.ImageFormat: android.filterfw.core.MutableFrameFormat create(int,int,int,int)>(i0, i1, 3, 3);
+
+        $r7 = virtualinvoke r1.<android.filterfw.core.FilterContext: android.filterfw.core.FrameManager getFrameManager()>();
+
+        $r9 = virtualinvoke $r7.<android.filterfw.core.FrameManager: android.filterfw.core.Frame newFrame(android.filterfw.core.FrameFormat)>(r14);
+
+        r0.<android.filterpacks.imageproc.RedEyeFilter: android.filterfw.core.Frame mRedEyeFrame> = $r9;
+
+        $r8 = r0.<android.filterpacks.imageproc.RedEyeFilter: android.filterfw.core.Frame mRedEyeFrame>;
+
+        virtualinvoke $r8.<android.filterfw.core.Frame: void setBitmap(android.graphics.Bitmap)>(r2);
+
+        virtualinvoke r2.<android.graphics.Bitmap: void recycle()>();
+
+        return;
+    }
+
+    private void updateProgramParams()
+    {
+        android.filterpacks.imageproc.RedEyeFilter r0;
+        float[] $r1;
+        int $i0, $i1;
+        java.lang.RuntimeException $r2;
+
+        r0 := @this: android.filterpacks.imageproc.RedEyeFilter;
+
+        $r1 = r0.<android.filterpacks.imageproc.RedEyeFilter: float[] mCenters>;
+
+        $i0 = lengthof $r1;
+
+        $i1 = $i0 % 2;
+
+        if $i1 != 1 goto label1;
+
+        $r2 = new java.lang.RuntimeException;
+
+        specialinvoke $r2.<java.lang.RuntimeException: void <init>(java.lang.String)>("The size of center array must be even.");
+
+        throw $r2;
+
+     label1:
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <android.filterpacks.imageproc.RedEyeFilter: float DEFAULT_RED_INTENSITY> = 1.3F;
+
+        <android.filterpacks.imageproc.RedEyeFilter: float MIN_RADIUS> = 10.0F;
+
+        <android.filterpacks.imageproc.RedEyeFilter: float RADIUS_RATIO> = 0.06F;
+
+        return;
+    }
+}

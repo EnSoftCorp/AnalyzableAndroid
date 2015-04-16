@@ -1,0 +1,1040 @@
+public abstract class com.android.org.conscrypt.OpenSSLCipherRSA extends javax.crypto.CipherSpi
+{
+    private com.android.org.conscrypt.OpenSSLKey key;
+    private boolean usingPrivateKey;
+    private boolean encrypting;
+    private byte[] buffer;
+    private int bufferOffset;
+    private boolean inputTooLarge;
+    private int padding;
+
+    protected void <init>(int)
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        int i0;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<javax.crypto.CipherSpi: void <init>()>();
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int padding> = 1;
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int padding> = i0;
+
+        return;
+    }
+
+    protected void engineSetMode(java.lang.String) throws java.security.NoSuchAlgorithmException
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        java.lang.String r1, r2, $r4, $r5, $r10;
+        java.util.Locale $r3;
+        boolean $z0, $z1;
+        java.security.NoSuchAlgorithmException $r6;
+        java.lang.StringBuilder $r7, $r8, $r9;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r3 = <java.util.Locale: java.util.Locale ROOT>;
+
+        r2 = virtualinvoke r1.<java.lang.String: java.lang.String toUpperCase(java.util.Locale)>($r3);
+
+        $r4 = "NONE";
+
+        $z0 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z0 != 0 goto label1;
+
+        $r5 = "ECB";
+
+        $z1 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z1 == 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r6 = new java.security.NoSuchAlgorithmException;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mode not supported: ");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r6.<java.security.NoSuchAlgorithmException: void <init>(java.lang.String)>($r10);
+
+        throw $r6;
+    }
+
+    protected void engineSetPadding(java.lang.String) throws javax.crypto.NoSuchPaddingException
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        java.lang.String r1, r2, $r4, $r5, $r10;
+        java.util.Locale $r3;
+        boolean $z0, $z1;
+        javax.crypto.NoSuchPaddingException $r6;
+        java.lang.StringBuilder $r7, $r8, $r9;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r3 = <java.util.Locale: java.util.Locale ROOT>;
+
+        r2 = virtualinvoke r1.<java.lang.String: java.lang.String toUpperCase(java.util.Locale)>($r3);
+
+        $r4 = "PKCS1PADDING";
+
+        $z0 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z0 == 0 goto label1;
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int padding> = 1;
+
+        return;
+
+     label1:
+        $r5 = "NOPADDING";
+
+        $z1 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z1 == 0 goto label2;
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int padding> = 3;
+
+        return;
+
+     label2:
+        $r6 = new javax.crypto.NoSuchPaddingException;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("padding not supported: ");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r6.<javax.crypto.NoSuchPaddingException: void <init>(java.lang.String)>($r10);
+
+        throw $r6;
+    }
+
+    protected int engineGetBlockSize()
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        boolean $z0;
+        int $i0, $i1;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        $z0 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean encrypting>;
+
+        if $z0 == 0 goto label1;
+
+        $i1 = specialinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int paddedBlockSizeBytes()>();
+
+        return $i1;
+
+     label1:
+        $i0 = specialinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int keySizeBytes()>();
+
+        return $i0;
+    }
+
+    protected int engineGetOutputSize(int)
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        int i0, $i1, $i2;
+        boolean $z0;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        i0 := @parameter0: int;
+
+        $z0 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean encrypting>;
+
+        if $z0 == 0 goto label1;
+
+        $i2 = specialinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int keySizeBytes()>();
+
+        return $i2;
+
+     label1:
+        $i1 = specialinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int paddedBlockSizeBytes()>();
+
+        return $i1;
+    }
+
+    private int paddedBlockSizeBytes()
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        int i0, $i1, i2;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        i0 = specialinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int keySizeBytes()>();
+
+        $i1 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int padding>;
+
+        if $i1 != 1 goto label1;
+
+        i2 = i0 + -1;
+
+        i0 = i2 + -10;
+
+     label1:
+        return i0;
+    }
+
+    private int keySizeBytes()
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        com.android.org.conscrypt.OpenSSLKey $r1, $r2;
+        long $l0;
+        int $i1;
+        java.lang.IllegalStateException $r3;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        $r1 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key>;
+
+        if $r1 != null goto label1;
+
+        $r3 = new java.lang.IllegalStateException;
+
+        specialinvoke $r3.<java.lang.IllegalStateException: void <init>(java.lang.String)>("cipher is not initialized");
+
+        throw $r3;
+
+     label1:
+        $r2 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key>;
+
+        $l0 = virtualinvoke $r2.<com.android.org.conscrypt.OpenSSLKey: long getPkeyContext()>();
+
+        $i1 = staticinvoke <com.android.org.conscrypt.NativeCrypto: int RSA_size(long)>($l0);
+
+        return $i1;
+    }
+
+    protected byte[] engineGetIV()
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        return null;
+    }
+
+    protected java.security.AlgorithmParameters engineGetParameters()
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        return null;
+    }
+
+    private void engineInitInternal(int, java.security.Key) throws java.security.InvalidKeyException
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        int i0, $i2;
+        java.security.Key r1;
+        com.android.org.conscrypt.OpenSSLRSAPrivateKey r2;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        java.security.InvalidKeyException $r3;
+        com.android.org.conscrypt.OpenSSLKey $r4, $r5, $r7, $r8, $r9, $r11;
+        long $l1;
+        byte[] $r6;
+        java.security.InvalidParameterException $r10;
+        java.lang.StringBuilder $r12, $r13, $r15;
+        java.lang.String $r14;
+        java.security.interfaces.RSAPrivateCrtKey r16;
+        java.security.interfaces.RSAPrivateKey r17;
+        com.android.org.conscrypt.OpenSSLRSAPublicKey r18;
+        java.security.interfaces.RSAPublicKey r19;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.security.Key;
+
+        if i0 == 1 goto label01;
+
+        if i0 != 3 goto label02;
+
+     label01:
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean encrypting> = 1;
+
+        goto label05;
+
+     label02:
+        if i0 == 2 goto label03;
+
+        if i0 != 4 goto label04;
+
+     label03:
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean encrypting> = 0;
+
+        goto label05;
+
+     label04:
+        $r10 = new java.security.InvalidParameterException;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unsupported opmode ");
+
+        $r15 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r10.<java.security.InvalidParameterException: void <init>(java.lang.String)>($r14);
+
+        throw $r10;
+
+     label05:
+        $z0 = r1 instanceof com.android.org.conscrypt.OpenSSLRSAPrivateKey;
+
+        if $z0 == 0 goto label06;
+
+        r2 = (com.android.org.conscrypt.OpenSSLRSAPrivateKey) r1;
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean usingPrivateKey> = 1;
+
+        $r11 = virtualinvoke r2.<com.android.org.conscrypt.OpenSSLRSAPrivateKey: com.android.org.conscrypt.OpenSSLKey getOpenSSLKey()>();
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key> = $r11;
+
+        goto label11;
+
+     label06:
+        $z1 = r1 instanceof java.security.interfaces.RSAPrivateCrtKey;
+
+        if $z1 == 0 goto label07;
+
+        r16 = (java.security.interfaces.RSAPrivateCrtKey) r1;
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean usingPrivateKey> = 1;
+
+        $r8 = staticinvoke <com.android.org.conscrypt.OpenSSLRSAPrivateCrtKey: com.android.org.conscrypt.OpenSSLKey getInstance(java.security.interfaces.RSAPrivateCrtKey)>(r16);
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key> = $r8;
+
+        goto label11;
+
+     label07:
+        $z2 = r1 instanceof java.security.interfaces.RSAPrivateKey;
+
+        if $z2 == 0 goto label08;
+
+        r17 = (java.security.interfaces.RSAPrivateKey) r1;
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean usingPrivateKey> = 1;
+
+        $r9 = staticinvoke <com.android.org.conscrypt.OpenSSLRSAPrivateKey: com.android.org.conscrypt.OpenSSLKey getInstance(java.security.interfaces.RSAPrivateKey)>(r17);
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key> = $r9;
+
+        goto label11;
+
+     label08:
+        $z3 = r1 instanceof com.android.org.conscrypt.OpenSSLRSAPublicKey;
+
+        if $z3 == 0 goto label09;
+
+        r18 = (com.android.org.conscrypt.OpenSSLRSAPublicKey) r1;
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean usingPrivateKey> = 0;
+
+        $r7 = virtualinvoke r18.<com.android.org.conscrypt.OpenSSLRSAPublicKey: com.android.org.conscrypt.OpenSSLKey getOpenSSLKey()>();
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key> = $r7;
+
+        goto label11;
+
+     label09:
+        $z4 = r1 instanceof java.security.interfaces.RSAPublicKey;
+
+        if $z4 == 0 goto label10;
+
+        r19 = (java.security.interfaces.RSAPublicKey) r1;
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean usingPrivateKey> = 0;
+
+        $r4 = staticinvoke <com.android.org.conscrypt.OpenSSLRSAPublicKey: com.android.org.conscrypt.OpenSSLKey getInstance(java.security.interfaces.RSAPublicKey)>(r19);
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key> = $r4;
+
+        goto label11;
+
+     label10:
+        $r3 = new java.security.InvalidKeyException;
+
+        specialinvoke $r3.<java.security.InvalidKeyException: void <init>(java.lang.String)>("Need RSA private or public key");
+
+        throw $r3;
+
+     label11:
+        $r5 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key>;
+
+        $l1 = virtualinvoke $r5.<com.android.org.conscrypt.OpenSSLKey: long getPkeyContext()>();
+
+        $i2 = staticinvoke <com.android.org.conscrypt.NativeCrypto: int RSA_size(long)>($l1);
+
+        $r6 = newarray (byte)[$i2];
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] buffer> = $r6;
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean inputTooLarge> = 0;
+
+        return;
+    }
+
+    protected void engineInit(int, java.security.Key, java.security.SecureRandom) throws java.security.InvalidKeyException
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        int i0;
+        java.security.Key r1;
+        java.security.SecureRandom r2;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.security.Key;
+
+        r2 := @parameter2: java.security.SecureRandom;
+
+        specialinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: void engineInitInternal(int,java.security.Key)>(i0, r1);
+
+        return;
+    }
+
+    protected void engineInit(int, java.security.Key, java.security.spec.AlgorithmParameterSpec, java.security.SecureRandom) throws java.security.InvalidKeyException, java.security.InvalidAlgorithmParameterException
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        int i0;
+        java.security.Key r1;
+        java.security.spec.AlgorithmParameterSpec r2;
+        java.security.SecureRandom r3;
+        java.security.InvalidAlgorithmParameterException $r4;
+        java.lang.StringBuilder $r5, $r6, $r9;
+        java.lang.Class $r7;
+        java.lang.String $r8, $r10;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.security.Key;
+
+        r2 := @parameter2: java.security.spec.AlgorithmParameterSpec;
+
+        r3 := @parameter3: java.security.SecureRandom;
+
+        if r2 == null goto label1;
+
+        $r4 = new java.security.InvalidAlgorithmParameterException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("unknown param type: ");
+
+        $r7 = virtualinvoke r2.<java.lang.Object: java.lang.Class getClass()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.Class: java.lang.String getName()>();
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.security.InvalidAlgorithmParameterException: void <init>(java.lang.String)>($r10);
+
+        throw $r4;
+
+     label1:
+        specialinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: void engineInitInternal(int,java.security.Key)>(i0, r1);
+
+        return;
+    }
+
+    protected void engineInit(int, java.security.Key, java.security.AlgorithmParameters, java.security.SecureRandom) throws java.security.InvalidKeyException, java.security.InvalidAlgorithmParameterException
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        int i0;
+        java.security.Key r1;
+        java.security.AlgorithmParameters r2;
+        java.security.SecureRandom r3;
+        java.security.InvalidAlgorithmParameterException $r4;
+        java.lang.StringBuilder $r5, $r6, $r9;
+        java.lang.Class $r7;
+        java.lang.String $r8, $r10;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.security.Key;
+
+        r2 := @parameter2: java.security.AlgorithmParameters;
+
+        r3 := @parameter3: java.security.SecureRandom;
+
+        if r2 == null goto label1;
+
+        $r4 = new java.security.InvalidAlgorithmParameterException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("unknown param type: ");
+
+        $r7 = virtualinvoke r2.<java.lang.Object: java.lang.Class getClass()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.Class: java.lang.String getName()>();
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.security.InvalidAlgorithmParameterException: void <init>(java.lang.String)>($r10);
+
+        throw $r4;
+
+     label1:
+        specialinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: void engineInitInternal(int,java.security.Key)>(i0, r1);
+
+        return;
+    }
+
+    protected byte[] engineUpdate(byte[], int, int)
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        byte[] r1, $r2, $r3, $r4, $r5;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $i2 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int bufferOffset>;
+
+        $i4 = $i2 + i1;
+
+        $r2 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] buffer>;
+
+        $i3 = lengthof $r2;
+
+        if $i4 <= $i3 goto label1;
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean inputTooLarge> = 1;
+
+        $r5 = <com.android.org.conscrypt.util.EmptyArray: byte[] BYTE>;
+
+        return $r5;
+
+     label1:
+        $r3 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] buffer>;
+
+        $i5 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int bufferOffset>;
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>(r1, i0, $r3, $i5, i1);
+
+        $i6 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int bufferOffset>;
+
+        $i7 = $i6 + i1;
+
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int bufferOffset> = $i7;
+
+        $r4 = <com.android.org.conscrypt.util.EmptyArray: byte[] BYTE>;
+
+        return $r4;
+    }
+
+    protected int engineUpdate(byte[], int, int, byte[], int) throws javax.crypto.ShortBufferException
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        byte[] r1, r2;
+        int i0, i1, i2;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: byte[];
+
+        i2 := @parameter4: int;
+
+        virtualinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] engineUpdate(byte[],int,int)>(r1, i0, i1);
+
+        return 0;
+    }
+
+    protected byte[] engineDoFinal(byte[], int, int) throws javax.crypto.IllegalBlockSizeException, javax.crypto.BadPaddingException
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        byte[] r1, r2, r3, $r6, $r7, $r12, $r13, $r14, $r18, $r21;
+        int i0, i1, i2, $i3, $i4, $i5, $i7, $i8, $i9, $i11, $i12, $i13, $i14, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i25, $i26;
+        java.security.SignatureException r4, $r23;
+        javax.crypto.IllegalBlockSizeException r5, $r17, $r22;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        com.android.org.conscrypt.OpenSSLKey $r8, $r9, $r10, $r11;
+        long $l6, $l10, $l15, $l16;
+        java.lang.StringBuilder $r15, $r16, $r19, $r20;
+        java.lang.String $r25;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        if r1 == null goto label01;
+
+        virtualinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] engineUpdate(byte[],int,int)>(r1, i0, i1);
+
+     label01:
+        $z0 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean inputTooLarge>;
+
+        if $z0 == 0 goto label02;
+
+        $r17 = new javax.crypto.IllegalBlockSizeException;
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("input must be under ");
+
+        $r21 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] buffer>;
+
+        $i26 = lengthof $r21;
+
+        $r20 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i26);
+
+        $r19 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" bytes");
+
+        $r25 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r17.<javax.crypto.IllegalBlockSizeException: void <init>(java.lang.String)>($r25);
+
+        throw $r17;
+
+     label02:
+        $i4 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int bufferOffset>;
+
+        $r6 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] buffer>;
+
+        $i3 = lengthof $r6;
+
+        if $i4 == $i3 goto label04;
+
+        $i20 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int padding>;
+
+        if $i20 != 3 goto label03;
+
+        $r14 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] buffer>;
+
+        $i21 = lengthof $r14;
+
+        r2 = newarray (byte)[$i21];
+
+        $r18 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] buffer>;
+
+        $r13 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] buffer>;
+
+        $i24 = lengthof $r13;
+
+        $i25 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int bufferOffset>;
+
+        $i22 = $i24 - $i25;
+
+        $i23 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int bufferOffset>;
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>($r18, 0, r2, $i22, $i23);
+
+        goto label05;
+
+     label03:
+        $r12 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] buffer>;
+
+        $i19 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int bufferOffset>;
+
+        r2 = staticinvoke <java.util.Arrays: byte[] copyOf(byte[],int)>($r12, $i19);
+
+        goto label05;
+
+     label04:
+        r2 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] buffer>;
+
+     label05:
+        $r7 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] buffer>;
+
+        $i5 = lengthof $r7;
+
+        r3 = newarray (byte)[$i5];
+
+        $z1 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean encrypting>;
+
+        if $z1 == 0 goto label07;
+
+        $z4 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean usingPrivateKey>;
+
+        if $z4 == 0 goto label06;
+
+        $i18 = lengthof r2;
+
+        $r11 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key>;
+
+        $l16 = virtualinvoke $r11.<com.android.org.conscrypt.OpenSSLKey: long getPkeyContext()>();
+
+        $i17 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int padding>;
+
+        i2 = staticinvoke <com.android.org.conscrypt.NativeCrypto: int RSA_private_encrypt(int,byte[],byte[],long,int)>($i18, r2, r3, $l16, $i17);
+
+        goto label11;
+
+     label06:
+        $i14 = lengthof r2;
+
+        $r10 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key>;
+
+        $l15 = virtualinvoke $r10.<com.android.org.conscrypt.OpenSSLKey: long getPkeyContext()>();
+
+        $i13 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int padding>;
+
+        i2 = staticinvoke <com.android.org.conscrypt.NativeCrypto: int RSA_public_encrypt(int,byte[],byte[],long,int)>($i14, r2, r3, $l15, $i13);
+
+        goto label11;
+
+     label07:
+        $z2 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean usingPrivateKey>;
+
+        if $z2 == 0 goto label08;
+
+        $i11 = lengthof r2;
+
+        $r9 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key>;
+
+        $l10 = virtualinvoke $r9.<com.android.org.conscrypt.OpenSSLKey: long getPkeyContext()>();
+
+        $i12 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int padding>;
+
+        i2 = staticinvoke <com.android.org.conscrypt.NativeCrypto: int RSA_private_decrypt(int,byte[],byte[],long,int)>($i11, r2, r3, $l10, $i12);
+
+        goto label09;
+
+     label08:
+        $i7 = lengthof r2;
+
+        $r8 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: com.android.org.conscrypt.OpenSSLKey key>;
+
+        $l6 = virtualinvoke $r8.<com.android.org.conscrypt.OpenSSLKey: long getPkeyContext()>();
+
+        $i8 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int padding>;
+
+        i2 = staticinvoke <com.android.org.conscrypt.NativeCrypto: int RSA_public_decrypt(int,byte[],byte[],long,int)>($i7, r2, r3, $l6, $i8);
+
+     label09:
+        goto label11;
+
+     label10:
+        $r23 := @caughtexception;
+
+        r4 = $r23;
+
+        $r22 = new javax.crypto.IllegalBlockSizeException;
+
+        specialinvoke $r22.<javax.crypto.IllegalBlockSizeException: void <init>()>();
+
+        r5 = $r22;
+
+        virtualinvoke r5.<javax.crypto.IllegalBlockSizeException: java.lang.Throwable initCause(java.lang.Throwable)>(r4);
+
+        throw r5;
+
+     label11:
+        $z3 = r0.<com.android.org.conscrypt.OpenSSLCipherRSA: boolean encrypting>;
+
+        if $z3 != 0 goto label12;
+
+        $i9 = lengthof r3;
+
+        if i2 == $i9 goto label12;
+
+        r3 = staticinvoke <java.util.Arrays: byte[] copyOf(byte[],int)>(r3, i2);
+
+     label12:
+        r0.<com.android.org.conscrypt.OpenSSLCipherRSA: int bufferOffset> = 0;
+
+        return r3;
+
+        catch java.security.SignatureException from label07 to label09 with label10;
+    }
+
+    protected int engineDoFinal(byte[], int, int, byte[], int) throws javax.crypto.ShortBufferException, javax.crypto.IllegalBlockSizeException, javax.crypto.BadPaddingException
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        byte[] r1, r2, r3;
+        int i0, i1, i2, i3, $i4, $i5, $i6, $i7, $i8;
+        javax.crypto.ShortBufferException $r4;
+        java.lang.StringBuilder $r5, $r6, $r7, $r8, $r9;
+        java.lang.String $r10;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: byte[];
+
+        i2 := @parameter4: int;
+
+        r3 = virtualinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] engineDoFinal(byte[],int,int)>(r1, i0, i1);
+
+        $i4 = lengthof r3;
+
+        i3 = i2 + $i4;
+
+        $i5 = lengthof r2;
+
+        if i3 <= $i5 goto label1;
+
+        $r4 = new javax.crypto.ShortBufferException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("output buffer is too small ");
+
+        $i8 = lengthof r2;
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i8);
+
+        $r9 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" < ");
+
+        $r8 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i3);
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<javax.crypto.ShortBufferException: void <init>(java.lang.String)>($r10);
+
+        throw $r4;
+
+     label1:
+        $i6 = lengthof r3;
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>(r3, 0, r2, i2, $i6);
+
+        $i7 = lengthof r3;
+
+        return $i7;
+    }
+
+    protected byte[] engineWrap(java.security.Key) throws javax.crypto.IllegalBlockSizeException, java.security.InvalidKeyException
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        java.security.Key r1;
+        byte[] r2, $r4;
+        javax.crypto.IllegalBlockSizeException r3, $r6;
+        int $i0;
+        javax.crypto.BadPaddingException $r5, r8;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        r1 := @parameter0: java.security.Key;
+
+     label1:
+        r2 = interfaceinvoke r1.<java.security.Key: byte[] getEncoded()>();
+
+        $i0 = lengthof r2;
+
+        $r4 = virtualinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] engineDoFinal(byte[],int,int)>(r2, 0, $i0);
+
+     label2:
+        return $r4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r8 = $r5;
+
+        $r6 = new javax.crypto.IllegalBlockSizeException;
+
+        specialinvoke $r6.<javax.crypto.IllegalBlockSizeException: void <init>()>();
+
+        r3 = $r6;
+
+        virtualinvoke r3.<javax.crypto.IllegalBlockSizeException: java.lang.Throwable initCause(java.lang.Throwable)>(r8);
+
+        throw r3;
+
+        catch javax.crypto.BadPaddingException from label1 to label2 with label3;
+    }
+
+    protected java.security.Key engineUnwrap(byte[], java.lang.String, int) throws java.security.InvalidKeyException, java.security.NoSuchAlgorithmException
+    {
+        com.android.org.conscrypt.OpenSSLCipherRSA r0;
+        byte[] r1, r3;
+        java.lang.String r2, $r9;
+        int i0, $i1;
+        java.security.KeyFactory r4, r21;
+        java.lang.UnsupportedOperationException $r5;
+        java.lang.StringBuilder $r6, $r7, $r8;
+        javax.crypto.spec.SecretKeySpec $r10;
+        java.security.spec.PKCS8EncodedKeySpec $r11;
+        java.security.PrivateKey $r12;
+        java.security.PublicKey $r13;
+        java.security.spec.X509EncodedKeySpec $r14;
+        java.security.InvalidKeyException $r15, $r17, $r19;
+        javax.crypto.BadPaddingException $r16, r23;
+        java.security.spec.InvalidKeySpecException $r18, r24;
+        javax.crypto.IllegalBlockSizeException $r20, r22;
+
+        r0 := @this: com.android.org.conscrypt.OpenSSLCipherRSA;
+
+        r1 := @parameter0: byte[];
+
+        r2 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+     label01:
+        $i1 = lengthof r1;
+
+        r3 = virtualinvoke r0.<com.android.org.conscrypt.OpenSSLCipherRSA: byte[] engineDoFinal(byte[],int,int)>(r1, 0, $i1);
+
+        if i0 != 1 goto label03;
+
+        r4 = staticinvoke <java.security.KeyFactory: java.security.KeyFactory getInstance(java.lang.String)>(r2);
+
+        $r14 = new java.security.spec.X509EncodedKeySpec;
+
+        specialinvoke $r14.<java.security.spec.X509EncodedKeySpec: void <init>(byte[])>(r3);
+
+        $r13 = virtualinvoke r4.<java.security.KeyFactory: java.security.PublicKey generatePublic(java.security.spec.KeySpec)>($r14);
+
+     label02:
+        return $r13;
+
+     label03:
+        if i0 != 2 goto label05;
+
+        r21 = staticinvoke <java.security.KeyFactory: java.security.KeyFactory getInstance(java.lang.String)>(r2);
+
+        $r11 = new java.security.spec.PKCS8EncodedKeySpec;
+
+        specialinvoke $r11.<java.security.spec.PKCS8EncodedKeySpec: void <init>(byte[])>(r3);
+
+        $r12 = virtualinvoke r21.<java.security.KeyFactory: java.security.PrivateKey generatePrivate(java.security.spec.KeySpec)>($r11);
+
+     label04:
+        return $r12;
+
+     label05:
+        if i0 != 3 goto label07;
+
+        $r10 = new javax.crypto.spec.SecretKeySpec;
+
+        specialinvoke $r10.<javax.crypto.spec.SecretKeySpec: void <init>(byte[],java.lang.String)>(r3, r2);
+
+     label06:
+        return $r10;
+
+     label07:
+        $r5 = new java.lang.UnsupportedOperationException;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("wrappedKeyType == ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r5.<java.lang.UnsupportedOperationException: void <init>(java.lang.String)>($r9);
+
+        throw $r5;
+
+     label08:
+        $r20 := @caughtexception;
+
+        r22 = $r20;
+
+        $r19 = new java.security.InvalidKeyException;
+
+        specialinvoke $r19.<java.security.InvalidKeyException: void <init>(java.lang.Throwable)>(r22);
+
+        throw $r19;
+
+     label09:
+        $r16 := @caughtexception;
+
+        r23 = $r16;
+
+        $r15 = new java.security.InvalidKeyException;
+
+        specialinvoke $r15.<java.security.InvalidKeyException: void <init>(java.lang.Throwable)>(r23);
+
+        throw $r15;
+
+     label10:
+        $r18 := @caughtexception;
+
+        r24 = $r18;
+
+        $r17 = new java.security.InvalidKeyException;
+
+        specialinvoke $r17.<java.security.InvalidKeyException: void <init>(java.lang.Throwable)>(r24);
+
+        throw $r17;
+
+        catch javax.crypto.IllegalBlockSizeException from label01 to label02 with label08;
+        catch javax.crypto.IllegalBlockSizeException from label03 to label04 with label08;
+        catch javax.crypto.IllegalBlockSizeException from label05 to label06 with label08;
+        catch javax.crypto.IllegalBlockSizeException from label07 to label08 with label08;
+        catch javax.crypto.BadPaddingException from label01 to label02 with label09;
+        catch javax.crypto.BadPaddingException from label03 to label04 with label09;
+        catch javax.crypto.BadPaddingException from label05 to label06 with label09;
+        catch javax.crypto.BadPaddingException from label07 to label08 with label09;
+        catch java.security.spec.InvalidKeySpecException from label01 to label02 with label10;
+        catch java.security.spec.InvalidKeySpecException from label03 to label04 with label10;
+        catch java.security.spec.InvalidKeySpecException from label05 to label06 with label10;
+        catch java.security.spec.InvalidKeySpecException from label07 to label08 with label10;
+    }
+}

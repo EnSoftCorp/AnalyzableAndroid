@@ -1,0 +1,1371 @@
+public class android.hardware.camera2.legacy.CaptureCollector extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private static final boolean DEBUG;
+    private static final int FLAG_RECEIVED_JPEG;
+    private static final int FLAG_RECEIVED_JPEG_TS;
+    private static final int FLAG_RECEIVED_PREVIEW;
+    private static final int FLAG_RECEIVED_PREVIEW_TS;
+    private static final int FLAG_RECEIVED_ALL_JPEG;
+    private static final int FLAG_RECEIVED_ALL_PREVIEW;
+    private static final int MAX_JPEGS_IN_FLIGHT;
+    private final java.util.TreeSet mActiveRequests;
+    private final java.util.ArrayDeque mJpegCaptureQueue;
+    private final java.util.ArrayDeque mJpegProduceQueue;
+    private final java.util.ArrayDeque mPreviewCaptureQueue;
+    private final java.util.ArrayDeque mPreviewProduceQueue;
+    private final java.util.ArrayList mCompletedRequests;
+    private final java.util.concurrent.locks.ReentrantLock mLock;
+    private final java.util.concurrent.locks.Condition mIsEmpty;
+    private final java.util.concurrent.locks.Condition mPreviewsEmpty;
+    private final java.util.concurrent.locks.Condition mNotFull;
+    private final android.hardware.camera2.legacy.CameraDeviceState mDeviceState;
+    private int mInFlight;
+    private int mInFlightPreviews;
+    private final int mMaxInFlight;
+
+    public void <init>(int, android.hardware.camera2.legacy.CameraDeviceState)
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        int i0, $i1, $i2;
+        android.hardware.camera2.legacy.CameraDeviceState r1;
+        java.util.ArrayList $r2;
+        java.util.concurrent.locks.ReentrantLock $r3, $r9, $r11, $r14;
+        java.util.ArrayDeque $r4, $r5, $r6, $r7;
+        java.util.TreeSet $r8;
+        java.util.concurrent.locks.Condition $r10, $r12, $r13;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.hardware.camera2.legacy.CameraDeviceState;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r2 = new java.util.ArrayList;
+
+        specialinvoke $r2.<java.util.ArrayList: void <init>()>();
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayList mCompletedRequests> = $r2;
+
+        $r3 = new java.util.concurrent.locks.ReentrantLock;
+
+        specialinvoke $r3.<java.util.concurrent.locks.ReentrantLock: void <init>()>();
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock> = $r3;
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight> = 0;
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlightPreviews> = 0;
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: int mMaxInFlight> = i0;
+
+        $r4 = new java.util.ArrayDeque;
+
+        specialinvoke $r4.<java.util.ArrayDeque: void <init>(int)>(1);
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegCaptureQueue> = $r4;
+
+        $r5 = new java.util.ArrayDeque;
+
+        specialinvoke $r5.<java.util.ArrayDeque: void <init>(int)>(1);
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegProduceQueue> = $r5;
+
+        $r6 = new java.util.ArrayDeque;
+
+        $i1 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mMaxInFlight>;
+
+        specialinvoke $r6.<java.util.ArrayDeque: void <init>(int)>($i1);
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewCaptureQueue> = $r6;
+
+        $r7 = new java.util.ArrayDeque;
+
+        $i2 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mMaxInFlight>;
+
+        specialinvoke $r7.<java.util.ArrayDeque: void <init>(int)>($i2);
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewProduceQueue> = $r7;
+
+        $r8 = new java.util.TreeSet;
+
+        specialinvoke $r8.<java.util.TreeSet: void <init>()>();
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.TreeSet mActiveRequests> = $r8;
+
+        $r9 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        $r10 = virtualinvoke $r9.<java.util.concurrent.locks.ReentrantLock: java.util.concurrent.locks.Condition newCondition()>();
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.Condition mIsEmpty> = $r10;
+
+        $r11 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        $r12 = virtualinvoke $r11.<java.util.concurrent.locks.ReentrantLock: java.util.concurrent.locks.Condition newCondition()>();
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.Condition mNotFull> = $r12;
+
+        $r14 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        $r13 = virtualinvoke $r14.<java.util.concurrent.locks.ReentrantLock: java.util.concurrent.locks.Condition newCondition()>();
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.Condition mPreviewsEmpty> = $r13;
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: android.hardware.camera2.legacy.CameraDeviceState mDeviceState> = r1;
+
+        return;
+    }
+
+    public boolean queueRequest(android.hardware.camera2.legacy.RequestHolder, android.hardware.camera2.legacy.LegacyRequest, long, java.util.concurrent.TimeUnit) throws java.lang.InterruptedException
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        android.hardware.camera2.legacy.RequestHolder r1;
+        android.hardware.camera2.legacy.LegacyRequest r2;
+        long l0, l1;
+        java.util.concurrent.TimeUnit r3;
+        android.hardware.camera2.legacy.CaptureCollector$CaptureHolder r4, $r7;
+        java.util.concurrent.locks.ReentrantLock r5;
+        boolean z0, $z1, $z2, $z3, $z4, $z10, z11, z12;
+        java.lang.Throwable r6, $r22;
+        java.util.TreeSet $r8;
+        int $i2, $i3, $i4, $i5, $i6, $i7, $i9, $i11, $i12;
+        java.util.ArrayDeque $r9, $r10, $r12, $r14;
+        java.util.concurrent.locks.Condition $r11, $r13;
+        byte $b8, $b10;
+        java.lang.IllegalStateException $r15;
+        java.lang.StringBuilder $r16, $r17, $r18, $r19, $r20, $r21;
+        java.lang.String $r23;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        r1 := @parameter0: android.hardware.camera2.legacy.RequestHolder;
+
+        r2 := @parameter1: android.hardware.camera2.legacy.LegacyRequest;
+
+        l0 := @parameter2: long;
+
+        r3 := @parameter3: java.util.concurrent.TimeUnit;
+
+        $r7 = new android.hardware.camera2.legacy.CaptureCollector$CaptureHolder;
+
+        specialinvoke $r7.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: void <init>(android.hardware.camera2.legacy.CaptureCollector,android.hardware.camera2.legacy.RequestHolder,android.hardware.camera2.legacy.LegacyRequest)>(r0, r1, r2);
+
+        r4 = $r7;
+
+        l1 = virtualinvoke r3.<java.util.concurrent.TimeUnit: long toNanos(long)>(l0);
+
+        r5 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r5.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label01:
+        $z1 = <android.hardware.camera2.legacy.CaptureCollector: boolean DEBUG>;
+
+        if $z1 == 0 goto label02;
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("queueRequest  for request ");
+
+        $i11 = virtualinvoke r1.<android.hardware.camera2.legacy.RequestHolder: int getRequestId()>();
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i11);
+
+        $r21 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" - ");
+
+        $i12 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight>;
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i12);
+
+        $r19 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" requests remain in flight.");
+
+        $r23 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("CaptureCollector", $r23);
+
+     label02:
+        $z2 = r4.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: boolean needsJpeg>;
+
+        if $z2 != 0 goto label03;
+
+        $z10 = r4.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: boolean needsPreview>;
+
+        if $z10 != 0 goto label03;
+
+        $r15 = new java.lang.IllegalStateException;
+
+        specialinvoke $r15.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Request must target at least one output surface!");
+
+        throw $r15;
+
+     label03:
+        $z4 = r4.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: boolean needsJpeg>;
+
+        if $z4 == 0 goto label08;
+
+     label04:
+        $i9 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight>;
+
+        if $i9 <= 0 goto label07;
+
+        $b10 = l1 cmp 0L;
+
+        if $b10 > 0 goto label06;
+
+        z0 = 0;
+
+     label05:
+        virtualinvoke r5.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return z0;
+
+     label06:
+        $r13 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.Condition mIsEmpty>;
+
+        l1 = interfaceinvoke $r13.<java.util.concurrent.locks.Condition: long awaitNanos(long)>(l1);
+
+        goto label04;
+
+     label07:
+        $r12 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegCaptureQueue>;
+
+        virtualinvoke $r12.<java.util.ArrayDeque: boolean add(java.lang.Object)>(r4);
+
+        $r14 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegProduceQueue>;
+
+        virtualinvoke $r14.<java.util.ArrayDeque: boolean add(java.lang.Object)>(r4);
+
+     label08:
+        $z3 = r4.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: boolean needsPreview>;
+
+        if $z3 == 0 goto label13;
+
+     label09:
+        $i4 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight>;
+
+        $i5 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mMaxInFlight>;
+
+        if $i4 < $i5 goto label12;
+
+        $b8 = l1 cmp 0L;
+
+        if $b8 > 0 goto label11;
+
+        z11 = 0;
+
+     label10:
+        virtualinvoke r5.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return z11;
+
+     label11:
+        $r11 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.Condition mNotFull>;
+
+        l1 = interfaceinvoke $r11.<java.util.concurrent.locks.Condition: long awaitNanos(long)>(l1);
+
+        goto label09;
+
+     label12:
+        $r9 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewCaptureQueue>;
+
+        virtualinvoke $r9.<java.util.ArrayDeque: boolean add(java.lang.Object)>(r4);
+
+        $r10 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewProduceQueue>;
+
+        virtualinvoke $r10.<java.util.ArrayDeque: boolean add(java.lang.Object)>(r4);
+
+        $i7 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlightPreviews>;
+
+        $i6 = $i7 + 1;
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlightPreviews> = $i6;
+
+     label13:
+        $r8 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.TreeSet mActiveRequests>;
+
+        virtualinvoke $r8.<java.util.TreeSet: boolean add(java.lang.Object)>(r4);
+
+        $i3 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight>;
+
+        $i2 = $i3 + 1;
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight> = $i2;
+
+        z12 = 1;
+
+     label14:
+        virtualinvoke r5.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return z12;
+
+     label15:
+        $r22 := @caughtexception;
+
+        r6 = $r22;
+
+     label16:
+        virtualinvoke r5.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r6;
+
+        catch java.lang.Throwable from label01 to label05 with label15;
+        catch java.lang.Throwable from label06 to label10 with label15;
+        catch java.lang.Throwable from label11 to label14 with label15;
+        catch java.lang.Throwable from label15 to label16 with label15;
+    }
+
+    public boolean waitForEmpty(long, java.util.concurrent.TimeUnit) throws java.lang.InterruptedException
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        long l0, l1;
+        java.util.concurrent.TimeUnit r1;
+        java.util.concurrent.locks.ReentrantLock r2;
+        boolean z0, z1;
+        java.lang.Throwable r3, $r5;
+        int $i2;
+        byte $b3;
+        java.util.concurrent.locks.Condition $r4;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        l0 := @parameter0: long;
+
+        r1 := @parameter1: java.util.concurrent.TimeUnit;
+
+        l1 = virtualinvoke r1.<java.util.concurrent.TimeUnit: long toNanos(long)>(l0);
+
+        r2 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r2.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label1:
+        $i2 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight>;
+
+        if $i2 <= 0 goto label4;
+
+        $b3 = l1 cmp 0L;
+
+        if $b3 > 0 goto label3;
+
+        z0 = 0;
+
+     label2:
+        virtualinvoke r2.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return z0;
+
+     label3:
+        $r4 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.Condition mIsEmpty>;
+
+        l1 = interfaceinvoke $r4.<java.util.concurrent.locks.Condition: long awaitNanos(long)>(l1);
+
+        goto label1;
+
+     label4:
+        z1 = 1;
+
+     label5:
+        virtualinvoke r2.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return z1;
+
+     label6:
+        $r5 := @caughtexception;
+
+        r3 = $r5;
+
+     label7:
+        virtualinvoke r2.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    public boolean waitForPreviewsEmpty(long, java.util.concurrent.TimeUnit) throws java.lang.InterruptedException
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        long l0, l1;
+        java.util.concurrent.TimeUnit r1;
+        java.util.concurrent.locks.ReentrantLock r2;
+        boolean z0, z1;
+        java.lang.Throwable r3, $r5;
+        int $i2;
+        byte $b3;
+        java.util.concurrent.locks.Condition $r4;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        l0 := @parameter0: long;
+
+        r1 := @parameter1: java.util.concurrent.TimeUnit;
+
+        l1 = virtualinvoke r1.<java.util.concurrent.TimeUnit: long toNanos(long)>(l0);
+
+        r2 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r2.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label1:
+        $i2 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlightPreviews>;
+
+        if $i2 <= 0 goto label4;
+
+        $b3 = l1 cmp 0L;
+
+        if $b3 > 0 goto label3;
+
+        z0 = 0;
+
+     label2:
+        virtualinvoke r2.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return z0;
+
+     label3:
+        $r4 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.Condition mPreviewsEmpty>;
+
+        l1 = interfaceinvoke $r4.<java.util.concurrent.locks.Condition: long awaitNanos(long)>(l1);
+
+        goto label1;
+
+     label4:
+        z1 = 1;
+
+     label5:
+        virtualinvoke r2.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return z1;
+
+     label6:
+        $r5 := @caughtexception;
+
+        r3 = $r5;
+
+     label7:
+        virtualinvoke r2.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    public boolean waitForRequestCompleted(android.hardware.camera2.legacy.RequestHolder, long, java.util.concurrent.TimeUnit, android.util.MutableLong) throws java.lang.InterruptedException
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        android.hardware.camera2.legacy.RequestHolder r1;
+        long l0, l1;
+        java.util.concurrent.TimeUnit r2;
+        android.util.MutableLong r3;
+        java.util.concurrent.locks.ReentrantLock r4;
+        boolean z0, $z1, z2;
+        java.lang.Throwable r5, $r7;
+        byte $b2;
+        java.util.concurrent.locks.Condition $r6;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        r1 := @parameter0: android.hardware.camera2.legacy.RequestHolder;
+
+        l0 := @parameter1: long;
+
+        r2 := @parameter2: java.util.concurrent.TimeUnit;
+
+        r3 := @parameter3: android.util.MutableLong;
+
+        l1 = virtualinvoke r2.<java.util.concurrent.TimeUnit: long toNanos(long)>(l0);
+
+        r4 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r4.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label1:
+        $z1 = specialinvoke r0.<android.hardware.camera2.legacy.CaptureCollector: boolean removeRequestIfCompleted(android.hardware.camera2.legacy.RequestHolder,android.util.MutableLong)>(r1, r3);
+
+        if $z1 != 0 goto label4;
+
+        $b2 = l1 cmp 0L;
+
+        if $b2 > 0 goto label3;
+
+        z0 = 0;
+
+     label2:
+        virtualinvoke r4.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return z0;
+
+     label3:
+        $r6 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.Condition mNotFull>;
+
+        l1 = interfaceinvoke $r6.<java.util.concurrent.locks.Condition: long awaitNanos(long)>(l1);
+
+        goto label1;
+
+     label4:
+        z2 = 1;
+
+     label5:
+        virtualinvoke r4.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return z2;
+
+     label6:
+        $r7 := @caughtexception;
+
+        r5 = $r7;
+
+     label7:
+        virtualinvoke r4.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r5;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    private boolean removeRequestIfCompleted(android.hardware.camera2.legacy.RequestHolder, android.util.MutableLong)
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        android.hardware.camera2.legacy.RequestHolder r1, $r7;
+        android.util.MutableLong r2;
+        int i0;
+        java.util.Iterator r3;
+        android.hardware.camera2.legacy.CaptureCollector$CaptureHolder r4;
+        java.util.ArrayList $r5, $r8;
+        boolean $z0, $z1;
+        java.lang.Object $r6;
+        long $l1;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        r1 := @parameter0: android.hardware.camera2.legacy.RequestHolder;
+
+        r2 := @parameter1: android.util.MutableLong;
+
+        i0 = 0;
+
+        $r5 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayList mCompletedRequests>;
+
+        r3 = virtualinvoke $r5.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r6 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (android.hardware.camera2.legacy.CaptureCollector$CaptureHolder) $r6;
+
+        $r7 = staticinvoke <android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: android.hardware.camera2.legacy.RequestHolder access$400(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r4);
+
+        $z1 = virtualinvoke $r7.<java.lang.Object: boolean equals(java.lang.Object)>(r1);
+
+        if $z1 == 0 goto label2;
+
+        $l1 = staticinvoke <android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: long access$500(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r4);
+
+        r2.<android.util.MutableLong: long value> = $l1;
+
+        $r8 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayList mCompletedRequests>;
+
+        virtualinvoke $r8.<java.util.ArrayList: java.lang.Object remove(int)>(i0);
+
+        return 1;
+
+     label2:
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    public android.hardware.camera2.legacy.RequestHolder jpegCaptured(long)
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        long l0;
+        java.util.concurrent.locks.ReentrantLock r1;
+        android.hardware.camera2.legacy.CaptureCollector$CaptureHolder r2;
+        java.lang.Throwable r3, $r6;
+        java.util.ArrayDeque $r4;
+        java.lang.Object $r5;
+        android.hardware.camera2.legacy.RequestHolder r7;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        l0 := @parameter0: long;
+
+        r1 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label1:
+        $r4 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegCaptureQueue>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayDeque: java.lang.Object poll()>();
+
+        r2 = (android.hardware.camera2.legacy.CaptureCollector$CaptureHolder) $r5;
+
+        if r2 != null goto label3;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("CaptureCollector", "jpegCaptured called with no jpeg request on queue!");
+
+     label2:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return null;
+
+     label3:
+        virtualinvoke r2.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: void setJpegTimestamp(long)>(l0);
+
+        r7 = staticinvoke <android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: android.hardware.camera2.legacy.RequestHolder access$400(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r2);
+
+     label4:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return r7;
+
+     label5:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+     label6:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public android.util.Pair jpegProduced()
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        java.util.concurrent.locks.ReentrantLock r1;
+        android.hardware.camera2.legacy.CaptureCollector$CaptureHolder r2;
+        java.lang.Throwable r3, $r9;
+        java.util.ArrayDeque $r4;
+        java.lang.Object $r5;
+        android.util.Pair $r6, r10;
+        android.hardware.camera2.legacy.RequestHolder $r7;
+        long $l0;
+        java.lang.Long $r8;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        r1 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label1:
+        $r4 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegProduceQueue>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayDeque: java.lang.Object poll()>();
+
+        r2 = (android.hardware.camera2.legacy.CaptureCollector$CaptureHolder) $r5;
+
+        if r2 != null goto label3;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("CaptureCollector", "jpegProduced called with no jpeg request on queue!");
+
+     label2:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return null;
+
+     label3:
+        virtualinvoke r2.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: void setJpegProduced()>();
+
+        $r6 = new android.util.Pair;
+
+        $r7 = staticinvoke <android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: android.hardware.camera2.legacy.RequestHolder access$400(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r2);
+
+        $l0 = staticinvoke <android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: long access$500(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r2);
+
+        $r8 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l0);
+
+        specialinvoke $r6.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r7, $r8);
+
+        r10 = $r6;
+
+     label4:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return r10;
+
+     label5:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+     label6:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public boolean hasPendingPreviewCaptures()
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        java.util.concurrent.locks.ReentrantLock r1;
+        boolean z0, $z1, $z2;
+        java.lang.Throwable r2, $r4;
+        java.util.ArrayDeque $r3;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        r1 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label1:
+        $r3 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewCaptureQueue>;
+
+        $z1 = virtualinvoke $r3.<java.util.ArrayDeque: boolean isEmpty()>();
+
+        if $z1 != 0 goto label2;
+
+        $z2 = 1;
+
+        goto label3;
+
+     label2:
+        $z2 = 0;
+
+     label3:
+        z0 = $z2;
+
+     label4:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return z0;
+
+     label5:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+     label6:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public android.util.Pair previewCaptured(long)
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        long l0, $l1;
+        java.util.concurrent.locks.ReentrantLock r1;
+        android.hardware.camera2.legacy.CaptureCollector$CaptureHolder r2;
+        java.lang.Throwable r3, $r9;
+        java.util.ArrayDeque $r4;
+        java.lang.Object $r5;
+        android.util.Pair $r6, r10;
+        android.hardware.camera2.legacy.RequestHolder $r7;
+        java.lang.Long $r8;
+        boolean $z0;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        l0 := @parameter0: long;
+
+        r1 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label1:
+        $r4 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewCaptureQueue>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayDeque: java.lang.Object poll()>();
+
+        r2 = (android.hardware.camera2.legacy.CaptureCollector$CaptureHolder) $r5;
+
+        if r2 != null goto label3;
+
+        $z0 = <android.hardware.camera2.legacy.CaptureCollector: boolean DEBUG>;
+
+        if $z0 == 0 goto label2;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("CaptureCollector", "previewCaptured called with no preview request on queue!");
+
+     label2:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return null;
+
+     label3:
+        virtualinvoke r2.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: void setPreviewTimestamp(long)>(l0);
+
+        $r6 = new android.util.Pair;
+
+        $r7 = staticinvoke <android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: android.hardware.camera2.legacy.RequestHolder access$400(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r2);
+
+        $l1 = staticinvoke <android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: long access$500(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r2);
+
+        $r8 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l1);
+
+        specialinvoke $r6.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r7, $r8);
+
+        r10 = $r6;
+
+     label4:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return r10;
+
+     label5:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+     label6:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public android.hardware.camera2.legacy.RequestHolder previewProduced()
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        java.util.concurrent.locks.ReentrantLock r1;
+        android.hardware.camera2.legacy.CaptureCollector$CaptureHolder r2;
+        java.lang.Throwable r3, $r6;
+        java.util.ArrayDeque $r4;
+        java.lang.Object $r5;
+        android.hardware.camera2.legacy.RequestHolder r7;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        r1 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label1:
+        $r4 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewProduceQueue>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayDeque: java.lang.Object poll()>();
+
+        r2 = (android.hardware.camera2.legacy.CaptureCollector$CaptureHolder) $r5;
+
+        if r2 != null goto label3;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("CaptureCollector", "previewProduced called with no preview request on queue!");
+
+     label2:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return null;
+
+     label3:
+        virtualinvoke r2.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: void setPreviewProduced()>();
+
+        r7 = staticinvoke <android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: android.hardware.camera2.legacy.RequestHolder access$400(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r2);
+
+     label4:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        return r7;
+
+     label5:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+     label6:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public void failNextPreview()
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        java.util.concurrent.locks.ReentrantLock r1;
+        android.hardware.camera2.legacy.CaptureCollector$CaptureHolder r2, r3, r4, $r13;
+        java.lang.Throwable r5, $r14;
+        java.util.ArrayDeque $r6, $r8, $r10, $r11;
+        java.lang.Object $r7, $r9;
+        int $i0;
+        java.util.TreeSet $r12;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        r1 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label1:
+        $r6 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewCaptureQueue>;
+
+        $r7 = virtualinvoke $r6.<java.util.ArrayDeque: java.lang.Object peek()>();
+
+        r2 = (android.hardware.camera2.legacy.CaptureCollector$CaptureHolder) $r7;
+
+        $r8 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewProduceQueue>;
+
+        $r9 = virtualinvoke $r8.<java.util.ArrayDeque: java.lang.Object peek()>();
+
+        r3 = (android.hardware.camera2.legacy.CaptureCollector$CaptureHolder) $r9;
+
+        if r2 != null goto label2;
+
+        $r13 = r3;
+
+        goto label5;
+
+     label2:
+        if r3 != null goto label3;
+
+        $r13 = r2;
+
+        goto label5;
+
+     label3:
+        $i0 = virtualinvoke r2.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: int compareTo(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r3);
+
+        if $i0 > 0 goto label4;
+
+        $r13 = r2;
+
+        goto label5;
+
+     label4:
+        $r13 = r3;
+
+     label5:
+        r4 = $r13;
+
+        if r4 == null goto label6;
+
+        $r10 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewCaptureQueue>;
+
+        virtualinvoke $r10.<java.util.ArrayDeque: boolean remove(java.lang.Object)>(r4);
+
+        $r11 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewProduceQueue>;
+
+        virtualinvoke $r11.<java.util.ArrayDeque: boolean remove(java.lang.Object)>(r4);
+
+        $r12 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.TreeSet mActiveRequests>;
+
+        virtualinvoke $r12.<java.util.TreeSet: boolean remove(java.lang.Object)>(r4);
+
+        virtualinvoke r4.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: void setPreviewFailed()>();
+
+     label6:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        goto label9;
+
+     label7:
+        $r14 := @caughtexception;
+
+        r5 = $r14;
+
+     label8:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r5;
+
+     label9:
+        return;
+
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    public void failNextJpeg()
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        java.util.concurrent.locks.ReentrantLock r1;
+        android.hardware.camera2.legacy.CaptureCollector$CaptureHolder r2, r3, r4, $r13;
+        java.lang.Throwable r5, $r14;
+        java.util.ArrayDeque $r6, $r8, $r10, $r11;
+        java.lang.Object $r7, $r9;
+        int $i0;
+        java.util.TreeSet $r12;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        r1 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label1:
+        $r6 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegCaptureQueue>;
+
+        $r7 = virtualinvoke $r6.<java.util.ArrayDeque: java.lang.Object peek()>();
+
+        r2 = (android.hardware.camera2.legacy.CaptureCollector$CaptureHolder) $r7;
+
+        $r8 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegProduceQueue>;
+
+        $r9 = virtualinvoke $r8.<java.util.ArrayDeque: java.lang.Object peek()>();
+
+        r3 = (android.hardware.camera2.legacy.CaptureCollector$CaptureHolder) $r9;
+
+        if r2 != null goto label2;
+
+        $r13 = r3;
+
+        goto label5;
+
+     label2:
+        if r3 != null goto label3;
+
+        $r13 = r2;
+
+        goto label5;
+
+     label3:
+        $i0 = virtualinvoke r2.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: int compareTo(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r3);
+
+        if $i0 > 0 goto label4;
+
+        $r13 = r2;
+
+        goto label5;
+
+     label4:
+        $r13 = r3;
+
+     label5:
+        r4 = $r13;
+
+        if r4 == null goto label6;
+
+        $r10 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegCaptureQueue>;
+
+        virtualinvoke $r10.<java.util.ArrayDeque: boolean remove(java.lang.Object)>(r4);
+
+        $r11 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegProduceQueue>;
+
+        virtualinvoke $r11.<java.util.ArrayDeque: boolean remove(java.lang.Object)>(r4);
+
+        $r12 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.TreeSet mActiveRequests>;
+
+        virtualinvoke $r12.<java.util.TreeSet: boolean remove(java.lang.Object)>(r4);
+
+        virtualinvoke r4.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: void setJpegFailed()>();
+
+     label6:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        goto label9;
+
+     label7:
+        $r14 := @caughtexception;
+
+        r5 = $r14;
+
+     label8:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r5;
+
+     label9:
+        return;
+
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    public void failAll()
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        java.util.concurrent.locks.ReentrantLock r1;
+        android.hardware.camera2.legacy.CaptureCollector$CaptureHolder r2, $r6;
+        java.lang.Throwable r3, $r11;
+        java.util.TreeSet $r4;
+        java.lang.Object $r5;
+        java.util.ArrayDeque $r7, $r8, $r9, $r10;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        r1 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.ReentrantLock mLock>;
+
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void lock()>();
+
+     label1:
+        $r4 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.TreeSet mActiveRequests>;
+
+        $r5 = virtualinvoke $r4.<java.util.TreeSet: java.lang.Object pollFirst()>();
+
+        $r6 = (android.hardware.camera2.legacy.CaptureCollector$CaptureHolder) $r5;
+
+        r2 = $r6;
+
+        if $r6 == null goto label2;
+
+        virtualinvoke r2.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: void setPreviewFailed()>();
+
+        virtualinvoke r2.<android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: void setJpegFailed()>();
+
+        goto label1;
+
+     label2:
+        $r7 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewCaptureQueue>;
+
+        virtualinvoke $r7.<java.util.ArrayDeque: void clear()>();
+
+        $r8 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mPreviewProduceQueue>;
+
+        virtualinvoke $r8.<java.util.ArrayDeque: void clear()>();
+
+        $r9 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegCaptureQueue>;
+
+        virtualinvoke $r9.<java.util.ArrayDeque: void clear()>();
+
+        $r10 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayDeque mJpegProduceQueue>;
+
+        virtualinvoke $r10.<java.util.ArrayDeque: void clear()>();
+
+     label3:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        goto label6;
+
+     label4:
+        $r11 := @caughtexception;
+
+        r3 = $r11;
+
+     label5:
+        virtualinvoke r1.<java.util.concurrent.locks.ReentrantLock: void unlock()>();
+
+        throw r3;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    private void onPreviewCompleted()
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        int $i0, $i1, $i2, $i3;
+        java.util.concurrent.locks.Condition $r1;
+        java.lang.IllegalStateException $r2;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        $i0 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlightPreviews>;
+
+        $i1 = $i0 - 1;
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlightPreviews> = $i1;
+
+        $i2 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlightPreviews>;
+
+        if $i2 >= 0 goto label1;
+
+        $r2 = new java.lang.IllegalStateException;
+
+        specialinvoke $r2.<java.lang.IllegalStateException: void <init>(java.lang.String)>("More preview captures completed than requests queued.");
+
+        throw $r2;
+
+     label1:
+        $i3 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlightPreviews>;
+
+        if $i3 != 0 goto label2;
+
+        $r1 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.Condition mPreviewsEmpty>;
+
+        interfaceinvoke $r1.<java.util.concurrent.locks.Condition: void signalAll()>();
+
+     label2:
+        return;
+    }
+
+    private void onRequestCompleted(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        android.hardware.camera2.legacy.CaptureCollector$CaptureHolder r1;
+        android.hardware.camera2.legacy.RequestHolder r2;
+        int $i0, $i1, $i2, $i3, $i4, $i5;
+        boolean $z0;
+        java.util.ArrayList $r3;
+        java.util.TreeSet $r4;
+        java.util.concurrent.locks.Condition $r5, $r6;
+        java.lang.IllegalStateException $r7;
+        java.lang.StringBuilder $r8, $r9, $r10, $r11, $r12, $r14;
+        java.lang.String $r13;
+
+        r0 := @this: android.hardware.camera2.legacy.CaptureCollector;
+
+        r1 := @parameter0: android.hardware.camera2.legacy.CaptureCollector$CaptureHolder;
+
+        r2 = staticinvoke <android.hardware.camera2.legacy.CaptureCollector$CaptureHolder: android.hardware.camera2.legacy.RequestHolder access$400(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r1);
+
+        $i0 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight>;
+
+        $i1 = $i0 - 1;
+
+        r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight> = $i1;
+
+        $z0 = <android.hardware.camera2.legacy.CaptureCollector: boolean DEBUG>;
+
+        if $z0 == 0 goto label1;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Completed request ");
+
+        $i4 = virtualinvoke r2.<android.hardware.camera2.legacy.RequestHolder: int getRequestId()>();
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        $i5 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight>;
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" requests remain in flight.");
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("CaptureCollector", $r13);
+
+     label1:
+        $i2 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight>;
+
+        if $i2 >= 0 goto label2;
+
+        $r7 = new java.lang.IllegalStateException;
+
+        specialinvoke $r7.<java.lang.IllegalStateException: void <init>(java.lang.String)>("More captures completed than requests queued.");
+
+        throw $r7;
+
+     label2:
+        $r3 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.ArrayList mCompletedRequests>;
+
+        virtualinvoke $r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r1);
+
+        $r4 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.TreeSet mActiveRequests>;
+
+        virtualinvoke $r4.<java.util.TreeSet: boolean remove(java.lang.Object)>(r1);
+
+        $r5 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.Condition mNotFull>;
+
+        interfaceinvoke $r5.<java.util.concurrent.locks.Condition: void signalAll()>();
+
+        $i3 = r0.<android.hardware.camera2.legacy.CaptureCollector: int mInFlight>;
+
+        if $i3 != 0 goto label3;
+
+        $r6 = r0.<android.hardware.camera2.legacy.CaptureCollector: java.util.concurrent.locks.Condition mIsEmpty>;
+
+        interfaceinvoke $r6.<java.util.concurrent.locks.Condition: void signalAll()>();
+
+     label3:
+        return;
+    }
+
+    static void access$000(android.hardware.camera2.legacy.CaptureCollector)
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+
+        r0 := @parameter0: android.hardware.camera2.legacy.CaptureCollector;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.CaptureCollector: void onPreviewCompleted()>();
+
+        return;
+    }
+
+    static android.hardware.camera2.legacy.CameraDeviceState access$100(android.hardware.camera2.legacy.CaptureCollector)
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        android.hardware.camera2.legacy.CameraDeviceState $r1;
+
+        r0 := @parameter0: android.hardware.camera2.legacy.CaptureCollector;
+
+        $r1 = r0.<android.hardware.camera2.legacy.CaptureCollector: android.hardware.camera2.legacy.CameraDeviceState mDeviceState>;
+
+        return $r1;
+    }
+
+    static void access$200(android.hardware.camera2.legacy.CaptureCollector, android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)
+    {
+        android.hardware.camera2.legacy.CaptureCollector r0;
+        android.hardware.camera2.legacy.CaptureCollector$CaptureHolder r1;
+
+        r0 := @parameter0: android.hardware.camera2.legacy.CaptureCollector;
+
+        r1 := @parameter1: android.hardware.camera2.legacy.CaptureCollector$CaptureHolder;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.CaptureCollector: void onRequestCompleted(android.hardware.camera2.legacy.CaptureCollector$CaptureHolder)>(r1);
+
+        return;
+    }
+
+    static boolean access$300()
+    {
+        boolean $z0;
+
+        $z0 = <android.hardware.camera2.legacy.CaptureCollector: boolean DEBUG>;
+
+        return $z0;
+    }
+
+    static void <clinit>()
+    {
+        boolean $z0;
+
+        <android.hardware.camera2.legacy.CaptureCollector: int MAX_JPEGS_IN_FLIGHT> = 1;
+
+        <android.hardware.camera2.legacy.CaptureCollector: int FLAG_RECEIVED_ALL_PREVIEW> = 12;
+
+        <android.hardware.camera2.legacy.CaptureCollector: int FLAG_RECEIVED_ALL_JPEG> = 3;
+
+        <android.hardware.camera2.legacy.CaptureCollector: int FLAG_RECEIVED_PREVIEW_TS> = 8;
+
+        <android.hardware.camera2.legacy.CaptureCollector: int FLAG_RECEIVED_PREVIEW> = 4;
+
+        <android.hardware.camera2.legacy.CaptureCollector: int FLAG_RECEIVED_JPEG_TS> = 2;
+
+        <android.hardware.camera2.legacy.CaptureCollector: int FLAG_RECEIVED_JPEG> = 1;
+
+        <android.hardware.camera2.legacy.CaptureCollector: java.lang.String TAG> = "CaptureCollector";
+
+        $z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("HAL1ShimLogging", 3);
+
+        <android.hardware.camera2.legacy.CaptureCollector: boolean DEBUG> = $z0;
+
+        return;
+    }
+}

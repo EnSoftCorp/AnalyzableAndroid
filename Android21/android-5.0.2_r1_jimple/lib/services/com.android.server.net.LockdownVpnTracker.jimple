@@ -1,0 +1,1144 @@
+public class com.android.server.net.LockdownVpnTracker extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private static final int MAX_ERROR_COUNT;
+    private static final java.lang.String ACTION_LOCKDOWN_RESET;
+    private static final java.lang.String ACTION_VPN_SETTINGS;
+    private static final java.lang.String EXTRA_PICK_LOCKDOWN;
+    private static final int ROOT_UID;
+    private final android.content.Context mContext;
+    private final android.os.INetworkManagementService mNetService;
+    private final com.android.server.ConnectivityService mConnService;
+    private final com.android.server.connectivity.Vpn mVpn;
+    private final com.android.internal.net.VpnProfile mProfile;
+    private final java.lang.Object mStateLock;
+    private final android.app.PendingIntent mConfigIntent;
+    private final android.app.PendingIntent mResetIntent;
+    private java.lang.String mAcceptedEgressIface;
+    private java.lang.String mAcceptedIface;
+    private java.util.List mAcceptedSourceAddr;
+    private int mErrorCount;
+    private android.content.BroadcastReceiver mResetReceiver;
+
+    public static boolean isEnabled()
+    {
+        android.security.KeyStore $r0;
+        boolean $z0;
+
+        $r0 = staticinvoke <android.security.KeyStore: android.security.KeyStore getInstance()>();
+
+        $z0 = virtualinvoke $r0.<android.security.KeyStore: boolean contains(java.lang.String)>("LOCKDOWN_VPN");
+
+        return $z0;
+    }
+
+    public void <init>(android.content.Context, android.os.INetworkManagementService, com.android.server.ConnectivityService, com.android.server.connectivity.Vpn, com.android.internal.net.VpnProfile)
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        android.content.Context r1, $r11, $r23, $r27;
+        android.os.INetworkManagementService r2, $r13;
+        com.android.server.ConnectivityService r3, $r15;
+        com.android.server.connectivity.Vpn r4, $r16;
+        com.android.internal.net.VpnProfile r5, $r18;
+        android.content.Intent r6, r7, $r21, $r25;
+        java.lang.Object $r8, $r10, $r12, $r14, $r17, $r19;
+        com.android.server.net.LockdownVpnTracker$1 $r9;
+        android.app.PendingIntent $r22, $r26;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.os.INetworkManagementService;
+
+        r3 := @parameter2: com.android.server.ConnectivityService;
+
+        r4 := @parameter3: com.android.server.connectivity.Vpn;
+
+        r5 := @parameter4: com.android.internal.net.VpnProfile;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r8 = new java.lang.Object;
+
+        specialinvoke $r8.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.net.LockdownVpnTracker: java.lang.Object mStateLock> = $r8;
+
+        $r9 = new com.android.server.net.LockdownVpnTracker$1;
+
+        specialinvoke $r9.<com.android.server.net.LockdownVpnTracker$1: void <init>(com.android.server.net.LockdownVpnTracker)>(r0);
+
+        r0.<com.android.server.net.LockdownVpnTracker: android.content.BroadcastReceiver mResetReceiver> = $r9;
+
+        $r10 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object)>(r1);
+
+        $r11 = (android.content.Context) $r10;
+
+        r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext> = $r11;
+
+        $r12 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object)>(r2);
+
+        $r13 = (android.os.INetworkManagementService) $r12;
+
+        r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService> = $r13;
+
+        $r14 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object)>(r3);
+
+        $r15 = (com.android.server.ConnectivityService) $r14;
+
+        r0.<com.android.server.net.LockdownVpnTracker: com.android.server.ConnectivityService mConnService> = $r15;
+
+        $r17 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object)>(r4);
+
+        $r16 = (com.android.server.connectivity.Vpn) $r17;
+
+        r0.<com.android.server.net.LockdownVpnTracker: com.android.server.connectivity.Vpn mVpn> = $r16;
+
+        $r19 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object)>(r5);
+
+        $r18 = (com.android.internal.net.VpnProfile) $r19;
+
+        r0.<com.android.server.net.LockdownVpnTracker: com.android.internal.net.VpnProfile mProfile> = $r18;
+
+        $r21 = new android.content.Intent;
+
+        specialinvoke $r21.<android.content.Intent: void <init>(java.lang.String)>("android.net.vpn.SETTINGS");
+
+        r6 = $r21;
+
+        virtualinvoke r6.<android.content.Intent: android.content.Intent putExtra(java.lang.String,boolean)>("android.net.vpn.PICK_LOCKDOWN", 1);
+
+        $r23 = r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext>;
+
+        $r22 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getActivity(android.content.Context,int,android.content.Intent,int)>($r23, 0, r6, 0);
+
+        r0.<com.android.server.net.LockdownVpnTracker: android.app.PendingIntent mConfigIntent> = $r22;
+
+        $r25 = new android.content.Intent;
+
+        specialinvoke $r25.<android.content.Intent: void <init>(java.lang.String)>("com.android.server.action.LOCKDOWN_RESET");
+
+        r7 = $r25;
+
+        virtualinvoke r7.<android.content.Intent: android.content.Intent addFlags(int)>(1073741824);
+
+        $r27 = r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext>;
+
+        $r26 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getBroadcast(android.content.Context,int,android.content.Intent,int)>($r27, 0, r7, 0);
+
+        r0.<com.android.server.net.LockdownVpnTracker: android.app.PendingIntent mResetIntent> = $r26;
+
+        return;
+    }
+
+    private void handleStateChangedLocked()
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        android.net.NetworkInfo r1, r3, $r42;
+        android.net.LinkProperties r2;
+        com.android.internal.net.VpnConfig r4;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12;
+        java.lang.String r5, r6, $r15, $r17, $r22, $r23, $r29, $r33, $r37, $r44, $r51, $r52, r56;
+        int i0, $i1, $i3, $i5;
+        java.lang.IllegalStateException r7, $r53;
+        java.util.List r8, $r40;
+        java.util.Iterator r9;
+        android.net.LinkAddress r10;
+        com.android.server.ConnectivityService $r11, $r12, $r43;
+        com.android.server.connectivity.Vpn $r13, $r14, $r28, $r45;
+        java.lang.StringBuilder $r16, $r18, $r19, $r20, $r21, $r24, $r25, $r30, $r31, $r32, $r34, $r35;
+        android.net.NetworkInfo$DetailedState $r26, $r27;
+        android.os.INetworkManagementService $r36, $r38, $r39;
+        java.lang.Object $r41;
+        com.android.internal.net.VpnProfile $r46, $r49;
+        android.net.NetworkInfo$State $r47, $r48;
+        android.security.KeyStore $r50;
+        java.lang.RuntimeException $r54;
+        android.os.RemoteException $r55, r57;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        $r11 = r0.<com.android.server.net.LockdownVpnTracker: com.android.server.ConnectivityService mConnService>;
+
+        r1 = virtualinvoke $r11.<com.android.server.ConnectivityService: android.net.NetworkInfo getActiveNetworkInfoUnfiltered()>();
+
+        $r12 = r0.<com.android.server.net.LockdownVpnTracker: com.android.server.ConnectivityService mConnService>;
+
+        r2 = virtualinvoke $r12.<com.android.server.ConnectivityService: android.net.LinkProperties getActiveLinkProperties()>();
+
+        $r13 = r0.<com.android.server.net.LockdownVpnTracker: com.android.server.connectivity.Vpn mVpn>;
+
+        r3 = virtualinvoke $r13.<com.android.server.connectivity.Vpn: android.net.NetworkInfo getNetworkInfo()>();
+
+        $r14 = r0.<com.android.server.net.LockdownVpnTracker: com.android.server.connectivity.Vpn mVpn>;
+
+        r4 = virtualinvoke $r14.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig getLegacyVpnConfig()>();
+
+        if r1 == null goto label01;
+
+        $r47 = <android.net.NetworkInfo$State: android.net.NetworkInfo$State DISCONNECTED>;
+
+        $r48 = virtualinvoke r1.<android.net.NetworkInfo: android.net.NetworkInfo$State getState()>();
+
+        $z12 = virtualinvoke $r47.<android.net.NetworkInfo$State: boolean equals(java.lang.Object)>($r48);
+
+        if $z12 == 0 goto label02;
+
+     label01:
+        $z11 = 1;
+
+        goto label03;
+
+     label02:
+        $z11 = 0;
+
+     label03:
+        z0 = $z11;
+
+        if r2 == null goto label04;
+
+        $r51 = r0.<com.android.server.net.LockdownVpnTracker: java.lang.String mAcceptedEgressIface>;
+
+        $r52 = virtualinvoke r2.<android.net.LinkProperties: java.lang.String getInterfaceName()>();
+
+        $z9 = staticinvoke <android.text.TextUtils: boolean equals(java.lang.CharSequence,java.lang.CharSequence)>($r51, $r52);
+
+        if $z9 != 0 goto label05;
+
+     label04:
+        $z10 = 1;
+
+        goto label06;
+
+     label05:
+        $z10 = 0;
+
+     label06:
+        z1 = $z10;
+
+        if r1 != null goto label07;
+
+        $r15 = null;
+
+        goto label08;
+
+     label07:
+        $i1 = virtualinvoke r1.<android.net.NetworkInfo: int getType()>();
+
+        $r15 = staticinvoke <android.net.ConnectivityManager: java.lang.String getNetworkTypeName(int)>($i1);
+
+     label08:
+        r5 = $r15;
+
+        if r2 != null goto label09;
+
+        $r17 = null;
+
+        goto label10;
+
+     label09:
+        $r17 = virtualinvoke r2.<android.net.LinkProperties: java.lang.String getInterfaceName()>();
+
+     label10:
+        r6 = $r17;
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleStateChanged: egress=");
+
+        $r20 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r5);
+
+        $r19 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r22 = r0.<com.android.server.net.LockdownVpnTracker: java.lang.String mAcceptedEgressIface>;
+
+        $r21 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r22);
+
+        $r24 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("->");
+
+        $r25 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r6);
+
+        $r23 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("LockdownVpnTracker", $r23);
+
+        if z0 != 0 goto label11;
+
+        if z1 == 0 goto label12;
+
+     label11:
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void clearSourceRulesLocked()>();
+
+        r0.<com.android.server.net.LockdownVpnTracker: java.lang.String mAcceptedEgressIface> = null;
+
+        $r28 = r0.<com.android.server.net.LockdownVpnTracker: com.android.server.connectivity.Vpn mVpn>;
+
+        virtualinvoke $r28.<com.android.server.connectivity.Vpn: void stopLegacyVpn()>();
+
+     label12:
+        if z0 == 0 goto label13;
+
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void hideNotification()>();
+
+        return;
+
+     label13:
+        i0 = virtualinvoke r1.<android.net.NetworkInfo: int getType()>();
+
+        $r26 = virtualinvoke r3.<android.net.NetworkInfo: android.net.NetworkInfo$DetailedState getDetailedState()>();
+
+        $r27 = <android.net.NetworkInfo$DetailedState: android.net.NetworkInfo$DetailedState FAILED>;
+
+        if $r26 != $r27 goto label14;
+
+        staticinvoke <com.android.server.EventLogTags: void writeLockdownVpnError(int)>(i0);
+
+     label14:
+        $i3 = r0.<com.android.server.net.LockdownVpnTracker: int mErrorCount>;
+
+        if $i3 <= 4 goto label15;
+
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void showNotification(int,int)>(17040705, 17303384);
+
+        goto label28;
+
+     label15:
+        $z3 = virtualinvoke r1.<android.net.NetworkInfo: boolean isConnected()>();
+
+        if $z3 == 0 goto label20;
+
+        $z7 = virtualinvoke r3.<android.net.NetworkInfo: boolean isConnectedOrConnecting()>();
+
+        if $z7 != 0 goto label20;
+
+        $r46 = r0.<com.android.server.net.LockdownVpnTracker: com.android.internal.net.VpnProfile mProfile>;
+
+        $z8 = virtualinvoke $r46.<com.android.internal.net.VpnProfile: boolean isValidLockdownProfile()>();
+
+        if $z8 == 0 goto label19;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("LockdownVpnTracker", "Active network connected; starting VPN");
+
+        staticinvoke <com.android.server.EventLogTags: void writeLockdownVpnConnecting(int)>(i0);
+
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void showNotification(int,int)>(17040703, 17303384);
+
+        $r44 = virtualinvoke r2.<android.net.LinkProperties: java.lang.String getInterfaceName()>();
+
+        r0.<com.android.server.net.LockdownVpnTracker: java.lang.String mAcceptedEgressIface> = $r44;
+
+     label16:
+        $r45 = r0.<com.android.server.net.LockdownVpnTracker: com.android.server.connectivity.Vpn mVpn>;
+
+        $r49 = r0.<com.android.server.net.LockdownVpnTracker: com.android.internal.net.VpnProfile mProfile>;
+
+        $r50 = staticinvoke <android.security.KeyStore: android.security.KeyStore getInstance()>();
+
+        virtualinvoke $r45.<com.android.server.connectivity.Vpn: void startLegacyVpn(com.android.internal.net.VpnProfile,android.security.KeyStore,android.net.LinkProperties)>($r49, $r50, r2);
+
+     label17:
+        goto label28;
+
+     label18:
+        $r53 := @caughtexception;
+
+        r7 = $r53;
+
+        r0.<com.android.server.net.LockdownVpnTracker: java.lang.String mAcceptedEgressIface> = null;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("LockdownVpnTracker", "Failed to start VPN", r7);
+
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void showNotification(int,int)>(17040705, 17303384);
+
+        goto label28;
+
+     label19:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("LockdownVpnTracker", "Invalid VPN profile; requires IP-based server and DNS");
+
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void showNotification(int,int)>(17040705, 17303384);
+
+        goto label28;
+
+     label20:
+        $z2 = virtualinvoke r3.<android.net.NetworkInfo: boolean isConnected()>();
+
+        if $z2 == 0 goto label28;
+
+        if r4 == null goto label28;
+
+        r56 = r4.<com.android.internal.net.VpnConfig: java.lang.String interfaze>;
+
+        r8 = r4.<com.android.internal.net.VpnConfig: java.util.List addresses>;
+
+        $r29 = r0.<com.android.server.net.LockdownVpnTracker: java.lang.String mAcceptedIface>;
+
+        $z4 = staticinvoke <android.text.TextUtils: boolean equals(java.lang.CharSequence,java.lang.CharSequence)>(r56, $r29);
+
+        if $z4 == 0 goto label21;
+
+        $r40 = r0.<com.android.server.net.LockdownVpnTracker: java.util.List mAcceptedSourceAddr>;
+
+        $z6 = interfaceinvoke r8.<java.util.List: boolean equals(java.lang.Object)>($r40);
+
+        if $z6 == 0 goto label21;
+
+        return;
+
+     label21:
+        $r31 = new java.lang.StringBuilder;
+
+        specialinvoke $r31.<java.lang.StringBuilder: void <init>()>();
+
+        $r30 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("VPN connected using iface=");
+
+        $r35 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r56);
+
+        $r34 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", sourceAddr=");
+
+        $r33 = virtualinvoke r8.<java.lang.Object: java.lang.String toString()>();
+
+        $r32 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r33);
+
+        $r37 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("LockdownVpnTracker", $r37);
+
+        staticinvoke <com.android.server.EventLogTags: void writeLockdownVpnConnected(int)>(i0);
+
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void showNotification(int,int)>(17040704, 17303383);
+
+     label22:
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void clearSourceRulesLocked()>();
+
+        $r36 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        interfaceinvoke $r36.<android.os.INetworkManagementService: void setFirewallInterfaceRule(java.lang.String,boolean)>(r56, 1);
+
+        r9 = interfaceinvoke r8.<java.util.List: java.util.Iterator iterator()>();
+
+     label23:
+        $z5 = interfaceinvoke r9.<java.util.Iterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label24;
+
+        $r41 = interfaceinvoke r9.<java.util.Iterator: java.lang.Object next()>();
+
+        r10 = (android.net.LinkAddress) $r41;
+
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void setFirewallEgressSourceRule(android.net.LinkAddress,boolean)>(r10, 1);
+
+        goto label23;
+
+     label24:
+        $r39 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        interfaceinvoke $r39.<android.os.INetworkManagementService: void setFirewallUidRule(int,boolean)>(0, 1);
+
+        $r38 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        $i5 = staticinvoke <android.system.Os: int getuid()>();
+
+        interfaceinvoke $r38.<android.os.INetworkManagementService: void setFirewallUidRule(int,boolean)>($i5, 1);
+
+        r0.<com.android.server.net.LockdownVpnTracker: int mErrorCount> = 0;
+
+        r0.<com.android.server.net.LockdownVpnTracker: java.lang.String mAcceptedIface> = r56;
+
+        r0.<com.android.server.net.LockdownVpnTracker: java.util.List mAcceptedSourceAddr> = r8;
+
+     label25:
+        goto label27;
+
+     label26:
+        $r55 := @caughtexception;
+
+        r57 = $r55;
+
+        $r54 = new java.lang.RuntimeException;
+
+        specialinvoke $r54.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>("Problem setting firewall rules", r57);
+
+        throw $r54;
+
+     label27:
+        $r43 = r0.<com.android.server.net.LockdownVpnTracker: com.android.server.ConnectivityService mConnService>;
+
+        $r42 = virtualinvoke r0.<com.android.server.net.LockdownVpnTracker: android.net.NetworkInfo augmentNetworkInfo(android.net.NetworkInfo)>(r1);
+
+        virtualinvoke $r43.<com.android.server.ConnectivityService: void sendConnectedBroadcast(android.net.NetworkInfo)>($r42);
+
+     label28:
+        return;
+
+        catch java.lang.IllegalStateException from label16 to label17 with label18;
+        catch android.os.RemoteException from label22 to label25 with label26;
+    }
+
+    public void init()
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        $r3 = r0.<com.android.server.net.LockdownVpnTracker: java.lang.Object mStateLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void initLocked()>();
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private void initLocked()
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        android.content.IntentFilter r1, $r5;
+        android.os.RemoteException r2, $r19;
+        java.lang.Throwable r3, $r20;
+        com.android.server.connectivity.Vpn $r4;
+        android.content.BroadcastReceiver $r6;
+        android.content.Context $r7;
+        com.android.internal.net.VpnProfile $r9, $r12, $r16;
+        java.lang.String $r10, $r13, $r15;
+        android.os.INetworkManagementService $r11, $r14, $r18;
+        java.lang.Object $r17, r22;
+        java.lang.RuntimeException $r21;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("LockdownVpnTracker", "initLocked()");
+
+        $r4 = r0.<com.android.server.net.LockdownVpnTracker: com.android.server.connectivity.Vpn mVpn>;
+
+        virtualinvoke $r4.<com.android.server.connectivity.Vpn: void setEnableTeardown(boolean)>(0);
+
+        $r5 = new android.content.IntentFilter;
+
+        specialinvoke $r5.<android.content.IntentFilter: void <init>(java.lang.String)>("com.android.server.action.LOCKDOWN_RESET");
+
+        r1 = $r5;
+
+        $r7 = r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext>;
+
+        $r6 = r0.<com.android.server.net.LockdownVpnTracker: android.content.BroadcastReceiver mResetReceiver>;
+
+        virtualinvoke $r7.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter,java.lang.String,android.os.Handler)>($r6, r1, "android.permission.CONNECTIVITY_INTERNAL", null);
+
+     label1:
+        $r11 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        $r9 = r0.<com.android.server.net.LockdownVpnTracker: com.android.internal.net.VpnProfile mProfile>;
+
+        $r10 = $r9.<com.android.internal.net.VpnProfile: java.lang.String server>;
+
+        interfaceinvoke $r11.<android.os.INetworkManagementService: void setFirewallEgressDestRule(java.lang.String,int,boolean)>($r10, 500, 1);
+
+        $r14 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        $r12 = r0.<com.android.server.net.LockdownVpnTracker: com.android.internal.net.VpnProfile mProfile>;
+
+        $r13 = $r12.<com.android.internal.net.VpnProfile: java.lang.String server>;
+
+        interfaceinvoke $r14.<android.os.INetworkManagementService: void setFirewallEgressDestRule(java.lang.String,int,boolean)>($r13, 4500, 1);
+
+        $r18 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        $r16 = r0.<com.android.server.net.LockdownVpnTracker: com.android.internal.net.VpnProfile mProfile>;
+
+        $r15 = $r16.<com.android.internal.net.VpnProfile: java.lang.String server>;
+
+        interfaceinvoke $r18.<android.os.INetworkManagementService: void setFirewallEgressDestRule(java.lang.String,int,boolean)>($r15, 1701, 1);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r19 := @caughtexception;
+
+        r2 = $r19;
+
+        $r21 = new java.lang.RuntimeException;
+
+        specialinvoke $r21.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>("Problem setting firewall rules", r2);
+
+        throw $r21;
+
+     label4:
+        $r17 = r0.<com.android.server.net.LockdownVpnTracker: java.lang.Object mStateLock>;
+
+        r22 = $r17;
+
+        entermonitor $r17;
+
+     label5:
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void handleStateChangedLocked()>();
+
+        exitmonitor r22;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r20 := @caughtexception;
+
+        r3 = $r20;
+
+        exitmonitor r22;
+
+     label8:
+        throw r3;
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    public void shutdown()
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        $r3 = r0.<com.android.server.net.LockdownVpnTracker: java.lang.Object mStateLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void shutdownLocked()>();
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private void shutdownLocked()
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        android.os.RemoteException r1, $r16;
+        com.android.server.connectivity.Vpn $r2, $r14;
+        com.android.internal.net.VpnProfile $r3, $r6, $r9;
+        java.lang.String $r4, $r7, $r10;
+        android.os.INetworkManagementService $r5, $r8, $r11;
+        android.content.BroadcastReceiver $r12;
+        android.content.Context $r13;
+        java.lang.RuntimeException $r15;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("LockdownVpnTracker", "shutdownLocked()");
+
+        r0.<com.android.server.net.LockdownVpnTracker: java.lang.String mAcceptedEgressIface> = null;
+
+        r0.<com.android.server.net.LockdownVpnTracker: int mErrorCount> = 0;
+
+        $r2 = r0.<com.android.server.net.LockdownVpnTracker: com.android.server.connectivity.Vpn mVpn>;
+
+        virtualinvoke $r2.<com.android.server.connectivity.Vpn: void stopLegacyVpn()>();
+
+     label1:
+        $r5 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        $r3 = r0.<com.android.server.net.LockdownVpnTracker: com.android.internal.net.VpnProfile mProfile>;
+
+        $r4 = $r3.<com.android.internal.net.VpnProfile: java.lang.String server>;
+
+        interfaceinvoke $r5.<android.os.INetworkManagementService: void setFirewallEgressDestRule(java.lang.String,int,boolean)>($r4, 500, 0);
+
+        $r8 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        $r6 = r0.<com.android.server.net.LockdownVpnTracker: com.android.internal.net.VpnProfile mProfile>;
+
+        $r7 = $r6.<com.android.internal.net.VpnProfile: java.lang.String server>;
+
+        interfaceinvoke $r8.<android.os.INetworkManagementService: void setFirewallEgressDestRule(java.lang.String,int,boolean)>($r7, 4500, 0);
+
+        $r11 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        $r9 = r0.<com.android.server.net.LockdownVpnTracker: com.android.internal.net.VpnProfile mProfile>;
+
+        $r10 = $r9.<com.android.internal.net.VpnProfile: java.lang.String server>;
+
+        interfaceinvoke $r11.<android.os.INetworkManagementService: void setFirewallEgressDestRule(java.lang.String,int,boolean)>($r10, 1701, 0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r16 := @caughtexception;
+
+        r1 = $r16;
+
+        $r15 = new java.lang.RuntimeException;
+
+        specialinvoke $r15.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>("Problem setting firewall rules", r1);
+
+        throw $r15;
+
+     label4:
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void clearSourceRulesLocked()>();
+
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void hideNotification()>();
+
+        $r13 = r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext>;
+
+        $r12 = r0.<com.android.server.net.LockdownVpnTracker: android.content.BroadcastReceiver mResetReceiver>;
+
+        virtualinvoke $r13.<android.content.Context: void unregisterReceiver(android.content.BroadcastReceiver)>($r12);
+
+        $r14 = r0.<com.android.server.net.LockdownVpnTracker: com.android.server.connectivity.Vpn mVpn>;
+
+        virtualinvoke $r14.<com.android.server.connectivity.Vpn: void setEnableTeardown(boolean)>(1);
+
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    public void reset()
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("LockdownVpnTracker", "reset()");
+
+        $r3 = r0.<com.android.server.net.LockdownVpnTracker: java.lang.Object mStateLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void shutdownLocked()>();
+
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void initLocked()>();
+
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void handleStateChangedLocked()>();
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private void clearSourceRulesLocked()
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        java.util.Iterator r1;
+        android.net.LinkAddress r2;
+        java.lang.String $r3, $r9;
+        java.util.List $r4, $r5;
+        boolean $z0;
+        android.os.INetworkManagementService $r6, $r7, $r10;
+        int $i0;
+        java.lang.Object $r8;
+        android.os.RemoteException $r11, r13;
+        java.lang.RuntimeException $r12;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+     label1:
+        $r3 = r0.<com.android.server.net.LockdownVpnTracker: java.lang.String mAcceptedIface>;
+
+        if $r3 == null goto label2;
+
+        $r10 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        $r9 = r0.<com.android.server.net.LockdownVpnTracker: java.lang.String mAcceptedIface>;
+
+        interfaceinvoke $r10.<android.os.INetworkManagementService: void setFirewallInterfaceRule(java.lang.String,boolean)>($r9, 0);
+
+        r0.<com.android.server.net.LockdownVpnTracker: java.lang.String mAcceptedIface> = null;
+
+     label2:
+        $r4 = r0.<com.android.server.net.LockdownVpnTracker: java.util.List mAcceptedSourceAddr>;
+
+        if $r4 == null goto label5;
+
+        $r5 = r0.<com.android.server.net.LockdownVpnTracker: java.util.List mAcceptedSourceAddr>;
+
+        r1 = interfaceinvoke $r5.<java.util.List: java.util.Iterator iterator()>();
+
+     label3:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r8 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (android.net.LinkAddress) $r8;
+
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void setFirewallEgressSourceRule(android.net.LinkAddress,boolean)>(r2, 0);
+
+        goto label3;
+
+     label4:
+        $r6 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        interfaceinvoke $r6.<android.os.INetworkManagementService: void setFirewallUidRule(int,boolean)>(0, 0);
+
+        $r7 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        $i0 = staticinvoke <android.system.Os: int getuid()>();
+
+        interfaceinvoke $r7.<android.os.INetworkManagementService: void setFirewallUidRule(int,boolean)>($i0, 0);
+
+        r0.<com.android.server.net.LockdownVpnTracker: java.util.List mAcceptedSourceAddr> = null;
+
+     label5:
+        goto label7;
+
+     label6:
+        $r11 := @caughtexception;
+
+        r13 = $r11;
+
+        $r12 = new java.lang.RuntimeException;
+
+        specialinvoke $r12.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>("Problem setting firewall rules", r13);
+
+        throw $r12;
+
+     label7:
+        return;
+
+        catch android.os.RemoteException from label1 to label5 with label6;
+    }
+
+    private void setFirewallEgressSourceRule(android.net.LinkAddress, boolean) throws android.os.RemoteException
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        android.net.LinkAddress r1;
+        boolean z0;
+        java.lang.String r2;
+        java.net.InetAddress $r3;
+        android.os.INetworkManagementService $r4;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        r1 := @parameter0: android.net.LinkAddress;
+
+        z0 := @parameter1: boolean;
+
+        $r3 = virtualinvoke r1.<android.net.LinkAddress: java.net.InetAddress getAddress()>();
+
+        r2 = virtualinvoke $r3.<java.net.InetAddress: java.lang.String getHostAddress()>();
+
+        $r4 = r0.<com.android.server.net.LockdownVpnTracker: android.os.INetworkManagementService mNetService>;
+
+        interfaceinvoke $r4.<android.os.INetworkManagementService: void setFirewallEgressSourceRule(java.lang.String,boolean)>(r2, z0);
+
+        return;
+    }
+
+    public void onNetworkInfoChanged()
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        $r3 = r0.<com.android.server.net.LockdownVpnTracker: java.lang.Object mStateLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void handleStateChangedLocked()>();
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public void onVpnStateChanged(android.net.NetworkInfo)
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        android.net.NetworkInfo r1;
+        java.lang.Object r2, $r6;
+        java.lang.Throwable r3, $r7;
+        android.net.NetworkInfo$DetailedState $r4, $r5;
+        int $i0, $i1;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        r1 := @parameter0: android.net.NetworkInfo;
+
+        $r4 = virtualinvoke r1.<android.net.NetworkInfo: android.net.NetworkInfo$DetailedState getDetailedState()>();
+
+        $r5 = <android.net.NetworkInfo$DetailedState: android.net.NetworkInfo$DetailedState FAILED>;
+
+        if $r4 != $r5 goto label1;
+
+        $i0 = r0.<com.android.server.net.LockdownVpnTracker: int mErrorCount>;
+
+        $i1 = $i0 + 1;
+
+        r0.<com.android.server.net.LockdownVpnTracker: int mErrorCount> = $i1;
+
+     label1:
+        $r6 = r0.<com.android.server.net.LockdownVpnTracker: java.lang.Object mStateLock>;
+
+        r2 = $r6;
+
+        entermonitor $r6;
+
+     label2:
+        specialinvoke r0.<com.android.server.net.LockdownVpnTracker: void handleStateChangedLocked()>();
+
+        exitmonitor r2;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r7 := @caughtexception;
+
+        r3 = $r7;
+
+        exitmonitor r2;
+
+     label5:
+        throw r3;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public android.net.NetworkInfo augmentNetworkInfo(android.net.NetworkInfo)
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        android.net.NetworkInfo r1, r2, $r4;
+        boolean $z0;
+        com.android.server.connectivity.Vpn $r3;
+        android.net.NetworkInfo$DetailedState $r5;
+        java.lang.String $r6;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        r1 := @parameter0: android.net.NetworkInfo;
+
+        $z0 = virtualinvoke r1.<android.net.NetworkInfo: boolean isConnected()>();
+
+        if $z0 == 0 goto label1;
+
+        $r3 = r0.<com.android.server.net.LockdownVpnTracker: com.android.server.connectivity.Vpn mVpn>;
+
+        r2 = virtualinvoke $r3.<com.android.server.connectivity.Vpn: android.net.NetworkInfo getNetworkInfo()>();
+
+        $r4 = new android.net.NetworkInfo;
+
+        specialinvoke $r4.<android.net.NetworkInfo: void <init>(android.net.NetworkInfo)>(r1);
+
+        r1 = $r4;
+
+        $r5 = virtualinvoke r2.<android.net.NetworkInfo: android.net.NetworkInfo$DetailedState getDetailedState()>();
+
+        $r6 = virtualinvoke r2.<android.net.NetworkInfo: java.lang.String getReason()>();
+
+        virtualinvoke r1.<android.net.NetworkInfo: void setDetailedState(android.net.NetworkInfo$DetailedState,java.lang.String,java.lang.String)>($r5, $r6, null);
+
+     label1:
+        return r1;
+    }
+
+    private void showNotification(int, int)
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        int i0, i1, $i2;
+        android.app.Notification$Builder r1, $r2, $r4, $r5, $r8, $r11, $r13, $r14, $r15, $r20;
+        android.content.Context $r3, $r6, $r9, $r16, $r19, $r22;
+        java.lang.String $r7, $r10, $r18;
+        android.app.PendingIntent $r12, $r17;
+        android.content.res.Resources $r21;
+        android.app.NotificationManager $r23;
+        android.app.Notification $r24;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $r2 = new android.app.Notification$Builder;
+
+        $r3 = r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext>;
+
+        specialinvoke $r2.<android.app.Notification$Builder: void <init>(android.content.Context)>($r3);
+
+        $r4 = virtualinvoke $r2.<android.app.Notification$Builder: android.app.Notification$Builder setWhen(long)>(0L);
+
+        $r5 = virtualinvoke $r4.<android.app.Notification$Builder: android.app.Notification$Builder setSmallIcon(int)>(i1);
+
+        $r6 = r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext>;
+
+        $r7 = virtualinvoke $r6.<android.content.Context: java.lang.String getString(int)>(i0);
+
+        $r8 = virtualinvoke $r5.<android.app.Notification$Builder: android.app.Notification$Builder setContentTitle(java.lang.CharSequence)>($r7);
+
+        $r9 = r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext>;
+
+        $r10 = virtualinvoke $r9.<android.content.Context: java.lang.String getString(int)>(17040706);
+
+        $r11 = virtualinvoke $r8.<android.app.Notification$Builder: android.app.Notification$Builder setContentText(java.lang.CharSequence)>($r10);
+
+        $r12 = r0.<com.android.server.net.LockdownVpnTracker: android.app.PendingIntent mConfigIntent>;
+
+        $r13 = virtualinvoke $r11.<android.app.Notification$Builder: android.app.Notification$Builder setContentIntent(android.app.PendingIntent)>($r12);
+
+        $r15 = virtualinvoke $r13.<android.app.Notification$Builder: android.app.Notification$Builder setPriority(int)>(-1);
+
+        $r14 = virtualinvoke $r15.<android.app.Notification$Builder: android.app.Notification$Builder setOngoing(boolean)>(1);
+
+        $r16 = r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext>;
+
+        $r18 = virtualinvoke $r16.<android.content.Context: java.lang.String getString(int)>(17040709);
+
+        $r17 = r0.<com.android.server.net.LockdownVpnTracker: android.app.PendingIntent mResetIntent>;
+
+        $r20 = virtualinvoke $r14.<android.app.Notification$Builder: android.app.Notification$Builder addAction(int,java.lang.CharSequence,android.app.PendingIntent)>(17302525, $r18, $r17);
+
+        $r19 = r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext>;
+
+        $r21 = virtualinvoke $r19.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i2 = virtualinvoke $r21.<android.content.res.Resources: int getColor(int)>(17170520);
+
+        r1 = virtualinvoke $r20.<android.app.Notification$Builder: android.app.Notification$Builder setColor(int)>($i2);
+
+        $r22 = r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext>;
+
+        $r23 = staticinvoke <android.app.NotificationManager: android.app.NotificationManager 'from'(android.content.Context)>($r22);
+
+        $r24 = virtualinvoke r1.<android.app.Notification$Builder: android.app.Notification build()>();
+
+        virtualinvoke $r23.<android.app.NotificationManager: void notify(java.lang.String,int,android.app.Notification)>("LockdownVpnTracker", 0, $r24);
+
+        return;
+    }
+
+    private void hideNotification()
+    {
+        com.android.server.net.LockdownVpnTracker r0;
+        android.content.Context $r1;
+        android.app.NotificationManager $r2;
+
+        r0 := @this: com.android.server.net.LockdownVpnTracker;
+
+        $r1 = r0.<com.android.server.net.LockdownVpnTracker: android.content.Context mContext>;
+
+        $r2 = staticinvoke <android.app.NotificationManager: android.app.NotificationManager 'from'(android.content.Context)>($r1);
+
+        virtualinvoke $r2.<android.app.NotificationManager: void cancel(java.lang.String,int)>("LockdownVpnTracker", 0);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.net.LockdownVpnTracker: int ROOT_UID> = 0;
+
+        <com.android.server.net.LockdownVpnTracker: java.lang.String EXTRA_PICK_LOCKDOWN> = "android.net.vpn.PICK_LOCKDOWN";
+
+        <com.android.server.net.LockdownVpnTracker: java.lang.String ACTION_VPN_SETTINGS> = "android.net.vpn.SETTINGS";
+
+        <com.android.server.net.LockdownVpnTracker: java.lang.String ACTION_LOCKDOWN_RESET> = "com.android.server.action.LOCKDOWN_RESET";
+
+        <com.android.server.net.LockdownVpnTracker: int MAX_ERROR_COUNT> = 4;
+
+        <com.android.server.net.LockdownVpnTracker: java.lang.String TAG> = "LockdownVpnTracker";
+
+        return;
+    }
+}

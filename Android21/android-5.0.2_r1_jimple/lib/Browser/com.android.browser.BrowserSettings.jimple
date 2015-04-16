@@ -1,0 +1,2611 @@
+public class com.android.browser.BrowserSettings extends java.lang.Object implements android.content.SharedPreferences$OnSharedPreferenceChangeListener, com.android.browser.PreferenceKeys
+{
+    private static final java.lang.String DESKTOP_USERAGENT;
+    private static final java.lang.String IPHONE_USERAGENT;
+    private static final java.lang.String IPAD_USERAGENT;
+    private static final java.lang.String FROYO_USERAGENT;
+    private static final java.lang.String HONEYCOMB_USERAGENT;
+    private static final java.lang.String[] USER_AGENTS;
+    private static final int MIN_FONT_SIZE_OFFSET;
+    private static final int TEXT_ZOOM_START_VAL;
+    private static final int TEXT_ZOOM_STEP;
+    private static final int DOUBLE_TAP_ZOOM_START_VAL;
+    private static final int DOUBLE_TAP_ZOOM_STEP;
+    private static com.android.browser.BrowserSettings sInstance;
+    private android.content.Context mContext;
+    private android.content.SharedPreferences mPrefs;
+    private java.util.LinkedList mManagedSettings;
+    private com.android.browser.Controller mController;
+    private com.android.browser.WebStorageSizeManager mWebStorageSizeManager;
+    private java.util.WeakHashMap mCustomUserAgents;
+    private static boolean sInitialized;
+    private boolean mNeedsSharedSync;
+    private float mFontSizeMult;
+    private boolean mLinkPrefetchAllowed;
+    private int mPageCacheCapacity;
+    private java.lang.String mAppCachePath;
+    private com.android.browser.search.SearchEngine mSearchEngine;
+    private static java.lang.String sFactoryResetUrl;
+    private java.lang.Runnable mSetup;
+    private static final java.lang.String DEAULT_PRELOAD_SECURE_SETTING_KEY;
+    private static final java.lang.String DEFAULT_LINK_PREFETCH_SECURE_SETTING_KEY;
+
+    public static void initialize(android.content.Context)
+    {
+        android.content.Context r0;
+        com.android.browser.BrowserSettings $r1;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r1 = new com.android.browser.BrowserSettings;
+
+        specialinvoke $r1.<com.android.browser.BrowserSettings: void <init>(android.content.Context)>(r0);
+
+        <com.android.browser.BrowserSettings: com.android.browser.BrowserSettings sInstance> = $r1;
+
+        return;
+    }
+
+    public static com.android.browser.BrowserSettings getInstance()
+    {
+        com.android.browser.BrowserSettings $r0;
+
+        $r0 = <com.android.browser.BrowserSettings: com.android.browser.BrowserSettings sInstance>;
+
+        return $r0;
+    }
+
+    private void <init>(android.content.Context)
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.Context r1, $r3, $r4;
+        com.android.browser.BrowserSettings$1 $r2;
+        android.content.SharedPreferences $r5;
+        java.util.LinkedList $r6;
+        java.util.WeakHashMap $r7;
+        java.lang.Runnable $r8;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.browser.BrowserSettings: boolean mNeedsSharedSync> = 1;
+
+        r0.<com.android.browser.BrowserSettings: float mFontSizeMult> = 1.0F;
+
+        r0.<com.android.browser.BrowserSettings: boolean mLinkPrefetchAllowed> = 1;
+
+        r0.<com.android.browser.BrowserSettings: int mPageCacheCapacity> = 1;
+
+        $r2 = new com.android.browser.BrowserSettings$1;
+
+        specialinvoke $r2.<com.android.browser.BrowserSettings$1: void <init>(com.android.browser.BrowserSettings)>(r0);
+
+        r0.<com.android.browser.BrowserSettings: java.lang.Runnable mSetup> = $r2;
+
+        $r3 = virtualinvoke r1.<android.content.Context: android.content.Context getApplicationContext()>();
+
+        r0.<com.android.browser.BrowserSettings: android.content.Context mContext> = $r3;
+
+        $r4 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r5 = staticinvoke <android.preference.PreferenceManager: android.content.SharedPreferences getDefaultSharedPreferences(android.content.Context)>($r4);
+
+        r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs> = $r5;
+
+        $r6 = new java.util.LinkedList;
+
+        specialinvoke $r6.<java.util.LinkedList: void <init>()>();
+
+        r0.<com.android.browser.BrowserSettings: java.util.LinkedList mManagedSettings> = $r6;
+
+        $r7 = new java.util.WeakHashMap;
+
+        specialinvoke $r7.<java.util.WeakHashMap: void <init>()>();
+
+        r0.<com.android.browser.BrowserSettings: java.util.WeakHashMap mCustomUserAgents> = $r7;
+
+        $r8 = r0.<com.android.browser.BrowserSettings: java.lang.Runnable mSetup>;
+
+        staticinvoke <com.android.browser.BackgroundHandler: void execute(java.lang.Runnable)>($r8);
+
+        return;
+    }
+
+    public void setController(com.android.browser.Controller)
+    {
+        com.android.browser.BrowserSettings r0;
+        com.android.browser.Controller r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r1 := @parameter0: com.android.browser.Controller;
+
+        r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController> = r1;
+
+        $z0 = <com.android.browser.BrowserSettings: boolean sInitialized>;
+
+        if $z0 == 0 goto label1;
+
+        specialinvoke r0.<com.android.browser.BrowserSettings: void syncSharedSettings()>();
+
+     label1:
+        return;
+    }
+
+    public void startManagingSettings(android.webkit.WebSettings)
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebSettings r1;
+        java.util.LinkedList r2, $r4, $r6;
+        java.lang.Throwable r3, $r7;
+        boolean $z0;
+        java.lang.ref.WeakReference $r5;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r1 := @parameter0: android.webkit.WebSettings;
+
+        $z0 = r0.<com.android.browser.BrowserSettings: boolean mNeedsSharedSync>;
+
+        if $z0 == 0 goto label1;
+
+        specialinvoke r0.<com.android.browser.BrowserSettings: void syncSharedSettings()>();
+
+     label1:
+        $r4 = r0.<com.android.browser.BrowserSettings: java.util.LinkedList mManagedSettings>;
+
+        r2 = $r4;
+
+        entermonitor $r4;
+
+     label2:
+        specialinvoke r0.<com.android.browser.BrowserSettings: void syncStaticSettings(android.webkit.WebSettings)>(r1);
+
+        specialinvoke r0.<com.android.browser.BrowserSettings: void syncSetting(android.webkit.WebSettings)>(r1);
+
+        $r6 = r0.<com.android.browser.BrowserSettings: java.util.LinkedList mManagedSettings>;
+
+        $r5 = new java.lang.ref.WeakReference;
+
+        specialinvoke $r5.<java.lang.ref.WeakReference: void <init>(java.lang.Object)>(r1);
+
+        virtualinvoke $r6.<java.util.LinkedList: boolean add(java.lang.Object)>($r5);
+
+        exitmonitor r2;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r7 := @caughtexception;
+
+        r3 = $r7;
+
+        exitmonitor r2;
+
+     label5:
+        throw r3;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public void stopManagingSettings(android.webkit.WebSettings)
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebSettings r1;
+        java.util.Iterator r2;
+        java.lang.ref.WeakReference r3;
+        java.util.LinkedList $r4;
+        boolean $z0;
+        java.lang.Object $r5, $r6;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r1 := @parameter0: android.webkit.WebSettings;
+
+        $r4 = r0.<com.android.browser.BrowserSettings: java.util.LinkedList mManagedSettings>;
+
+        r2 = virtualinvoke $r4.<java.util.LinkedList: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r5 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.lang.ref.WeakReference) $r5;
+
+        $r6 = virtualinvoke r3.<java.lang.ref.WeakReference: java.lang.Object get()>();
+
+        if $r6 != r1 goto label2;
+
+        interfaceinvoke r2.<java.util.Iterator: void remove()>();
+
+        return;
+
+     label2:
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    private static void requireInitialization()
+    {
+        java.lang.Class r0, $r3;
+        java.lang.Throwable r2, $r5;
+        boolean $z0;
+        java.lang.InterruptedException $r4;
+
+        r0 = class "com/android/browser/BrowserSettings";
+
+        entermonitor class "com/android/browser/BrowserSettings";
+
+     label1:
+        $z0 = <com.android.browser.BrowserSettings: boolean sInitialized>;
+
+        if $z0 != 0 goto label5;
+
+     label2:
+        $r3 = class "com/android/browser/BrowserSettings";
+
+        virtualinvoke $r3.<java.lang.Object: void wait()>();
+
+     label3:
+        goto label1;
+
+     label4:
+        $r4 := @caughtexception;
+
+        goto label1;
+
+     label5:
+        exitmonitor r0;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r0;
+
+     label8:
+        throw r2;
+
+     label9:
+        return;
+
+        catch java.lang.InterruptedException from label2 to label3 with label4;
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    private void syncSetting(android.webkit.WebSettings)
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebSettings r1;
+        java.lang.String r2, $r3, $r10;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10;
+        android.webkit.WebSettings$ZoomDensity $r4;
+        int $i0, $i1, $i2, $i3;
+        android.webkit.WebSettings$PluginState $r5;
+        android.webkit.WebSettings$LayoutAlgorithm $r6;
+        java.lang.Object $r7;
+        java.util.WeakHashMap $r8;
+        java.lang.String[] $r9;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r1 := @parameter0: android.webkit.WebSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean enableGeolocation()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setGeolocationEnabled(boolean)>($z0);
+
+        $z1 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean enableJavascript()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setJavaScriptEnabled(boolean)>($z1);
+
+        $z2 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean enableLightTouch()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setLightTouchEnabled(boolean)>($z2);
+
+        $z3 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean enableNavDump()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setNavDump(boolean)>($z3);
+
+        $r3 = virtualinvoke r0.<com.android.browser.BrowserSettings: java.lang.String getDefaultTextEncoding()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setDefaultTextEncodingName(java.lang.String)>($r3);
+
+        $r4 = virtualinvoke r0.<com.android.browser.BrowserSettings: android.webkit.WebSettings$ZoomDensity getDefaultZoom()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setDefaultZoom(android.webkit.WebSettings$ZoomDensity)>($r4);
+
+        $i0 = virtualinvoke r0.<com.android.browser.BrowserSettings: int getMinimumFontSize()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setMinimumFontSize(int)>($i0);
+
+        $i1 = virtualinvoke r0.<com.android.browser.BrowserSettings: int getMinimumFontSize()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setMinimumLogicalFontSize(int)>($i1);
+
+        $r5 = virtualinvoke r0.<com.android.browser.BrowserSettings: android.webkit.WebSettings$PluginState getPluginState()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setPluginState(android.webkit.WebSettings$PluginState)>($r5);
+
+        $i2 = virtualinvoke r0.<com.android.browser.BrowserSettings: int getTextZoom()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setTextZoom(int)>($i2);
+
+        $r6 = virtualinvoke r0.<com.android.browser.BrowserSettings: android.webkit.WebSettings$LayoutAlgorithm getLayoutAlgorithm()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setLayoutAlgorithm(android.webkit.WebSettings$LayoutAlgorithm)>($r6);
+
+        $z4 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean blockPopupWindows()>();
+
+        if $z4 != 0 goto label1;
+
+        $z10 = 1;
+
+        goto label2;
+
+     label1:
+        $z10 = 0;
+
+     label2:
+        virtualinvoke r1.<android.webkit.WebSettings: void setJavaScriptCanOpenWindowsAutomatically(boolean)>($z10);
+
+        $z5 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean loadImages()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setLoadsImagesAutomatically(boolean)>($z5);
+
+        $z7 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean loadPageInOverviewMode()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setLoadWithOverviewMode(boolean)>($z7);
+
+        $z6 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean rememberPasswords()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setSavePassword(boolean)>($z6);
+
+        $z9 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean saveFormdata()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setSaveFormData(boolean)>($z9);
+
+        $z8 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isWideViewport()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setUseWideViewPort(boolean)>($z8);
+
+        $r8 = r0.<com.android.browser.BrowserSettings: java.util.WeakHashMap mCustomUserAgents>;
+
+        $r7 = virtualinvoke $r8.<java.util.WeakHashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r2 = (java.lang.String) $r7;
+
+        if r2 == null goto label3;
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setUserAgentString(java.lang.String)>(r2);
+
+        goto label4;
+
+     label3:
+        $r9 = <com.android.browser.BrowserSettings: java.lang.String[] USER_AGENTS>;
+
+        $i3 = virtualinvoke r0.<com.android.browser.BrowserSettings: int getUserAgent()>();
+
+        $r10 = $r9[$i3];
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setUserAgentString(java.lang.String)>($r10);
+
+     label4:
+        return;
+    }
+
+    private void syncStaticSettings(android.webkit.WebSettings)
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebSettings r1;
+        com.android.browser.WebStorageSizeManager $r2;
+        long $l0;
+        java.lang.String $r3, $r6, $r9;
+        android.content.Context $r4, $r7;
+        java.io.File $r5, $r8;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r1 := @parameter0: android.webkit.WebSettings;
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setDefaultFontSize(int)>(16);
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setDefaultFixedFontSize(int)>(13);
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setNeedInitialFocus(boolean)>(0);
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setSupportMultipleWindows(boolean)>(1);
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setEnableSmoothTransition(boolean)>(1);
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setAllowContentAccess(boolean)>(0);
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setAppCacheEnabled(boolean)>(1);
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setDatabaseEnabled(boolean)>(1);
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setDomStorageEnabled(boolean)>(1);
+
+        $r2 = virtualinvoke r0.<com.android.browser.BrowserSettings: com.android.browser.WebStorageSizeManager getWebStorageSizeManager()>();
+
+        $l0 = virtualinvoke $r2.<com.android.browser.WebStorageSizeManager: long getAppCacheMaxSize()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setAppCacheMaxSize(long)>($l0);
+
+        $r3 = specialinvoke r0.<com.android.browser.BrowserSettings: java.lang.String getAppCachePath()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setAppCachePath(java.lang.String)>($r3);
+
+        $r4 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: java.io.File getDir(java.lang.String,int)>("databases", 0);
+
+        $r6 = virtualinvoke $r5.<java.io.File: java.lang.String getPath()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setDatabasePath(java.lang.String)>($r6);
+
+        $r7 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r8 = virtualinvoke $r7.<android.content.Context: java.io.File getDir(java.lang.String,int)>("geolocation", 0);
+
+        $r9 = virtualinvoke $r8.<java.io.File: java.lang.String getPath()>();
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setGeolocationDatabasePath(java.lang.String)>($r9);
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setAllowUniversalAccessFromFileURLs(boolean)>(0);
+
+        virtualinvoke r1.<android.webkit.WebSettings: void setAllowFileAccessFromFileURLs(boolean)>(0);
+
+        return;
+    }
+
+    private void syncSharedSettings()
+    {
+        com.android.browser.BrowserSettings r0;
+        java.util.Iterator r1;
+        com.android.browser.Tab r2;
+        android.webkit.CookieManager $r3;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.browser.Controller $r4, $r5, $r7;
+        java.util.List $r6;
+        java.lang.Object $r8;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r0.<com.android.browser.BrowserSettings: boolean mNeedsSharedSync> = 0;
+
+        $r3 = staticinvoke <android.webkit.CookieManager: android.webkit.CookieManager getInstance()>();
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean acceptCookies()>();
+
+        virtualinvoke $r3.<android.webkit.CookieManager: void setAcceptCookie(boolean)>($z0);
+
+        $r4 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        if $r4 == null goto label3;
+
+        $r5 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        $r6 = virtualinvoke $r5.<com.android.browser.Controller: java.util.List getTabs()>();
+
+        r1 = interfaceinvoke $r6.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z1 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label2;
+
+        $r8 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.browser.Tab) $r8;
+
+        $z3 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean acceptCookies()>();
+
+        virtualinvoke r2.<com.android.browser.Tab: void setAcceptThirdPartyCookies(boolean)>($z3);
+
+        goto label1;
+
+     label2:
+        $r7 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        $z2 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean enableJavascriptConsole()>();
+
+        virtualinvoke $r7.<com.android.browser.Controller: void setShouldShowErrorConsole(boolean)>($z2);
+
+     label3:
+        return;
+    }
+
+    private void syncManagedSettings()
+    {
+        com.android.browser.BrowserSettings r0;
+        java.util.LinkedList r1, $r6, $r7;
+        java.util.Iterator r2;
+        java.lang.ref.WeakReference r3;
+        android.webkit.WebSettings r4;
+        java.lang.Throwable r5, $r10;
+        boolean $z0;
+        java.lang.Object $r8, $r9;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        specialinvoke r0.<com.android.browser.BrowserSettings: void syncSharedSettings()>();
+
+        $r6 = r0.<com.android.browser.BrowserSettings: java.util.LinkedList mManagedSettings>;
+
+        r1 = $r6;
+
+        entermonitor $r6;
+
+     label1:
+        $r7 = r0.<com.android.browser.BrowserSettings: java.util.LinkedList mManagedSettings>;
+
+        r2 = virtualinvoke $r7.<java.util.LinkedList: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r8 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.lang.ref.WeakReference) $r8;
+
+        $r9 = virtualinvoke r3.<java.lang.ref.WeakReference: java.lang.Object get()>();
+
+        r4 = (android.webkit.WebSettings) $r9;
+
+        if r4 != null goto label3;
+
+        interfaceinvoke r2.<java.util.Iterator: void remove()>();
+
+        goto label2;
+
+     label3:
+        specialinvoke r0.<com.android.browser.BrowserSettings: void syncSetting(android.webkit.WebSettings)>(r4);
+
+        goto label2;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r10 := @caughtexception;
+
+        r5 = $r10;
+
+        exitmonitor r1;
+
+     label7:
+        throw r5;
+
+     label8:
+        return;
+
+        catch java.lang.Throwable from label1 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    public void onSharedPreferenceChanged(android.content.SharedPreferences, java.lang.String)
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences r1;
+        java.lang.String r2, $r3, $r4, $r5, $r6;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        com.android.browser.Controller $r7, $r8, $r10, $r12, $r14, $r16;
+        com.android.browser.UI $r9, $r11, $r13, $r15;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r1 := @parameter0: android.content.SharedPreferences;
+
+        r2 := @parameter1: java.lang.String;
+
+        specialinvoke r0.<com.android.browser.BrowserSettings: void syncManagedSettings()>();
+
+        $r3 = "search_engine";
+
+        $z0 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z0 == 0 goto label1;
+
+        specialinvoke r0.<com.android.browser.BrowserSettings: void updateSearchEngine(boolean)>(0);
+
+        goto label4;
+
+     label1:
+        $r4 = "fullscreen";
+
+        $z1 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z1 == 0 goto label2;
+
+        $r12 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        if $r12 == null goto label4;
+
+        $r14 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        $r13 = virtualinvoke $r14.<com.android.browser.Controller: com.android.browser.UI getUi()>();
+
+        if $r13 == null goto label4;
+
+        $r16 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        $r15 = virtualinvoke $r16.<com.android.browser.Controller: com.android.browser.UI getUi()>();
+
+        $z5 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean useFullscreen()>();
+
+        interfaceinvoke $r15.<com.android.browser.UI: void setFullscreen(boolean)>($z5);
+
+        goto label4;
+
+     label2:
+        $r5 = "enable_quick_controls";
+
+        $z2 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z2 == 0 goto label3;
+
+        $r7 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        if $r7 == null goto label4;
+
+        $r8 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        $r9 = virtualinvoke $r8.<com.android.browser.Controller: com.android.browser.UI getUi()>();
+
+        if $r9 == null goto label4;
+
+        $r10 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        $r11 = virtualinvoke $r10.<com.android.browser.Controller: com.android.browser.UI getUi()>();
+
+        $z4 = interfaceinvoke r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>(r2, 0);
+
+        interfaceinvoke $r11.<com.android.browser.UI: void setUseQuickControls(boolean)>($z4);
+
+        goto label4;
+
+     label3:
+        $r6 = "link_prefetch_when";
+
+        $z3 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z3 == 0 goto label4;
+
+        virtualinvoke r0.<com.android.browser.BrowserSettings: void updateConnectionType()>();
+
+     label4:
+        return;
+    }
+
+    public static java.lang.String getFactoryResetHomeUrl(android.content.Context)
+    {
+        android.content.Context r0;
+        java.lang.String $r1;
+
+        r0 := @parameter0: android.content.Context;
+
+        staticinvoke <com.android.browser.BrowserSettings: void requireInitialization()>();
+
+        $r1 = <com.android.browser.BrowserSettings: java.lang.String sFactoryResetUrl>;
+
+        return $r1;
+    }
+
+    public android.webkit.WebSettings$LayoutAlgorithm getLayoutAlgorithm()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebSettings$LayoutAlgorithm r1, r2, $r3;
+        int $i0;
+        boolean $z0, $z1, $z2;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r1 = <android.webkit.WebSettings$LayoutAlgorithm: android.webkit.WebSettings$LayoutAlgorithm NORMAL>;
+
+        $i0 = <android.os.Build$VERSION: int SDK_INT>;
+
+        if $i0 < 19 goto label1;
+
+        $r3 = <android.webkit.WebSettings$LayoutAlgorithm: android.webkit.WebSettings$LayoutAlgorithm TEXT_AUTOSIZING>;
+
+        goto label2;
+
+     label1:
+        $r3 = <android.webkit.WebSettings$LayoutAlgorithm: android.webkit.WebSettings$LayoutAlgorithm NARROW_COLUMNS>;
+
+     label2:
+        r2 = $r3;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean autofitPages()>();
+
+        if $z0 == 0 goto label3;
+
+        r1 = r2;
+
+     label3:
+        $z1 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z1 == 0 goto label5;
+
+        $z2 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isNormalLayout()>();
+
+        if $z2 == 0 goto label4;
+
+        r1 = <android.webkit.WebSettings$LayoutAlgorithm: android.webkit.WebSettings$LayoutAlgorithm NORMAL>;
+
+        goto label5;
+
+     label4:
+        r1 = r2;
+
+     label5:
+        return r1;
+    }
+
+    public int getPageCacheCapacity()
+    {
+        com.android.browser.BrowserSettings r0;
+        int $i0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        staticinvoke <com.android.browser.BrowserSettings: void requireInitialization()>();
+
+        $i0 = r0.<com.android.browser.BrowserSettings: int mPageCacheCapacity>;
+
+        return $i0;
+    }
+
+    public com.android.browser.WebStorageSizeManager getWebStorageSizeManager()
+    {
+        com.android.browser.BrowserSettings r0;
+        com.android.browser.WebStorageSizeManager $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        staticinvoke <com.android.browser.BrowserSettings: void requireInitialization()>();
+
+        $r1 = r0.<com.android.browser.BrowserSettings: com.android.browser.WebStorageSizeManager mWebStorageSizeManager>;
+
+        return $r1;
+    }
+
+    private java.lang.String getAppCachePath()
+    {
+        com.android.browser.BrowserSettings r0;
+        java.lang.String $r1, $r2, $r5;
+        android.content.Context $r3;
+        java.io.File $r4;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: java.lang.String mAppCachePath>;
+
+        if $r1 != null goto label1;
+
+        $r3 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: java.io.File getDir(java.lang.String,int)>("appcache", 0);
+
+        $r5 = virtualinvoke $r4.<java.io.File: java.lang.String getPath()>();
+
+        r0.<com.android.browser.BrowserSettings: java.lang.String mAppCachePath> = $r5;
+
+     label1:
+        $r2 = r0.<com.android.browser.BrowserSettings: java.lang.String mAppCachePath>;
+
+        return $r2;
+    }
+
+    private void updateSearchEngine(boolean)
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean z0, $z1;
+        java.lang.String r1, $r6;
+        android.content.Context $r2;
+        com.android.browser.search.SearchEngine $r3, $r4, $r5;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        z0 := @parameter0: boolean;
+
+        r1 = virtualinvoke r0.<com.android.browser.BrowserSettings: java.lang.String getSearchEngineName()>();
+
+        if z0 != 0 goto label1;
+
+        $r4 = r0.<com.android.browser.BrowserSettings: com.android.browser.search.SearchEngine mSearchEngine>;
+
+        if $r4 == null goto label1;
+
+        $r5 = r0.<com.android.browser.BrowserSettings: com.android.browser.search.SearchEngine mSearchEngine>;
+
+        $r6 = interfaceinvoke $r5.<com.android.browser.search.SearchEngine: java.lang.String getName()>();
+
+        $z1 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z1 != 0 goto label2;
+
+     label1:
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r3 = staticinvoke <com.android.browser.search.SearchEngines: com.android.browser.search.SearchEngine get(android.content.Context,java.lang.String)>($r2, r1);
+
+        r0.<com.android.browser.BrowserSettings: com.android.browser.search.SearchEngine mSearchEngine> = $r3;
+
+     label2:
+        return;
+    }
+
+    public com.android.browser.search.SearchEngine getSearchEngine()
+    {
+        com.android.browser.BrowserSettings r0;
+        com.android.browser.search.SearchEngine $r1, $r2;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: com.android.browser.search.SearchEngine mSearchEngine>;
+
+        if $r1 != null goto label1;
+
+        specialinvoke r0.<com.android.browser.BrowserSettings: void updateSearchEngine(boolean)>(0);
+
+     label1:
+        $r2 = r0.<com.android.browser.BrowserSettings: com.android.browser.search.SearchEngine mSearchEngine>;
+
+        return $r2;
+    }
+
+    public boolean isDebugEnabled()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        staticinvoke <com.android.browser.BrowserSettings: void requireInitialization()>();
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("debug_menu", 0);
+
+        return $z0;
+    }
+
+    public void setDebugEnabled(boolean)
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean z0;
+        android.content.SharedPreferences$Editor r1;
+        android.content.SharedPreferences $r2;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        z0 := @parameter0: boolean;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        r1 = interfaceinvoke $r2.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putBoolean(java.lang.String,boolean)>("debug_menu", z0);
+
+        if z0 != 0 goto label1;
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putBoolean(java.lang.String,boolean)>("enable_hardware_accel_skia", 0);
+
+     label1:
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    public void clearCache()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebView r1;
+        android.webkit.WebIconDatabase $r2;
+        com.android.browser.Controller $r3, $r4;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r2 = staticinvoke <android.webkit.WebIconDatabase: android.webkit.WebIconDatabase getInstance()>();
+
+        virtualinvoke $r2.<android.webkit.WebIconDatabase: void removeAllIcons()>();
+
+        $r3 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        if $r3 == null goto label1;
+
+        $r4 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        r1 = virtualinvoke $r4.<com.android.browser.Controller: android.webkit.WebView getCurrentWebView()>();
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<android.webkit.WebView: void clearCache(boolean)>(1);
+
+     label1:
+        return;
+    }
+
+    public void clearCookies()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.CookieManager $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = staticinvoke <android.webkit.CookieManager: android.webkit.CookieManager getInstance()>();
+
+        virtualinvoke $r1.<android.webkit.CookieManager: void removeAllCookie()>();
+
+        return;
+    }
+
+    public void clearHistory()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.ContentResolver r1;
+        android.content.Context $r2;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        r1 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        staticinvoke <android.provider.Browser: void clearHistory(android.content.ContentResolver)>(r1);
+
+        staticinvoke <android.provider.Browser: void clearSearches(android.content.ContentResolver)>(r1);
+
+        return;
+    }
+
+    public void clearFormData()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebView r1;
+        android.content.Context $r2;
+        android.webkit.WebViewDatabase $r3;
+        com.android.browser.Controller $r4, $r5;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r3 = staticinvoke <android.webkit.WebViewDatabase: android.webkit.WebViewDatabase getInstance(android.content.Context)>($r2);
+
+        virtualinvoke $r3.<android.webkit.WebViewDatabase: void clearFormData()>();
+
+        $r4 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        if $r4 == null goto label1;
+
+        $r5 = r0.<com.android.browser.BrowserSettings: com.android.browser.Controller mController>;
+
+        r1 = virtualinvoke $r5.<com.android.browser.Controller: android.webkit.WebView getCurrentTopWebView()>();
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<android.webkit.WebView: void clearFormData()>();
+
+     label1:
+        return;
+    }
+
+    public void clearPasswords()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebViewDatabase r1;
+        android.content.Context $r2;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        r1 = staticinvoke <android.webkit.WebViewDatabase: android.webkit.WebViewDatabase getInstance(android.content.Context)>($r2);
+
+        virtualinvoke r1.<android.webkit.WebViewDatabase: void clearUsernamePassword()>();
+
+        virtualinvoke r1.<android.webkit.WebViewDatabase: void clearHttpAuthUsernamePassword()>();
+
+        return;
+    }
+
+    public void clearDatabases()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebStorage $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = staticinvoke <android.webkit.WebStorage: android.webkit.WebStorage getInstance()>();
+
+        virtualinvoke $r1.<android.webkit.WebStorage: void deleteAllData()>();
+
+        return;
+    }
+
+    public void clearLocationAccess()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.GeolocationPermissions $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = staticinvoke <android.webkit.GeolocationPermissions: android.webkit.GeolocationPermissions getInstance()>();
+
+        virtualinvoke $r1.<android.webkit.GeolocationPermissions: void clearAll()>();
+
+        return;
+    }
+
+    public void resetDefaultPreferences()
+    {
+        com.android.browser.BrowserSettings r0;
+        long l0;
+        android.content.SharedPreferences $r1, $r2;
+        android.content.SharedPreferences$Editor $r3, $r4, $r5;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        l0 = interfaceinvoke $r1.<android.content.SharedPreferences: long getLong(java.lang.String,long)>("last_autologin_time", -1L);
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r3 = interfaceinvoke $r2.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        $r4 = interfaceinvoke $r3.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor clear()>();
+
+        $r5 = interfaceinvoke $r4.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putLong(java.lang.String,long)>("last_autologin_time", l0);
+
+        interfaceinvoke $r5.<android.content.SharedPreferences$Editor: void apply()>();
+
+        specialinvoke r0.<com.android.browser.BrowserSettings: void resetCachedValues()>();
+
+        specialinvoke r0.<com.android.browser.BrowserSettings: void syncManagedSettings()>();
+
+        return;
+    }
+
+    private void resetCachedValues()
+    {
+        com.android.browser.BrowserSettings r0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        specialinvoke r0.<com.android.browser.BrowserSettings: void updateSearchEngine(boolean)>(0);
+
+        return;
+    }
+
+    public void toggleDebugSettings()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        $z1 = 1;
+
+        goto label2;
+
+     label1:
+        $z1 = 0;
+
+     label2:
+        virtualinvoke r0.<com.android.browser.BrowserSettings: void setDebugEnabled(boolean)>($z1);
+
+        return;
+    }
+
+    public boolean hasDesktopUseragent(android.webkit.WebView)
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebView r1;
+        java.util.WeakHashMap $r2;
+        android.webkit.WebSettings $r3;
+        java.lang.Object $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r1 := @parameter0: android.webkit.WebView;
+
+        if r1 == null goto label1;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: java.util.WeakHashMap mCustomUserAgents>;
+
+        $r3 = virtualinvoke r1.<android.webkit.WebView: android.webkit.WebSettings getSettings()>();
+
+        $r4 = virtualinvoke $r2.<java.util.WeakHashMap: java.lang.Object get(java.lang.Object)>($r3);
+
+        if $r4 == null goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    public void toggleDesktopUseragent(android.webkit.WebView)
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebView r1;
+        android.webkit.WebSettings r2;
+        java.util.WeakHashMap $r3, $r5, $r7;
+        java.lang.Object $r4;
+        java.lang.String[] $r9;
+        int $i0;
+        java.lang.String $r10;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r1 := @parameter0: android.webkit.WebView;
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        r2 = virtualinvoke r1.<android.webkit.WebView: android.webkit.WebSettings getSettings()>();
+
+        $r3 = r0.<com.android.browser.BrowserSettings: java.util.WeakHashMap mCustomUserAgents>;
+
+        $r4 = virtualinvoke $r3.<java.util.WeakHashMap: java.lang.Object get(java.lang.Object)>(r2);
+
+        if $r4 == null goto label2;
+
+        $r7 = r0.<com.android.browser.BrowserSettings: java.util.WeakHashMap mCustomUserAgents>;
+
+        virtualinvoke $r7.<java.util.WeakHashMap: java.lang.Object remove(java.lang.Object)>(r2);
+
+        $r9 = <com.android.browser.BrowserSettings: java.lang.String[] USER_AGENTS>;
+
+        $i0 = virtualinvoke r0.<com.android.browser.BrowserSettings: int getUserAgent()>();
+
+        $r10 = $r9[$i0];
+
+        virtualinvoke r2.<android.webkit.WebSettings: void setUserAgentString(java.lang.String)>($r10);
+
+        goto label3;
+
+     label2:
+        $r5 = r0.<com.android.browser.BrowserSettings: java.util.WeakHashMap mCustomUserAgents>;
+
+        virtualinvoke $r5.<java.util.WeakHashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r2, "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.34 Safari/534.24");
+
+        virtualinvoke r2.<android.webkit.WebSettings: void setUserAgentString(java.lang.String)>("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.34 Safari/534.24");
+
+     label3:
+        return;
+    }
+
+    public static int getAdjustedMinimumFontSize(int)
+    {
+        int i0, i1;
+
+        i0 := @parameter0: int;
+
+        i1 = i0 + 1;
+
+        if i1 <= 1 goto label1;
+
+        i1 = i1 + 3;
+
+     label1:
+        return i1;
+    }
+
+    public int getAdjustedTextZoom(int)
+    {
+        com.android.browser.BrowserSettings r0;
+        int i0, $i1, $i2, $i3, i4;
+        float $f0, $f1, $f2;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        i0 := @parameter0: int;
+
+        $i1 = i0 - 10;
+
+        i4 = $i1 * 5;
+
+        $i2 = i4 + 100;
+
+        $f1 = (float) $i2;
+
+        $f0 = r0.<com.android.browser.BrowserSettings: float mFontSizeMult>;
+
+        $f2 = $f1 * $f0;
+
+        $i3 = (int) $f2;
+
+        return $i3;
+    }
+
+    static int getRawTextZoom(int)
+    {
+        int i0, $i1, $i2, $i3;
+
+        i0 := @parameter0: int;
+
+        $i1 = i0 - 100;
+
+        $i2 = $i1 / 5;
+
+        $i3 = $i2 + 10;
+
+        return $i3;
+    }
+
+    public int getAdjustedDoubleTapZoom(int)
+    {
+        com.android.browser.BrowserSettings r0;
+        int i0, $i1, $i2, $i3, i4;
+        float $f0, $f1, $f2;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        i0 := @parameter0: int;
+
+        $i1 = i0 - 5;
+
+        i4 = $i1 * 5;
+
+        $i2 = i4 + 100;
+
+        $f1 = (float) $i2;
+
+        $f0 = r0.<com.android.browser.BrowserSettings: float mFontSizeMult>;
+
+        $f2 = $f1 * $f0;
+
+        $i3 = (int) $f2;
+
+        return $i3;
+    }
+
+    static int getRawDoubleTapZoom(int)
+    {
+        int i0, $i1, $i2, $i3;
+
+        i0 := @parameter0: int;
+
+        $i1 = i0 - 100;
+
+        $i2 = $i1 / 5;
+
+        $i3 = $i2 + 5;
+
+        return $i3;
+    }
+
+    public android.content.SharedPreferences getPreferences()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        return $r1;
+    }
+
+    public void updateConnectionType()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.net.ConnectivityManager r1;
+        java.lang.String r2, $r7, $r9;
+        boolean z0, $z1, $z2;
+        android.net.NetworkInfo r3;
+        android.content.Context $r4, $r6, $r8;
+        java.lang.Object $r5;
+        int $i0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r4 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("connectivity");
+
+        r1 = (android.net.ConnectivityManager) $r5;
+
+        r2 = virtualinvoke r0.<com.android.browser.BrowserSettings: java.lang.String getLinkPrefetchEnabled()>();
+
+        $r6 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r7 = staticinvoke <com.android.browser.BrowserSettings: java.lang.String getLinkPrefetchAlwaysPreferenceString(android.content.Context)>($r6);
+
+        z0 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>($r7);
+
+        r3 = virtualinvoke r1.<android.net.ConnectivityManager: android.net.NetworkInfo getActiveNetworkInfo()>();
+
+        if r3 == null goto label2;
+
+        $i0 = virtualinvoke r3.<android.net.NetworkInfo: int getType()>();
+
+        tableswitch($i0)
+        {
+            case 0: goto label2;
+            case 1: goto label1;
+            case 2: goto label2;
+            case 3: goto label2;
+            case 4: goto label2;
+            case 5: goto label2;
+            case 6: goto label2;
+            case 7: goto label1;
+            case 8: goto label2;
+            case 9: goto label1;
+            default: goto label2;
+        };
+
+     label1:
+        $r8 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r9 = staticinvoke <com.android.browser.BrowserSettings: java.lang.String getLinkPrefetchOnWifiOnlyPreferenceString(android.content.Context)>($r8);
+
+        $z2 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>($r9);
+
+        z0 = z0 | $z2;
+
+        goto label2;
+
+     label2:
+        $z1 = r0.<com.android.browser.BrowserSettings: boolean mLinkPrefetchAllowed>;
+
+        if $z1 == z0 goto label3;
+
+        r0.<com.android.browser.BrowserSettings: boolean mLinkPrefetchAllowed> = z0;
+
+        specialinvoke r0.<com.android.browser.BrowserSettings: void syncManagedSettings()>();
+
+     label3:
+        return;
+    }
+
+    private android.webkit.WebSettings$TextSize getTextSize()
+    {
+        com.android.browser.BrowserSettings r0;
+        java.lang.String r1;
+        android.content.SharedPreferences $r2;
+        android.webkit.WebSettings$TextSize $r3;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        r1 = interfaceinvoke $r2.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("text_size", "NORMAL");
+
+        $r3 = staticinvoke <android.webkit.WebSettings$TextSize: android.webkit.WebSettings$TextSize valueOf(java.lang.String)>(r1);
+
+        return $r3;
+    }
+
+    public int getMinimumFontSize()
+    {
+        com.android.browser.BrowserSettings r0;
+        int i0, $i1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        i0 = interfaceinvoke $r1.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("min_font_size", 0);
+
+        $i1 = staticinvoke <com.android.browser.BrowserSettings: int getAdjustedMinimumFontSize(int)>(i0);
+
+        return $i1;
+    }
+
+    public boolean forceEnableUserScalable()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("force_userscalable", 0);
+
+        return $z0;
+    }
+
+    public int getTextZoom()
+    {
+        com.android.browser.BrowserSettings r0;
+        int i0, $i1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        staticinvoke <com.android.browser.BrowserSettings: void requireInitialization()>();
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        i0 = interfaceinvoke $r1.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("text_zoom", 10);
+
+        $i1 = virtualinvoke r0.<com.android.browser.BrowserSettings: int getAdjustedTextZoom(int)>(i0);
+
+        return $i1;
+    }
+
+    public void setTextZoom(int)
+    {
+        com.android.browser.BrowserSettings r0;
+        int i0, $i1;
+        android.content.SharedPreferences $r1;
+        android.content.SharedPreferences$Editor $r2, $r3;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r2 = interfaceinvoke $r1.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        $i1 = staticinvoke <com.android.browser.BrowserSettings: int getRawTextZoom(int)>(i0);
+
+        $r3 = interfaceinvoke $r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putInt(java.lang.String,int)>("text_zoom", $i1);
+
+        interfaceinvoke $r3.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    public int getDoubleTapZoom()
+    {
+        com.android.browser.BrowserSettings r0;
+        int i0, $i1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        staticinvoke <com.android.browser.BrowserSettings: void requireInitialization()>();
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        i0 = interfaceinvoke $r1.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("double_tap_zoom", 5);
+
+        $i1 = virtualinvoke r0.<com.android.browser.BrowserSettings: int getAdjustedDoubleTapZoom(int)>(i0);
+
+        return $i1;
+    }
+
+    public void setDoubleTapZoom(int)
+    {
+        com.android.browser.BrowserSettings r0;
+        int i0, $i1;
+        android.content.SharedPreferences $r1;
+        android.content.SharedPreferences$Editor $r2, $r3;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r2 = interfaceinvoke $r1.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        $i1 = staticinvoke <com.android.browser.BrowserSettings: int getRawDoubleTapZoom(int)>(i0);
+
+        $r3 = interfaceinvoke $r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putInt(java.lang.String,int)>("double_tap_zoom", $i1);
+
+        interfaceinvoke $r3.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    public java.lang.String getSearchEngineName()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        java.lang.String $r2;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r2 = interfaceinvoke $r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("search_engine", "google");
+
+        return $r2;
+    }
+
+    public boolean allowAppTabs()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("allow_apptabs", 0);
+
+        return $z0;
+    }
+
+    public boolean openInBackground()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("open_in_background", 0);
+
+        return $z0;
+    }
+
+    public boolean enableJavascript()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("enable_javascript", 1);
+
+        return $z0;
+    }
+
+    public android.webkit.WebSettings$PluginState getPluginState()
+    {
+        com.android.browser.BrowserSettings r0;
+        java.lang.String r1;
+        android.content.SharedPreferences $r2;
+        android.webkit.WebSettings$PluginState $r3;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        r1 = interfaceinvoke $r2.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("plugin_state", "ON");
+
+        $r3 = staticinvoke <android.webkit.WebSettings$PluginState: android.webkit.WebSettings$PluginState valueOf(java.lang.String)>(r1);
+
+        return $r3;
+    }
+
+    public android.webkit.WebSettings$ZoomDensity getDefaultZoom()
+    {
+        com.android.browser.BrowserSettings r0;
+        java.lang.String r1;
+        android.content.SharedPreferences $r2;
+        android.webkit.WebSettings$ZoomDensity $r3;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        r1 = interfaceinvoke $r2.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("default_zoom", "MEDIUM");
+
+        $r3 = staticinvoke <android.webkit.WebSettings$ZoomDensity: android.webkit.WebSettings$ZoomDensity valueOf(java.lang.String)>(r1);
+
+        return $r3;
+    }
+
+    public boolean loadPageInOverviewMode()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("load_page", 1);
+
+        return $z0;
+    }
+
+    public boolean autofitPages()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("autofit_pages", 1);
+
+        return $z0;
+    }
+
+    public boolean blockPopupWindows()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("block_popup_windows", 1);
+
+        return $z0;
+    }
+
+    public boolean loadImages()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("load_images", 1);
+
+        return $z0;
+    }
+
+    public java.lang.String getDefaultTextEncoding()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        java.lang.String $r2;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r2 = interfaceinvoke $r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("default_text_encoding", null);
+
+        return $r2;
+    }
+
+    public java.lang.String getHomePage()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.Context $r1;
+        android.content.SharedPreferences $r2;
+        java.lang.String $r3, $r4;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r3 = staticinvoke <com.android.browser.BrowserSettings: java.lang.String getFactoryResetHomeUrl(android.content.Context)>($r1);
+
+        $r4 = interfaceinvoke $r2.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("homepage", $r3);
+
+        return $r4;
+    }
+
+    public void setHomePage(java.lang.String)
+    {
+        com.android.browser.BrowserSettings r0;
+        java.lang.String r1;
+        android.content.SharedPreferences $r2;
+        android.content.SharedPreferences$Editor $r3, $r4;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r3 = interfaceinvoke $r2.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        $r4 = interfaceinvoke $r3.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putString(java.lang.String,java.lang.String)>("homepage", r1);
+
+        interfaceinvoke $r4.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    public boolean isAutofillEnabled()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("autofill_enabled", 1);
+
+        return $z0;
+    }
+
+    public void setAutofillEnabled(boolean)
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean z0;
+        android.content.SharedPreferences $r1;
+        android.content.SharedPreferences$Editor $r2, $r3;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r2 = interfaceinvoke $r1.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        $r3 = interfaceinvoke $r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putBoolean(java.lang.String,boolean)>("autofill_enabled", z0);
+
+        interfaceinvoke $r3.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    public boolean isHardwareAccelerated()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0, $z1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return 1;
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z1 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("enable_hardware_accel", 1);
+
+        return $z1;
+    }
+
+    public boolean isSkiaHardwareAccelerated()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0, $z1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z1 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("enable_hardware_accel_skia", 0);
+
+        return $z1;
+    }
+
+    public int getUserAgent()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0;
+        android.content.SharedPreferences $r1;
+        java.lang.String $r2;
+        int $i0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r2 = interfaceinvoke $r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("user_agent", "0");
+
+        $i0 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r2);
+
+        return $i0;
+    }
+
+    public boolean enableVisualIndicator()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0, $z1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z1 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("enable_visual_indicator", 0);
+
+        return $z1;
+    }
+
+    public boolean enableCpuUploadPath()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0, $z1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z1 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("enable_cpu_upload_path", 0);
+
+        return $z1;
+    }
+
+    public boolean enableJavascriptConsole()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0, $z1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z1 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("javascript_console", 1);
+
+        return $z1;
+    }
+
+    public boolean isWideViewport()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0, $z1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return 1;
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z1 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("wide_viewport", 1);
+
+        return $z1;
+    }
+
+    public boolean isNormalLayout()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0, $z1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z1 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("normal_layout", 0);
+
+        return $z1;
+    }
+
+    public boolean isTracing()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0, $z1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z1 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("enable_tracing", 0);
+
+        return $z1;
+    }
+
+    public boolean enableLightTouch()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0, $z1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z1 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("enable_light_touch", 0);
+
+        return $z1;
+    }
+
+    public boolean enableNavDump()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0, $z1;
+        android.content.SharedPreferences $r1;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z1 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("enable_nav_dump", 0);
+
+        return $z1;
+    }
+
+    public java.lang.String getJsEngineFlags()
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean $z0;
+        android.content.SharedPreferences $r1;
+        java.lang.String $r2;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $z0 = virtualinvoke r0.<com.android.browser.BrowserSettings: boolean isDebugEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        return "";
+
+     label1:
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r2 = interfaceinvoke $r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("js_engine_flags", "");
+
+        return $r2;
+    }
+
+    public boolean useQuickControls()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("enable_quick_controls", 0);
+
+        return $z0;
+    }
+
+    public boolean useMostVisitedHomepage()
+    {
+        com.android.browser.BrowserSettings r0;
+        java.lang.String $r1, $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = "content://com.android.browser.home/";
+
+        $r2 = virtualinvoke r0.<com.android.browser.BrowserSettings: java.lang.String getHomePage()>();
+
+        $z0 = virtualinvoke $r1.<java.lang.String: boolean equals(java.lang.Object)>($r2);
+
+        return $z0;
+    }
+
+    public boolean useFullscreen()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("fullscreen", 0);
+
+        return $z0;
+    }
+
+    public boolean useInvertedRendering()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("inverted", 0);
+
+        return $z0;
+    }
+
+    public float getInvertedContrast()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        int $i0;
+        float $f0, $f1, $f2;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $i0 = interfaceinvoke $r1.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("inverted_contrast", 0);
+
+        $f0 = (float) $i0;
+
+        $f1 = $f0 / 10.0F;
+
+        $f2 = 1.0F + $f1;
+
+        return $f2;
+    }
+
+    public boolean showSecurityWarnings()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("show_security_warnings", 1);
+
+        return $z0;
+    }
+
+    public boolean acceptCookies()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("accept_cookies", 1);
+
+        return $z0;
+    }
+
+    public boolean saveFormdata()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("save_formdata", 1);
+
+        return $z0;
+    }
+
+    public boolean enableGeolocation()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("enable_geolocation", 1);
+
+        return $z0;
+    }
+
+    public boolean rememberPasswords()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("remember_passwords", 1);
+
+        return $z0;
+    }
+
+    public static java.lang.String getPreloadOnWifiOnlyPreferenceString(android.content.Context)
+    {
+        android.content.Context r0;
+        android.content.res.Resources $r1;
+        java.lang.String $r2;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r1 = virtualinvoke r0.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $r2 = virtualinvoke $r1.<android.content.res.Resources: java.lang.String getString(int)>(2131493107);
+
+        return $r2;
+    }
+
+    public static java.lang.String getPreloadAlwaysPreferenceString(android.content.Context)
+    {
+        android.content.Context r0;
+        android.content.res.Resources $r1;
+        java.lang.String $r2;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r1 = virtualinvoke r0.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $r2 = virtualinvoke $r1.<android.content.res.Resources: java.lang.String getString(int)>(2131493108);
+
+        return $r2;
+    }
+
+    public java.lang.String getDefaultPreloadSetting()
+    {
+        com.android.browser.BrowserSettings r0;
+        java.lang.String r1;
+        android.content.Context $r2, $r4;
+        android.content.ContentResolver $r3;
+        android.content.res.Resources $r5;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r1 = staticinvoke <android.provider.Settings$Secure: java.lang.String getString(android.content.ContentResolver,java.lang.String)>($r3, "browser_default_preload_setting");
+
+        if r1 != null goto label1;
+
+        $r4 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r1 = virtualinvoke $r5.<android.content.res.Resources: java.lang.String getString(int)>(2131493109);
+
+     label1:
+        return r1;
+    }
+
+    public java.lang.String getPreloadEnabled()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        java.lang.String $r2, $r3;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r2 = virtualinvoke r0.<com.android.browser.BrowserSettings: java.lang.String getDefaultPreloadSetting()>();
+
+        $r3 = interfaceinvoke $r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("preload_when", $r2);
+
+        return $r3;
+    }
+
+    public static java.lang.String getLinkPrefetchOnWifiOnlyPreferenceString(android.content.Context)
+    {
+        android.content.Context r0;
+        android.content.res.Resources $r1;
+        java.lang.String $r2;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r1 = virtualinvoke r0.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $r2 = virtualinvoke $r1.<android.content.res.Resources: java.lang.String getString(int)>(2131493114);
+
+        return $r2;
+    }
+
+    public static java.lang.String getLinkPrefetchAlwaysPreferenceString(android.content.Context)
+    {
+        android.content.Context r0;
+        android.content.res.Resources $r1;
+        java.lang.String $r2;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r1 = virtualinvoke r0.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $r2 = virtualinvoke $r1.<android.content.res.Resources: java.lang.String getString(int)>(2131493115);
+
+        return $r2;
+    }
+
+    public java.lang.String getDefaultLinkPrefetchSetting()
+    {
+        com.android.browser.BrowserSettings r0;
+        java.lang.String r1;
+        android.content.Context $r2, $r4;
+        android.content.ContentResolver $r3;
+        android.content.res.Resources $r5;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r2 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r1 = staticinvoke <android.provider.Settings$Secure: java.lang.String getString(android.content.ContentResolver,java.lang.String)>($r3, "browser_default_link_prefetch_setting");
+
+        if r1 != null goto label1;
+
+        $r4 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r1 = virtualinvoke $r5.<android.content.res.Resources: java.lang.String getString(int)>(2131493116);
+
+     label1:
+        return r1;
+    }
+
+    public java.lang.String getLinkPrefetchEnabled()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        java.lang.String $r2, $r3;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r2 = virtualinvoke r0.<com.android.browser.BrowserSettings: java.lang.String getDefaultLinkPrefetchSetting()>();
+
+        $r3 = interfaceinvoke $r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("link_prefetch_when", $r2);
+
+        return $r3;
+    }
+
+    public long getLastRecovered()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        long $l0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $l0 = interfaceinvoke $r1.<android.content.SharedPreferences: long getLong(java.lang.String,long)>("last_recovered", 0L);
+
+        return $l0;
+    }
+
+    public void setLastRecovered(long)
+    {
+        com.android.browser.BrowserSettings r0;
+        long l0;
+        android.content.SharedPreferences $r1;
+        android.content.SharedPreferences$Editor $r2, $r3;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        l0 := @parameter0: long;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r2 = interfaceinvoke $r1.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        $r3 = interfaceinvoke $r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putLong(java.lang.String,long)>("last_recovered", l0);
+
+        interfaceinvoke $r3.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    public boolean wasLastRunPaused()
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $z0 = interfaceinvoke $r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("last_paused", 0);
+
+        return $z0;
+    }
+
+    public void setLastRunPaused(boolean)
+    {
+        com.android.browser.BrowserSettings r0;
+        boolean z0;
+        android.content.SharedPreferences $r1;
+        android.content.SharedPreferences$Editor $r2, $r3;
+
+        r0 := @this: com.android.browser.BrowserSettings;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        $r2 = interfaceinvoke $r1.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        $r3 = interfaceinvoke $r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putBoolean(java.lang.String,boolean)>("last_paused", z0);
+
+        interfaceinvoke $r3.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    static android.content.Context access$000(com.android.browser.BrowserSettings)
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static float access$102(com.android.browser.BrowserSettings, float)
+    {
+        com.android.browser.BrowserSettings r0;
+        float f0;
+
+        r0 := @parameter0: com.android.browser.BrowserSettings;
+
+        f0 := @parameter1: float;
+
+        r0.<com.android.browser.BrowserSettings: float mFontSizeMult> = f0;
+
+        return f0;
+    }
+
+    static int access$202(com.android.browser.BrowserSettings, int)
+    {
+        com.android.browser.BrowserSettings r0;
+        int i0;
+
+        r0 := @parameter0: com.android.browser.BrowserSettings;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.browser.BrowserSettings: int mPageCacheCapacity> = i0;
+
+        return i0;
+    }
+
+    static com.android.browser.WebStorageSizeManager access$302(com.android.browser.BrowserSettings, com.android.browser.WebStorageSizeManager)
+    {
+        com.android.browser.BrowserSettings r0;
+        com.android.browser.WebStorageSizeManager r1;
+
+        r0 := @parameter0: com.android.browser.BrowserSettings;
+
+        r1 := @parameter1: com.android.browser.WebStorageSizeManager;
+
+        r0.<com.android.browser.BrowserSettings: com.android.browser.WebStorageSizeManager mWebStorageSizeManager> = r1;
+
+        return r1;
+    }
+
+    static java.lang.String access$400(com.android.browser.BrowserSettings)
+    {
+        com.android.browser.BrowserSettings r0;
+        java.lang.String $r1;
+
+        r0 := @parameter0: com.android.browser.BrowserSettings;
+
+        $r1 = specialinvoke r0.<com.android.browser.BrowserSettings: java.lang.String getAppCachePath()>();
+
+        return $r1;
+    }
+
+    static android.content.SharedPreferences access$500(com.android.browser.BrowserSettings)
+    {
+        com.android.browser.BrowserSettings r0;
+        android.content.SharedPreferences $r1;
+
+        r0 := @parameter0: com.android.browser.BrowserSettings;
+
+        $r1 = r0.<com.android.browser.BrowserSettings: android.content.SharedPreferences mPrefs>;
+
+        return $r1;
+    }
+
+    static android.webkit.WebSettings$TextSize access$600(com.android.browser.BrowserSettings)
+    {
+        com.android.browser.BrowserSettings r0;
+        android.webkit.WebSettings$TextSize $r1;
+
+        r0 := @parameter0: com.android.browser.BrowserSettings;
+
+        $r1 = specialinvoke r0.<com.android.browser.BrowserSettings: android.webkit.WebSettings$TextSize getTextSize()>();
+
+        return $r1;
+    }
+
+    static java.lang.String access$702(java.lang.String)
+    {
+        java.lang.String r0;
+
+        r0 := @parameter0: java.lang.String;
+
+        <com.android.browser.BrowserSettings: java.lang.String sFactoryResetUrl> = r0;
+
+        return r0;
+    }
+
+    static java.lang.String access$700()
+    {
+        java.lang.String $r0;
+
+        $r0 = <com.android.browser.BrowserSettings: java.lang.String sFactoryResetUrl>;
+
+        return $r0;
+    }
+
+    static boolean access$802(boolean)
+    {
+        boolean z0;
+
+        z0 := @parameter0: boolean;
+
+        <com.android.browser.BrowserSettings: boolean sInitialized> = z0;
+
+        return z0;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.String[] $r0;
+
+        <com.android.browser.BrowserSettings: java.lang.String DEFAULT_LINK_PREFETCH_SECURE_SETTING_KEY> = "browser_default_link_prefetch_setting";
+
+        <com.android.browser.BrowserSettings: java.lang.String DEAULT_PRELOAD_SECURE_SETTING_KEY> = "browser_default_preload_setting";
+
+        <com.android.browser.BrowserSettings: int DOUBLE_TAP_ZOOM_STEP> = 5;
+
+        <com.android.browser.BrowserSettings: int DOUBLE_TAP_ZOOM_START_VAL> = 5;
+
+        <com.android.browser.BrowserSettings: int TEXT_ZOOM_STEP> = 5;
+
+        <com.android.browser.BrowserSettings: int TEXT_ZOOM_START_VAL> = 10;
+
+        <com.android.browser.BrowserSettings: int MIN_FONT_SIZE_OFFSET> = 5;
+
+        <com.android.browser.BrowserSettings: java.lang.String HONEYCOMB_USERAGENT> = "Mozilla/5.0 (Linux; U; Android 3.1; en-us; Xoom Build/HMJ25) AppleWebKit/534.13 (KHTML, like Gecko) Version/4.0 Safari/534.13";
+
+        <com.android.browser.BrowserSettings: java.lang.String FROYO_USERAGENT> = "Mozilla/5.0 (Linux; U; Android 2.2; en-us; Nexus One Build/FRF91) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1";
+
+        <com.android.browser.BrowserSettings: java.lang.String IPAD_USERAGENT> = "Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B367 Safari/531.21.10";
+
+        <com.android.browser.BrowserSettings: java.lang.String IPHONE_USERAGENT> = "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7";
+
+        <com.android.browser.BrowserSettings: java.lang.String DESKTOP_USERAGENT> = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.34 Safari/534.24";
+
+        $r0 = newarray (java.lang.String)[6];
+
+        $r0[0] = null;
+
+        $r0[1] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.34 Safari/534.24";
+
+        $r0[2] = "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7";
+
+        $r0[3] = "Mozilla/5.0 (iPad; U; CPU OS 3_2 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Version/4.0.4 Mobile/7B367 Safari/531.21.10";
+
+        $r0[4] = "Mozilla/5.0 (Linux; U; Android 2.2; en-us; Nexus One Build/FRF91) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1";
+
+        $r0[5] = "Mozilla/5.0 (Linux; U; Android 3.1; en-us; Xoom Build/HMJ25) AppleWebKit/534.13 (KHTML, like Gecko) Version/4.0 Safari/534.13";
+
+        <com.android.browser.BrowserSettings: java.lang.String[] USER_AGENTS> = $r0;
+
+        <com.android.browser.BrowserSettings: boolean sInitialized> = 0;
+
+        return;
+    }
+}

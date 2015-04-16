@@ -1,0 +1,2521 @@
+public class com.android.browser.AddBookmarkPage extends android.app.Activity implements android.view.View$OnClickListener, android.widget.TextView$OnEditorActionListener, android.widget.AdapterView$OnItemClickListener, android.app.LoaderManager$LoaderCallbacks, com.android.browser.BreadCrumbView$Controller, com.android.browser.addbookmark.FolderSpinner$OnSetSelectionListener, android.widget.AdapterView$OnItemSelectedListener
+{
+    public static final long DEFAULT_FOLDER_ID;
+    public static final java.lang.String TOUCH_ICON_URL;
+    public static final java.lang.String REMOVE_THUMBNAIL;
+    public static final java.lang.String USER_AGENT;
+    public static final java.lang.String CHECK_FOR_DUPE;
+    static final java.lang.String EXTRA_EDIT_BOOKMARK;
+    static final java.lang.String EXTRA_IS_FOLDER;
+    private static final int MAX_CRUMBS_SHOWN;
+    private final java.lang.String LOGTAG;
+    private final int LOADER_ID_ACCOUNTS;
+    private final int LOADER_ID_FOLDER_CONTENTS;
+    private final int LOADER_ID_EDIT_INFO;
+    private android.widget.EditText mTitle;
+    private android.widget.EditText mAddress;
+    private android.widget.TextView mButton;
+    private android.view.View mCancelButton;
+    private boolean mEditingExisting;
+    private boolean mEditingFolder;
+    private android.os.Bundle mMap;
+    private java.lang.String mTouchIconUrl;
+    private java.lang.String mOriginalUrl;
+    private com.android.browser.addbookmark.FolderSpinner mFolder;
+    private android.view.View mDefaultView;
+    private android.view.View mFolderSelector;
+    private android.widget.EditText mFolderNamer;
+    private android.view.View mFolderCancel;
+    private boolean mIsFolderNamerShowing;
+    private android.view.View mFolderNamerHolder;
+    private android.view.View mAddNewFolder;
+    private android.view.View mAddSeparator;
+    private long mCurrentFolder;
+    private com.android.browser.AddBookmarkPage$FolderAdapter mAdapter;
+    private com.android.browser.BreadCrumbView mCrumbs;
+    private android.widget.TextView mFakeTitle;
+    private android.view.View mCrumbHolder;
+    private com.android.browser.AddBookmarkPage$CustomListView mListView;
+    private boolean mSaveToHomeScreen;
+    private long mRootFolder;
+    private android.widget.TextView mTopLevelLabel;
+    private android.graphics.drawable.Drawable mHeaderIcon;
+    private android.view.View mRemoveLink;
+    private android.view.View mFakeTitleHolder;
+    private com.android.browser.addbookmark.FolderSpinnerAdapter mFolderAdapter;
+    private android.widget.Spinner mAccountSpinner;
+    private android.widget.ArrayAdapter mAccountAdapter;
+    private static final int SAVE_BOOKMARK;
+    private static final int TOUCH_ICON_DOWNLOADED;
+    private static final int BOOKMARK_DELETED;
+    private android.os.Handler mHandler;
+    private android.app.LoaderManager$LoaderCallbacks mEditInfoLoaderCallbacks;
+
+    public void <init>()
+    {
+        com.android.browser.AddBookmarkPage r0;
+        com.android.browser.AddBookmarkPage$1 $r1;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        specialinvoke r0.<android.app.Activity: void <init>()>();
+
+        r0.<com.android.browser.AddBookmarkPage: java.lang.String LOGTAG> = "Bookmarks";
+
+        r0.<com.android.browser.AddBookmarkPage: int LOADER_ID_ACCOUNTS> = 0;
+
+        r0.<com.android.browser.AddBookmarkPage: int LOADER_ID_FOLDER_CONTENTS> = 1;
+
+        r0.<com.android.browser.AddBookmarkPage: int LOADER_ID_EDIT_INFO> = 2;
+
+        $r1 = new com.android.browser.AddBookmarkPage$1;
+
+        specialinvoke $r1.<com.android.browser.AddBookmarkPage$1: void <init>(com.android.browser.AddBookmarkPage)>(r0);
+
+        r0.<com.android.browser.AddBookmarkPage: android.app.LoaderManager$LoaderCallbacks mEditInfoLoaderCallbacks> = $r1;
+
+        return;
+    }
+
+    private android.view.inputmethod.InputMethodManager getInputMethodManager()
+    {
+        com.android.browser.AddBookmarkPage r0;
+        java.lang.Object $r1;
+        android.view.inputmethod.InputMethodManager $r2;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        $r1 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: java.lang.Object getSystemService(java.lang.String)>("input_method");
+
+        $r2 = (android.view.inputmethod.InputMethodManager) $r1;
+
+        return $r2;
+    }
+
+    private android.net.Uri getUriForFolder(long)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        long l0, $l1;
+        com.android.browser.AddBookmarkPage$BookmarkAccount r1;
+        android.widget.Spinner $r2;
+        java.lang.Object $r3;
+        byte $b2;
+        android.net.Uri $r4, $r7, $r8;
+        java.lang.String $r5, $r6;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        l0 := @parameter0: long;
+
+        $r2 = r0.<com.android.browser.AddBookmarkPage: android.widget.Spinner mAccountSpinner>;
+
+        $r3 = virtualinvoke $r2.<android.widget.Spinner: java.lang.Object getSelectedItem()>();
+
+        r1 = (com.android.browser.AddBookmarkPage$BookmarkAccount) $r3;
+
+        $l1 = r0.<com.android.browser.AddBookmarkPage: long mRootFolder>;
+
+        $b2 = l0 cmp $l1;
+
+        if $b2 != 0 goto label1;
+
+        if r1 == null goto label1;
+
+        $r7 = <android.provider.BrowserContract$Bookmarks: android.net.Uri CONTENT_URI_DEFAULT_FOLDER>;
+
+        $r6 = r1.<com.android.browser.AddBookmarkPage$BookmarkAccount: java.lang.String accountType>;
+
+        $r5 = r1.<com.android.browser.AddBookmarkPage$BookmarkAccount: java.lang.String accountName>;
+
+        $r8 = staticinvoke <com.android.browser.BookmarksLoader: android.net.Uri addAccount(android.net.Uri,java.lang.String,java.lang.String)>($r7, $r6, $r5);
+
+        return $r8;
+
+     label1:
+        $r4 = staticinvoke <android.provider.BrowserContract$Bookmarks: android.net.Uri buildFolderUri(long)>(l0);
+
+        return $r4;
+    }
+
+    public void onTop(com.android.browser.BreadCrumbView, int, java.lang.Object)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        com.android.browser.BreadCrumbView r1;
+        int i0;
+        java.lang.Object r2;
+        com.android.browser.AddBookmarkPage$Folder r3;
+        long l1;
+        android.app.LoaderManager r4;
+        android.content.CursorLoader r5;
+        android.content.Loader $r6;
+        android.net.Uri $r7;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: com.android.browser.BreadCrumbView;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.Object;
+
+        if null != r2 goto label1;
+
+        return;
+
+     label1:
+        r3 = (com.android.browser.AddBookmarkPage$Folder) r2;
+
+        l1 = r3.<com.android.browser.AddBookmarkPage$Folder: long Id>;
+
+        r4 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.app.LoaderManager getLoaderManager()>();
+
+        $r6 = virtualinvoke r4.<android.app.LoaderManager: android.content.Loader getLoader(int)>(1);
+
+        r5 = (android.content.CursorLoader) $r6;
+
+        $r7 = specialinvoke r0.<com.android.browser.AddBookmarkPage: android.net.Uri getUriForFolder(long)>(l1);
+
+        virtualinvoke r5.<android.content.CursorLoader: void setUri(android.net.Uri)>($r7);
+
+        virtualinvoke r5.<android.content.CursorLoader: void forceLoad()>();
+
+        $z0 = r0.<com.android.browser.AddBookmarkPage: boolean mIsFolderNamerShowing>;
+
+        if $z0 == 0 goto label2;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void completeOrCancelFolderNaming(boolean)>(1);
+
+     label2:
+        if i0 != 1 goto label3;
+
+        $z1 = 1;
+
+        goto label4;
+
+     label3:
+        $z1 = 0;
+
+     label4:
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void setShowBookmarkIcon(boolean)>($z1);
+
+        return;
+    }
+
+    private void setShowBookmarkIcon(boolean)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        boolean z0;
+        android.graphics.drawable.Drawable r1, $r3;
+        android.widget.TextView $r2;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        z0 := @parameter0: boolean;
+
+        if z0 == 0 goto label1;
+
+        $r3 = r0.<com.android.browser.AddBookmarkPage: android.graphics.drawable.Drawable mHeaderIcon>;
+
+        goto label2;
+
+     label1:
+        $r3 = null;
+
+     label2:
+        r1 = $r3;
+
+        $r2 = r0.<com.android.browser.AddBookmarkPage: android.widget.TextView mTopLevelLabel>;
+
+        virtualinvoke $r2.<android.widget.TextView: void setCompoundDrawablesWithIntrinsicBounds(android.graphics.drawable.Drawable,android.graphics.drawable.Drawable,android.graphics.drawable.Drawable,android.graphics.drawable.Drawable)>(r1, null, null, null);
+
+        return;
+    }
+
+    public boolean onEditorAction(android.widget.TextView, int, android.view.KeyEvent)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.widget.TextView r1;
+        int i0, $i1, $i2;
+        android.view.KeyEvent r2;
+        android.widget.EditText $r3;
+        java.lang.CharSequence $r4;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: android.widget.TextView;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: android.view.KeyEvent;
+
+        $r3 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mFolderNamer>;
+
+        if r1 != $r3 goto label2;
+
+        $r4 = virtualinvoke r1.<android.widget.TextView: java.lang.CharSequence getText()>();
+
+        $i1 = interfaceinvoke $r4.<java.lang.CharSequence: int length()>();
+
+        if $i1 <= 0 goto label1;
+
+        if i0 != 0 goto label1;
+
+        $i2 = virtualinvoke r2.<android.view.KeyEvent: int getAction()>();
+
+        if $i2 != 1 goto label1;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void completeOrCancelFolderNaming(boolean)>(0);
+
+     label1:
+        return 1;
+
+     label2:
+        return 0;
+    }
+
+    private void switchToDefaultView(boolean)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        boolean z0, $z1, $z2, $z3;
+        java.lang.Object r1, r19;
+        com.android.browser.AddBookmarkPage$Folder r2, $r9, $r11;
+        android.view.View $r3, $r4, $r5, $r6;
+        long $l0, $l1, $l3, $l5, $l7, $l8, $l9;
+        byte $b2, $b4, $b6, $b10, $b11;
+        com.android.browser.BreadCrumbView $r7, $r14;
+        java.lang.String $r10, $r17;
+        com.android.browser.addbookmark.FolderSpinnerAdapter $r12, $r16;
+        com.android.browser.addbookmark.FolderSpinner $r13, $r15, $r18;
+        android.app.LoaderManager r20;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        z0 := @parameter0: boolean;
+
+        $r3 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderSelector>;
+
+        virtualinvoke $r3.<android.view.View: void setVisibility(int)>(8);
+
+        $r4 = r0.<com.android.browser.AddBookmarkPage: android.view.View mDefaultView>;
+
+        virtualinvoke $r4.<android.view.View: void setVisibility(int)>(0);
+
+        $r5 = r0.<com.android.browser.AddBookmarkPage: android.view.View mCrumbHolder>;
+
+        virtualinvoke $r5.<android.view.View: void setVisibility(int)>(8);
+
+        $r6 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFakeTitleHolder>;
+
+        virtualinvoke $r6.<android.view.View: void setVisibility(int)>(0);
+
+        if z0 == 0 goto label05;
+
+        $r14 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs>;
+
+        r1 = virtualinvoke $r14.<com.android.browser.BreadCrumbView: java.lang.Object getTopData()>();
+
+        if r1 == null goto label04;
+
+        r2 = (com.android.browser.AddBookmarkPage$Folder) r1;
+
+        $l7 = r2.<com.android.browser.AddBookmarkPage$Folder: long Id>;
+
+        r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder> = $l7;
+
+        $l8 = r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder>;
+
+        $l9 = r0.<com.android.browser.AddBookmarkPage: long mRootFolder>;
+
+        $b10 = $l8 cmp $l9;
+
+        if $b10 != 0 goto label03;
+
+        $r18 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinner mFolder>;
+
+        $z3 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder>;
+
+        if $z3 == 0 goto label01;
+
+        $b11 = 0;
+
+        goto label02;
+
+     label01:
+        $b11 = 1;
+
+     label02:
+        virtualinvoke $r18.<com.android.browser.addbookmark.FolderSpinner: void setSelectionIgnoringSelectionChange(int)>($b11);
+
+        goto label04;
+
+     label03:
+        $r16 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinnerAdapter mFolderAdapter>;
+
+        $r17 = r2.<com.android.browser.AddBookmarkPage$Folder: java.lang.String Name>;
+
+        virtualinvoke $r16.<com.android.browser.addbookmark.FolderSpinnerAdapter: void setOtherFolderDisplayText(java.lang.String)>($r17);
+
+     label04:
+        goto label11;
+
+     label05:
+        $z1 = r0.<com.android.browser.AddBookmarkPage: boolean mSaveToHomeScreen>;
+
+        if $z1 == 0 goto label06;
+
+        $r15 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinner mFolder>;
+
+        virtualinvoke $r15.<com.android.browser.addbookmark.FolderSpinner: void setSelectionIgnoringSelectionChange(int)>(0);
+
+        goto label11;
+
+     label06:
+        $l1 = r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder>;
+
+        $l0 = r0.<com.android.browser.AddBookmarkPage: long mRootFolder>;
+
+        $b2 = $l1 cmp $l0;
+
+        if $b2 != 0 goto label09;
+
+        $r13 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinner mFolder>;
+
+        $z2 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder>;
+
+        if $z2 == 0 goto label07;
+
+        $b6 = 0;
+
+        goto label08;
+
+     label07:
+        $b6 = 1;
+
+     label08:
+        virtualinvoke $r13.<com.android.browser.addbookmark.FolderSpinner: void setSelectionIgnoringSelectionChange(int)>($b6);
+
+        goto label11;
+
+     label09:
+        $r7 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs>;
+
+        r19 = virtualinvoke $r7.<com.android.browser.BreadCrumbView: java.lang.Object getTopData()>();
+
+        if r19 == null goto label10;
+
+        $r9 = (com.android.browser.AddBookmarkPage$Folder) r19;
+
+        $l5 = $r9.<com.android.browser.AddBookmarkPage$Folder: long Id>;
+
+        $l3 = r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder>;
+
+        $b4 = $l5 cmp $l3;
+
+        if $b4 != 0 goto label10;
+
+        $r12 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinnerAdapter mFolderAdapter>;
+
+        $r11 = (com.android.browser.AddBookmarkPage$Folder) r19;
+
+        $r10 = $r11.<com.android.browser.AddBookmarkPage$Folder: java.lang.String Name>;
+
+        virtualinvoke $r12.<com.android.browser.addbookmark.FolderSpinnerAdapter: void setOtherFolderDisplayText(java.lang.String)>($r10);
+
+        goto label11;
+
+     label10:
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void setupTopCrumb()>();
+
+        r20 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.app.LoaderManager getLoaderManager()>();
+
+        virtualinvoke r20.<android.app.LoaderManager: android.content.Loader restartLoader(int,android.os.Bundle,android.app.LoaderManager$LoaderCallbacks)>(1, null, r0);
+
+     label11:
+        return;
+    }
+
+    public void onClick(android.view.View)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.view.View r1, $r5, $r6, $r7, $r8, $r17, $r18, $r21, $r22;
+        android.view.inputmethod.InputMethodManager r2;
+        android.os.Message r3;
+        android.widget.TextView $r4;
+        boolean $z0, $z3, $z4, $z5;
+        android.os.Bundle $r9;
+        android.os.Handler $r10;
+        android.widget.EditText $r11, $r14, $r16, $r20;
+        java.lang.String $r12;
+        android.text.Editable $r13;
+        java.lang.AssertionError $r15;
+        com.android.browser.AddBookmarkPage$CustomListView $r19;
+        int $i0, $i1;
+        long l2;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: android.view.View;
+
+        $r4 = r0.<com.android.browser.AddBookmarkPage: android.widget.TextView mButton>;
+
+        if r1 != $r4 goto label03;
+
+        $r22 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderSelector>;
+
+        $i1 = virtualinvoke $r22.<android.view.View: int getVisibility()>();
+
+        if $i1 != 0 goto label02;
+
+        $z4 = r0.<com.android.browser.AddBookmarkPage: boolean mIsFolderNamerShowing>;
+
+        if $z4 == 0 goto label01;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void completeOrCancelFolderNaming(boolean)>(0);
+
+        goto label10;
+
+     label01:
+        r0.<com.android.browser.AddBookmarkPage: boolean mSaveToHomeScreen> = 0;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void switchToDefaultView(boolean)>(1);
+
+        goto label10;
+
+     label02:
+        $z5 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: boolean save()>();
+
+        if $z5 == 0 goto label10;
+
+        virtualinvoke r0.<com.android.browser.AddBookmarkPage: void finish()>();
+
+        goto label10;
+
+     label03:
+        $r5 = r0.<com.android.browser.AddBookmarkPage: android.view.View mCancelButton>;
+
+        if r1 != $r5 goto label06;
+
+        $z3 = r0.<com.android.browser.AddBookmarkPage: boolean mIsFolderNamerShowing>;
+
+        if $z3 == 0 goto label04;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void completeOrCancelFolderNaming(boolean)>(1);
+
+        goto label10;
+
+     label04:
+        $r21 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderSelector>;
+
+        $i0 = virtualinvoke $r21.<android.view.View: int getVisibility()>();
+
+        if $i0 != 0 goto label05;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void switchToDefaultView(boolean)>(0);
+
+        goto label10;
+
+     label05:
+        virtualinvoke r0.<com.android.browser.AddBookmarkPage: void finish()>();
+
+        goto label10;
+
+     label06:
+        $r6 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderCancel>;
+
+        if r1 != $r6 goto label07;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void completeOrCancelFolderNaming(boolean)>(1);
+
+        goto label10;
+
+     label07:
+        $r7 = r0.<com.android.browser.AddBookmarkPage: android.view.View mAddNewFolder>;
+
+        if r1 != $r7 goto label08;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void setShowFolderNamer(boolean)>(1);
+
+        $r14 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mFolderNamer>;
+
+        virtualinvoke $r14.<android.widget.EditText: void setText(int)>(2131492910);
+
+        $r16 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mFolderNamer>;
+
+        virtualinvoke $r16.<android.widget.EditText: boolean requestFocus()>();
+
+        $r18 = r0.<com.android.browser.AddBookmarkPage: android.view.View mAddNewFolder>;
+
+        virtualinvoke $r18.<android.view.View: void setVisibility(int)>(8);
+
+        $r17 = r0.<com.android.browser.AddBookmarkPage: android.view.View mAddSeparator>;
+
+        virtualinvoke $r17.<android.view.View: void setVisibility(int)>(8);
+
+        r2 = specialinvoke r0.<com.android.browser.AddBookmarkPage: android.view.inputmethod.InputMethodManager getInputMethodManager()>();
+
+        $r19 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        virtualinvoke r2.<android.view.inputmethod.InputMethodManager: void focusIn(android.view.View)>($r19);
+
+        $r20 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mFolderNamer>;
+
+        virtualinvoke r2.<android.view.inputmethod.InputMethodManager: boolean showSoftInput(android.view.View,int)>($r20, 1);
+
+        goto label10;
+
+     label08:
+        $r8 = r0.<com.android.browser.AddBookmarkPage: android.view.View mRemoveLink>;
+
+        if r1 != $r8 goto label10;
+
+        $z0 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingExisting>;
+
+        if $z0 != 0 goto label09;
+
+        $r15 = new java.lang.AssertionError;
+
+        specialinvoke $r15.<java.lang.AssertionError: void <init>(java.lang.Object)>("Remove button should not be shown for new bookmarks");
+
+        throw $r15;
+
+     label09:
+        $r9 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        l2 = virtualinvoke $r9.<android.os.Bundle: long getLong(java.lang.String)>("_id");
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void createHandler()>();
+
+        $r10 = r0.<com.android.browser.AddBookmarkPage: android.os.Handler mHandler>;
+
+        r3 = staticinvoke <android.os.Message: android.os.Message obtain(android.os.Handler,int)>($r10, 102);
+
+        $r11 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mTitle>;
+
+        $r13 = virtualinvoke $r11.<android.widget.EditText: android.text.Editable getText()>();
+
+        $r12 = virtualinvoke $r13.<java.lang.Object: java.lang.String toString()>();
+
+        staticinvoke <com.android.browser.BookmarkUtils: void displayRemoveBookmarkDialog(long,java.lang.String,android.content.Context,android.os.Message)>(l2, $r12, r0, r3);
+
+     label10:
+        return;
+    }
+
+    public void onSetSelection(long)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        long l0, $l2, $l3;
+        int i1;
+        android.app.LoaderManager r1;
+        com.android.browser.addbookmark.FolderSpinnerAdapter $r2;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        l0 := @parameter0: long;
+
+        i1 = (int) l0;
+
+        tableswitch(i1)
+        {
+            case 0: goto label2;
+            case 1: goto label1;
+            case 2: goto label3;
+            case 3: goto label4;
+            default: goto label5;
+        };
+
+     label1:
+        $l2 = r0.<com.android.browser.AddBookmarkPage: long mRootFolder>;
+
+        r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder> = $l2;
+
+        r0.<com.android.browser.AddBookmarkPage: boolean mSaveToHomeScreen> = 0;
+
+        goto label5;
+
+     label2:
+        r0.<com.android.browser.AddBookmarkPage: boolean mSaveToHomeScreen> = 1;
+
+        goto label5;
+
+     label3:
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void switchToFolderSelector()>();
+
+        goto label5;
+
+     label4:
+        $r2 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinnerAdapter mFolderAdapter>;
+
+        $l3 = virtualinvoke $r2.<com.android.browser.addbookmark.FolderSpinnerAdapter: long recentFolderId()>();
+
+        r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder> = $l3;
+
+        r0.<com.android.browser.AddBookmarkPage: boolean mSaveToHomeScreen> = 0;
+
+        r1 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.app.LoaderManager getLoaderManager()>();
+
+        virtualinvoke r1.<android.app.LoaderManager: android.content.Loader restartLoader(int,android.os.Bundle,android.app.LoaderManager$LoaderCallbacks)>(1, null, r0);
+
+        goto label5;
+
+     label5:
+        return;
+    }
+
+    private void completeOrCancelFolderNaming(boolean)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        boolean z0, $z2;
+        java.lang.String r1, $r12;
+        long l0;
+        android.view.View $r2, $r3;
+        android.view.inputmethod.InputMethodManager $r4;
+        com.android.browser.AddBookmarkPage$CustomListView $r5;
+        android.os.IBinder $r6;
+        android.widget.EditText $r7, $r9, $r11;
+        android.text.Editable $r8, $r10, $r13;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        z0 := @parameter0: boolean;
+
+        if z0 != 0 goto label1;
+
+        $r7 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mFolderNamer>;
+
+        $r8 = virtualinvoke $r7.<android.widget.EditText: android.text.Editable getText()>();
+
+        $z2 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>($r8);
+
+        if $z2 != 0 goto label1;
+
+        $r9 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mFolderNamer>;
+
+        $r10 = virtualinvoke $r9.<android.widget.EditText: android.text.Editable getText()>();
+
+        r1 = virtualinvoke $r10.<java.lang.Object: java.lang.String toString()>();
+
+        $r11 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mFolderNamer>;
+
+        $r13 = virtualinvoke $r11.<android.widget.EditText: android.text.Editable getText()>();
+
+        $r12 = virtualinvoke $r13.<java.lang.Object: java.lang.String toString()>();
+
+        l0 = specialinvoke r0.<com.android.browser.AddBookmarkPage: long addFolderToCurrent(java.lang.String)>($r12);
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void descendInto(java.lang.String,long)>(r1, l0);
+
+     label1:
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void setShowFolderNamer(boolean)>(0);
+
+        $r2 = r0.<com.android.browser.AddBookmarkPage: android.view.View mAddNewFolder>;
+
+        virtualinvoke $r2.<android.view.View: void setVisibility(int)>(0);
+
+        $r3 = r0.<com.android.browser.AddBookmarkPage: android.view.View mAddSeparator>;
+
+        virtualinvoke $r3.<android.view.View: void setVisibility(int)>(0);
+
+        $r4 = specialinvoke r0.<com.android.browser.AddBookmarkPage: android.view.inputmethod.InputMethodManager getInputMethodManager()>();
+
+        $r5 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        $r6 = virtualinvoke $r5.<com.android.browser.AddBookmarkPage$CustomListView: android.os.IBinder getWindowToken()>();
+
+        virtualinvoke $r4.<android.view.inputmethod.InputMethodManager: boolean hideSoftInputFromWindow(android.os.IBinder,int)>($r6, 0);
+
+        return;
+    }
+
+    private long addFolderToCurrent(java.lang.String)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        java.lang.String r1;
+        android.content.ContentValues r2, $r5;
+        long l0, $l1;
+        java.lang.Object r3;
+        android.net.Uri r4, $r10;
+        java.lang.Integer $r6;
+        com.android.browser.BreadCrumbView $r7;
+        java.lang.Long $r8;
+        android.content.ContentResolver $r9;
+        com.android.browser.AddBookmarkPage$Folder $r11;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r5 = new android.content.ContentValues;
+
+        specialinvoke $r5.<android.content.ContentValues: void <init>()>();
+
+        r2 = $r5;
+
+        virtualinvoke r2.<android.content.ContentValues: void put(java.lang.String,java.lang.String)>("title", r1);
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(1);
+
+        virtualinvoke r2.<android.content.ContentValues: void put(java.lang.String,java.lang.Integer)>("folder", $r6);
+
+        $r7 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs>;
+
+        r3 = virtualinvoke $r7.<com.android.browser.BreadCrumbView: java.lang.Object getTopData()>();
+
+        if r3 == null goto label1;
+
+        $r11 = (com.android.browser.AddBookmarkPage$Folder) r3;
+
+        l0 = $r11.<com.android.browser.AddBookmarkPage$Folder: long Id>;
+
+        goto label2;
+
+     label1:
+        l0 = r0.<com.android.browser.AddBookmarkPage: long mRootFolder>;
+
+     label2:
+        $r8 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        virtualinvoke r2.<android.content.ContentValues: void put(java.lang.String,java.lang.Long)>("parent", $r8);
+
+        $r9 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.content.ContentResolver getContentResolver()>();
+
+        $r10 = <android.provider.BrowserContract$Bookmarks: android.net.Uri CONTENT_URI>;
+
+        r4 = virtualinvoke $r9.<android.content.ContentResolver: android.net.Uri insert(android.net.Uri,android.content.ContentValues)>($r10, r2);
+
+        if r4 == null goto label3;
+
+        $l1 = staticinvoke <android.content.ContentUris: long parseId(android.net.Uri)>(r4);
+
+        return $l1;
+
+     label3:
+        return -1L;
+    }
+
+    private void switchToFolderSelector()
+    {
+        com.android.browser.AddBookmarkPage r0;
+        com.android.browser.AddBookmarkPage$CustomListView $r1, $r9;
+        android.view.View $r2, $r3, $r4, $r5, $r6, $r7;
+        android.view.inputmethod.InputMethodManager $r8;
+        android.os.IBinder $r10;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        $r1 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        virtualinvoke $r1.<com.android.browser.AddBookmarkPage$CustomListView: void setSelection(int)>(0);
+
+        $r2 = r0.<com.android.browser.AddBookmarkPage: android.view.View mDefaultView>;
+
+        virtualinvoke $r2.<android.view.View: void setVisibility(int)>(8);
+
+        $r3 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderSelector>;
+
+        virtualinvoke $r3.<android.view.View: void setVisibility(int)>(0);
+
+        $r4 = r0.<com.android.browser.AddBookmarkPage: android.view.View mCrumbHolder>;
+
+        virtualinvoke $r4.<android.view.View: void setVisibility(int)>(0);
+
+        $r5 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFakeTitleHolder>;
+
+        virtualinvoke $r5.<android.view.View: void setVisibility(int)>(8);
+
+        $r6 = r0.<com.android.browser.AddBookmarkPage: android.view.View mAddNewFolder>;
+
+        virtualinvoke $r6.<android.view.View: void setVisibility(int)>(0);
+
+        $r7 = r0.<com.android.browser.AddBookmarkPage: android.view.View mAddSeparator>;
+
+        virtualinvoke $r7.<android.view.View: void setVisibility(int)>(0);
+
+        $r8 = specialinvoke r0.<com.android.browser.AddBookmarkPage: android.view.inputmethod.InputMethodManager getInputMethodManager()>();
+
+        $r9 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        $r10 = virtualinvoke $r9.<com.android.browser.AddBookmarkPage$CustomListView: android.os.IBinder getWindowToken()>();
+
+        virtualinvoke $r8.<android.view.inputmethod.InputMethodManager: boolean hideSoftInputFromWindow(android.os.IBinder,int)>($r10, 0);
+
+        return;
+    }
+
+    private void descendInto(java.lang.String, long)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        java.lang.String r1;
+        long l0;
+        byte $b1;
+        com.android.browser.AddBookmarkPage$Folder $r2;
+        com.android.browser.BreadCrumbView $r3, $r5;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: java.lang.String;
+
+        l0 := @parameter1: long;
+
+        $b1 = l0 cmp -1L;
+
+        if $b1 == 0 goto label1;
+
+        $r3 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs>;
+
+        $r2 = new com.android.browser.AddBookmarkPage$Folder;
+
+        specialinvoke $r2.<com.android.browser.AddBookmarkPage$Folder: void <init>(java.lang.String,long)>(r1, l0);
+
+        virtualinvoke $r3.<com.android.browser.BreadCrumbView: android.view.View pushView(java.lang.String,java.lang.Object)>(r1, $r2);
+
+        $r5 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs>;
+
+        virtualinvoke $r5.<com.android.browser.BreadCrumbView: void notifyController()>();
+
+     label1:
+        return;
+    }
+
+    void setAccount(java.lang.String, java.lang.String)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        java.lang.String r1, r2, $r7, $r8;
+        int i0, $i1;
+        com.android.browser.AddBookmarkPage$BookmarkAccount r3;
+        android.widget.ArrayAdapter $r4, $r5;
+        java.lang.Object $r6;
+        boolean $z0, $z1;
+        android.widget.Spinner $r9;
+        long $l2;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        i0 = 0;
+
+     label1:
+        $r4 = r0.<com.android.browser.AddBookmarkPage: android.widget.ArrayAdapter mAccountAdapter>;
+
+        $i1 = virtualinvoke $r4.<android.widget.ArrayAdapter: int getCount()>();
+
+        if i0 >= $i1 goto label3;
+
+        $r5 = r0.<com.android.browser.AddBookmarkPage: android.widget.ArrayAdapter mAccountAdapter>;
+
+        $r6 = virtualinvoke $r5.<android.widget.ArrayAdapter: java.lang.Object getItem(int)>(i0);
+
+        r3 = (com.android.browser.AddBookmarkPage$BookmarkAccount) $r6;
+
+        $r7 = r3.<com.android.browser.AddBookmarkPage$BookmarkAccount: java.lang.String accountName>;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean equals(java.lang.CharSequence,java.lang.CharSequence)>($r7, r1);
+
+        if $z0 == 0 goto label2;
+
+        $r8 = r3.<com.android.browser.AddBookmarkPage$BookmarkAccount: java.lang.String accountType>;
+
+        $z1 = staticinvoke <android.text.TextUtils: boolean equals(java.lang.CharSequence,java.lang.CharSequence)>($r8, r2);
+
+        if $z1 == 0 goto label2;
+
+        $r9 = r0.<com.android.browser.AddBookmarkPage: android.widget.Spinner mAccountSpinner>;
+
+        virtualinvoke $r9.<android.widget.Spinner: void setSelection(int)>(i0);
+
+        $l2 = r3.<com.android.browser.AddBookmarkPage$BookmarkAccount: long rootFolderId>;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void onRootFolderFound(long)>($l2);
+
+        return;
+
+     label2:
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    public android.content.Loader onCreateLoader(int, android.os.Bundle)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        int i0;
+        android.os.Bundle r1, $r14;
+        java.lang.String[] r2, r4, $r6, $r15;
+        java.lang.String r3, $r17;
+        long l1, $l2;
+        java.lang.Object r5;
+        boolean $z0;
+        com.android.browser.BreadCrumbView $r7;
+        android.content.CursorLoader $r8;
+        android.net.Uri $r9;
+        com.android.browser.AddBookmarkPage$Folder $r10;
+        java.lang.StringBuilder $r11, $r12, $r13;
+        com.android.browser.AddBookmarkPage$AccountsLoader $r16;
+        java.lang.AssertionError $r18;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.os.Bundle;
+
+        lookupswitch(i0)
+        {
+            case 0: goto label1;
+            case 1: goto label2;
+            default: goto label6;
+        };
+
+     label1:
+        $r16 = new com.android.browser.AddBookmarkPage$AccountsLoader;
+
+        specialinvoke $r16.<com.android.browser.AddBookmarkPage$AccountsLoader: void <init>(android.content.Context)>(r0);
+
+        return $r16;
+
+     label2:
+        $r6 = newarray (java.lang.String)[3];
+
+        $r6[0] = "_id";
+
+        $r6[1] = "title";
+
+        $r6[2] = "folder";
+
+        r2 = $r6;
+
+        r3 = "folder != 0";
+
+        r4 = null;
+
+        $z0 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder>;
+
+        if $z0 == 0 goto label3;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" AND _id != ?");
+
+        r3 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r15 = newarray (java.lang.String)[1];
+
+        $r14 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        $l2 = virtualinvoke $r14.<android.os.Bundle: long getLong(java.lang.String)>("_id");
+
+        $r17 = staticinvoke <java.lang.Long: java.lang.String toString(long)>($l2);
+
+        $r15[0] = $r17;
+
+        r4 = $r15;
+
+     label3:
+        $r7 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs>;
+
+        r5 = virtualinvoke $r7.<com.android.browser.BreadCrumbView: java.lang.Object getTopData()>();
+
+        if r5 == null goto label4;
+
+        $r10 = (com.android.browser.AddBookmarkPage$Folder) r5;
+
+        l1 = $r10.<com.android.browser.AddBookmarkPage$Folder: long Id>;
+
+        goto label5;
+
+     label4:
+        l1 = r0.<com.android.browser.AddBookmarkPage: long mRootFolder>;
+
+     label5:
+        $r8 = new android.content.CursorLoader;
+
+        $r9 = specialinvoke r0.<com.android.browser.AddBookmarkPage: android.net.Uri getUriForFolder(long)>(l1);
+
+        specialinvoke $r8.<android.content.CursorLoader: void <init>(android.content.Context,android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>(r0, $r9, r2, r3, r4, "_id ASC");
+
+        return $r8;
+
+     label6:
+        $r18 = new java.lang.AssertionError;
+
+        specialinvoke $r18.<java.lang.AssertionError: void <init>(java.lang.Object)>("Asking for nonexistant loader!");
+
+        throw $r18;
+    }
+
+    public void onLoadFinished(android.content.Loader, android.database.Cursor)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.content.Loader r1;
+        android.database.Cursor r2;
+        int $i0;
+        com.android.browser.AddBookmarkPage$FolderAdapter $r3;
+        android.widget.ArrayAdapter $r4, $r10;
+        boolean $z0;
+        android.app.LoaderManager $r5, $r6;
+        android.app.LoaderManager$LoaderCallbacks $r7;
+        com.android.browser.AddBookmarkPage$BookmarkAccount $r9;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: android.content.Loader;
+
+        r2 := @parameter1: android.database.Cursor;
+
+        $i0 = virtualinvoke r1.<android.content.Loader: int getId()>();
+
+        lookupswitch($i0)
+        {
+            case 0: goto label1;
+            case 1: goto label4;
+            default: goto label5;
+        };
+
+     label1:
+        $r4 = r0.<com.android.browser.AddBookmarkPage: android.widget.ArrayAdapter mAccountAdapter>;
+
+        virtualinvoke $r4.<android.widget.ArrayAdapter: void clear()>();
+
+     label2:
+        $z0 = interfaceinvoke r2.<android.database.Cursor: boolean moveToNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r10 = r0.<com.android.browser.AddBookmarkPage: android.widget.ArrayAdapter mAccountAdapter>;
+
+        $r9 = new com.android.browser.AddBookmarkPage$BookmarkAccount;
+
+        specialinvoke $r9.<com.android.browser.AddBookmarkPage$BookmarkAccount: void <init>(android.content.Context,android.database.Cursor)>(r0, r2);
+
+        virtualinvoke $r10.<android.widget.ArrayAdapter: void add(java.lang.Object)>($r9);
+
+        goto label2;
+
+     label3:
+        $r5 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.app.LoaderManager getLoaderManager()>();
+
+        virtualinvoke $r5.<android.app.LoaderManager: void destroyLoader(int)>(0);
+
+        $r6 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.app.LoaderManager getLoaderManager()>();
+
+        $r7 = r0.<com.android.browser.AddBookmarkPage: android.app.LoaderManager$LoaderCallbacks mEditInfoLoaderCallbacks>;
+
+        virtualinvoke $r6.<android.app.LoaderManager: android.content.Loader restartLoader(int,android.os.Bundle,android.app.LoaderManager$LoaderCallbacks)>(2, null, $r7);
+
+        goto label5;
+
+     label4:
+        $r3 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$FolderAdapter mAdapter>;
+
+        virtualinvoke $r3.<com.android.browser.AddBookmarkPage$FolderAdapter: void changeCursor(android.database.Cursor)>(r2);
+
+     label5:
+        return;
+    }
+
+    public void onLoaderReset(android.content.Loader)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.content.Loader r1;
+        int $i0;
+        com.android.browser.AddBookmarkPage$FolderAdapter $r2;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: android.content.Loader;
+
+        $i0 = virtualinvoke r1.<android.content.Loader: int getId()>();
+
+        lookupswitch($i0)
+        {
+            case 1: goto label1;
+            default: goto label2;
+        };
+
+     label1:
+        $r2 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$FolderAdapter mAdapter>;
+
+        virtualinvoke $r2.<com.android.browser.AddBookmarkPage$FolderAdapter: void changeCursor(android.database.Cursor)>(null);
+
+     label2:
+        return;
+    }
+
+    void moveCursorToFolder(android.database.Cursor, long, int) throws java.lang.AssertionError
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.database.Cursor r1;
+        long l0, l2;
+        int i1;
+        boolean $z0, $z1, $z2;
+        byte $b3;
+        java.lang.AssertionError $r2, $r8;
+        java.lang.StringBuilder $r3, $r4, $r5, $r6;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: android.database.Cursor;
+
+        l0 := @parameter1: long;
+
+        i1 := @parameter2: int;
+
+        $z0 = interfaceinvoke r1.<android.database.Cursor: boolean moveToFirst()>();
+
+        if $z0 != 0 goto label1;
+
+        $r8 = new java.lang.AssertionError;
+
+        specialinvoke $r8.<java.lang.AssertionError: void <init>(java.lang.Object)>("No folders in the database!");
+
+        throw $r8;
+
+     label1:
+        l2 = interfaceinvoke r1.<android.database.Cursor: long getLong(int)>(i1);
+
+        $b3 = l2 cmp l0;
+
+        if $b3 == 0 goto label2;
+
+        $z2 = interfaceinvoke r1.<android.database.Cursor: boolean moveToNext()>();
+
+        if $z2 != 0 goto label1;
+
+     label2:
+        $z1 = interfaceinvoke r1.<android.database.Cursor: boolean isAfterLast()>();
+
+        if $z1 == 0 goto label3;
+
+        $r2 = new java.lang.AssertionError;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Folder(id=");
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(") holding this bookmark does not exist!");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r2.<java.lang.AssertionError: void <init>(java.lang.Object)>($r7);
+
+        throw $r2;
+
+     label3:
+        return;
+    }
+
+    public void onItemClick(android.widget.AdapterView, android.view.View, int, long)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.widget.AdapterView r1;
+        android.view.View r2, $r4;
+        int i0;
+        long l1;
+        android.widget.TextView r3;
+        java.lang.CharSequence $r5;
+        java.lang.String $r6;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: android.widget.AdapterView;
+
+        r2 := @parameter1: android.view.View;
+
+        i0 := @parameter2: int;
+
+        l1 := @parameter3: long;
+
+        $r4 = virtualinvoke r2.<android.view.View: android.view.View findViewById(int)>(16908308);
+
+        r3 = (android.widget.TextView) $r4;
+
+        $r5 = virtualinvoke r3.<android.widget.TextView: java.lang.CharSequence getText()>();
+
+        $r6 = interfaceinvoke $r5.<java.lang.CharSequence: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void descendInto(java.lang.String,long)>($r6, l1);
+
+        return;
+    }
+
+    private void setShowFolderNamer(boolean)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        boolean z0, $z1;
+        android.view.View $r1, $r7;
+        com.android.browser.AddBookmarkPage$CustomListView $r2, $r4, $r5, $r6, $r8;
+        com.android.browser.AddBookmarkPage$FolderAdapter $r3;
+        int $i0, $i1;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = r0.<com.android.browser.AddBookmarkPage: boolean mIsFolderNamerShowing>;
+
+        if z0 == $z1 goto label3;
+
+        r0.<com.android.browser.AddBookmarkPage: boolean mIsFolderNamerShowing> = z0;
+
+        if z0 == 0 goto label1;
+
+        $r8 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        $r7 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderNamerHolder>;
+
+        virtualinvoke $r8.<com.android.browser.AddBookmarkPage$CustomListView: void addFooterView(android.view.View)>($r7);
+
+        goto label2;
+
+     label1:
+        $r2 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        $r1 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderNamerHolder>;
+
+        virtualinvoke $r2.<com.android.browser.AddBookmarkPage$CustomListView: boolean removeFooterView(android.view.View)>($r1);
+
+     label2:
+        $r4 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        $r3 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$FolderAdapter mAdapter>;
+
+        virtualinvoke $r4.<com.android.browser.AddBookmarkPage$CustomListView: void setAdapter(android.widget.ListAdapter)>($r3);
+
+        if z0 == 0 goto label3;
+
+        $r6 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        $r5 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        $i0 = virtualinvoke $r5.<com.android.browser.AddBookmarkPage$CustomListView: int getCount()>();
+
+        $i1 = $i0 - 1;
+
+        virtualinvoke $r6.<com.android.browser.AddBookmarkPage$CustomListView: void setSelection(int)>($i1);
+
+     label3:
+        return;
+    }
+
+    protected void onCreate(android.os.Bundle)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.os.Bundle r1, r5, $r8, $r11, $r72, $r74, $r75, $r76, $r77, $r80, $r81;
+        android.view.Window r2;
+        java.lang.String r3, r4, $r73, $r79;
+        int i0;
+        android.view.WindowManager$LayoutParams r6;
+        android.content.Intent $r7;
+        android.view.View $r9, $r12, $r16, $r17, $r21, $r22, $r24, $r28, $r31, $r32, $r34, $r35, $r36, $r37, $r39, $r40, $r41, $r42, $r43, $r50, $r54, $r66, $r69, $r70, $r82, r83;
+        android.widget.TextView $r10, $r19, $r20, $r68, $r78;
+        android.widget.EditText $r13, $r14, $r15, $r18, $r33, $r38, $r55;
+        com.android.browser.addbookmark.FolderSpinner $r23, $r26, $r30;
+        boolean $z1, $z3, $z4, $z5, $z6;
+        com.android.browser.addbookmark.FolderSpinnerAdapter $r25, $r27;
+        android.view.LayoutInflater $r29;
+        android.content.res.Resources $r44;
+        com.android.browser.BreadCrumbView $r45, $r46, $r47, $r49;
+        com.android.browser.AddBookmarkPage$FolderAdapter $r48, $r58;
+        android.graphics.drawable.Drawable $r51;
+        com.android.browser.AddBookmarkPage$CustomListView $r52, $r53, $r56, $r57, $r63;
+        android.widget.Spinner $r59, $r61, $r62;
+        android.widget.ArrayAdapter $r60, $r64, $r65;
+        android.app.LoaderManager $r71;
+        long $l1;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: android.os.Bundle;
+
+        specialinvoke r0.<android.app.Activity: void onCreate(android.os.Bundle)>(r1);
+
+        virtualinvoke r0.<com.android.browser.AddBookmarkPage: boolean requestWindowFeature(int)>(1);
+
+        $r7 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.content.Intent getIntent()>();
+
+        $r8 = virtualinvoke $r7.<android.content.Intent: android.os.Bundle getExtras()>();
+
+        r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap> = $r8;
+
+        virtualinvoke r0.<com.android.browser.AddBookmarkPage: void setContentView(int)>(2130968593);
+
+        r2 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.Window getWindow()>();
+
+        r3 = null;
+
+        r4 = null;
+
+        $r9 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558443);
+
+        $r10 = (android.widget.TextView) $r9;
+
+        r0.<com.android.browser.AddBookmarkPage: android.widget.TextView mFakeTitle> = $r10;
+
+        $r11 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        if $r11 == null goto label4;
+
+        $r75 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        r5 = virtualinvoke $r75.<android.os.Bundle: android.os.Bundle getBundle(java.lang.String)>("bookmark");
+
+        if r5 == null goto label2;
+
+        $r77 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        $z5 = virtualinvoke $r77.<android.os.Bundle: boolean getBoolean(java.lang.String,boolean)>("is_folder", 0);
+
+        r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder> = $z5;
+
+        r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap> = r5;
+
+        r0.<com.android.browser.AddBookmarkPage: boolean mEditingExisting> = 1;
+
+        $r78 = r0.<com.android.browser.AddBookmarkPage: android.widget.TextView mFakeTitle>;
+
+        virtualinvoke $r78.<android.widget.TextView: void setText(int)>(2131492922);
+
+        $z6 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder>;
+
+        if $z6 == 0 goto label1;
+
+        $r82 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558448);
+
+        virtualinvoke $r82.<android.view.View: void setVisibility(int)>(8);
+
+        goto label3;
+
+     label1:
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void showRemoveButton()>();
+
+        goto label3;
+
+     label2:
+        $r76 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        i0 = virtualinvoke $r76.<android.os.Bundle: int getInt(java.lang.String,int)>("gravity", -1);
+
+        if i0 == -1 goto label3;
+
+        r6 = virtualinvoke r2.<android.view.Window: android.view.WindowManager$LayoutParams getAttributes()>();
+
+        r6.<android.view.WindowManager$LayoutParams: int gravity> = i0;
+
+        virtualinvoke r2.<android.view.Window: void setAttributes(android.view.WindowManager$LayoutParams)>(r6);
+
+     label3:
+        $r72 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        r3 = virtualinvoke $r72.<android.os.Bundle: java.lang.String getString(java.lang.String)>("title");
+
+        $r74 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        $r73 = virtualinvoke $r74.<android.os.Bundle: java.lang.String getString(java.lang.String)>("url");
+
+        r0.<com.android.browser.AddBookmarkPage: java.lang.String mOriginalUrl> = $r73;
+
+        r4 = $r73;
+
+        $r80 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        $r79 = virtualinvoke $r80.<android.os.Bundle: java.lang.String getString(java.lang.String)>("touch_icon_url");
+
+        r0.<com.android.browser.AddBookmarkPage: java.lang.String mTouchIconUrl> = $r79;
+
+        $r81 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        $l1 = virtualinvoke $r81.<android.os.Bundle: long getLong(java.lang.String,long)>("parent", -1L);
+
+        r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder> = $l1;
+
+     label4:
+        $r12 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558407);
+
+        $r14 = (android.widget.EditText) $r12;
+
+        r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mTitle> = $r14;
+
+        $r13 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mTitle>;
+
+        virtualinvoke $r13.<android.widget.EditText: void setText(java.lang.CharSequence)>(r3);
+
+        $r16 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558450);
+
+        $r15 = (android.widget.EditText) $r16;
+
+        r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mAddress> = $r15;
+
+        $r18 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mAddress>;
+
+        virtualinvoke $r18.<android.widget.EditText: void setText(java.lang.CharSequence)>(r4);
+
+        $r17 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558457);
+
+        $r20 = (android.widget.TextView) $r17;
+
+        r0.<com.android.browser.AddBookmarkPage: android.widget.TextView mButton> = $r20;
+
+        $r19 = r0.<com.android.browser.AddBookmarkPage: android.widget.TextView mButton>;
+
+        virtualinvoke $r19.<android.widget.TextView: void setOnClickListener(android.view.View$OnClickListener)>(r0);
+
+        $r22 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558456);
+
+        r0.<com.android.browser.AddBookmarkPage: android.view.View mCancelButton> = $r22;
+
+        $r21 = r0.<com.android.browser.AddBookmarkPage: android.view.View mCancelButton>;
+
+        virtualinvoke $r21.<android.view.View: void setOnClickListener(android.view.View$OnClickListener)>(r0);
+
+        $r24 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558452);
+
+        $r23 = (com.android.browser.addbookmark.FolderSpinner) $r24;
+
+        r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinner mFolder> = $r23;
+
+        $r25 = new com.android.browser.addbookmark.FolderSpinnerAdapter;
+
+        $z1 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder>;
+
+        if $z1 != 0 goto label5;
+
+        $z3 = 1;
+
+        goto label6;
+
+     label5:
+        $z3 = 0;
+
+     label6:
+        specialinvoke $r25.<com.android.browser.addbookmark.FolderSpinnerAdapter: void <init>(android.content.Context,boolean)>(r0, $z3);
+
+        r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinnerAdapter mFolderAdapter> = $r25;
+
+        $r26 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinner mFolder>;
+
+        $r27 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinnerAdapter mFolderAdapter>;
+
+        virtualinvoke $r26.<com.android.browser.addbookmark.FolderSpinner: void setAdapter(android.widget.SpinnerAdapter)>($r27);
+
+        $r30 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinner mFolder>;
+
+        virtualinvoke $r30.<com.android.browser.addbookmark.FolderSpinner: void setOnSetSelectionListener(com.android.browser.addbookmark.FolderSpinner$OnSetSelectionListener)>(r0);
+
+        $r31 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558446);
+
+        r0.<com.android.browser.AddBookmarkPage: android.view.View mDefaultView> = $r31;
+
+        $r28 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558453);
+
+        r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderSelector> = $r28;
+
+        $r29 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.LayoutInflater getLayoutInflater()>();
+
+        $r34 = virtualinvoke $r29.<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup)>(2130968609, null);
+
+        r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderNamerHolder> = $r34;
+
+        $r35 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderNamerHolder>;
+
+        $r32 = virtualinvoke $r35.<android.view.View: android.view.View findViewById(int)>(2131558492);
+
+        $r33 = (android.widget.EditText) $r32;
+
+        r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mFolderNamer> = $r33;
+
+        $r38 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mFolderNamer>;
+
+        virtualinvoke $r38.<android.widget.EditText: void setOnEditorActionListener(android.widget.TextView$OnEditorActionListener)>(r0);
+
+        $r39 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderNamerHolder>;
+
+        $r36 = virtualinvoke $r39.<android.view.View: android.view.View findViewById(int)>(2131558493);
+
+        r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderCancel> = $r36;
+
+        $r37 = r0.<com.android.browser.AddBookmarkPage: android.view.View mFolderCancel>;
+
+        virtualinvoke $r37.<android.view.View: void setOnClickListener(android.view.View$OnClickListener)>(r0);
+
+        $r42 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558441);
+
+        r0.<com.android.browser.AddBookmarkPage: android.view.View mAddNewFolder> = $r42;
+
+        $r43 = r0.<com.android.browser.AddBookmarkPage: android.view.View mAddNewFolder>;
+
+        virtualinvoke $r43.<android.view.View: void setOnClickListener(android.view.View$OnClickListener)>(r0);
+
+        $r40 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558440);
+
+        r0.<com.android.browser.AddBookmarkPage: android.view.View mAddSeparator> = $r40;
+
+        $r41 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558436);
+
+        $r47 = (com.android.browser.BreadCrumbView) $r41;
+
+        r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs> = $r47;
+
+        $r46 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs>;
+
+        virtualinvoke $r46.<com.android.browser.BreadCrumbView: void setUseBackButton(boolean)>(1);
+
+        $r45 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs>;
+
+        virtualinvoke $r45.<com.android.browser.BreadCrumbView: void setController(com.android.browser.BreadCrumbView$Controller)>(r0);
+
+        $r44 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.content.res.Resources getResources()>();
+
+        $r51 = virtualinvoke $r44.<android.content.res.Resources: android.graphics.drawable.Drawable getDrawable(int)>(2130837543);
+
+        r0.<com.android.browser.AddBookmarkPage: android.graphics.drawable.Drawable mHeaderIcon> = $r51;
+
+        $r50 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558422);
+
+        r0.<com.android.browser.AddBookmarkPage: android.view.View mCrumbHolder> = $r50;
+
+        $r49 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs>;
+
+        virtualinvoke $r49.<com.android.browser.BreadCrumbView: void setMaxVisible(int)>(2);
+
+        $r48 = new com.android.browser.AddBookmarkPage$FolderAdapter;
+
+        specialinvoke $r48.<com.android.browser.AddBookmarkPage$FolderAdapter: void <init>(com.android.browser.AddBookmarkPage,android.content.Context)>(r0, r0);
+
+        r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$FolderAdapter mAdapter> = $r48;
+
+        $r54 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558454);
+
+        $r53 = (com.android.browser.AddBookmarkPage$CustomListView) $r54;
+
+        r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView> = $r53;
+
+        r83 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558455);
+
+        $r52 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        virtualinvoke $r52.<com.android.browser.AddBookmarkPage$CustomListView: void setEmptyView(android.view.View)>(r83);
+
+        $r57 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        $r58 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$FolderAdapter mAdapter>;
+
+        virtualinvoke $r57.<com.android.browser.AddBookmarkPage$CustomListView: void setAdapter(android.widget.ListAdapter)>($r58);
+
+        $r56 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        virtualinvoke $r56.<com.android.browser.AddBookmarkPage$CustomListView: void setOnItemClickListener(android.widget.AdapterView$OnItemClickListener)>(r0);
+
+        $r63 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.AddBookmarkPage$CustomListView mListView>;
+
+        $r55 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mFolderNamer>;
+
+        virtualinvoke $r63.<com.android.browser.AddBookmarkPage$CustomListView: void addEditText(android.widget.EditText)>($r55);
+
+        $r64 = new android.widget.ArrayAdapter;
+
+        specialinvoke $r64.<android.widget.ArrayAdapter: void <init>(android.content.Context,int)>(r0, 17367048);
+
+        r0.<com.android.browser.AddBookmarkPage: android.widget.ArrayAdapter mAccountAdapter> = $r64;
+
+        $r65 = r0.<com.android.browser.AddBookmarkPage: android.widget.ArrayAdapter mAccountAdapter>;
+
+        virtualinvoke $r65.<android.widget.ArrayAdapter: void setDropDownViewResource(int)>(17367049);
+
+        $r66 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558451);
+
+        $r59 = (android.widget.Spinner) $r66;
+
+        r0.<com.android.browser.AddBookmarkPage: android.widget.Spinner mAccountSpinner> = $r59;
+
+        $r61 = r0.<com.android.browser.AddBookmarkPage: android.widget.Spinner mAccountSpinner>;
+
+        $r60 = r0.<com.android.browser.AddBookmarkPage: android.widget.ArrayAdapter mAccountAdapter>;
+
+        virtualinvoke $r61.<android.widget.Spinner: void setAdapter(android.widget.SpinnerAdapter)>($r60);
+
+        $r62 = r0.<com.android.browser.AddBookmarkPage: android.widget.Spinner mAccountSpinner>;
+
+        virtualinvoke $r62.<android.widget.Spinner: void setOnItemSelectedListener(android.widget.AdapterView$OnItemSelectedListener)>(r0);
+
+        $r69 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558442);
+
+        r0.<com.android.browser.AddBookmarkPage: android.view.View mFakeTitleHolder> = $r69;
+
+        $r70 = virtualinvoke r2.<android.view.Window: android.view.View getDecorView()>();
+
+        $z4 = virtualinvoke $r70.<android.view.View: boolean isInTouchMode()>();
+
+        if $z4 != 0 goto label7;
+
+        $r68 = r0.<com.android.browser.AddBookmarkPage: android.widget.TextView mButton>;
+
+        virtualinvoke $r68.<android.widget.TextView: boolean requestFocus()>();
+
+     label7:
+        $r71 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.app.LoaderManager getLoaderManager()>();
+
+        virtualinvoke $r71.<android.app.LoaderManager: android.content.Loader restartLoader(int,android.os.Bundle,android.app.LoaderManager$LoaderCallbacks)>(0, null, r0);
+
+        return;
+    }
+
+    private void showRemoveButton()
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.view.View $r1, $r2, $r3, $r4;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        $r1 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558444);
+
+        virtualinvoke $r1.<android.view.View: void setVisibility(int)>(0);
+
+        $r2 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.view.View findViewById(int)>(2131558445);
+
+        r0.<com.android.browser.AddBookmarkPage: android.view.View mRemoveLink> = $r2;
+
+        $r3 = r0.<com.android.browser.AddBookmarkPage: android.view.View mRemoveLink>;
+
+        virtualinvoke $r3.<android.view.View: void setVisibility(int)>(0);
+
+        $r4 = r0.<com.android.browser.AddBookmarkPage: android.view.View mRemoveLink>;
+
+        virtualinvoke $r4.<android.view.View: void setOnClickListener(android.view.View$OnClickListener)>(r0);
+
+        return;
+    }
+
+    private void onRootFolderFound(long)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        long l0, $l1;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        l0 := @parameter0: long;
+
+        r0.<com.android.browser.AddBookmarkPage: long mRootFolder> = l0;
+
+        $l1 = r0.<com.android.browser.AddBookmarkPage: long mRootFolder>;
+
+        r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder> = $l1;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void setupTopCrumb()>();
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void onCurrentFolderFound()>();
+
+        return;
+    }
+
+    private void setupTopCrumb()
+    {
+        com.android.browser.AddBookmarkPage r0;
+        java.lang.String r1;
+        com.android.browser.BreadCrumbView $r2, $r4;
+        com.android.browser.AddBookmarkPage$Folder $r3;
+        long $l0;
+        android.view.View $r5;
+        android.widget.TextView $r6, $r7;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        $r2 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs>;
+
+        virtualinvoke $r2.<com.android.browser.BreadCrumbView: void clear()>();
+
+        r1 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: java.lang.String getString(int)>(2131492945);
+
+        $r4 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.BreadCrumbView mCrumbs>;
+
+        $r3 = new com.android.browser.AddBookmarkPage$Folder;
+
+        $l0 = r0.<com.android.browser.AddBookmarkPage: long mRootFolder>;
+
+        specialinvoke $r3.<com.android.browser.AddBookmarkPage$Folder: void <init>(java.lang.String,long)>(r1, $l0);
+
+        $r5 = virtualinvoke $r4.<com.android.browser.BreadCrumbView: android.view.View pushView(java.lang.String,boolean,java.lang.Object)>(r1, 0, $r3);
+
+        $r6 = (android.widget.TextView) $r5;
+
+        r0.<com.android.browser.AddBookmarkPage: android.widget.TextView mTopLevelLabel> = $r6;
+
+        $r7 = r0.<com.android.browser.AddBookmarkPage: android.widget.TextView mTopLevelLabel>;
+
+        virtualinvoke $r7.<android.widget.TextView: void setCompoundDrawablePadding(int)>(6);
+
+        return;
+    }
+
+    private void onCurrentFolderFound()
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.app.LoaderManager r1;
+        long $l0, $l1;
+        byte $b2, $b3;
+        boolean $z0, $z1;
+        com.android.browser.addbookmark.FolderSpinner $r3, $r4;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.app.LoaderManager getLoaderManager()>();
+
+        $l1 = r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder>;
+
+        $l0 = r0.<com.android.browser.AddBookmarkPage: long mRootFolder>;
+
+        $b2 = $l1 cmp $l0;
+
+        if $b2 == 0 goto label3;
+
+        $r4 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinner mFolder>;
+
+        $z1 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder>;
+
+        if $z1 == 0 goto label1;
+
+        $b3 = 1;
+
+        goto label2;
+
+     label1:
+        $b3 = 2;
+
+     label2:
+        virtualinvoke $r4.<com.android.browser.addbookmark.FolderSpinner: void setSelectionIgnoringSelectionChange(int)>($b3);
+
+        goto label4;
+
+     label3:
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void setShowBookmarkIcon(boolean)>(1);
+
+        $z0 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder>;
+
+        if $z0 != 0 goto label4;
+
+        $r3 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinner mFolder>;
+
+        virtualinvoke $r3.<com.android.browser.addbookmark.FolderSpinner: void setSelectionIgnoringSelectionChange(int)>(1);
+
+     label4:
+        virtualinvoke r1.<android.app.LoaderManager: android.content.Loader restartLoader(int,android.os.Bundle,android.app.LoaderManager$LoaderCallbacks)>(1, null, r0);
+
+        return;
+    }
+
+    private void createHandler()
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.os.Handler $r1;
+        com.android.browser.AddBookmarkPage$2 $r2;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        $r1 = r0.<com.android.browser.AddBookmarkPage: android.os.Handler mHandler>;
+
+        if $r1 != null goto label1;
+
+        $r2 = new com.android.browser.AddBookmarkPage$2;
+
+        specialinvoke $r2.<com.android.browser.AddBookmarkPage$2: void <init>(com.android.browser.AddBookmarkPage)>(r0);
+
+        r0.<com.android.browser.AddBookmarkPage: android.os.Handler mHandler> = $r2;
+
+     label1:
+        return;
+    }
+
+    boolean save()
+    {
+        com.android.browser.AddBookmarkPage r0;
+        java.lang.String r1, r2, r4, r6, $r13, $r15, $r17, $r23, $r25, $r30, $r33, $r39, $r50, $r51;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, z13;
+        android.content.res.Resources r3;
+        java.net.URI r5, $r52;
+        android.net.WebAddress r7, $r49;
+        android.os.Message r9, r67;
+        com.android.browser.DownloadTouchIcon r10, $r35;
+        android.widget.EditText $r11, $r14, $r18, $r19, $r56, $r58;
+        android.text.Editable $r12, $r16;
+        int $i0, $i1, $i5, $i6;
+        java.lang.CharSequence $r20, $r21, $r55, $r57;
+        android.os.Bundle $r22, $r34, $r37, $r40, $r42, r66;
+        android.os.Handler $r24, $r29;
+        android.content.Context $r26, $r44;
+        java.lang.Thread $r27, r68;
+        com.android.browser.AddBookmarkPage$SaveBookmarkRunnable $r28;
+        android.content.Intent $r31;
+        java.lang.String[] $r32;
+        android.os.Parcelable $r36, $r41;
+        long $l2, $l3, $l4;
+        android.content.ContentValues $r43, r63;
+        android.content.ContentValues[] $r45;
+        java.lang.Long $r47, r62;
+        com.android.browser.AddBookmarkPage$UpdateBookmarkTask $r48;
+        java.net.URISyntaxException $r53, $r54, $r59;
+        android.net.ParseException $r60;
+        android.graphics.Bitmap r64, r65;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void createHandler()>();
+
+        $r11 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mTitle>;
+
+        $r12 = virtualinvoke $r11.<android.widget.EditText: android.text.Editable getText()>();
+
+        $r13 = virtualinvoke $r12.<java.lang.Object: java.lang.String toString()>();
+
+        r1 = virtualinvoke $r13.<java.lang.String: java.lang.String trim()>();
+
+        $r14 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mAddress>;
+
+        $r16 = virtualinvoke $r14.<android.widget.EditText: android.text.Editable getText()>();
+
+        $r15 = virtualinvoke $r16.<java.lang.Object: java.lang.String toString()>();
+
+        r2 = staticinvoke <com.android.browser.UrlUtils: java.lang.String fixUrl(java.lang.String)>($r15);
+
+        $i0 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i0 != 0 goto label01;
+
+        $z12 = 1;
+
+        goto label02;
+
+     label01:
+        $z12 = 0;
+
+     label02:
+        z0 = $z12;
+
+        $r17 = virtualinvoke r2.<java.lang.String: java.lang.String trim()>();
+
+        $i1 = virtualinvoke $r17.<java.lang.String: int length()>();
+
+        if $i1 != 0 goto label03;
+
+        $z10 = 1;
+
+        goto label04;
+
+     label03:
+        $z10 = 0;
+
+     label04:
+        z1 = $z10;
+
+        r3 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.content.res.Resources getResources()>();
+
+        if z0 != 0 goto label05;
+
+        if z1 == 0 goto label08;
+
+        $z11 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder>;
+
+        if $z11 != 0 goto label08;
+
+     label05:
+        if z0 == 0 goto label06;
+
+        $r19 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mTitle>;
+
+        $r21 = virtualinvoke r3.<android.content.res.Resources: java.lang.CharSequence getText(int)>(2131492932);
+
+        virtualinvoke $r19.<android.widget.EditText: void setError(java.lang.CharSequence)>($r21);
+
+     label06:
+        if z1 == 0 goto label07;
+
+        $r18 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mAddress>;
+
+        $r20 = virtualinvoke r3.<android.content.res.Resources: java.lang.CharSequence getText(int)>(2131492933);
+
+        virtualinvoke $r18.<android.widget.EditText: void setError(java.lang.CharSequence)>($r20);
+
+     label07:
+        return 0;
+
+     label08:
+        r4 = virtualinvoke r2.<java.lang.String: java.lang.String trim()>();
+
+        $z3 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder>;
+
+        if $z3 != 0 goto label18;
+
+     label09:
+        $r51 = virtualinvoke r4.<java.lang.String: java.lang.String toLowerCase()>();
+
+        $z9 = virtualinvoke $r51.<java.lang.String: boolean startsWith(java.lang.String)>("javascript:");
+
+        if $z9 != 0 goto label16;
+
+        $r52 = new java.net.URI;
+
+        specialinvoke $r52.<java.net.URI: void <init>(java.lang.String)>(r4);
+
+        r5 = $r52;
+
+        r6 = virtualinvoke r5.<java.net.URI: java.lang.String getScheme()>();
+
+        $z8 = staticinvoke <com.android.browser.Bookmarks: boolean urlHasAcceptableScheme(java.lang.String)>(r4);
+
+        if $z8 != 0 goto label16;
+
+        if r6 == null goto label11;
+
+        $r56 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mAddress>;
+
+        $r55 = virtualinvoke r3.<android.content.res.Resources: java.lang.CharSequence getText(int)>(2131492935);
+
+        virtualinvoke $r56.<android.widget.EditText: void setError(java.lang.CharSequence)>($r55);
+
+     label10:
+        return 0;
+
+     label11:
+        $r49 = new android.net.WebAddress;
+
+        specialinvoke $r49.<android.net.WebAddress: void <init>(java.lang.String)>(r2);
+
+        r7 = $r49;
+
+     label12:
+        goto label14;
+
+     label13:
+        $r60 := @caughtexception;
+
+        $r59 = new java.net.URISyntaxException;
+
+        specialinvoke $r59.<java.net.URISyntaxException: void <init>(java.lang.String,java.lang.String)>("", "");
+
+        throw $r59;
+
+     label14:
+        $r50 = virtualinvoke r7.<android.net.WebAddress: java.lang.String getHost()>();
+
+        $i6 = virtualinvoke $r50.<java.lang.String: int length()>();
+
+        if $i6 != 0 goto label15;
+
+        $r54 = new java.net.URISyntaxException;
+
+        specialinvoke $r54.<java.net.URISyntaxException: void <init>(java.lang.String,java.lang.String)>("", "");
+
+        throw $r54;
+
+     label15:
+        r4 = virtualinvoke r7.<android.net.WebAddress: java.lang.String toString()>();
+
+     label16:
+        goto label18;
+
+     label17:
+        $r53 := @caughtexception;
+
+        $r58 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mAddress>;
+
+        $r57 = virtualinvoke r3.<android.content.res.Resources: java.lang.CharSequence getText(int)>(2131492934);
+
+        virtualinvoke $r58.<android.widget.EditText: void setError(java.lang.CharSequence)>($r57);
+
+        return 0;
+
+     label18:
+        $z2 = r0.<com.android.browser.AddBookmarkPage: boolean mSaveToHomeScreen>;
+
+        if $z2 == 0 goto label19;
+
+        r0.<com.android.browser.AddBookmarkPage: boolean mEditingExisting> = 0;
+
+     label19:
+        $r23 = r0.<com.android.browser.AddBookmarkPage: java.lang.String mOriginalUrl>;
+
+        z13 = virtualinvoke r4.<java.lang.String: boolean equals(java.lang.Object)>($r23);
+
+        $z4 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingExisting>;
+
+        if $z4 == 0 goto label22;
+
+        $r40 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        $l2 = virtualinvoke $r40.<android.os.Bundle: long getLong(java.lang.String)>("_id");
+
+        r62 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l2);
+
+        $r43 = new android.content.ContentValues;
+
+        specialinvoke $r43.<android.content.ContentValues: void <init>()>();
+
+        r63 = $r43;
+
+        virtualinvoke r63.<android.content.ContentValues: void put(java.lang.String,java.lang.String)>("title", r1);
+
+        $l3 = r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder>;
+
+        $r47 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l3);
+
+        virtualinvoke r63.<android.content.ContentValues: void put(java.lang.String,java.lang.Long)>("parent", $r47);
+
+        $z7 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder>;
+
+        if $z7 != 0 goto label20;
+
+        virtualinvoke r63.<android.content.ContentValues: void put(java.lang.String,java.lang.String)>("url", r4);
+
+        if z13 != 0 goto label20;
+
+        virtualinvoke r63.<android.content.ContentValues: void putNull(java.lang.String)>("thumbnail");
+
+     label20:
+        $i5 = virtualinvoke r63.<android.content.ContentValues: int size()>();
+
+        if $i5 <= 0 goto label21;
+
+        $r48 = new com.android.browser.AddBookmarkPage$UpdateBookmarkTask;
+
+        $r44 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.content.Context getApplicationContext()>();
+
+        $l4 = virtualinvoke r62.<java.lang.Long: long longValue()>();
+
+        specialinvoke $r48.<com.android.browser.AddBookmarkPage$UpdateBookmarkTask: void <init>(android.content.Context,long)>($r44, $l4);
+
+        $r45 = newarray (android.content.ContentValues)[1];
+
+        $r45[0] = r63;
+
+        virtualinvoke $r48.<com.android.browser.AddBookmarkPage$UpdateBookmarkTask: android.os.AsyncTask execute(java.lang.Object[])>($r45);
+
+     label21:
+        virtualinvoke r0.<com.android.browser.AddBookmarkPage: void setResult(int)>(-1);
+
+        goto label30;
+
+     label22:
+        if z13 == 0 goto label23;
+
+        $r37 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        $r36 = virtualinvoke $r37.<android.os.Bundle: android.os.Parcelable getParcelable(java.lang.String)>("thumbnail");
+
+        r64 = (android.graphics.Bitmap) $r36;
+
+        $r42 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        $r41 = virtualinvoke $r42.<android.os.Bundle: android.os.Parcelable getParcelable(java.lang.String)>("favicon");
+
+        r65 = (android.graphics.Bitmap) $r41;
+
+        goto label24;
+
+     label23:
+        r64 = null;
+
+        r65 = null;
+
+     label24:
+        $r22 = new android.os.Bundle;
+
+        specialinvoke $r22.<android.os.Bundle: void <init>()>();
+
+        r66 = $r22;
+
+        virtualinvoke r66.<android.os.Bundle: void putString(java.lang.String,java.lang.String)>("title", r1);
+
+        virtualinvoke r66.<android.os.Bundle: void putString(java.lang.String,java.lang.String)>("url", r4);
+
+        virtualinvoke r66.<android.os.Bundle: void putParcelable(java.lang.String,android.os.Parcelable)>("favicon", r65);
+
+        $z5 = r0.<com.android.browser.AddBookmarkPage: boolean mSaveToHomeScreen>;
+
+        if $z5 == 0 goto label26;
+
+        $r30 = r0.<com.android.browser.AddBookmarkPage: java.lang.String mTouchIconUrl>;
+
+        if $r30 == null goto label25;
+
+        if z13 == 0 goto label25;
+
+        $r29 = r0.<com.android.browser.AddBookmarkPage: android.os.Handler mHandler>;
+
+        r9 = staticinvoke <android.os.Message: android.os.Message obtain(android.os.Handler,int)>($r29, 101);
+
+        virtualinvoke r9.<android.os.Message: void setData(android.os.Bundle)>(r66);
+
+        $r35 = new com.android.browser.DownloadTouchIcon;
+
+        $r34 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        $r33 = virtualinvoke $r34.<android.os.Bundle: java.lang.String getString(java.lang.String)>("user_agent");
+
+        specialinvoke $r35.<com.android.browser.DownloadTouchIcon: void <init>(android.content.Context,android.os.Message,java.lang.String)>(r0, r9, $r33);
+
+        r10 = $r35;
+
+        $r32 = newarray (java.lang.String)[1];
+
+        $r39 = r0.<com.android.browser.AddBookmarkPage: java.lang.String mTouchIconUrl>;
+
+        $r32[0] = $r39;
+
+        virtualinvoke r10.<com.android.browser.DownloadTouchIcon: android.os.AsyncTask execute(java.lang.Object[])>($r32);
+
+        goto label29;
+
+     label25:
+        $r31 = staticinvoke <com.android.browser.BookmarkUtils: android.content.Intent createAddToHomeIntent(android.content.Context,java.lang.String,java.lang.String,android.graphics.Bitmap,android.graphics.Bitmap)>(r0, r4, r1, null, r65);
+
+        virtualinvoke r0.<com.android.browser.AddBookmarkPage: void sendBroadcast(android.content.Intent)>($r31);
+
+        goto label29;
+
+     label26:
+        virtualinvoke r66.<android.os.Bundle: void putParcelable(java.lang.String,android.os.Parcelable)>("thumbnail", r64);
+
+        if z13 != 0 goto label27;
+
+        $z6 = 1;
+
+        goto label28;
+
+     label27:
+        $z6 = 0;
+
+     label28:
+        virtualinvoke r66.<android.os.Bundle: void putBoolean(java.lang.String,boolean)>("remove_thumbnail", $z6);
+
+        $r25 = r0.<com.android.browser.AddBookmarkPage: java.lang.String mTouchIconUrl>;
+
+        virtualinvoke r66.<android.os.Bundle: void putString(java.lang.String,java.lang.String)>("touch_icon_url", $r25);
+
+        $r24 = r0.<com.android.browser.AddBookmarkPage: android.os.Handler mHandler>;
+
+        r67 = staticinvoke <android.os.Message: android.os.Message obtain(android.os.Handler,int)>($r24, 100);
+
+        virtualinvoke r67.<android.os.Message: void setData(android.os.Bundle)>(r66);
+
+        $r27 = new java.lang.Thread;
+
+        $r28 = new com.android.browser.AddBookmarkPage$SaveBookmarkRunnable;
+
+        $r26 = virtualinvoke r0.<com.android.browser.AddBookmarkPage: android.content.Context getApplicationContext()>();
+
+        specialinvoke $r28.<com.android.browser.AddBookmarkPage$SaveBookmarkRunnable: void <init>(com.android.browser.AddBookmarkPage,android.content.Context,android.os.Message)>(r0, $r26, r67);
+
+        specialinvoke $r27.<java.lang.Thread: void <init>(java.lang.Runnable)>($r28);
+
+        r68 = $r27;
+
+        virtualinvoke r68.<java.lang.Thread: void start()>();
+
+     label29:
+        virtualinvoke r0.<com.android.browser.AddBookmarkPage: void setResult(int)>(-1);
+
+        staticinvoke <com.android.browser.LogTag: void logBookmarkAdded(java.lang.String,java.lang.String)>(r4, "bookmarkview");
+
+     label30:
+        return 1;
+
+        catch android.net.ParseException from label11 to label12 with label13;
+        catch java.net.URISyntaxException from label09 to label10 with label17;
+        catch java.net.URISyntaxException from label11 to label16 with label17;
+    }
+
+    public void onItemSelected(android.widget.AdapterView, android.view.View, int, long)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.widget.AdapterView r1;
+        android.view.View r2;
+        int i0;
+        long l1, l2, $l3;
+        android.widget.Spinner $r3;
+        android.widget.ArrayAdapter $r4;
+        java.lang.Object $r5;
+        com.android.browser.AddBookmarkPage$BookmarkAccount $r6;
+        byte $b4;
+        com.android.browser.addbookmark.FolderSpinnerAdapter $r7;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: android.widget.AdapterView;
+
+        r2 := @parameter1: android.view.View;
+
+        i0 := @parameter2: int;
+
+        l1 := @parameter3: long;
+
+        $r3 = r0.<com.android.browser.AddBookmarkPage: android.widget.Spinner mAccountSpinner>;
+
+        if $r3 != r1 goto label1;
+
+        $r4 = r0.<com.android.browser.AddBookmarkPage: android.widget.ArrayAdapter mAccountAdapter>;
+
+        $r5 = virtualinvoke $r4.<android.widget.ArrayAdapter: java.lang.Object getItem(int)>(i0);
+
+        $r6 = (com.android.browser.AddBookmarkPage$BookmarkAccount) $r5;
+
+        l2 = $r6.<com.android.browser.AddBookmarkPage$BookmarkAccount: long rootFolderId>;
+
+        $l3 = r0.<com.android.browser.AddBookmarkPage: long mRootFolder>;
+
+        $b4 = l2 cmp $l3;
+
+        if $b4 == 0 goto label1;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void onRootFolderFound(long)>(l2);
+
+        $r7 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinnerAdapter mFolderAdapter>;
+
+        virtualinvoke $r7.<com.android.browser.addbookmark.FolderSpinnerAdapter: void clearRecentFolder()>();
+
+     label1:
+        return;
+    }
+
+    public void onNothingSelected(android.widget.AdapterView)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.widget.AdapterView r1;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: android.widget.AdapterView;
+
+        return;
+    }
+
+    public volatile void onLoadFinished(android.content.Loader, java.lang.Object)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.content.Loader r1;
+        java.lang.Object r2;
+        android.database.Cursor $r3;
+
+        r0 := @this: com.android.browser.AddBookmarkPage;
+
+        r1 := @parameter0: android.content.Loader;
+
+        r2 := @parameter1: java.lang.Object;
+
+        $r3 = (android.database.Cursor) r2;
+
+        virtualinvoke r0.<com.android.browser.AddBookmarkPage: void onLoadFinished(android.content.Loader,android.database.Cursor)>(r1, $r3);
+
+        return;
+    }
+
+    static boolean access$002(com.android.browser.AddBookmarkPage, boolean)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.browser.AddBookmarkPage: boolean mEditingExisting> = z0;
+
+        return z0;
+    }
+
+    static void access$100(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void showRemoveButton()>();
+
+        return;
+    }
+
+    static android.widget.TextView access$200(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.widget.TextView $r1;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        $r1 = r0.<com.android.browser.AddBookmarkPage: android.widget.TextView mFakeTitle>;
+
+        return $r1;
+    }
+
+    static android.widget.EditText access$300(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.widget.EditText $r1;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        $r1 = r0.<com.android.browser.AddBookmarkPage: android.widget.EditText mTitle>;
+
+        return $r1;
+    }
+
+    static com.android.browser.addbookmark.FolderSpinnerAdapter access$400(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        com.android.browser.addbookmark.FolderSpinnerAdapter $r1;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        $r1 = r0.<com.android.browser.AddBookmarkPage: com.android.browser.addbookmark.FolderSpinnerAdapter mFolderAdapter>;
+
+        return $r1;
+    }
+
+    static android.os.Bundle access$500(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.os.Bundle $r1;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        $r1 = r0.<com.android.browser.AddBookmarkPage: android.os.Bundle mMap>;
+
+        return $r1;
+    }
+
+    static long access$602(com.android.browser.AddBookmarkPage, long)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        long l0;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        l0 := @parameter1: long;
+
+        r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder> = l0;
+
+        return l0;
+    }
+
+    static void access$700(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        specialinvoke r0.<com.android.browser.AddBookmarkPage: void onCurrentFolderFound()>();
+
+        return;
+    }
+
+    static boolean access$800(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        $z0 = r0.<com.android.browser.AddBookmarkPage: boolean mEditingFolder>;
+
+        return $z0;
+    }
+
+    static long access$900(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        long $l0;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        $l0 = r0.<com.android.browser.AddBookmarkPage: long mRootFolder>;
+
+        return $l0;
+    }
+
+    static android.widget.Spinner access$1000(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        android.widget.Spinner $r1;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        $r1 = r0.<com.android.browser.AddBookmarkPage: android.widget.Spinner mAccountSpinner>;
+
+        return $r1;
+    }
+
+    static boolean access$1100(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        $z0 = r0.<com.android.browser.AddBookmarkPage: boolean mIsFolderNamerShowing>;
+
+        return $z0;
+    }
+
+    static long access$600(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        long $l0;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        $l0 = r0.<com.android.browser.AddBookmarkPage: long mCurrentFolder>;
+
+        return $l0;
+    }
+
+    static java.lang.String access$1200(com.android.browser.AddBookmarkPage)
+    {
+        com.android.browser.AddBookmarkPage r0;
+        java.lang.String $r1;
+
+        r0 := @parameter0: com.android.browser.AddBookmarkPage;
+
+        $r1 = r0.<com.android.browser.AddBookmarkPage: java.lang.String mTouchIconUrl>;
+
+        return $r1;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.browser.AddBookmarkPage: int BOOKMARK_DELETED> = 102;
+
+        <com.android.browser.AddBookmarkPage: int TOUCH_ICON_DOWNLOADED> = 101;
+
+        <com.android.browser.AddBookmarkPage: int SAVE_BOOKMARK> = 100;
+
+        <com.android.browser.AddBookmarkPage: int MAX_CRUMBS_SHOWN> = 2;
+
+        <com.android.browser.AddBookmarkPage: java.lang.String EXTRA_IS_FOLDER> = "is_folder";
+
+        <com.android.browser.AddBookmarkPage: java.lang.String EXTRA_EDIT_BOOKMARK> = "bookmark";
+
+        <com.android.browser.AddBookmarkPage: java.lang.String CHECK_FOR_DUPE> = "check_for_dupe";
+
+        <com.android.browser.AddBookmarkPage: java.lang.String USER_AGENT> = "user_agent";
+
+        <com.android.browser.AddBookmarkPage: java.lang.String REMOVE_THUMBNAIL> = "remove_thumbnail";
+
+        <com.android.browser.AddBookmarkPage: java.lang.String TOUCH_ICON_URL> = "touch_icon_url";
+
+        <com.android.browser.AddBookmarkPage: long DEFAULT_FOLDER_ID> = -1L;
+
+        return;
+    }
+}

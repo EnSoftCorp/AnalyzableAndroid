@@ -1,0 +1,873 @@
+public class com.android.server.net.NetworkStatsRecorder extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private static final boolean LOGD;
+    private static final boolean LOGV;
+    private static final java.lang.String TAG_NETSTATS_DUMP;
+    private static final boolean DUMP_BEFORE_DELETE;
+    private final com.android.internal.util.FileRotator mRotator;
+    private final android.net.NetworkStats$NonMonotonicObserver mObserver;
+    private final android.os.DropBoxManager mDropBox;
+    private final java.lang.String mCookie;
+    private final long mBucketDuration;
+    private final boolean mOnlyTags;
+    private long mPersistThresholdBytes;
+    private android.net.NetworkStats mLastSnapshot;
+    private final com.android.server.net.NetworkStatsCollection mPending;
+    private final com.android.server.net.NetworkStatsCollection mSinceBoot;
+    private final com.android.server.net.NetworkStatsRecorder$CombiningRewriter mPendingRewriter;
+    private java.lang.ref.WeakReference mComplete;
+
+    public void <init>(com.android.internal.util.FileRotator, android.net.NetworkStats$NonMonotonicObserver, android.os.DropBoxManager, java.lang.String, long, boolean)
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        com.android.internal.util.FileRotator r1, $r6;
+        android.net.NetworkStats$NonMonotonicObserver r2, $r8;
+        android.os.DropBoxManager r3, $r10;
+        java.lang.String r4;
+        long l0;
+        boolean z0;
+        java.lang.Object $r5, $r7, $r9;
+        com.android.server.net.NetworkStatsCollection $r11, $r12, $r13;
+        com.android.server.net.NetworkStatsRecorder$CombiningRewriter $r14;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        r1 := @parameter0: com.android.internal.util.FileRotator;
+
+        r2 := @parameter1: android.net.NetworkStats$NonMonotonicObserver;
+
+        r3 := @parameter2: android.os.DropBoxManager;
+
+        r4 := @parameter3: java.lang.String;
+
+        l0 := @parameter4: long;
+
+        z0 := @parameter5: boolean;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.net.NetworkStatsRecorder: long mPersistThresholdBytes> = 2097152L;
+
+        $r5 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object,java.lang.Object)>(r1, "missing FileRotator");
+
+        $r6 = (com.android.internal.util.FileRotator) $r5;
+
+        r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator> = $r6;
+
+        $r7 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object,java.lang.Object)>(r2, "missing NonMonotonicObserver");
+
+        $r8 = (android.net.NetworkStats$NonMonotonicObserver) $r7;
+
+        r0.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats$NonMonotonicObserver mObserver> = $r8;
+
+        $r9 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object,java.lang.Object)>(r3, "missing DropBoxManager");
+
+        $r10 = (android.os.DropBoxManager) $r9;
+
+        r0.<com.android.server.net.NetworkStatsRecorder: android.os.DropBoxManager mDropBox> = $r10;
+
+        r0.<com.android.server.net.NetworkStatsRecorder: java.lang.String mCookie> = r4;
+
+        r0.<com.android.server.net.NetworkStatsRecorder: long mBucketDuration> = l0;
+
+        r0.<com.android.server.net.NetworkStatsRecorder: boolean mOnlyTags> = z0;
+
+        $r11 = new com.android.server.net.NetworkStatsCollection;
+
+        specialinvoke $r11.<com.android.server.net.NetworkStatsCollection: void <init>(long)>(l0);
+
+        r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mPending> = $r11;
+
+        $r12 = new com.android.server.net.NetworkStatsCollection;
+
+        specialinvoke $r12.<com.android.server.net.NetworkStatsCollection: void <init>(long)>(l0);
+
+        r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mSinceBoot> = $r12;
+
+        $r14 = new com.android.server.net.NetworkStatsRecorder$CombiningRewriter;
+
+        $r13 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mPending>;
+
+        specialinvoke $r14.<com.android.server.net.NetworkStatsRecorder$CombiningRewriter: void <init>(com.android.server.net.NetworkStatsCollection)>($r13);
+
+        r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsRecorder$CombiningRewriter mPendingRewriter> = $r14;
+
+        return;
+    }
+
+    public void setPersistThreshold(long)
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        long l0, $l1;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        l0 := @parameter0: long;
+
+        $l1 = staticinvoke <android.util.MathUtils: long constrain(long,long,long)>(l0, 1024L, 104857600L);
+
+        r0.<com.android.server.net.NetworkStatsRecorder: long mPersistThresholdBytes> = $l1;
+
+        return;
+    }
+
+    public void resetLocked()
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        com.android.server.net.NetworkStatsCollection $r1, $r2;
+        java.lang.ref.WeakReference $r3;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        r0.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats mLastSnapshot> = null;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mPending>;
+
+        virtualinvoke $r1.<com.android.server.net.NetworkStatsCollection: void reset()>();
+
+        $r2 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mSinceBoot>;
+
+        virtualinvoke $r2.<com.android.server.net.NetworkStatsCollection: void reset()>();
+
+        $r3 = r0.<com.android.server.net.NetworkStatsRecorder: java.lang.ref.WeakReference mComplete>;
+
+        virtualinvoke $r3.<java.lang.ref.WeakReference: void clear()>();
+
+        return;
+    }
+
+    public android.net.NetworkStats$Entry getTotalSinceBootLocked(android.net.NetworkTemplate)
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        android.net.NetworkTemplate r1;
+        com.android.server.net.NetworkStatsCollection $r2;
+        android.net.NetworkStats $r3;
+        android.net.NetworkStats$Entry $r4;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        r1 := @parameter0: android.net.NetworkTemplate;
+
+        $r2 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mSinceBoot>;
+
+        $r3 = virtualinvoke $r2.<com.android.server.net.NetworkStatsCollection: android.net.NetworkStats getSummary(android.net.NetworkTemplate,long,long)>(r1, -9223372036854775808L, 9223372036854775807L);
+
+        $r4 = virtualinvoke $r3.<android.net.NetworkStats: android.net.NetworkStats$Entry getTotal(android.net.NetworkStats$Entry)>(null);
+
+        return $r4;
+    }
+
+    public com.android.server.net.NetworkStatsCollection getOrLoadCompleteLocked()
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        com.android.server.net.NetworkStatsCollection r1, $r4, $r6, $r10;
+        java.io.IOException r2, $r12;
+        java.lang.ref.WeakReference $r3, $r7, $r8;
+        long $l0;
+        com.android.internal.util.FileRotator $r5;
+        java.lang.Object $r9;
+        java.lang.OutOfMemoryError $r11, r13;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        $r3 = r0.<com.android.server.net.NetworkStatsRecorder: java.lang.ref.WeakReference mComplete>;
+
+        if $r3 == null goto label1;
+
+        $r8 = r0.<com.android.server.net.NetworkStatsRecorder: java.lang.ref.WeakReference mComplete>;
+
+        $r9 = virtualinvoke $r8.<java.lang.ref.WeakReference: java.lang.Object get()>();
+
+        $r10 = (com.android.server.net.NetworkStatsCollection) $r9;
+
+        goto label2;
+
+     label1:
+        $r10 = null;
+
+     label2:
+        r1 = $r10;
+
+        if r1 != null goto label7;
+
+     label3:
+        $r4 = new com.android.server.net.NetworkStatsCollection;
+
+        $l0 = r0.<com.android.server.net.NetworkStatsRecorder: long mBucketDuration>;
+
+        specialinvoke $r4.<com.android.server.net.NetworkStatsCollection: void <init>(long)>($l0);
+
+        r1 = $r4;
+
+        $r5 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        virtualinvoke $r5.<com.android.internal.util.FileRotator: void readMatching(com.android.internal.util.FileRotator$Reader,long,long)>(r1, -9223372036854775808L, 9223372036854775807L);
+
+        $r6 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mPending>;
+
+        virtualinvoke r1.<com.android.server.net.NetworkStatsCollection: void recordCollection(com.android.server.net.NetworkStatsCollection)>($r6);
+
+        $r7 = new java.lang.ref.WeakReference;
+
+        specialinvoke $r7.<java.lang.ref.WeakReference: void <init>(java.lang.Object)>(r1);
+
+        r0.<com.android.server.net.NetworkStatsRecorder: java.lang.ref.WeakReference mComplete> = $r7;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r12 := @caughtexception;
+
+        r2 = $r12;
+
+        staticinvoke <android.util.Log: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("NetworkStatsRecorder", "problem completely reading network stats", r2);
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsRecorder: void recoverFromWtf()>();
+
+        goto label7;
+
+     label6:
+        $r11 := @caughtexception;
+
+        r13 = $r11;
+
+        staticinvoke <android.util.Log: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("NetworkStatsRecorder", "problem completely reading network stats", r13);
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsRecorder: void recoverFromWtf()>();
+
+     label7:
+        return r1;
+
+        catch java.io.IOException from label3 to label4 with label5;
+        catch java.lang.OutOfMemoryError from label3 to label4 with label6;
+    }
+
+    public void recordSnapshotLocked(android.net.NetworkStats, java.util.Map, long)
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        android.net.NetworkStats r1, r5, $r9, $r12;
+        java.util.Map r2;
+        long l0, l1, l2, $l5;
+        java.util.HashSet r3;
+        com.android.server.net.NetworkStatsCollection r4, $r15, $r16, $r18, $r20;
+        android.net.NetworkStats$Entry r6;
+        int i3, $i4, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15;
+        com.android.server.net.NetworkIdentitySet r7;
+        java.lang.ref.WeakReference $r8, $r21;
+        android.net.NetworkStats$NonMonotonicObserver $r10;
+        java.lang.String $r11, $r13, $r17;
+        boolean $z0, $z1, $z2;
+        java.lang.Object $r14, $r19;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        r1 := @parameter0: android.net.NetworkStats;
+
+        r2 := @parameter1: java.util.Map;
+
+        l0 := @parameter2: long;
+
+        r3 = staticinvoke <com.google.android.collect.Sets: java.util.HashSet newHashSet()>();
+
+        if r1 != null goto label01;
+
+        return;
+
+     label01:
+        $r9 = r0.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats mLastSnapshot>;
+
+        if $r9 != null goto label02;
+
+        r0.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats mLastSnapshot> = r1;
+
+        return;
+
+     label02:
+        $r8 = r0.<com.android.server.net.NetworkStatsRecorder: java.lang.ref.WeakReference mComplete>;
+
+        if $r8 == null goto label03;
+
+        $r21 = r0.<com.android.server.net.NetworkStatsRecorder: java.lang.ref.WeakReference mComplete>;
+
+        $r19 = virtualinvoke $r21.<java.lang.ref.WeakReference: java.lang.Object get()>();
+
+        $r20 = (com.android.server.net.NetworkStatsCollection) $r19;
+
+        goto label04;
+
+     label03:
+        $r20 = null;
+
+     label04:
+        r4 = $r20;
+
+        $r12 = r0.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats mLastSnapshot>;
+
+        $r10 = r0.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats$NonMonotonicObserver mObserver>;
+
+        $r11 = r0.<com.android.server.net.NetworkStatsRecorder: java.lang.String mCookie>;
+
+        r5 = staticinvoke <android.net.NetworkStats: android.net.NetworkStats subtract(android.net.NetworkStats,android.net.NetworkStats,android.net.NetworkStats$NonMonotonicObserver,java.lang.Object)>(r1, $r12, $r10, $r11);
+
+        l1 = l0;
+
+        $l5 = virtualinvoke r5.<android.net.NetworkStats: long getElapsedRealtime()>();
+
+        l2 = l1 - $l5;
+
+        r6 = null;
+
+        i3 = 0;
+
+     label05:
+        $i4 = virtualinvoke r5.<android.net.NetworkStats: int size()>();
+
+        if i3 >= $i4 goto label12;
+
+        r6 = virtualinvoke r5.<android.net.NetworkStats: android.net.NetworkStats$Entry getValues(int,android.net.NetworkStats$Entry)>(i3, r6);
+
+        $r13 = r6.<android.net.NetworkStats$Entry: java.lang.String iface>;
+
+        $r14 = interfaceinvoke r2.<java.util.Map: java.lang.Object get(java.lang.Object)>($r13);
+
+        r7 = (com.android.server.net.NetworkIdentitySet) $r14;
+
+        if r7 != null goto label06;
+
+        $r17 = r6.<android.net.NetworkStats$Entry: java.lang.String iface>;
+
+        virtualinvoke r3.<java.util.HashSet: boolean add(java.lang.Object)>($r17);
+
+        goto label11;
+
+     label06:
+        $z0 = virtualinvoke r6.<android.net.NetworkStats$Entry: boolean isEmpty()>();
+
+        if $z0 == 0 goto label07;
+
+        goto label11;
+
+     label07:
+        $i6 = r6.<android.net.NetworkStats$Entry: int tag>;
+
+        if $i6 != 0 goto label08;
+
+        $z2 = 1;
+
+        goto label09;
+
+     label08:
+        $z2 = 0;
+
+     label09:
+        $z1 = r0.<com.android.server.net.NetworkStatsRecorder: boolean mOnlyTags>;
+
+        if $z2 == $z1 goto label11;
+
+        $r16 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mPending>;
+
+        $i10 = r6.<android.net.NetworkStats$Entry: int uid>;
+
+        $i7 = r6.<android.net.NetworkStats$Entry: int set>;
+
+        $i8 = r6.<android.net.NetworkStats$Entry: int tag>;
+
+        virtualinvoke $r16.<com.android.server.net.NetworkStatsCollection: void recordData(com.android.server.net.NetworkIdentitySet,int,int,int,long,long,android.net.NetworkStats$Entry)>(r7, $i10, $i7, $i8, l2, l1, r6);
+
+        $r15 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mSinceBoot>;
+
+        if $r15 == null goto label10;
+
+        $r18 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mSinceBoot>;
+
+        $i15 = r6.<android.net.NetworkStats$Entry: int uid>;
+
+        $i12 = r6.<android.net.NetworkStats$Entry: int set>;
+
+        $i11 = r6.<android.net.NetworkStats$Entry: int tag>;
+
+        virtualinvoke $r18.<com.android.server.net.NetworkStatsCollection: void recordData(com.android.server.net.NetworkIdentitySet,int,int,int,long,long,android.net.NetworkStats$Entry)>(r7, $i15, $i12, $i11, l2, l1, r6);
+
+     label10:
+        if r4 == null goto label11;
+
+        $i14 = r6.<android.net.NetworkStats$Entry: int uid>;
+
+        $i13 = r6.<android.net.NetworkStats$Entry: int set>;
+
+        $i9 = r6.<android.net.NetworkStats$Entry: int tag>;
+
+        virtualinvoke r4.<com.android.server.net.NetworkStatsCollection: void recordData(com.android.server.net.NetworkIdentitySet,int,int,int,long,long,android.net.NetworkStats$Entry)>(r7, $i14, $i13, $i9, l2, l1, r6);
+
+     label11:
+        i3 = i3 + 1;
+
+        goto label05;
+
+     label12:
+        r0.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats mLastSnapshot> = r1;
+
+        return;
+    }
+
+    public void maybePersistLocked(long)
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        long l0, l1, $l2;
+        com.android.server.net.NetworkStatsCollection $r1;
+        byte $b3;
+        com.android.internal.util.FileRotator $r2;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        l0 := @parameter0: long;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mPending>;
+
+        l1 = virtualinvoke $r1.<com.android.server.net.NetworkStatsCollection: long getTotalBytes()>();
+
+        $l2 = r0.<com.android.server.net.NetworkStatsRecorder: long mPersistThresholdBytes>;
+
+        $b3 = l1 cmp $l2;
+
+        if $b3 < 0 goto label1;
+
+        virtualinvoke r0.<com.android.server.net.NetworkStatsRecorder: void forcePersistLocked(long)>(l0);
+
+        goto label2;
+
+     label1:
+        $r2 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        virtualinvoke $r2.<com.android.internal.util.FileRotator: void maybeRotate(long)>(l0);
+
+     label2:
+        return;
+    }
+
+    public void forcePersistLocked(long)
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        long l0;
+        java.io.IOException r1, $r8;
+        com.android.server.net.NetworkStatsCollection $r2, $r6;
+        boolean $z0;
+        com.android.server.net.NetworkStatsRecorder$CombiningRewriter $r3;
+        com.android.internal.util.FileRotator $r4, $r5;
+        java.lang.OutOfMemoryError $r7, r9;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        l0 := @parameter0: long;
+
+        $r2 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mPending>;
+
+        $z0 = virtualinvoke $r2.<com.android.server.net.NetworkStatsCollection: boolean isDirty()>();
+
+        if $z0 == 0 goto label5;
+
+     label1:
+        $r4 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        $r3 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsRecorder$CombiningRewriter mPendingRewriter>;
+
+        virtualinvoke $r4.<com.android.internal.util.FileRotator: void rewriteActive(com.android.internal.util.FileRotator$Rewriter,long)>($r3, l0);
+
+        $r5 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        virtualinvoke $r5.<com.android.internal.util.FileRotator: void maybeRotate(long)>(l0);
+
+        $r6 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mPending>;
+
+        virtualinvoke $r6.<com.android.server.net.NetworkStatsCollection: void reset()>();
+
+     label2:
+        goto label5;
+
+     label3:
+        $r8 := @caughtexception;
+
+        r1 = $r8;
+
+        staticinvoke <android.util.Log: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("NetworkStatsRecorder", "problem persisting pending stats", r1);
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsRecorder: void recoverFromWtf()>();
+
+        goto label5;
+
+     label4:
+        $r7 := @caughtexception;
+
+        r9 = $r7;
+
+        staticinvoke <android.util.Log: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("NetworkStatsRecorder", "problem persisting pending stats", r9);
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsRecorder: void recoverFromWtf()>();
+
+     label5:
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+        catch java.lang.OutOfMemoryError from label1 to label2 with label4;
+    }
+
+    public void removeUidsLocked(int[])
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        int[] r1;
+        java.io.IOException r2, $r14;
+        com.android.server.net.NetworkStatsRecorder$RemoveUidRewriter $r3;
+        long $l0;
+        com.android.internal.util.FileRotator $r4;
+        com.android.server.net.NetworkStatsCollection $r5, $r6, $r11, r27;
+        android.net.NetworkStats $r7, $r12, $r13;
+        java.lang.ref.WeakReference $r8, $r9;
+        java.lang.Object $r10;
+        java.lang.StringBuilder $r15, $r17, $r19, $r21, $r23, $r25;
+        java.lang.String $r16, $r18, $r22, $r24;
+        java.lang.OutOfMemoryError $r20, r26;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        r1 := @parameter0: int[];
+
+     label1:
+        $r4 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        $r3 = new com.android.server.net.NetworkStatsRecorder$RemoveUidRewriter;
+
+        $l0 = r0.<com.android.server.net.NetworkStatsRecorder: long mBucketDuration>;
+
+        specialinvoke $r3.<com.android.server.net.NetworkStatsRecorder$RemoveUidRewriter: void <init>(long,int[])>($l0, r1);
+
+        virtualinvoke $r4.<com.android.internal.util.FileRotator: void rewriteAll(com.android.internal.util.FileRotator$Rewriter)>($r3);
+
+     label2:
+        goto label5;
+
+     label3:
+        $r14 := @caughtexception;
+
+        r2 = $r14;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        $r17 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("problem removing UIDs ");
+
+        $r16 = staticinvoke <java.util.Arrays: java.lang.String toString(int[])>(r1);
+
+        $r19 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r16);
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("NetworkStatsRecorder", $r18, r2);
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsRecorder: void recoverFromWtf()>();
+
+        goto label5;
+
+     label4:
+        $r20 := @caughtexception;
+
+        r26 = $r20;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        $r23 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("problem removing UIDs ");
+
+        $r22 = staticinvoke <java.util.Arrays: java.lang.String toString(int[])>(r1);
+
+        $r25 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r22);
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("NetworkStatsRecorder", $r24, r26);
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsRecorder: void recoverFromWtf()>();
+
+     label5:
+        $r5 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mPending>;
+
+        virtualinvoke $r5.<com.android.server.net.NetworkStatsCollection: void removeUids(int[])>(r1);
+
+        $r6 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mSinceBoot>;
+
+        virtualinvoke $r6.<com.android.server.net.NetworkStatsCollection: void removeUids(int[])>(r1);
+
+        $r7 = r0.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats mLastSnapshot>;
+
+        if $r7 == null goto label6;
+
+        $r12 = r0.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats mLastSnapshot>;
+
+        $r13 = virtualinvoke $r12.<android.net.NetworkStats: android.net.NetworkStats withoutUids(int[])>(r1);
+
+        r0.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats mLastSnapshot> = $r13;
+
+     label6:
+        $r8 = r0.<com.android.server.net.NetworkStatsRecorder: java.lang.ref.WeakReference mComplete>;
+
+        if $r8 == null goto label7;
+
+        $r9 = r0.<com.android.server.net.NetworkStatsRecorder: java.lang.ref.WeakReference mComplete>;
+
+        $r10 = virtualinvoke $r9.<java.lang.ref.WeakReference: java.lang.Object get()>();
+
+        $r11 = (com.android.server.net.NetworkStatsCollection) $r10;
+
+        goto label8;
+
+     label7:
+        $r11 = null;
+
+     label8:
+        r27 = $r11;
+
+        if r27 == null goto label9;
+
+        virtualinvoke r27.<com.android.server.net.NetworkStatsCollection: void removeUids(int[])>(r1);
+
+     label9:
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+        catch java.lang.OutOfMemoryError from label1 to label2 with label4;
+    }
+
+    public void importLegacyNetworkLocked(java.io.File) throws java.io.IOException
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        java.io.File r1;
+        com.android.server.net.NetworkStatsCollection r2, $r4;
+        long l0, l1, $l2;
+        com.android.internal.util.FileRotator $r3, $r6, $r7;
+        boolean $z0;
+        com.android.server.net.NetworkStatsRecorder$CombiningRewriter $r5;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        r1 := @parameter0: java.io.File;
+
+        $r3 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        virtualinvoke $r3.<com.android.internal.util.FileRotator: void deleteAll()>();
+
+        $r4 = new com.android.server.net.NetworkStatsCollection;
+
+        $l2 = r0.<com.android.server.net.NetworkStatsRecorder: long mBucketDuration>;
+
+        specialinvoke $r4.<com.android.server.net.NetworkStatsCollection: void <init>(long)>($l2);
+
+        r2 = $r4;
+
+        virtualinvoke r2.<com.android.server.net.NetworkStatsCollection: void readLegacyNetwork(java.io.File)>(r1);
+
+        l0 = virtualinvoke r2.<com.android.server.net.NetworkStatsCollection: long getStartMillis()>();
+
+        l1 = virtualinvoke r2.<com.android.server.net.NetworkStatsCollection: long getEndMillis()>();
+
+        $z0 = virtualinvoke r2.<com.android.server.net.NetworkStatsCollection: boolean isEmpty()>();
+
+        if $z0 != 0 goto label1;
+
+        $r6 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        $r5 = new com.android.server.net.NetworkStatsRecorder$CombiningRewriter;
+
+        specialinvoke $r5.<com.android.server.net.NetworkStatsRecorder$CombiningRewriter: void <init>(com.android.server.net.NetworkStatsCollection)>(r2);
+
+        virtualinvoke $r6.<com.android.internal.util.FileRotator: void rewriteActive(com.android.internal.util.FileRotator$Rewriter,long)>($r5, l0);
+
+        $r7 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        virtualinvoke $r7.<com.android.internal.util.FileRotator: void maybeRotate(long)>(l1);
+
+     label1:
+        return;
+    }
+
+    public void importLegacyUidLocked(java.io.File) throws java.io.IOException
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        java.io.File r1;
+        com.android.server.net.NetworkStatsCollection r2, $r4;
+        long l0, l1, $l2;
+        com.android.internal.util.FileRotator $r3, $r6, $r7;
+        boolean $z0, $z1;
+        com.android.server.net.NetworkStatsRecorder$CombiningRewriter $r5;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        r1 := @parameter0: java.io.File;
+
+        $r3 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        virtualinvoke $r3.<com.android.internal.util.FileRotator: void deleteAll()>();
+
+        $r4 = new com.android.server.net.NetworkStatsCollection;
+
+        $l2 = r0.<com.android.server.net.NetworkStatsRecorder: long mBucketDuration>;
+
+        specialinvoke $r4.<com.android.server.net.NetworkStatsCollection: void <init>(long)>($l2);
+
+        r2 = $r4;
+
+        $z0 = r0.<com.android.server.net.NetworkStatsRecorder: boolean mOnlyTags>;
+
+        virtualinvoke r2.<com.android.server.net.NetworkStatsCollection: void readLegacyUid(java.io.File,boolean)>(r1, $z0);
+
+        l0 = virtualinvoke r2.<com.android.server.net.NetworkStatsCollection: long getStartMillis()>();
+
+        l1 = virtualinvoke r2.<com.android.server.net.NetworkStatsCollection: long getEndMillis()>();
+
+        $z1 = virtualinvoke r2.<com.android.server.net.NetworkStatsCollection: boolean isEmpty()>();
+
+        if $z1 != 0 goto label1;
+
+        $r6 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        $r5 = new com.android.server.net.NetworkStatsRecorder$CombiningRewriter;
+
+        specialinvoke $r5.<com.android.server.net.NetworkStatsRecorder$CombiningRewriter: void <init>(com.android.server.net.NetworkStatsCollection)>(r2);
+
+        virtualinvoke $r6.<com.android.internal.util.FileRotator: void rewriteActive(com.android.internal.util.FileRotator$Rewriter,long)>($r5, l0);
+
+        $r7 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        virtualinvoke $r7.<com.android.internal.util.FileRotator: void maybeRotate(long)>(l1);
+
+     label1:
+        return;
+    }
+
+    public void dumpLocked(com.android.internal.util.IndentingPrintWriter, boolean)
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        com.android.internal.util.IndentingPrintWriter r1;
+        boolean z0;
+        com.android.server.net.NetworkStatsCollection $r2, $r3, $r4;
+        long $l0;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        r1 := @parameter0: com.android.internal.util.IndentingPrintWriter;
+
+        z0 := @parameter1: boolean;
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Pending bytes: ");
+
+        $r2 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mPending>;
+
+        $l0 = virtualinvoke $r2.<com.android.server.net.NetworkStatsCollection: long getTotalBytes()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(long)>($l0);
+
+        if z0 == 0 goto label1;
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Complete history:");
+
+        $r4 = virtualinvoke r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection getOrLoadCompleteLocked()>();
+
+        virtualinvoke $r4.<com.android.server.net.NetworkStatsCollection: void dump(com.android.internal.util.IndentingPrintWriter)>(r1);
+
+        goto label2;
+
+     label1:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("History since boot:");
+
+        $r3 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection mSinceBoot>;
+
+        virtualinvoke $r3.<com.android.server.net.NetworkStatsCollection: void dump(com.android.internal.util.IndentingPrintWriter)>(r1);
+
+     label2:
+        return;
+    }
+
+    private void recoverFromWtf()
+    {
+        com.android.server.net.NetworkStatsRecorder r0;
+        java.io.ByteArrayOutputStream r1, $r4;
+        java.lang.Throwable r3, $r9;
+        com.android.internal.util.FileRotator $r5, $r8;
+        android.os.DropBoxManager $r6;
+        byte[] $r7;
+        java.io.IOException $r10;
+
+        r0 := @this: com.android.server.net.NetworkStatsRecorder;
+
+        $r4 = new java.io.ByteArrayOutputStream;
+
+        specialinvoke $r4.<java.io.ByteArrayOutputStream: void <init>()>();
+
+        r1 = $r4;
+
+     label1:
+        $r5 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        virtualinvoke $r5.<com.android.internal.util.FileRotator: void dumpAll(java.io.OutputStream)>(r1);
+
+     label2:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r1);
+
+        goto label7;
+
+     label3:
+        $r10 := @caughtexception;
+
+        virtualinvoke r1.<java.io.ByteArrayOutputStream: void reset()>();
+
+     label4:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r1);
+
+        goto label7;
+
+     label5:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+     label6:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r1);
+
+        throw r3;
+
+     label7:
+        $r6 = r0.<com.android.server.net.NetworkStatsRecorder: android.os.DropBoxManager mDropBox>;
+
+        $r7 = virtualinvoke r1.<java.io.ByteArrayOutputStream: byte[] toByteArray()>();
+
+        virtualinvoke $r6.<android.os.DropBoxManager: void addData(java.lang.String,byte[],int)>("netstats_dump", $r7, 0);
+
+        $r8 = r0.<com.android.server.net.NetworkStatsRecorder: com.android.internal.util.FileRotator mRotator>;
+
+        virtualinvoke $r8.<com.android.internal.util.FileRotator: void deleteAll()>();
+
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.net.NetworkStatsRecorder: boolean DUMP_BEFORE_DELETE> = 1;
+
+        <com.android.server.net.NetworkStatsRecorder: java.lang.String TAG_NETSTATS_DUMP> = "netstats_dump";
+
+        <com.android.server.net.NetworkStatsRecorder: boolean LOGV> = 0;
+
+        <com.android.server.net.NetworkStatsRecorder: boolean LOGD> = 0;
+
+        <com.android.server.net.NetworkStatsRecorder: java.lang.String TAG> = "NetworkStatsRecorder";
+
+        return;
+    }
+}

@@ -1,0 +1,1504 @@
+public class com.android.server.wifi.WifiWatchdogStateMachine extends com.android.internal.util.StateMachine
+{
+    private static final boolean DBG;
+    private static final int BASE;
+    private static final int EVENT_WATCHDOG_TOGGLED;
+    private static final int EVENT_NETWORK_STATE_CHANGE;
+    private static final int EVENT_RSSI_CHANGE;
+    private static final int EVENT_SUPPLICANT_STATE_CHANGE;
+    private static final int EVENT_WIFI_RADIO_STATE_CHANGE;
+    private static final int EVENT_WATCHDOG_SETTINGS_CHANGE;
+    private static final int EVENT_BSSID_CHANGE;
+    private static final int EVENT_SCREEN_ON;
+    private static final int EVENT_SCREEN_OFF;
+    private static final int CMD_RSSI_FETCH;
+    static final int POOR_LINK_DETECTED;
+    static final int GOOD_LINK_DETECTED;
+    private static final int LINK_MONITOR_LEVEL_THRESHOLD;
+    private static final int BSSID_STAT_CACHE_SIZE;
+    private static final int BSSID_STAT_RANGE_LOW_DBM;
+    private static final int BSSID_STAT_RANGE_HIGH_DBM;
+    private static final int BSSID_STAT_EMPTY_COUNT;
+    private static final long LINK_SAMPLING_INTERVAL_MS;
+    private static final double EXP_COEFFICIENT_RECORD;
+    private static final double EXP_COEFFICIENT_MONITOR;
+    private static final double POOR_LINK_LOSS_THRESHOLD;
+    private static final double GOOD_LINK_LOSS_THRESHOLD;
+    private static final int POOR_LINK_SAMPLE_COUNT;
+    private static final double POOR_LINK_MIN_VOLUME;
+    private static final int GOOD_LINK_RSSI_RANGE_MIN;
+    private static final int GOOD_LINK_RSSI_RANGE_MAX;
+    private static final com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget[] GOOD_LINK_TARGET;
+    private static final com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime[] MAX_AVOID_TIME;
+    private android.content.Context mContext;
+    private android.content.ContentResolver mContentResolver;
+    private android.net.wifi.WifiManager mWifiManager;
+    private android.content.IntentFilter mIntentFilter;
+    private android.content.BroadcastReceiver mBroadcastReceiver;
+    private com.android.internal.util.AsyncChannel mWsmChannel;
+    private android.net.wifi.WifiInfo mWifiInfo;
+    private android.net.LinkProperties mLinkProperties;
+    private static boolean sWifiOnly;
+    private boolean mPoorNetworkDetectionEnabled;
+    private android.util.LruCache mBssidCache;
+    private int mRssiFetchToken;
+    private int mCurrentSignalLevel;
+    private com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid;
+    private com.android.server.wifi.WifiWatchdogStateMachine$VolumeWeightedEMA mCurrentLoss;
+    private boolean mIsScreenOn;
+    private static double[] sPresetLoss;
+    private com.android.server.wifi.WifiWatchdogStateMachine$DefaultState mDefaultState;
+    private com.android.server.wifi.WifiWatchdogStateMachine$WatchdogDisabledState mWatchdogDisabledState;
+    private com.android.server.wifi.WifiWatchdogStateMachine$WatchdogEnabledState mWatchdogEnabledState;
+    private com.android.server.wifi.WifiWatchdogStateMachine$NotConnectedState mNotConnectedState;
+    private com.android.server.wifi.WifiWatchdogStateMachine$VerifyingLinkState mVerifyingLinkState;
+    private com.android.server.wifi.WifiWatchdogStateMachine$ConnectedState mConnectedState;
+    private com.android.server.wifi.WifiWatchdogStateMachine$OnlineWatchState mOnlineWatchState;
+    private com.android.server.wifi.WifiWatchdogStateMachine$LinkMonitoringState mLinkMonitoringState;
+    private com.android.server.wifi.WifiWatchdogStateMachine$OnlineState mOnlineState;
+
+    private void <init>(android.content.Context, android.os.Messenger)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        android.content.Context r1, $r19;
+        android.os.Messenger r2;
+        com.android.internal.util.AsyncChannel $r3, $r16;
+        android.util.LruCache $r4;
+        com.android.server.wifi.WifiWatchdogStateMachine$DefaultState $r5, $r20, $r22, $r24;
+        com.android.server.wifi.WifiWatchdogStateMachine$WatchdogDisabledState $r6, $r21, $r35;
+        com.android.server.wifi.WifiWatchdogStateMachine$WatchdogEnabledState $r7, $r23, $r26, $r28, $r30;
+        com.android.server.wifi.WifiWatchdogStateMachine$NotConnectedState $r8, $r25, $r38;
+        com.android.server.wifi.WifiWatchdogStateMachine$VerifyingLinkState $r9, $r27;
+        com.android.server.wifi.WifiWatchdogStateMachine$ConnectedState $r10, $r29, $r31, $r33, $r36;
+        com.android.server.wifi.WifiWatchdogStateMachine$OnlineWatchState $r11, $r34;
+        com.android.server.wifi.WifiWatchdogStateMachine$LinkMonitoringState $r12, $r32;
+        com.android.server.wifi.WifiWatchdogStateMachine$OnlineState $r13, $r37;
+        android.content.ContentResolver $r14;
+        java.lang.Object $r15;
+        android.net.wifi.WifiManager $r17;
+        android.os.Handler $r18;
+        boolean $z0;
+
+        r0 := @this: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.os.Messenger;
+
+        specialinvoke r0.<com.android.internal.util.StateMachine: void <init>(java.lang.String)>("WifiWatchdogStateMachine");
+
+        $r3 = new com.android.internal.util.AsyncChannel;
+
+        specialinvoke $r3.<com.android.internal.util.AsyncChannel: void <init>()>();
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.internal.util.AsyncChannel mWsmChannel> = $r3;
+
+        $r4 = new android.util.LruCache;
+
+        specialinvoke $r4.<android.util.LruCache: void <init>(int)>(20);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.util.LruCache mBssidCache> = $r4;
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: int mRssiFetchToken> = 0;
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: boolean mIsScreenOn> = 1;
+
+        $r5 = new com.android.server.wifi.WifiWatchdogStateMachine$DefaultState;
+
+        specialinvoke $r5.<com.android.server.wifi.WifiWatchdogStateMachine$DefaultState: void <init>(com.android.server.wifi.WifiWatchdogStateMachine)>(r0);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$DefaultState mDefaultState> = $r5;
+
+        $r6 = new com.android.server.wifi.WifiWatchdogStateMachine$WatchdogDisabledState;
+
+        specialinvoke $r6.<com.android.server.wifi.WifiWatchdogStateMachine$WatchdogDisabledState: void <init>(com.android.server.wifi.WifiWatchdogStateMachine)>(r0);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$WatchdogDisabledState mWatchdogDisabledState> = $r6;
+
+        $r7 = new com.android.server.wifi.WifiWatchdogStateMachine$WatchdogEnabledState;
+
+        specialinvoke $r7.<com.android.server.wifi.WifiWatchdogStateMachine$WatchdogEnabledState: void <init>(com.android.server.wifi.WifiWatchdogStateMachine)>(r0);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$WatchdogEnabledState mWatchdogEnabledState> = $r7;
+
+        $r8 = new com.android.server.wifi.WifiWatchdogStateMachine$NotConnectedState;
+
+        specialinvoke $r8.<com.android.server.wifi.WifiWatchdogStateMachine$NotConnectedState: void <init>(com.android.server.wifi.WifiWatchdogStateMachine)>(r0);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$NotConnectedState mNotConnectedState> = $r8;
+
+        $r9 = new com.android.server.wifi.WifiWatchdogStateMachine$VerifyingLinkState;
+
+        specialinvoke $r9.<com.android.server.wifi.WifiWatchdogStateMachine$VerifyingLinkState: void <init>(com.android.server.wifi.WifiWatchdogStateMachine)>(r0);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$VerifyingLinkState mVerifyingLinkState> = $r9;
+
+        $r10 = new com.android.server.wifi.WifiWatchdogStateMachine$ConnectedState;
+
+        specialinvoke $r10.<com.android.server.wifi.WifiWatchdogStateMachine$ConnectedState: void <init>(com.android.server.wifi.WifiWatchdogStateMachine)>(r0);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$ConnectedState mConnectedState> = $r10;
+
+        $r11 = new com.android.server.wifi.WifiWatchdogStateMachine$OnlineWatchState;
+
+        specialinvoke $r11.<com.android.server.wifi.WifiWatchdogStateMachine$OnlineWatchState: void <init>(com.android.server.wifi.WifiWatchdogStateMachine)>(r0);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$OnlineWatchState mOnlineWatchState> = $r11;
+
+        $r12 = new com.android.server.wifi.WifiWatchdogStateMachine$LinkMonitoringState;
+
+        specialinvoke $r12.<com.android.server.wifi.WifiWatchdogStateMachine$LinkMonitoringState: void <init>(com.android.server.wifi.WifiWatchdogStateMachine)>(r0);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$LinkMonitoringState mLinkMonitoringState> = $r12;
+
+        $r13 = new com.android.server.wifi.WifiWatchdogStateMachine$OnlineState;
+
+        specialinvoke $r13.<com.android.server.wifi.WifiWatchdogStateMachine$OnlineState: void <init>(com.android.server.wifi.WifiWatchdogStateMachine)>(r0);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$OnlineState mOnlineState> = $r13;
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.Context mContext> = r1;
+
+        $r14 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.ContentResolver mContentResolver> = $r14;
+
+        $r15 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("wifi");
+
+        $r17 = (android.net.wifi.WifiManager) $r15;
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.net.wifi.WifiManager mWifiManager> = $r17;
+
+        $r16 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.internal.util.AsyncChannel mWsmChannel>;
+
+        $r19 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.Context mContext>;
+
+        $r18 = virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.os.Handler getHandler()>();
+
+        virtualinvoke $r16.<com.android.internal.util.AsyncChannel: int connectSync(android.content.Context,android.os.Handler,android.os.Messenger)>($r19, $r18, r2);
+
+        specialinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void setupNetworkReceiver()>();
+
+        specialinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void registerForSettingsChanges()>();
+
+        specialinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void registerForWatchdogToggle()>();
+
+        $r20 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$DefaultState mDefaultState>;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void addState(com.android.internal.util.State)>($r20);
+
+        $r21 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$WatchdogDisabledState mWatchdogDisabledState>;
+
+        $r22 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$DefaultState mDefaultState>;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void addState(com.android.internal.util.State,com.android.internal.util.State)>($r21, $r22);
+
+        $r23 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$WatchdogEnabledState mWatchdogEnabledState>;
+
+        $r24 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$DefaultState mDefaultState>;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void addState(com.android.internal.util.State,com.android.internal.util.State)>($r23, $r24);
+
+        $r25 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$NotConnectedState mNotConnectedState>;
+
+        $r26 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$WatchdogEnabledState mWatchdogEnabledState>;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void addState(com.android.internal.util.State,com.android.internal.util.State)>($r25, $r26);
+
+        $r27 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$VerifyingLinkState mVerifyingLinkState>;
+
+        $r28 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$WatchdogEnabledState mWatchdogEnabledState>;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void addState(com.android.internal.util.State,com.android.internal.util.State)>($r27, $r28);
+
+        $r29 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$ConnectedState mConnectedState>;
+
+        $r30 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$WatchdogEnabledState mWatchdogEnabledState>;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void addState(com.android.internal.util.State,com.android.internal.util.State)>($r29, $r30);
+
+        $r34 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$OnlineWatchState mOnlineWatchState>;
+
+        $r33 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$ConnectedState mConnectedState>;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void addState(com.android.internal.util.State,com.android.internal.util.State)>($r34, $r33);
+
+        $r32 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$LinkMonitoringState mLinkMonitoringState>;
+
+        $r31 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$ConnectedState mConnectedState>;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void addState(com.android.internal.util.State,com.android.internal.util.State)>($r32, $r31);
+
+        $r37 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$OnlineState mOnlineState>;
+
+        $r36 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$ConnectedState mConnectedState>;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void addState(com.android.internal.util.State,com.android.internal.util.State)>($r37, $r36);
+
+        $z0 = specialinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: boolean isWatchdogEnabled()>();
+
+        if $z0 == 0 goto label1;
+
+        $r38 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$NotConnectedState mNotConnectedState>;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void setInitialState(com.android.internal.util.State)>($r38);
+
+        goto label2;
+
+     label1:
+        $r35 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$WatchdogDisabledState mWatchdogDisabledState>;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void setInitialState(com.android.internal.util.State)>($r35);
+
+     label2:
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void setLogRecSize(int)>(25);
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void setLogOnlyTransitions(boolean)>(1);
+
+        specialinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void updateSettings()>();
+
+        return;
+    }
+
+    public static com.android.server.wifi.WifiWatchdogStateMachine makeWifiWatchdogStateMachine(android.content.Context, android.os.Messenger)
+    {
+        android.content.Context r0;
+        android.os.Messenger r1;
+        android.content.ContentResolver r2;
+        android.net.ConnectivityManager r3;
+        com.android.server.wifi.WifiWatchdogStateMachine r4, $r6;
+        java.lang.Object $r5;
+        boolean $z0, $z2;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: android.os.Messenger;
+
+        r2 = virtualinvoke r0.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r5 = virtualinvoke r0.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("connectivity");
+
+        r3 = (android.net.ConnectivityManager) $r5;
+
+        $z0 = virtualinvoke r3.<android.net.ConnectivityManager: boolean isNetworkSupported(int)>(0);
+
+        if $z0 != 0 goto label1;
+
+        $z2 = 1;
+
+        goto label2;
+
+     label1:
+        $z2 = 0;
+
+     label2:
+        <com.android.server.wifi.WifiWatchdogStateMachine: boolean sWifiOnly> = $z2;
+
+        staticinvoke <com.android.server.wifi.WifiWatchdogStateMachine: boolean putSettingsGlobalBoolean(android.content.ContentResolver,java.lang.String,boolean)>(r2, "wifi_watchdog_on", 1);
+
+        $r6 = new com.android.server.wifi.WifiWatchdogStateMachine;
+
+        specialinvoke $r6.<com.android.server.wifi.WifiWatchdogStateMachine: void <init>(android.content.Context,android.os.Messenger)>(r0, r1);
+
+        r4 = $r6;
+
+        virtualinvoke r4.<com.android.server.wifi.WifiWatchdogStateMachine: void start()>();
+
+        return r4;
+    }
+
+    private void setupNetworkReceiver()
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$1 $r1;
+        android.content.IntentFilter $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9;
+        android.content.BroadcastReceiver $r10;
+        android.content.Context $r11;
+
+        r0 := @this: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = new com.android.server.wifi.WifiWatchdogStateMachine$1;
+
+        specialinvoke $r1.<com.android.server.wifi.WifiWatchdogStateMachine$1: void <init>(com.android.server.wifi.WifiWatchdogStateMachine)>(r0);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.BroadcastReceiver mBroadcastReceiver> = $r1;
+
+        $r2 = new android.content.IntentFilter;
+
+        specialinvoke $r2.<android.content.IntentFilter: void <init>()>();
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.IntentFilter mIntentFilter> = $r2;
+
+        $r3 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.IntentFilter mIntentFilter>;
+
+        virtualinvoke $r3.<android.content.IntentFilter: void addAction(java.lang.String)>("android.net.wifi.STATE_CHANGE");
+
+        $r4 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.IntentFilter mIntentFilter>;
+
+        virtualinvoke $r4.<android.content.IntentFilter: void addAction(java.lang.String)>("android.net.wifi.WIFI_STATE_CHANGED");
+
+        $r5 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.IntentFilter mIntentFilter>;
+
+        virtualinvoke $r5.<android.content.IntentFilter: void addAction(java.lang.String)>("android.net.wifi.RSSI_CHANGED");
+
+        $r6 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.IntentFilter mIntentFilter>;
+
+        virtualinvoke $r6.<android.content.IntentFilter: void addAction(java.lang.String)>("android.net.wifi.supplicant.STATE_CHANGE");
+
+        $r7 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.IntentFilter mIntentFilter>;
+
+        virtualinvoke $r7.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.SCREEN_ON");
+
+        $r8 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.IntentFilter mIntentFilter>;
+
+        virtualinvoke $r8.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.SCREEN_OFF");
+
+        $r11 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.Context mContext>;
+
+        $r10 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.BroadcastReceiver mBroadcastReceiver>;
+
+        $r9 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.IntentFilter mIntentFilter>;
+
+        virtualinvoke $r11.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r10, $r9);
+
+        return;
+    }
+
+    private void registerForWatchdogToggle()
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$2 r1, $r2;
+        android.os.Handler $r3;
+        android.content.Context $r4;
+        android.content.ContentResolver $r5;
+        android.net.Uri $r6;
+
+        r0 := @this: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r2 = new com.android.server.wifi.WifiWatchdogStateMachine$2;
+
+        $r3 = virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.os.Handler getHandler()>();
+
+        specialinvoke $r2.<com.android.server.wifi.WifiWatchdogStateMachine$2: void <init>(com.android.server.wifi.WifiWatchdogStateMachine,android.os.Handler)>(r0, $r3);
+
+        r1 = $r2;
+
+        $r4 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r6 = staticinvoke <android.provider.Settings$Global: android.net.Uri getUriFor(java.lang.String)>("wifi_watchdog_on");
+
+        virtualinvoke $r5.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver)>($r6, 0, r1);
+
+        return;
+    }
+
+    private void registerForSettingsChanges()
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$3 r1, $r2;
+        android.os.Handler $r3;
+        android.content.Context $r4;
+        android.content.ContentResolver $r5;
+        android.net.Uri $r6;
+
+        r0 := @this: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r2 = new com.android.server.wifi.WifiWatchdogStateMachine$3;
+
+        $r3 = virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.os.Handler getHandler()>();
+
+        specialinvoke $r2.<com.android.server.wifi.WifiWatchdogStateMachine$3: void <init>(com.android.server.wifi.WifiWatchdogStateMachine,android.os.Handler)>(r0, $r3);
+
+        r1 = $r2;
+
+        $r4 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r6 = staticinvoke <android.provider.Settings$Global: android.net.Uri getUriFor(java.lang.String)>("wifi_watchdog_poor_network_test_enabled");
+
+        virtualinvoke $r5.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver)>($r6, 0, r1);
+
+        return;
+    }
+
+    public void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        java.lang.StringBuilder $r4, $r5, $r7, $r8, $r10, $r11, $r13, $r14, $r16, $r17, $r18, $r20, $r21, $r22, $r23, $r25;
+        android.net.wifi.WifiInfo $r6;
+        java.lang.String $r9, $r15, $r19, $r24;
+        android.net.LinkProperties $r12;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        specialinvoke r0.<com.android.internal.util.StateMachine: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r1, r2, r3);
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mWifiInfo: [");
+
+        $r6 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.net.wifi.WifiInfo mWifiInfo>;
+
+        $r7 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r6);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r9);
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mLinkProperties: [");
+
+        $r12 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.net.LinkProperties mLinkProperties>;
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r12);
+
+        $r14 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r15 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r15);
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        $r16 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mCurrentSignalLevel: [");
+
+        $i0 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: int mCurrentSignalLevel>;
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r20 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r19 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r19);
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mPoorNetworkDetectionEnabled: [");
+
+        $z0 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: boolean mPoorNetworkDetectionEnabled>;
+
+        $r23 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r25 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r24);
+
+        return;
+    }
+
+    private boolean isWatchdogEnabled()
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        boolean z0;
+        android.content.ContentResolver $r1;
+
+        r0 := @this: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.ContentResolver mContentResolver>;
+
+        z0 = staticinvoke <com.android.server.wifi.WifiWatchdogStateMachine: boolean getSettingsGlobalBoolean(android.content.ContentResolver,java.lang.String,boolean)>($r1, "wifi_watchdog_on", 1);
+
+        return z0;
+    }
+
+    private void updateSettings()
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        boolean $z0, $z1;
+        android.content.ContentResolver $r1;
+
+        r0 := @this: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $z0 = <com.android.server.wifi.WifiWatchdogStateMachine: boolean sWifiOnly>;
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void logd(java.lang.String)>("Disabling poor network avoidance for wi-fi only device");
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: boolean mPoorNetworkDetectionEnabled> = 0;
+
+        goto label2;
+
+     label1:
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.content.ContentResolver mContentResolver>;
+
+        $z1 = staticinvoke <com.android.server.wifi.WifiWatchdogStateMachine: boolean getSettingsGlobalBoolean(android.content.ContentResolver,java.lang.String,boolean)>($r1, "wifi_watchdog_poor_network_test_enabled", 0);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: boolean mPoorNetworkDetectionEnabled> = $z1;
+
+     label2:
+        return;
+    }
+
+    private void updateCurrentBssid(java.lang.String)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        java.lang.String r1, $r12;
+        com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics $r2, $r5, $r6, $r7, $r8, $r11, $r13;
+        android.util.LruCache $r3, $r9;
+        java.lang.Object $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter0: java.lang.String;
+
+        if r1 != null goto label2;
+
+        $r13 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid>;
+
+        if $r13 != null goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid> = null;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void sendMessage(int)>(135175);
+
+        return;
+
+     label2:
+        $r2 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid>;
+
+        if $r2 == null goto label3;
+
+        $r11 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid>;
+
+        $r12 = staticinvoke <com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics: java.lang.String access$4500(com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics)>($r11);
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r12);
+
+        if $z0 == 0 goto label3;
+
+        return;
+
+     label3:
+        $r3 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.util.LruCache mBssidCache>;
+
+        $r4 = virtualinvoke $r3.<android.util.LruCache: java.lang.Object get(java.lang.Object)>(r1);
+
+        $r5 = (com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics) $r4;
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid> = $r5;
+
+        $r6 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid>;
+
+        if $r6 != null goto label4;
+
+        $r7 = new com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics;
+
+        specialinvoke $r7.<com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics: void <init>(com.android.server.wifi.WifiWatchdogStateMachine,java.lang.String)>(r0, r1);
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid> = $r7;
+
+        $r9 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.util.LruCache mBssidCache>;
+
+        $r8 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid>;
+
+        virtualinvoke $r9.<android.util.LruCache: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, $r8);
+
+     label4:
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void sendMessage(int)>(135175);
+
+        return;
+    }
+
+    private int calculateSignalLevel(int)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        int i0, i1;
+
+        r0 := @this: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        i0 := @parameter0: int;
+
+        i1 = staticinvoke <android.net.wifi.WifiManager: int calculateSignalLevel(int,int)>(i0, 5);
+
+        return i1;
+    }
+
+    private void sendLinkStatusNotification(boolean)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        boolean z0;
+        com.android.internal.util.AsyncChannel $r1, $r4;
+        com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics $r2, $r3, $r5, $r6;
+        long $l0, $l2;
+
+        r0 := @this: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        z0 := @parameter0: boolean;
+
+        if z0 == 0 goto label1;
+
+        $r4 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.internal.util.AsyncChannel mWsmChannel>;
+
+        virtualinvoke $r4.<com.android.internal.util.AsyncChannel: void sendMessage(int)>(135190);
+
+        $r5 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid>;
+
+        if $r5 == null goto label3;
+
+        $r6 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid>;
+
+        $l2 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        staticinvoke <com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics: long access$4602(com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics,long)>($r6, $l2);
+
+        goto label3;
+
+     label1:
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.internal.util.AsyncChannel mWsmChannel>;
+
+        virtualinvoke $r1.<com.android.internal.util.AsyncChannel: void sendMessage(int)>(135189);
+
+        $r2 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid>;
+
+        if $r2 == null goto label2;
+
+        $r3 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid>;
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        staticinvoke <com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics: long access$4702(com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics,long)>($r3, $l0);
+
+     label2:
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void logd(java.lang.String)>("Poor link notification is sent");
+
+     label3:
+        return;
+    }
+
+    private static boolean getSettingsGlobalBoolean(android.content.ContentResolver, java.lang.String, boolean)
+    {
+        android.content.ContentResolver r0;
+        java.lang.String r1;
+        boolean z0, $z1;
+        int $i0;
+        byte $b1;
+
+        r0 := @parameter0: android.content.ContentResolver;
+
+        r1 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        if z0 == 0 goto label1;
+
+        $b1 = 1;
+
+        goto label2;
+
+     label1:
+        $b1 = 0;
+
+     label2:
+        $i0 = staticinvoke <android.provider.Settings$Global: int getInt(android.content.ContentResolver,java.lang.String,int)>(r0, r1, $b1);
+
+        if $i0 != 1 goto label3;
+
+        $z1 = 1;
+
+        goto label4;
+
+     label3:
+        $z1 = 0;
+
+     label4:
+        return $z1;
+    }
+
+    private static boolean putSettingsGlobalBoolean(android.content.ContentResolver, java.lang.String, boolean)
+    {
+        android.content.ContentResolver r0;
+        java.lang.String r1;
+        boolean z0, $z1;
+        byte $b0;
+
+        r0 := @parameter0: android.content.ContentResolver;
+
+        r1 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        if z0 == 0 goto label1;
+
+        $b0 = 1;
+
+        goto label2;
+
+     label1:
+        $b0 = 0;
+
+     label2:
+        $z1 = staticinvoke <android.provider.Settings$Global: boolean putInt(android.content.ContentResolver,java.lang.String,int)>(r0, r1, $b0);
+
+        return $z1;
+    }
+
+    static void access$000(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        specialinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void updateSettings()>();
+
+        return;
+    }
+
+    static int access$102(com.android.server.wifi.WifiWatchdogStateMachine, int)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: int mCurrentSignalLevel> = i0;
+
+        return i0;
+    }
+
+    static int access$200(com.android.server.wifi.WifiWatchdogStateMachine, int)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        int i0, $i1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        i0 := @parameter1: int;
+
+        $i1 = specialinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: int calculateSignalLevel(int)>(i0);
+
+        return $i1;
+    }
+
+    static boolean access$302(com.android.server.wifi.WifiWatchdogStateMachine, boolean)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: boolean mIsScreenOn> = z0;
+
+        return z0;
+    }
+
+    static com.android.internal.util.IState access$400(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.internal.util.IState getCurrentState()>();
+
+        return $r1;
+    }
+
+    static void access$500(com.android.server.wifi.WifiWatchdogStateMachine, java.lang.String)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: java.lang.String;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void loge(java.lang.String)>(r1);
+
+        return;
+    }
+
+    static boolean access$600(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $z0 = specialinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: boolean isWatchdogEnabled()>();
+
+        return $z0;
+    }
+
+    static com.android.server.wifi.WifiWatchdogStateMachine$NotConnectedState access$700(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$NotConnectedState $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$NotConnectedState mNotConnectedState>;
+
+        return $r1;
+    }
+
+    static void access$800(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static void access$900(com.android.server.wifi.WifiWatchdogStateMachine, boolean)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void sendLinkStatusNotification(boolean)>(z0);
+
+        return;
+    }
+
+    static com.android.server.wifi.WifiWatchdogStateMachine$WatchdogDisabledState access$1000(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$WatchdogDisabledState $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$WatchdogDisabledState mWatchdogDisabledState>;
+
+        return $r1;
+    }
+
+    static void access$1100(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static android.net.wifi.WifiInfo access$1202(com.android.server.wifi.WifiWatchdogStateMachine, android.net.wifi.WifiInfo)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        android.net.wifi.WifiInfo r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: android.net.wifi.WifiInfo;
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.net.wifi.WifiInfo mWifiInfo> = r1;
+
+        return r1;
+    }
+
+    static android.net.wifi.WifiInfo access$1200(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        android.net.wifi.WifiInfo $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.net.wifi.WifiInfo mWifiInfo>;
+
+        return $r1;
+    }
+
+    static void access$1300(com.android.server.wifi.WifiWatchdogStateMachine, java.lang.String)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: java.lang.String;
+
+        specialinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void updateCurrentBssid(java.lang.String)>(r1);
+
+        return;
+    }
+
+    static android.net.LinkProperties access$1402(com.android.server.wifi.WifiWatchdogStateMachine, android.net.LinkProperties)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        android.net.LinkProperties r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: android.net.LinkProperties;
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.net.LinkProperties mLinkProperties> = r1;
+
+        return r1;
+    }
+
+    static boolean access$1500(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $z0 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: boolean mPoorNetworkDetectionEnabled>;
+
+        return $z0;
+    }
+
+    static com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics access$1600(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$BssidStatistics mCurrentBssid>;
+
+        return $r1;
+    }
+
+    static void access$1700(com.android.server.wifi.WifiWatchdogStateMachine, java.lang.String)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: java.lang.String;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void loge(java.lang.String)>(r1);
+
+        return;
+    }
+
+    static com.android.server.wifi.WifiWatchdogStateMachine$VerifyingLinkState access$1800(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$VerifyingLinkState $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$VerifyingLinkState mVerifyingLinkState>;
+
+        return $r1;
+    }
+
+    static void access$1900(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static com.android.server.wifi.WifiWatchdogStateMachine$OnlineWatchState access$2000(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$OnlineWatchState $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$OnlineWatchState mOnlineWatchState>;
+
+        return $r1;
+    }
+
+    static void access$2100(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static void access$2200(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static android.net.wifi.WifiManager access$2300(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        android.net.wifi.WifiManager $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: android.net.wifi.WifiManager mWifiManager>;
+
+        return $r1;
+    }
+
+    static void access$2400(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static int access$2504(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        int $i0, $i1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $i0 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: int mRssiFetchToken>;
+
+        $i1 = $i0 + 1;
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: int mRssiFetchToken> = $i1;
+
+        return $i1;
+    }
+
+    static void access$2600(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static int access$2500(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $i0 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: int mRssiFetchToken>;
+
+        return $i0;
+    }
+
+    static com.android.internal.util.AsyncChannel access$2700(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.AsyncChannel $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.internal.util.AsyncChannel mWsmChannel>;
+
+        return $r1;
+    }
+
+    static void access$3100(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static com.android.server.wifi.WifiWatchdogStateMachine$OnlineState access$3200(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$OnlineState $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$OnlineState mOnlineState>;
+
+        return $r1;
+    }
+
+    static void access$3300(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static void access$3400(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static int access$100(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $i0 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: int mCurrentSignalLevel>;
+
+        return $i0;
+    }
+
+    static com.android.server.wifi.WifiWatchdogStateMachine$LinkMonitoringState access$3500(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$LinkMonitoringState $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$LinkMonitoringState mLinkMonitoringState>;
+
+        return $r1;
+    }
+
+    static void access$3600(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static com.android.server.wifi.WifiWatchdogStateMachine$VolumeWeightedEMA access$3702(com.android.server.wifi.WifiWatchdogStateMachine, com.android.server.wifi.WifiWatchdogStateMachine$VolumeWeightedEMA)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$VolumeWeightedEMA r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.server.wifi.WifiWatchdogStateMachine$VolumeWeightedEMA;
+
+        r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$VolumeWeightedEMA mCurrentLoss> = r1;
+
+        return r1;
+    }
+
+    static void access$3800(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static void access$3900(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static boolean access$300(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $z0 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: boolean mIsScreenOn>;
+
+        return $z0;
+    }
+
+    static void access$4000(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static com.android.server.wifi.WifiWatchdogStateMachine$VolumeWeightedEMA access$3700(com.android.server.wifi.WifiWatchdogStateMachine)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$VolumeWeightedEMA $r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        $r1 = r0.<com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$VolumeWeightedEMA mCurrentLoss>;
+
+        return $r1;
+    }
+
+    static void access$4400(com.android.server.wifi.WifiWatchdogStateMachine, com.android.internal.util.IState)
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine r0;
+        com.android.internal.util.IState r1;
+
+        r0 := @parameter0: com.android.server.wifi.WifiWatchdogStateMachine;
+
+        r1 := @parameter1: com.android.internal.util.IState;
+
+        virtualinvoke r0.<com.android.server.wifi.WifiWatchdogStateMachine: void transitionTo(com.android.internal.util.IState)>(r1);
+
+        return;
+    }
+
+    static double[] access$4800()
+    {
+        double[] $r0;
+
+        $r0 = <com.android.server.wifi.WifiWatchdogStateMachine: double[] sPresetLoss>;
+
+        return $r0;
+    }
+
+    static double[] access$4802(double[])
+    {
+        double[] r0;
+
+        r0 := @parameter0: double[];
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: double[] sPresetLoss> = r0;
+
+        return r0;
+    }
+
+    static com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget[] access$4900()
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget[] $r0;
+
+        $r0 = <com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget[] GOOD_LINK_TARGET>;
+
+        return $r0;
+    }
+
+    static com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime[] access$5000()
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime[] $r0;
+
+        $r0 = <com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime[] MAX_AVOID_TIME>;
+
+        return $r0;
+    }
+
+    static void <clinit>()
+    {
+        com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget[] $r0;
+        com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget $r1, $r2, $r3, $r4;
+        com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime[] $r5;
+        com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime $r6, $r7, $r8;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int GOOD_LINK_RSSI_RANGE_MAX> = 20;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int GOOD_LINK_RSSI_RANGE_MIN> = 3;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: double POOR_LINK_MIN_VOLUME> = 2.0;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int POOR_LINK_SAMPLE_COUNT> = 3;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: double GOOD_LINK_LOSS_THRESHOLD> = 0.1;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: double POOR_LINK_LOSS_THRESHOLD> = 0.5;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: double EXP_COEFFICIENT_MONITOR> = 0.5;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: double EXP_COEFFICIENT_RECORD> = 0.1;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: long LINK_SAMPLING_INTERVAL_MS> = 1000L;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int BSSID_STAT_EMPTY_COUNT> = 3;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int BSSID_STAT_RANGE_HIGH_DBM> = -45;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int BSSID_STAT_RANGE_LOW_DBM> = -105;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int BSSID_STAT_CACHE_SIZE> = 20;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int LINK_MONITOR_LEVEL_THRESHOLD> = 4;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int GOOD_LINK_DETECTED> = 135190;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int POOR_LINK_DETECTED> = 135189;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int CMD_RSSI_FETCH> = 135179;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int EVENT_SCREEN_OFF> = 135177;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int EVENT_SCREEN_ON> = 135176;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int EVENT_BSSID_CHANGE> = 135175;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int EVENT_WATCHDOG_SETTINGS_CHANGE> = 135174;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int EVENT_WIFI_RADIO_STATE_CHANGE> = 135173;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int EVENT_SUPPLICANT_STATE_CHANGE> = 135172;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int EVENT_RSSI_CHANGE> = 135171;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int EVENT_NETWORK_STATE_CHANGE> = 135170;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int EVENT_WATCHDOG_TOGGLED> = 135169;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: int BASE> = 135168;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: boolean DBG> = 0;
+
+        $r0 = newarray (com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget)[4];
+
+        $r1 = new com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget;
+
+        specialinvoke $r1.<com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget: void <init>(int,int,int)>(0, 3, 1800000);
+
+        $r0[0] = $r1;
+
+        $r2 = new com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget;
+
+        specialinvoke $r2.<com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget: void <init>(int,int,int)>(3, 5, 300000);
+
+        $r0[1] = $r2;
+
+        $r3 = new com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget;
+
+        specialinvoke $r3.<com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget: void <init>(int,int,int)>(6, 10, 60000);
+
+        $r0[2] = $r3;
+
+        $r4 = new com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget;
+
+        specialinvoke $r4.<com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget: void <init>(int,int,int)>(9, 30, 0);
+
+        $r0[3] = $r4;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$GoodLinkTarget[] GOOD_LINK_TARGET> = $r0;
+
+        $r5 = newarray (com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime)[3];
+
+        $r6 = new com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime;
+
+        specialinvoke $r6.<com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime: void <init>(int,int)>(1800000, -200);
+
+        $r5[0] = $r6;
+
+        $r7 = new com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime;
+
+        specialinvoke $r7.<com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime: void <init>(int,int)>(300000, -70);
+
+        $r5[1] = $r7;
+
+        $r8 = new com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime;
+
+        specialinvoke $r8.<com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime: void <init>(int,int)>(0, -55);
+
+        $r5[2] = $r8;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: com.android.server.wifi.WifiWatchdogStateMachine$MaxAvoidTime[] MAX_AVOID_TIME> = $r5;
+
+        <com.android.server.wifi.WifiWatchdogStateMachine: boolean sWifiOnly> = 0;
+
+        return;
+    }
+}

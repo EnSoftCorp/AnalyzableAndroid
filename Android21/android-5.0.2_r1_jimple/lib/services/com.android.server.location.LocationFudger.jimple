@@ -1,0 +1,673 @@
+public class com.android.server.location.LocationFudger extends java.lang.Object
+{
+    private static final boolean D;
+    private static final java.lang.String TAG;
+    private static final float DEFAULT_ACCURACY_IN_METERS;
+    private static final float MINIMUM_ACCURACY_IN_METERS;
+    private static final java.lang.String COARSE_ACCURACY_CONFIG_NAME;
+    public static final long FASTEST_INTERVAL_MS;
+    private static final long CHANGE_INTERVAL_MS;
+    private static final double CHANGE_PER_INTERVAL;
+    private static final double NEW_WEIGHT;
+    private static final double PREVIOUS_WEIGHT;
+    private static final int APPROXIMATE_METERS_PER_DEGREE_AT_EQUATOR;
+    private static final double MAX_LATITUDE;
+    private final java.lang.Object mLock;
+    private final java.security.SecureRandom mRandom;
+    private final android.database.ContentObserver mSettingsObserver;
+    private final android.content.Context mContext;
+    private double mOffsetLatitudeMeters;
+    private double mOffsetLongitudeMeters;
+    private long mNextInterval;
+    private float mAccuracyInMeters;
+    private double mGridSizeInMeters;
+    private double mStandardDeviationInMeters;
+
+    public void <init>(android.content.Context, android.os.Handler)
+    {
+        com.android.server.location.LocationFudger r0;
+        android.content.Context r1, $r8;
+        android.os.Handler r2;
+        float f0;
+        java.lang.Object r3, $r5, $r12;
+        java.lang.Throwable r4, $r13;
+        java.security.SecureRandom $r6;
+        com.android.server.location.LocationFudger$1 $r7;
+        android.content.ContentResolver $r9;
+        android.net.Uri $r10;
+        android.database.ContentObserver $r11;
+        double $d0, $d1;
+        long $l0, $l1;
+
+        r0 := @this: com.android.server.location.LocationFudger;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.os.Handler;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r5 = new java.lang.Object;
+
+        specialinvoke $r5.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.location.LocationFudger: java.lang.Object mLock> = $r5;
+
+        $r6 = new java.security.SecureRandom;
+
+        specialinvoke $r6.<java.security.SecureRandom: void <init>()>();
+
+        r0.<com.android.server.location.LocationFudger: java.security.SecureRandom mRandom> = $r6;
+
+        r0.<com.android.server.location.LocationFudger: android.content.Context mContext> = r1;
+
+        $r7 = new com.android.server.location.LocationFudger$1;
+
+        specialinvoke $r7.<com.android.server.location.LocationFudger$1: void <init>(com.android.server.location.LocationFudger,android.os.Handler)>(r0, r2);
+
+        r0.<com.android.server.location.LocationFudger: android.database.ContentObserver mSettingsObserver> = $r7;
+
+        $r8 = r0.<com.android.server.location.LocationFudger: android.content.Context mContext>;
+
+        $r9 = virtualinvoke $r8.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r10 = staticinvoke <android.provider.Settings$Secure: android.net.Uri getUriFor(java.lang.String)>("locationCoarseAccuracy");
+
+        $r11 = r0.<com.android.server.location.LocationFudger: android.database.ContentObserver mSettingsObserver>;
+
+        virtualinvoke $r9.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver)>($r10, 0, $r11);
+
+        f0 = specialinvoke r0.<com.android.server.location.LocationFudger: float loadCoarseAccuracy()>();
+
+        $r12 = r0.<com.android.server.location.LocationFudger: java.lang.Object mLock>;
+
+        r3 = $r12;
+
+        entermonitor $r12;
+
+     label1:
+        specialinvoke r0.<com.android.server.location.LocationFudger: void setAccuracyInMetersLocked(float)>(f0);
+
+        $d0 = specialinvoke r0.<com.android.server.location.LocationFudger: double nextOffsetLocked()>();
+
+        r0.<com.android.server.location.LocationFudger: double mOffsetLatitudeMeters> = $d0;
+
+        $d1 = specialinvoke r0.<com.android.server.location.LocationFudger: double nextOffsetLocked()>();
+
+        r0.<com.android.server.location.LocationFudger: double mOffsetLongitudeMeters> = $d1;
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l1 = $l0 + 3600000L;
+
+        r0.<com.android.server.location.LocationFudger: long mNextInterval> = $l1;
+
+        exitmonitor r3;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r13 := @caughtexception;
+
+        r4 = $r13;
+
+        exitmonitor r3;
+
+     label4:
+        throw r4;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public android.location.Location getOrCreate(android.location.Location)
+    {
+        com.android.server.location.LocationFudger r0;
+        android.location.Location r1, r3, $r6, $r7;
+        java.lang.Object r2, $r5;
+        java.lang.Throwable r4, $r8;
+        float $f0, $f1;
+        byte $b0;
+
+        r0 := @this: com.android.server.location.LocationFudger;
+
+        r1 := @parameter0: android.location.Location;
+
+        $r5 = r0.<com.android.server.location.LocationFudger: java.lang.Object mLock>;
+
+        r2 = $r5;
+
+        entermonitor $r5;
+
+     label1:
+        r3 = virtualinvoke r1.<android.location.Location: android.location.Location getExtraLocation(java.lang.String)>("coarseLocation");
+
+        if r3 != null goto label3;
+
+        $r7 = specialinvoke r0.<com.android.server.location.LocationFudger: android.location.Location addCoarseLocationExtraLocked(android.location.Location)>(r1);
+
+        exitmonitor r2;
+
+     label2:
+        return $r7;
+
+     label3:
+        $f0 = virtualinvoke r3.<android.location.Location: float getAccuracy()>();
+
+        $f1 = r0.<com.android.server.location.LocationFudger: float mAccuracyInMeters>;
+
+        $b0 = $f0 cmpg $f1;
+
+        if $b0 >= 0 goto label5;
+
+        $r6 = specialinvoke r0.<com.android.server.location.LocationFudger: android.location.Location addCoarseLocationExtraLocked(android.location.Location)>(r1);
+
+        exitmonitor r2;
+
+     label4:
+        return $r6;
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        return r3;
+
+     label7:
+        $r8 := @caughtexception;
+
+        r4 = $r8;
+
+        exitmonitor r2;
+
+     label8:
+        throw r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    private android.location.Location addCoarseLocationExtraLocked(android.location.Location)
+    {
+        com.android.server.location.LocationFudger r0;
+        android.location.Location r1, r2;
+
+        r0 := @this: com.android.server.location.LocationFudger;
+
+        r1 := @parameter0: android.location.Location;
+
+        r2 = specialinvoke r0.<com.android.server.location.LocationFudger: android.location.Location createCoarseLocked(android.location.Location)>(r1);
+
+        virtualinvoke r1.<android.location.Location: void setExtraLocation(java.lang.String,android.location.Location)>("coarseLocation", r2);
+
+        return r2;
+    }
+
+    private android.location.Location createCoarseLocked(android.location.Location)
+    {
+        com.android.server.location.LocationFudger r0;
+        android.location.Location r1, r2, $r3;
+        double d0, d1, d2, d3, $d4, $d5, $d6, $d7, $d8, $d9, $d10, $d11, $d12, $d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23;
+        long $l0, $l1;
+        float $f0, $f1, $f2;
+
+        r0 := @this: com.android.server.location.LocationFudger;
+
+        r1 := @parameter0: android.location.Location;
+
+        $r3 = new android.location.Location;
+
+        specialinvoke $r3.<android.location.Location: void <init>(android.location.Location)>(r1);
+
+        r2 = $r3;
+
+        virtualinvoke r2.<android.location.Location: void removeBearing()>();
+
+        virtualinvoke r2.<android.location.Location: void removeSpeed()>();
+
+        virtualinvoke r2.<android.location.Location: void removeAltitude()>();
+
+        virtualinvoke r2.<android.location.Location: void setExtras(android.os.Bundle)>(null);
+
+        d0 = virtualinvoke r2.<android.location.Location: double getLatitude()>();
+
+        d1 = virtualinvoke r2.<android.location.Location: double getLongitude()>();
+
+        d14 = staticinvoke <com.android.server.location.LocationFudger: double wrapLatitude(double)>(d0);
+
+        d15 = staticinvoke <com.android.server.location.LocationFudger: double wrapLongitude(double)>(d1);
+
+        specialinvoke r0.<com.android.server.location.LocationFudger: void updateRandomOffsetLocked()>();
+
+        $d5 = r0.<com.android.server.location.LocationFudger: double mOffsetLongitudeMeters>;
+
+        $d4 = staticinvoke <com.android.server.location.LocationFudger: double metersToDegreesLongitude(double,double)>($d5, d14);
+
+        d16 = d15 + $d4;
+
+        $d7 = r0.<com.android.server.location.LocationFudger: double mOffsetLatitudeMeters>;
+
+        $d6 = staticinvoke <com.android.server.location.LocationFudger: double metersToDegreesLatitude(double)>($d7);
+
+        d17 = d14 + $d6;
+
+        d18 = staticinvoke <com.android.server.location.LocationFudger: double wrapLatitude(double)>(d17);
+
+        d19 = staticinvoke <com.android.server.location.LocationFudger: double wrapLongitude(double)>(d16);
+
+        $d8 = r0.<com.android.server.location.LocationFudger: double mGridSizeInMeters>;
+
+        d2 = staticinvoke <com.android.server.location.LocationFudger: double metersToDegreesLatitude(double)>($d8);
+
+        $d9 = d18 / d2;
+
+        $l0 = staticinvoke <java.lang.Math: long round(double)>($d9);
+
+        $d11 = (double) $l0;
+
+        d20 = $d11 * d2;
+
+        $d10 = r0.<com.android.server.location.LocationFudger: double mGridSizeInMeters>;
+
+        d3 = staticinvoke <com.android.server.location.LocationFudger: double metersToDegreesLongitude(double,double)>($d10, d20);
+
+        $d12 = d19 / d3;
+
+        $l1 = staticinvoke <java.lang.Math: long round(double)>($d12);
+
+        $d13 = (double) $l1;
+
+        d21 = $d13 * d3;
+
+        d22 = staticinvoke <com.android.server.location.LocationFudger: double wrapLatitude(double)>(d20);
+
+        d23 = staticinvoke <com.android.server.location.LocationFudger: double wrapLongitude(double)>(d21);
+
+        virtualinvoke r2.<android.location.Location: void setLatitude(double)>(d22);
+
+        virtualinvoke r2.<android.location.Location: void setLongitude(double)>(d23);
+
+        $f0 = r0.<com.android.server.location.LocationFudger: float mAccuracyInMeters>;
+
+        $f1 = virtualinvoke r2.<android.location.Location: float getAccuracy()>();
+
+        $f2 = staticinvoke <java.lang.Math: float max(float,float)>($f0, $f1);
+
+        virtualinvoke r2.<android.location.Location: void setAccuracy(float)>($f2);
+
+        return r2;
+    }
+
+    private void updateRandomOffsetLocked()
+    {
+        com.android.server.location.LocationFudger r0;
+        long l0, $l1, $l3;
+        byte $b2;
+        double $d0, $d1, $d2, $d3, $d4, $d5, $d6, $d7, $d8, $d9, $d10, $d11, $d12, $d13;
+
+        r0 := @this: com.android.server.location.LocationFudger;
+
+        l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l1 = r0.<com.android.server.location.LocationFudger: long mNextInterval>;
+
+        $b2 = l0 cmp $l1;
+
+        if $b2 >= 0 goto label1;
+
+        return;
+
+     label1:
+        $l3 = l0 + 3600000L;
+
+        r0.<com.android.server.location.LocationFudger: long mNextInterval> = $l3;
+
+        $d1 = r0.<com.android.server.location.LocationFudger: double mOffsetLatitudeMeters>;
+
+        $d0 = <com.android.server.location.LocationFudger: double PREVIOUS_WEIGHT>;
+
+        $d2 = $d1 * $d0;
+
+        r0.<com.android.server.location.LocationFudger: double mOffsetLatitudeMeters> = $d2;
+
+        $d3 = r0.<com.android.server.location.LocationFudger: double mOffsetLatitudeMeters>;
+
+        $d4 = specialinvoke r0.<com.android.server.location.LocationFudger: double nextOffsetLocked()>();
+
+        $d5 = 0.03 * $d4;
+
+        $d6 = $d3 + $d5;
+
+        r0.<com.android.server.location.LocationFudger: double mOffsetLatitudeMeters> = $d6;
+
+        $d9 = r0.<com.android.server.location.LocationFudger: double mOffsetLongitudeMeters>;
+
+        $d7 = <com.android.server.location.LocationFudger: double PREVIOUS_WEIGHT>;
+
+        $d8 = $d9 * $d7;
+
+        r0.<com.android.server.location.LocationFudger: double mOffsetLongitudeMeters> = $d8;
+
+        $d10 = r0.<com.android.server.location.LocationFudger: double mOffsetLongitudeMeters>;
+
+        $d12 = specialinvoke r0.<com.android.server.location.LocationFudger: double nextOffsetLocked()>();
+
+        $d11 = 0.03 * $d12;
+
+        $d13 = $d10 + $d11;
+
+        r0.<com.android.server.location.LocationFudger: double mOffsetLongitudeMeters> = $d13;
+
+        return;
+    }
+
+    private double nextOffsetLocked()
+    {
+        com.android.server.location.LocationFudger r0;
+        java.security.SecureRandom $r1;
+        double $d0, $d1, $d2;
+
+        r0 := @this: com.android.server.location.LocationFudger;
+
+        $r1 = r0.<com.android.server.location.LocationFudger: java.security.SecureRandom mRandom>;
+
+        $d0 = virtualinvoke $r1.<java.security.SecureRandom: double nextGaussian()>();
+
+        $d1 = r0.<com.android.server.location.LocationFudger: double mStandardDeviationInMeters>;
+
+        $d2 = $d0 * $d1;
+
+        return $d2;
+    }
+
+    private static double wrapLatitude(double)
+    {
+        double d0;
+        byte $b0, $b1;
+
+        d0 := @parameter0: double;
+
+        $b0 = d0 cmpl 89.999990990991;
+
+        if $b0 <= 0 goto label1;
+
+        d0 = 89.999990990991;
+
+     label1:
+        $b1 = d0 cmpg -89.999990990991;
+
+        if $b1 >= 0 goto label2;
+
+        d0 = -89.999990990991;
+
+     label2:
+        return d0;
+    }
+
+    private static double wrapLongitude(double)
+    {
+        double d0, d1;
+        byte $b0, $b1;
+
+        d0 := @parameter0: double;
+
+        d1 = d0 % 360.0;
+
+        $b0 = d1 cmpl 180.0;
+
+        if $b0 < 0 goto label1;
+
+        d1 = d1 - 360.0;
+
+     label1:
+        $b1 = d1 cmpg -180.0;
+
+        if $b1 >= 0 goto label2;
+
+        d1 = d1 + 360.0;
+
+     label2:
+        return d1;
+    }
+
+    private static double metersToDegreesLatitude(double)
+    {
+        double d0, $d1;
+
+        d0 := @parameter0: double;
+
+        $d1 = d0 / 111000.0;
+
+        return $d1;
+    }
+
+    private static double metersToDegreesLongitude(double, double)
+    {
+        double d0, d1, $d2, $d3, $d4, $d5;
+
+        d0 := @parameter0: double;
+
+        d1 := @parameter1: double;
+
+        $d2 = d0 / 111000.0;
+
+        $d3 = staticinvoke <java.lang.Math: double toRadians(double)>(d1);
+
+        $d4 = staticinvoke <java.lang.Math: double cos(double)>($d3);
+
+        $d5 = $d2 / $d4;
+
+        return $d5;
+    }
+
+    public void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.server.location.LocationFudger r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        java.lang.Object[] $r4;
+        double $d0, $d1;
+        java.lang.Double $r5, $r6;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.server.location.LocationFudger;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        $r4 = newarray (java.lang.Object)[2];
+
+        $d0 = r0.<com.android.server.location.LocationFudger: double mOffsetLongitudeMeters>;
+
+        $r5 = staticinvoke <java.lang.Double: java.lang.Double valueOf(double)>($d0);
+
+        $r4[0] = $r5;
+
+        $d1 = r0.<com.android.server.location.LocationFudger: double mOffsetLatitudeMeters>;
+
+        $r6 = staticinvoke <java.lang.Double: java.lang.Double valueOf(double)>($d1);
+
+        $r4[1] = $r6;
+
+        $r7 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("offset: %.0f, %.0f (meters)", $r4);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r7);
+
+        return;
+    }
+
+    private void setAccuracyInMetersLocked(float)
+    {
+        com.android.server.location.LocationFudger r0;
+        float f0, $f1, $f2;
+        double $d0, $d1, $d2;
+
+        r0 := @this: com.android.server.location.LocationFudger;
+
+        f0 := @parameter0: float;
+
+        $f1 = staticinvoke <java.lang.Math: float max(float,float)>(f0, 200.0F);
+
+        r0.<com.android.server.location.LocationFudger: float mAccuracyInMeters> = $f1;
+
+        $f2 = r0.<com.android.server.location.LocationFudger: float mAccuracyInMeters>;
+
+        $d0 = (double) $f2;
+
+        r0.<com.android.server.location.LocationFudger: double mGridSizeInMeters> = $d0;
+
+        $d1 = r0.<com.android.server.location.LocationFudger: double mGridSizeInMeters>;
+
+        $d2 = $d1 / 4.0;
+
+        r0.<com.android.server.location.LocationFudger: double mStandardDeviationInMeters> = $d2;
+
+        return;
+    }
+
+    private void setAccuracyInMeters(float)
+    {
+        com.android.server.location.LocationFudger r0;
+        float f0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.server.location.LocationFudger;
+
+        f0 := @parameter0: float;
+
+        $r3 = r0.<com.android.server.location.LocationFudger: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        specialinvoke r0.<com.android.server.location.LocationFudger: void setAccuracyInMetersLocked(float)>(f0);
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private float loadCoarseAccuracy()
+    {
+        com.android.server.location.LocationFudger r0;
+        java.lang.String r1;
+        android.content.Context $r3;
+        android.content.ContentResolver $r4;
+        float $f0;
+        java.lang.NumberFormatException $r5;
+
+        r0 := @this: com.android.server.location.LocationFudger;
+
+        $r3 = r0.<com.android.server.location.LocationFudger: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r1 = staticinvoke <android.provider.Settings$Secure: java.lang.String getString(android.content.ContentResolver,java.lang.String)>($r4, "locationCoarseAccuracy");
+
+        if r1 != null goto label1;
+
+        return 2000.0F;
+
+     label1:
+        $f0 = staticinvoke <java.lang.Float: float parseFloat(java.lang.String)>(r1);
+
+     label2:
+        return $f0;
+
+     label3:
+        $r5 := @caughtexception;
+
+        return 2000.0F;
+
+        catch java.lang.NumberFormatException from label1 to label2 with label3;
+    }
+
+    static float access$000(com.android.server.location.LocationFudger)
+    {
+        com.android.server.location.LocationFudger r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.server.location.LocationFudger;
+
+        $f0 = specialinvoke r0.<com.android.server.location.LocationFudger: float loadCoarseAccuracy()>();
+
+        return $f0;
+    }
+
+    static void access$100(com.android.server.location.LocationFudger, float)
+    {
+        com.android.server.location.LocationFudger r0;
+        float f0;
+
+        r0 := @parameter0: com.android.server.location.LocationFudger;
+
+        f0 := @parameter1: float;
+
+        specialinvoke r0.<com.android.server.location.LocationFudger: void setAccuracyInMeters(float)>(f0);
+
+        return;
+    }
+
+    static void <clinit>()
+    {
+        double $d0;
+
+        <com.android.server.location.LocationFudger: double MAX_LATITUDE> = 89.999990990991;
+
+        <com.android.server.location.LocationFudger: int APPROXIMATE_METERS_PER_DEGREE_AT_EQUATOR> = 111000;
+
+        <com.android.server.location.LocationFudger: double NEW_WEIGHT> = 0.03;
+
+        <com.android.server.location.LocationFudger: double CHANGE_PER_INTERVAL> = 0.03;
+
+        <com.android.server.location.LocationFudger: long CHANGE_INTERVAL_MS> = 3600000L;
+
+        <com.android.server.location.LocationFudger: long FASTEST_INTERVAL_MS> = 600000L;
+
+        <com.android.server.location.LocationFudger: java.lang.String COARSE_ACCURACY_CONFIG_NAME> = "locationCoarseAccuracy";
+
+        <com.android.server.location.LocationFudger: float MINIMUM_ACCURACY_IN_METERS> = 200.0F;
+
+        <com.android.server.location.LocationFudger: float DEFAULT_ACCURACY_IN_METERS> = 2000.0F;
+
+        <com.android.server.location.LocationFudger: java.lang.String TAG> = "LocationFudge";
+
+        <com.android.server.location.LocationFudger: boolean D> = 0;
+
+        $d0 = staticinvoke <java.lang.Math: double sqrt(double)>(0.9991);
+
+        <com.android.server.location.LocationFudger: double PREVIOUS_WEIGHT> = $d0;
+
+        return;
+    }
+}

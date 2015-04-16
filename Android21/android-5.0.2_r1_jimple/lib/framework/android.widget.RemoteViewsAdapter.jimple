@@ -1,0 +1,2283 @@
+public class android.widget.RemoteViewsAdapter extends android.widget.BaseAdapter implements android.os.Handler$Callback
+{
+    private static final java.lang.String MULTI_USER_PERM;
+    private static final java.lang.String TAG;
+    private static final int sDefaultCacheSize;
+    private static final int sUnbindServiceDelay;
+    private static final int sDefaultLoadingViewHeight;
+    private static final int sDefaultMessageType;
+    private static final int sUnbindServiceMessageType;
+    private final android.content.Context mContext;
+    private final android.content.Intent mIntent;
+    private final int mAppWidgetId;
+    private android.view.LayoutInflater mLayoutInflater;
+    private android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection;
+    private java.lang.ref.WeakReference mCallback;
+    private android.widget.RemoteViews$OnClickHandler mRemoteViewsOnClickHandler;
+    private android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache;
+    private int mVisibleWindowLowerBound;
+    private int mVisibleWindowUpperBound;
+    private boolean mNotifyDataSetChangedAfterOnServiceConnected;
+    private android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet mRequestedViews;
+    private android.os.HandlerThread mWorkerThread;
+    private android.os.Handler mWorkerQueue;
+    private android.os.Handler mMainQueue;
+    private static final java.util.HashMap sCachedRemoteViewsCaches;
+    private static final java.util.HashMap sRemoteViewsCacheRemoveRunnables;
+    private static android.os.HandlerThread sCacheRemovalThread;
+    private static android.os.Handler sCacheRemovalQueue;
+    private static final int REMOTE_VIEWS_CACHE_DURATION;
+    private boolean mDataReady;
+
+    public void <init>(android.content.Context, android.content.Intent, android.widget.RemoteViewsAdapter$RemoteAdapterConnectionCallback)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.content.Context r1;
+        android.content.Intent r2, $r10, $r24;
+        android.widget.RemoteViewsAdapter$RemoteAdapterConnectionCallback r3;
+        android.widget.RemoteViewsAdapter$RemoteViewsCacheKey r4, $r23;
+        java.util.HashMap r5, $r25, $r26, $r28;
+        android.widget.RemoteViewsAdapter$RemoteViewsMetaData r6, $r30, $r34;
+        java.lang.Throwable r7, r8, $r39, $r42;
+        int $i0, $i1, $i2;
+        android.view.LayoutInflater $r9;
+        android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet $r11;
+        boolean $z0, $z1, $z3;
+        android.os.HandlerThread $r12, $r13, $r14, $r18, $r36, $r37, $r38;
+        android.os.Handler $r15, $r16, $r35;
+        android.os.Looper $r17, $r19, $r41;
+        android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection $r20;
+        java.lang.ref.WeakReference $r21;
+        android.content.Intent$FilterComparison $r22;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache $r27, $r29, $r32, $r33;
+        java.lang.Object $r31;
+        java.lang.IllegalArgumentException $r40;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.content.Intent;
+
+        r3 := @parameter2: android.widget.RemoteViewsAdapter$RemoteAdapterConnectionCallback;
+
+        specialinvoke r0.<android.widget.BaseAdapter: void <init>()>();
+
+        r0.<android.widget.RemoteViewsAdapter: boolean mNotifyDataSetChangedAfterOnServiceConnected> = 0;
+
+        r0.<android.widget.RemoteViewsAdapter: boolean mDataReady> = 0;
+
+        r0.<android.widget.RemoteViewsAdapter: android.content.Context mContext> = r1;
+
+        r0.<android.widget.RemoteViewsAdapter: android.content.Intent mIntent> = r2;
+
+        $i0 = virtualinvoke r2.<android.content.Intent: int getIntExtra(java.lang.String,int)>("remoteAdapterAppWidgetId", -1);
+
+        r0.<android.widget.RemoteViewsAdapter: int mAppWidgetId> = $i0;
+
+        $r9 = staticinvoke <android.view.LayoutInflater: android.view.LayoutInflater 'from'(android.content.Context)>(r1);
+
+        r0.<android.widget.RemoteViewsAdapter: android.view.LayoutInflater mLayoutInflater> = $r9;
+
+        $r10 = r0.<android.widget.RemoteViewsAdapter: android.content.Intent mIntent>;
+
+        if $r10 != null goto label01;
+
+        $r40 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r40.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Non-null Intent must be specified.");
+
+        throw $r40;
+
+     label01:
+        $r11 = new android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet;
+
+        specialinvoke $r11.<android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet: void <init>(android.widget.RemoteViewsAdapter)>(r0);
+
+        r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet mRequestedViews> = $r11;
+
+        $z0 = virtualinvoke r2.<android.content.Intent: boolean hasExtra(java.lang.String)>("remoteAdapterAppWidgetId");
+
+        if $z0 == 0 goto label02;
+
+        virtualinvoke r2.<android.content.Intent: void removeExtra(java.lang.String)>("remoteAdapterAppWidgetId");
+
+     label02:
+        $r12 = new android.os.HandlerThread;
+
+        specialinvoke $r12.<android.os.HandlerThread: void <init>(java.lang.String)>("RemoteViewsCache-loader");
+
+        r0.<android.widget.RemoteViewsAdapter: android.os.HandlerThread mWorkerThread> = $r12;
+
+        $r13 = r0.<android.widget.RemoteViewsAdapter: android.os.HandlerThread mWorkerThread>;
+
+        virtualinvoke $r13.<android.os.HandlerThread: void start()>();
+
+        $r15 = new android.os.Handler;
+
+        $r14 = r0.<android.widget.RemoteViewsAdapter: android.os.HandlerThread mWorkerThread>;
+
+        $r17 = virtualinvoke $r14.<android.os.HandlerThread: android.os.Looper getLooper()>();
+
+        specialinvoke $r15.<android.os.Handler: void <init>(android.os.Looper)>($r17);
+
+        r0.<android.widget.RemoteViewsAdapter: android.os.Handler mWorkerQueue> = $r15;
+
+        $r16 = new android.os.Handler;
+
+        $r19 = staticinvoke <android.os.Looper: android.os.Looper myLooper()>();
+
+        specialinvoke $r16.<android.os.Handler: void <init>(android.os.Looper,android.os.Handler$Callback)>($r19, r0);
+
+        r0.<android.widget.RemoteViewsAdapter: android.os.Handler mMainQueue> = $r16;
+
+        $r18 = <android.widget.RemoteViewsAdapter: android.os.HandlerThread sCacheRemovalThread>;
+
+        if $r18 != null goto label03;
+
+        $r37 = new android.os.HandlerThread;
+
+        specialinvoke $r37.<android.os.HandlerThread: void <init>(java.lang.String)>("RemoteViewsAdapter-cachePruner");
+
+        <android.widget.RemoteViewsAdapter: android.os.HandlerThread sCacheRemovalThread> = $r37;
+
+        $r38 = <android.widget.RemoteViewsAdapter: android.os.HandlerThread sCacheRemovalThread>;
+
+        virtualinvoke $r38.<android.os.HandlerThread: void start()>();
+
+        $r35 = new android.os.Handler;
+
+        $r36 = <android.widget.RemoteViewsAdapter: android.os.HandlerThread sCacheRemovalThread>;
+
+        $r41 = virtualinvoke $r36.<android.os.HandlerThread: android.os.Looper getLooper()>();
+
+        specialinvoke $r35.<android.os.Handler: void <init>(android.os.Looper)>($r41);
+
+        <android.widget.RemoteViewsAdapter: android.os.Handler sCacheRemovalQueue> = $r35;
+
+     label03:
+        $r21 = new java.lang.ref.WeakReference;
+
+        specialinvoke $r21.<java.lang.ref.WeakReference: void <init>(java.lang.Object)>(r3);
+
+        r0.<android.widget.RemoteViewsAdapter: java.lang.ref.WeakReference mCallback> = $r21;
+
+        $r20 = new android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection;
+
+        specialinvoke $r20.<android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection: void <init>(android.widget.RemoteViewsAdapter)>(r0);
+
+        r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection> = $r20;
+
+        $r23 = new android.widget.RemoteViewsAdapter$RemoteViewsCacheKey;
+
+        $r22 = new android.content.Intent$FilterComparison;
+
+        $r24 = r0.<android.widget.RemoteViewsAdapter: android.content.Intent mIntent>;
+
+        specialinvoke $r22.<android.content.Intent$FilterComparison: void <init>(android.content.Intent)>($r24);
+
+        $i1 = r0.<android.widget.RemoteViewsAdapter: int mAppWidgetId>;
+
+        specialinvoke $r23.<android.widget.RemoteViewsAdapter$RemoteViewsCacheKey: void <init>(android.content.Intent$FilterComparison,int)>($r22, $i1);
+
+        r4 = $r23;
+
+        $r26 = <android.widget.RemoteViewsAdapter: java.util.HashMap sCachedRemoteViewsCaches>;
+
+        r5 = $r26;
+
+        entermonitor $r26;
+
+     label04:
+        $r25 = <android.widget.RemoteViewsAdapter: java.util.HashMap sCachedRemoteViewsCaches>;
+
+        $z1 = virtualinvoke $r25.<java.util.HashMap: boolean containsKey(java.lang.Object)>(r4);
+
+        if $z1 == 0 goto label11;
+
+        $r28 = <android.widget.RemoteViewsAdapter: java.util.HashMap sCachedRemoteViewsCaches>;
+
+        $r31 = virtualinvoke $r28.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r4);
+
+        $r32 = (android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache) $r31;
+
+        r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache> = $r32;
+
+        $r29 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r30 = staticinvoke <android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData access$1200(android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache)>($r29);
+
+        r6 = $r30;
+
+        entermonitor $r30;
+
+     label05:
+        $r33 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r34 = staticinvoke <android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData access$1200(android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache)>($r33);
+
+        $i2 = $r34.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: int count>;
+
+        if $i2 <= 0 goto label06;
+
+        r0.<android.widget.RemoteViewsAdapter: boolean mDataReady> = 1;
+
+     label06:
+        exitmonitor r6;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r42 := @caughtexception;
+
+        r7 = $r42;
+
+        exitmonitor r6;
+
+     label09:
+        throw r7;
+
+     label10:
+        goto label12;
+
+     label11:
+        $r27 = new android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache;
+
+        specialinvoke $r27.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: void <init>(int)>(40);
+
+        r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache> = $r27;
+
+     label12:
+        $z3 = r0.<android.widget.RemoteViewsAdapter: boolean mDataReady>;
+
+        if $z3 != 0 goto label13;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: boolean requestBindService()>();
+
+     label13:
+        exitmonitor r5;
+
+     label14:
+        goto label17;
+
+     label15:
+        $r39 := @caughtexception;
+
+        r8 = $r39;
+
+        exitmonitor r5;
+
+     label16:
+        throw r8;
+
+     label17:
+        return;
+
+        catch java.lang.Throwable from label05 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+        catch java.lang.Throwable from label04 to label14 with label15;
+        catch java.lang.Throwable from label15 to label16 with label15;
+    }
+
+    protected void finalize() throws java.lang.Throwable
+    {
+        android.widget.RemoteViewsAdapter r0;
+        java.lang.Throwable r1, $r4;
+        android.os.HandlerThread $r2, $r3;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+     label1:
+        $r2 = r0.<android.widget.RemoteViewsAdapter: android.os.HandlerThread mWorkerThread>;
+
+        if $r2 == null goto label2;
+
+        $r3 = r0.<android.widget.RemoteViewsAdapter: android.os.HandlerThread mWorkerThread>;
+
+        virtualinvoke $r3.<android.os.HandlerThread: boolean quit()>();
+
+     label2:
+        specialinvoke r0.<java.lang.Object: void finalize()>();
+
+        goto label5;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+     label4:
+        specialinvoke r0.<java.lang.Object: void finalize()>();
+
+        throw r1;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public boolean isDataReady()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        boolean $z0;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $z0 = r0.<android.widget.RemoteViewsAdapter: boolean mDataReady>;
+
+        return $z0;
+    }
+
+    public void setRemoteViewsOnClickHandler(android.widget.RemoteViews$OnClickHandler)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.widget.RemoteViews$OnClickHandler r1;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        r1 := @parameter0: android.widget.RemoteViews$OnClickHandler;
+
+        r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViews$OnClickHandler mRemoteViewsOnClickHandler> = r1;
+
+        return;
+    }
+
+    public void saveRemoteViewsCache()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.widget.RemoteViewsAdapter$RemoteViewsCacheKey r1, $r7;
+        java.util.HashMap r2, $r10, $r11, $r17, $r19, $r24, $r26, $r28;
+        android.widget.RemoteViewsAdapter$RemoteViewsMetaData r3, $r12, $r14;
+        java.lang.Throwable r4, r5, r6, $r31, $r33, $r34;
+        android.content.Intent$FilterComparison $r8;
+        android.content.Intent $r9;
+        int $i0, i1, i2;
+        boolean $z2;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache $r13, $r15, $r16, $r18, $r25, r35;
+        android.widget.RemoteViewsAdapter$1 $r20, r36;
+        android.os.Handler $r21, $r29;
+        java.lang.Runnable $r27;
+        java.lang.Object $r30;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $r7 = new android.widget.RemoteViewsAdapter$RemoteViewsCacheKey;
+
+        $r8 = new android.content.Intent$FilterComparison;
+
+        $r9 = r0.<android.widget.RemoteViewsAdapter: android.content.Intent mIntent>;
+
+        specialinvoke $r8.<android.content.Intent$FilterComparison: void <init>(android.content.Intent)>($r9);
+
+        $i0 = r0.<android.widget.RemoteViewsAdapter: int mAppWidgetId>;
+
+        specialinvoke $r7.<android.widget.RemoteViewsAdapter$RemoteViewsCacheKey: void <init>(android.content.Intent$FilterComparison,int)>($r8, $i0);
+
+        r1 = $r7;
+
+        $r10 = <android.widget.RemoteViewsAdapter: java.util.HashMap sCachedRemoteViewsCaches>;
+
+        r2 = $r10;
+
+        entermonitor $r10;
+
+     label01:
+        $r11 = <android.widget.RemoteViewsAdapter: java.util.HashMap sRemoteViewsCacheRemoveRunnables>;
+
+        $z2 = virtualinvoke $r11.<java.util.HashMap: boolean containsKey(java.lang.Object)>(r1);
+
+        if $z2 == 0 goto label02;
+
+        $r29 = <android.widget.RemoteViewsAdapter: android.os.Handler sCacheRemovalQueue>;
+
+        $r24 = <android.widget.RemoteViewsAdapter: java.util.HashMap sRemoteViewsCacheRemoveRunnables>;
+
+        $r30 = virtualinvoke $r24.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        $r27 = (java.lang.Runnable) $r30;
+
+        virtualinvoke $r29.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r27);
+
+        $r28 = <android.widget.RemoteViewsAdapter: java.util.HashMap sRemoteViewsCacheRemoveRunnables>;
+
+        virtualinvoke $r28.<java.util.HashMap: java.lang.Object remove(java.lang.Object)>(r1);
+
+     label02:
+        $r13 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r12 = staticinvoke <android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData access$1200(android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache)>($r13);
+
+        r3 = $r12;
+
+        entermonitor $r12;
+
+     label03:
+        $r15 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r14 = staticinvoke <android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData access$1200(android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache)>($r15);
+
+        i1 = $r14.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: int count>;
+
+        exitmonitor r3;
+
+     label04:
+        goto label07;
+
+     label05:
+        $r33 := @caughtexception;
+
+        r4 = $r33;
+
+        exitmonitor r3;
+
+     label06:
+        throw r4;
+
+     label07:
+        $r16 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r35 = $r16;
+
+        entermonitor $r16;
+
+     label08:
+        $r18 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r17 = staticinvoke <android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: java.util.HashMap access$1300(android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache)>($r18);
+
+        i2 = virtualinvoke $r17.<java.util.HashMap: int size()>();
+
+        exitmonitor r35;
+
+     label09:
+        goto label12;
+
+     label10:
+        $r34 := @caughtexception;
+
+        r5 = $r34;
+
+        exitmonitor r35;
+
+     label11:
+        throw r5;
+
+     label12:
+        if i1 <= 0 goto label13;
+
+        if i2 <= 0 goto label13;
+
+        $r26 = <android.widget.RemoteViewsAdapter: java.util.HashMap sCachedRemoteViewsCaches>;
+
+        $r25 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        virtualinvoke $r26.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, $r25);
+
+     label13:
+        $r20 = new android.widget.RemoteViewsAdapter$1;
+
+        specialinvoke $r20.<android.widget.RemoteViewsAdapter$1: void <init>(android.widget.RemoteViewsAdapter,android.widget.RemoteViewsAdapter$RemoteViewsCacheKey)>(r0, r1);
+
+        r36 = $r20;
+
+        $r19 = <android.widget.RemoteViewsAdapter: java.util.HashMap sRemoteViewsCacheRemoveRunnables>;
+
+        virtualinvoke $r19.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, r36);
+
+        $r21 = <android.widget.RemoteViewsAdapter: android.os.Handler sCacheRemovalQueue>;
+
+        virtualinvoke $r21.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>(r36, 5000L);
+
+        exitmonitor r2;
+
+     label14:
+        goto label17;
+
+     label15:
+        $r31 := @caughtexception;
+
+        r6 = $r31;
+
+        exitmonitor r2;
+
+     label16:
+        throw r6;
+
+     label17:
+        return;
+
+        catch java.lang.Throwable from label03 to label04 with label05;
+        catch java.lang.Throwable from label05 to label06 with label05;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label10 to label11 with label10;
+        catch java.lang.Throwable from label01 to label14 with label15;
+        catch java.lang.Throwable from label15 to label16 with label15;
+    }
+
+    private void loadNextIndexInBackground()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.widget.RemoteViewsAdapter$2 $r1;
+        android.os.Handler $r2;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $r2 = r0.<android.widget.RemoteViewsAdapter: android.os.Handler mWorkerQueue>;
+
+        $r1 = new android.widget.RemoteViewsAdapter$2;
+
+        specialinvoke $r1.<android.widget.RemoteViewsAdapter$2: void <init>(android.widget.RemoteViewsAdapter)>(r0);
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    private void processException(java.lang.String, java.lang.Exception)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        java.lang.String r1, $r11, $r13;
+        java.lang.Exception r2;
+        android.widget.RemoteViewsAdapter$RemoteViewsMetaData r3, r4;
+        java.lang.Throwable r5, r6, $r20, $r21;
+        java.lang.StringBuilder $r7, $r8, $r9, $r10, $r12;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache $r14, $r16, $r17, r22;
+        android.widget.RemoteViewsAdapter$3 $r18;
+        android.os.Handler $r19;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.Exception;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error in ");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        $r11 = virtualinvoke r2.<java.lang.Exception: java.lang.String getMessage()>();
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("RemoteViewsAdapter", $r13);
+
+        $r14 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r3 = virtualinvoke $r14.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData getMetaData()>();
+
+        r4 = r3;
+
+        entermonitor r3;
+
+     label01:
+        virtualinvoke r3.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: void reset()>();
+
+        exitmonitor r4;
+
+     label02:
+        goto label05;
+
+     label03:
+        $r20 := @caughtexception;
+
+        r5 = $r20;
+
+        exitmonitor r4;
+
+     label04:
+        throw r5;
+
+     label05:
+        $r17 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r22 = $r17;
+
+        entermonitor $r17;
+
+     label06:
+        $r16 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        virtualinvoke $r16.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: void reset()>();
+
+        exitmonitor r22;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r21 := @caughtexception;
+
+        r6 = $r21;
+
+        exitmonitor r22;
+
+     label09:
+        throw r6;
+
+     label10:
+        $r19 = r0.<android.widget.RemoteViewsAdapter: android.os.Handler mMainQueue>;
+
+        $r18 = new android.widget.RemoteViewsAdapter$3;
+
+        specialinvoke $r18.<android.widget.RemoteViewsAdapter$3: void <init>(android.widget.RemoteViewsAdapter)>(r0);
+
+        virtualinvoke $r19.<android.os.Handler: boolean post(java.lang.Runnable)>($r18);
+
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label03;
+        catch java.lang.Throwable from label03 to label04 with label03;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+    }
+
+    private void updateTemporaryMetaData()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        com.android.internal.widget.IRemoteViewsFactory r1;
+        boolean z0;
+        int i0, i1, $i2;
+        android.widget.RemoteViews r2, r3;
+        android.widget.RemoteViewsAdapter$RemoteViewsMetaData r4, r5;
+        java.lang.Throwable r6, $r12;
+        android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection $r7;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache $r8;
+        android.os.RemoteException $r10, r13;
+        java.lang.RuntimeException $r11, r14;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $r7 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection>;
+
+        r1 = virtualinvoke $r7.<android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection: com.android.internal.widget.IRemoteViewsFactory getRemoteViewsFactory()>();
+
+     label01:
+        z0 = interfaceinvoke r1.<com.android.internal.widget.IRemoteViewsFactory: boolean hasStableIds()>();
+
+        i0 = interfaceinvoke r1.<com.android.internal.widget.IRemoteViewsFactory: int getViewTypeCount()>();
+
+        i1 = interfaceinvoke r1.<com.android.internal.widget.IRemoteViewsFactory: int getCount()>();
+
+        r2 = interfaceinvoke r1.<com.android.internal.widget.IRemoteViewsFactory: android.widget.RemoteViews getLoadingView()>();
+
+        r3 = null;
+
+        if i1 <= 0 goto label02;
+
+        if r2 != null goto label02;
+
+        r3 = interfaceinvoke r1.<com.android.internal.widget.IRemoteViewsFactory: android.widget.RemoteViews getViewAt(int)>(0);
+
+     label02:
+        $r8 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r4 = virtualinvoke $r8.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData getTemporaryMetaData()>();
+
+        r5 = r4;
+
+        entermonitor r4;
+
+     label03:
+        r4.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: boolean hasStableIds> = z0;
+
+        $i2 = i0 + 1;
+
+        r4.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: int viewTypeCount> = $i2;
+
+        r4.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: int count> = i1;
+
+        virtualinvoke r4.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: void setLoadingViewTemplates(android.widget.RemoteViews,android.widget.RemoteViews)>(r2, r3);
+
+        exitmonitor r5;
+
+     label04:
+        goto label07;
+
+     label05:
+        $r12 := @caughtexception;
+
+        r6 = $r12;
+
+        exitmonitor r5;
+
+     label06:
+        throw r6;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r10 := @caughtexception;
+
+        r13 = $r10;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void processException(java.lang.String,java.lang.Exception)>("updateMetaData", r13);
+
+        goto label10;
+
+     label09:
+        $r11 := @caughtexception;
+
+        r14 = $r11;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void processException(java.lang.String,java.lang.Exception)>("updateMetaData", r14);
+
+     label10:
+        return;
+
+        catch java.lang.Throwable from label03 to label04 with label05;
+        catch java.lang.Throwable from label05 to label06 with label05;
+        catch android.os.RemoteException from label01 to label07 with label08;
+        catch java.lang.RuntimeException from label01 to label07 with label09;
+    }
+
+    private void updateRemoteViews(int, boolean)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        int i0, i1, $i2, $i3, i5;
+        boolean z0, z1;
+        com.android.internal.widget.IRemoteViewsFactory r1;
+        android.os.RemoteException r2, $r23;
+        android.widget.RemoteViewsAdapter$RemoteViewsMetaData r3, r4, $r11;
+        java.lang.Throwable r5, r7, $r39, $r41;
+        android.widget.RemoteViews r6, r42;
+        android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection $r8;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache $r9, $r12, $r13, $r16, r44;
+        android.widget.RemoteViewsAdapter$4 $r14;
+        android.os.Handler $r15;
+        java.lang.StringBuilder $r17, $r18, $r19, $r20, $r21, $r22, $r24, $r26, $r27, $r28, $r30, $r32, $r33, $r35, $r37, $r38;
+        java.lang.String $r25, $r29, $r31, $r36, $r40;
+        java.lang.RuntimeException $r34, r43;
+        long l4;
+        java.util.ArrayList r45;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        $r8 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection>;
+
+        r1 = virtualinvoke $r8.<android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection: com.android.internal.widget.IRemoteViewsFactory getRemoteViewsFactory()>();
+
+     label01:
+        r42 = interfaceinvoke r1.<com.android.internal.widget.IRemoteViewsFactory: android.widget.RemoteViews getViewAt(int)>(i0);
+
+        l4 = interfaceinvoke r1.<com.android.internal.widget.IRemoteViewsFactory: long getItemId(int)>(i0);
+
+     label02:
+        goto label05;
+
+     label03:
+        $r23 := @caughtexception;
+
+        r2 = $r23;
+
+        $r24 = new java.lang.StringBuilder;
+
+        specialinvoke $r24.<java.lang.StringBuilder: void <init>()>();
+
+        $r28 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error in updateRemoteViews(");
+
+        $r27 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r26 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("): ");
+
+        $r31 = virtualinvoke r2.<android.os.RemoteException: java.lang.String getMessage()>();
+
+        $r30 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r31);
+
+        $r29 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("RemoteViewsAdapter", $r29);
+
+        return;
+
+     label04:
+        $r34 := @caughtexception;
+
+        r43 = $r34;
+
+        $r33 = new java.lang.StringBuilder;
+
+        specialinvoke $r33.<java.lang.StringBuilder: void <init>()>();
+
+        $r32 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error in updateRemoteViews(");
+
+        $r38 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r37 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("): ");
+
+        $r36 = virtualinvoke r43.<java.lang.RuntimeException: java.lang.String getMessage()>();
+
+        $r35 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r36);
+
+        $r40 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("RemoteViewsAdapter", $r40);
+
+        return;
+
+     label05:
+        if r42 != null goto label06;
+
+        $r18 = new java.lang.StringBuilder;
+
+        specialinvoke $r18.<java.lang.StringBuilder: void <init>()>();
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error in updateRemoteViews(");
+
+        $r21 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r22 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("): ");
+
+        $r19 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" null RemoteViews ");
+
+        $r20 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("returned from RemoteViewsFactory.");
+
+        $r25 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("RemoteViewsAdapter", $r25);
+
+        return;
+
+     label06:
+        i5 = virtualinvoke r42.<android.widget.RemoteViews: int getLayoutId()>();
+
+        $r9 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r3 = virtualinvoke $r9.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData getMetaData()>();
+
+        r4 = r3;
+
+        entermonitor r3;
+
+     label07:
+        z1 = virtualinvoke r3.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: boolean isViewTypeInRange(int)>(i5);
+
+        $r12 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r11 = staticinvoke <android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData access$1200(android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache)>($r12);
+
+        i1 = $r11.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: int count>;
+
+        exitmonitor r4;
+
+     label08:
+        goto label11;
+
+     label09:
+        $r39 := @caughtexception;
+
+        r5 = $r39;
+
+        exitmonitor r4;
+
+     label10:
+        throw r5;
+
+     label11:
+        $r13 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r44 = $r13;
+
+        entermonitor $r13;
+
+     label12:
+        if z1 == 0 goto label14;
+
+        $i2 = r0.<android.widget.RemoteViewsAdapter: int mVisibleWindowLowerBound>;
+
+        $i3 = r0.<android.widget.RemoteViewsAdapter: int mVisibleWindowUpperBound>;
+
+        r45 = specialinvoke r0.<android.widget.RemoteViewsAdapter: java.util.ArrayList getVisibleWindow(int,int,int)>($i2, $i3, i1);
+
+        $r16 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        virtualinvoke $r16.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: void insert(int,android.widget.RemoteViews,long,java.util.ArrayList)>(i0, r42, l4, r45);
+
+        r6 = r42;
+
+        if z0 == 0 goto label13;
+
+        $r15 = r0.<android.widget.RemoteViewsAdapter: android.os.Handler mMainQueue>;
+
+        $r14 = new android.widget.RemoteViewsAdapter$4;
+
+        specialinvoke $r14.<android.widget.RemoteViewsAdapter$4: void <init>(android.widget.RemoteViewsAdapter,int,android.widget.RemoteViews)>(r0, i0, r6);
+
+        virtualinvoke $r15.<android.os.Handler: boolean post(java.lang.Runnable)>($r14);
+
+     label13:
+        goto label15;
+
+     label14:
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("RemoteViewsAdapter", "Error: widget\'s RemoteViewsFactory returns more view types than  indicated by getViewTypeCount() ");
+
+     label15:
+        exitmonitor r44;
+
+     label16:
+        goto label19;
+
+     label17:
+        $r41 := @caughtexception;
+
+        r7 = $r41;
+
+        exitmonitor r44;
+
+     label18:
+        throw r7;
+
+     label19:
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label03;
+        catch java.lang.RuntimeException from label01 to label02 with label04;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+        catch java.lang.Throwable from label12 to label16 with label17;
+        catch java.lang.Throwable from label17 to label18 with label17;
+    }
+
+    public android.content.Intent getRemoteViewsServiceIntent()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.content.Intent $r1;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $r1 = r0.<android.widget.RemoteViewsAdapter: android.content.Intent mIntent>;
+
+        return $r1;
+    }
+
+    public int getCount()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.widget.RemoteViewsAdapter$RemoteViewsMetaData r1, r2;
+        java.lang.Throwable r3, $r6;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache $r4;
+        int $i0;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $r4 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r1 = virtualinvoke $r4.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData getMetaData()>();
+
+        r2 = r1;
+
+        entermonitor r1;
+
+     label1:
+        $i0 = r1.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: int count>;
+
+        exitmonitor r2;
+
+     label2:
+        return $i0;
+
+     label3:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+        exitmonitor r2;
+
+     label4:
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public java.lang.Object getItem(int)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        int i0;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        i0 := @parameter0: int;
+
+        return null;
+    }
+
+    public long getItemId(int)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        int i0;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache r1, $r3, $r4, $r5;
+        java.lang.Throwable r2, $r7;
+        boolean $z0;
+        android.widget.RemoteViewsAdapter$RemoteViewsIndexMetaData $r6;
+        long $l1;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        i0 := @parameter0: int;
+
+        $r3 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $r4 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $z0 = virtualinvoke $r4.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: boolean containsMetaDataAt(int)>(i0);
+
+        if $z0 == 0 goto label3;
+
+        $r5 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r6 = virtualinvoke $r5.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsIndexMetaData getMetaDataAt(int)>(i0);
+
+        $l1 = $r6.<android.widget.RemoteViewsAdapter$RemoteViewsIndexMetaData: long itemId>;
+
+        exitmonitor r1;
+
+     label2:
+        return $l1;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        return 0L;
+
+     label5:
+        $r7 := @caughtexception;
+
+        r2 = $r7;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public int getItemViewType(int)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        int i0, $i1, i2;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache r1, $r4, $r5, $r6, $r8;
+        java.lang.Throwable r2, r3, $r10, $r11;
+        boolean $z1;
+        android.widget.RemoteViewsAdapter$RemoteViewsIndexMetaData $r7;
+        android.widget.RemoteViewsAdapter$RemoteViewsMetaData r12, r13;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        i0 := @parameter0: int;
+
+        $r4 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r1 = $r4;
+
+        entermonitor $r4;
+
+     label01:
+        $r5 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $z1 = virtualinvoke $r5.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: boolean containsMetaDataAt(int)>(i0);
+
+        if $z1 == 0 goto label02;
+
+        $r6 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r7 = virtualinvoke $r6.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsIndexMetaData getMetaDataAt(int)>(i0);
+
+        i2 = $r7.<android.widget.RemoteViewsAdapter$RemoteViewsIndexMetaData: int typeId>;
+
+        goto label04;
+
+     label02:
+        exitmonitor r1;
+
+     label03:
+        return 0;
+
+     label04:
+        exitmonitor r1;
+
+     label05:
+        goto label08;
+
+     label06:
+        $r10 := @caughtexception;
+
+        r2 = $r10;
+
+        exitmonitor r1;
+
+     label07:
+        throw r2;
+
+     label08:
+        $r8 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r12 = virtualinvoke $r8.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData getMetaData()>();
+
+        r13 = r12;
+
+        entermonitor r12;
+
+     label09:
+        $i1 = virtualinvoke r12.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: int getMappedViewType(int)>(i2);
+
+        exitmonitor r13;
+
+     label10:
+        return $i1;
+
+     label11:
+        $r11 := @caughtexception;
+
+        r3 = $r11;
+
+        exitmonitor r13;
+
+     label12:
+        throw r3;
+
+        catch java.lang.Throwable from label01 to label03 with label06;
+        catch java.lang.Throwable from label04 to label05 with label06;
+        catch java.lang.Throwable from label06 to label07 with label06;
+        catch java.lang.Throwable from label09 to label10 with label11;
+        catch java.lang.Throwable from label11 to label12 with label11;
+    }
+
+    private int getConvertViewTypeId(android.view.View)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.view.View r1;
+        int i0;
+        java.lang.Object r2;
+        java.lang.Integer $r3;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        r1 := @parameter0: android.view.View;
+
+        i0 = -1;
+
+        if r1 == null goto label1;
+
+        r2 = virtualinvoke r1.<android.view.View: java.lang.Object getTag(int)>(16908346);
+
+        if r2 == null goto label1;
+
+        $r3 = (java.lang.Integer) r2;
+
+        i0 = virtualinvoke $r3.<java.lang.Integer: int intValue()>();
+
+     label1:
+        return i0;
+    }
+
+    public void setVisibleRangeHint(int, int)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        int i0, i1;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r0.<android.widget.RemoteViewsAdapter: int mVisibleWindowLowerBound> = i0;
+
+        r0.<android.widget.RemoteViewsAdapter: int mVisibleWindowUpperBound> = i1;
+
+        return;
+    }
+
+    public android.view.View getView(int, android.view.View, android.view.ViewGroup)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        int i0, i1, i2;
+        android.view.View r1, r4, r53;
+        android.view.ViewGroup r2;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache r3, $r16, $r18, $r20, $r21, $r23, $r27, $r28, $r30, $r48, $r50;
+        boolean z0, z1, z2, $z3, $z4;
+        android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout r5, r9, r11, $r29, $r34, r55, r56, r59;
+        android.content.Context r6;
+        android.widget.RemoteViews r7;
+        android.widget.RemoteViewsAdapter$RemoteViewsIndexMetaData r8;
+        android.widget.RemoteViewsAdapter$RemoteViewsMetaData r10, r13, r57, r58;
+        java.lang.Throwable r12, r14, r15, r17, $r35, $r36, $r51, $r52;
+        android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection $r19;
+        android.view.LayoutInflater $r22, $r47;
+        android.widget.RemoteViews$OnClickHandler $r25, $r32, $r33, $r46;
+        android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet $r26, $r37;
+        java.lang.Integer $r31;
+        java.lang.StringBuilder $r38, $r39, $r40, $r41, $r43, $r44;
+        java.lang.Exception $r42, r54;
+        java.lang.String $r49;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.view.View;
+
+        r2 := @parameter2: android.view.ViewGroup;
+
+        $r16 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r3 = $r16;
+
+        entermonitor $r16;
+
+     label01:
+        $r18 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        z0 = virtualinvoke $r18.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: boolean containsRemoteViewAt(int)>(i0);
+
+        $r19 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection>;
+
+        z1 = virtualinvoke $r19.<android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection: boolean isConnected()>();
+
+        z2 = 0;
+
+        if r1 == null goto label02;
+
+        $z4 = r1 instanceof android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout;
+
+        if $z4 == 0 goto label02;
+
+        $r37 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet mRequestedViews>;
+
+        $r34 = (android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout) r1;
+
+        virtualinvoke $r37.<android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet: void removeView(android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout)>($r34);
+
+     label02:
+        if z0 != 0 goto label03;
+
+        if z1 != 0 goto label03;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: boolean requestBindService()>();
+
+        goto label04;
+
+     label03:
+        $r20 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        z2 = virtualinvoke $r20.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: boolean queuePositionsToBePreloadedFromRequestedPosition(int)>(i0);
+
+     label04:
+        if z0 == 0 goto label28;
+
+        r4 = null;
+
+        i1 = 0;
+
+        r5 = null;
+
+        $z3 = r1 instanceof android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout;
+
+        if $z3 == 0 goto label05;
+
+        r5 = (android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout) r1;
+
+        r4 = virtualinvoke r5.<android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout: android.view.View getChildAt(int)>(0);
+
+        i1 = specialinvoke r0.<android.widget.RemoteViewsAdapter: int getConvertViewTypeId(android.view.View)>(r4);
+
+     label05:
+        r6 = virtualinvoke r2.<android.view.ViewGroup: android.content.Context getContext()>();
+
+        $r28 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r7 = virtualinvoke $r28.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViews getRemoteViewsAt(int)>(i0);
+
+        $r30 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r8 = virtualinvoke $r30.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsIndexMetaData getMetaDataAt(int)>(i0);
+
+        i2 = r8.<android.widget.RemoteViewsAdapter$RemoteViewsIndexMetaData: int typeId>;
+
+     label06:
+        if r5 == null goto label11;
+
+        if i1 != i2 goto label10;
+
+        $r33 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViews$OnClickHandler mRemoteViewsOnClickHandler>;
+
+        virtualinvoke r7.<android.widget.RemoteViews: void reapply(android.content.Context,android.view.View,android.widget.RemoteViews$OnClickHandler)>(r6, r4, $r33);
+
+        r9 = r5;
+
+     label07:
+        if z2 == 0 goto label08;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void loadNextIndexInBackground()>();
+
+     label08:
+        exitmonitor r3;
+
+     label09:
+        return r9;
+
+     label10:
+        virtualinvoke r5.<android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout: void removeAllViews()>();
+
+        goto label12;
+
+     label11:
+        $r29 = new android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout;
+
+        specialinvoke $r29.<android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout: void <init>(android.content.Context)>(r6);
+
+        r5 = $r29;
+
+     label12:
+        $r32 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViews$OnClickHandler mRemoteViewsOnClickHandler>;
+
+        r53 = virtualinvoke r7.<android.widget.RemoteViews: android.view.View apply(android.content.Context,android.view.ViewGroup,android.widget.RemoteViews$OnClickHandler)>(r6, r2, $r32);
+
+        $r31 = new java.lang.Integer;
+
+        specialinvoke $r31.<java.lang.Integer: void <init>(int)>(i2);
+
+        virtualinvoke r53.<android.view.View: void setTagInternal(int,java.lang.Object)>(16908346, $r31);
+
+        virtualinvoke r5.<android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout: void addView(android.view.View)>(r53);
+
+        r11 = r5;
+
+     label13:
+        if z2 == 0 goto label14;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void loadNextIndexInBackground()>();
+
+     label14:
+        exitmonitor r3;
+
+     label15:
+        return r11;
+
+     label16:
+        $r42 := @caughtexception;
+
+        r54 = $r42;
+
+        $r43 = new java.lang.StringBuilder;
+
+        specialinvoke $r43.<java.lang.StringBuilder: void <init>()>();
+
+        $r44 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error inflating RemoteViews at position: ");
+
+        $r38 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r39 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", using");
+
+        $r40 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("loading view instead");
+
+        $r41 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r54);
+
+        $r49 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("RemoteViewsAdapter", $r49);
+
+        $r50 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r10 = virtualinvoke $r50.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData getMetaData()>();
+
+        r13 = r10;
+
+        entermonitor r10;
+
+     label17:
+        $r48 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r47 = r0.<android.widget.RemoteViewsAdapter: android.view.LayoutInflater mLayoutInflater>;
+
+        $r46 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViews$OnClickHandler mRemoteViewsOnClickHandler>;
+
+        r55 = staticinvoke <android.widget.RemoteViewsAdapter$RemoteViewsMetaData: android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout access$1900(android.widget.RemoteViewsAdapter$RemoteViewsMetaData,int,android.view.View,android.view.ViewGroup,java.lang.Object,android.view.LayoutInflater,android.widget.RemoteViews$OnClickHandler)>(r10, i0, r1, r2, $r48, $r47, $r46);
+
+        exitmonitor r13;
+
+     label18:
+        goto label21;
+
+     label19:
+        $r35 := @caughtexception;
+
+        r12 = $r35;
+
+        exitmonitor r13;
+
+     label20:
+        throw r12;
+
+     label21:
+        r56 = r55;
+
+     label22:
+        if z2 == 0 goto label23;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void loadNextIndexInBackground()>();
+
+     label23:
+        exitmonitor r3;
+
+     label24:
+        return r56;
+
+     label25:
+        $r36 := @caughtexception;
+
+        r15 = $r36;
+
+     label26:
+        if z2 == 0 goto label27;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void loadNextIndexInBackground()>();
+
+     label27:
+        throw r15;
+
+     label28:
+        $r21 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r57 = virtualinvoke $r21.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData getMetaData()>();
+
+        r58 = r57;
+
+        entermonitor r57;
+
+     label29:
+        $r23 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r22 = r0.<android.widget.RemoteViewsAdapter: android.view.LayoutInflater mLayoutInflater>;
+
+        $r25 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViews$OnClickHandler mRemoteViewsOnClickHandler>;
+
+        r59 = staticinvoke <android.widget.RemoteViewsAdapter$RemoteViewsMetaData: android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout access$1900(android.widget.RemoteViewsAdapter$RemoteViewsMetaData,int,android.view.View,android.view.ViewGroup,java.lang.Object,android.view.LayoutInflater,android.widget.RemoteViews$OnClickHandler)>(r57, i0, r1, r2, $r23, $r22, $r25);
+
+        exitmonitor r58;
+
+     label30:
+        goto label33;
+
+     label31:
+        $r52 := @caughtexception;
+
+        r14 = $r52;
+
+        exitmonitor r58;
+
+     label32:
+        throw r14;
+
+     label33:
+        $r26 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet mRequestedViews>;
+
+        virtualinvoke $r26.<android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet: void add(int,android.widget.RemoteViewsAdapter$RemoteViewsFrameLayout)>(i0, r59);
+
+        $r27 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        virtualinvoke $r27.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: void queueRequestedPositionToLoad(int)>(i0);
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void loadNextIndexInBackground()>();
+
+        exitmonitor r3;
+
+     label34:
+        return r59;
+
+     label35:
+        $r51 := @caughtexception;
+
+        r17 = $r51;
+
+        exitmonitor r3;
+
+     label36:
+        throw r17;
+
+        catch java.lang.Exception from label06 to label07 with label16;
+        catch java.lang.Exception from label10 to label13 with label16;
+        catch java.lang.Throwable from label17 to label18 with label19;
+        catch java.lang.Throwable from label19 to label20 with label19;
+        catch java.lang.Throwable from label06 to label07 with label25;
+        catch java.lang.Throwable from label10 to label13 with label25;
+        catch java.lang.Throwable from label16 to label22 with label25;
+        catch java.lang.Throwable from label25 to label26 with label25;
+        catch java.lang.Throwable from label29 to label30 with label31;
+        catch java.lang.Throwable from label31 to label32 with label31;
+        catch java.lang.Throwable from label01 to label09 with label35;
+        catch java.lang.Throwable from label10 to label15 with label35;
+        catch java.lang.Throwable from label16 to label24 with label35;
+        catch java.lang.Throwable from label25 to label34 with label35;
+        catch java.lang.Throwable from label35 to label36 with label35;
+    }
+
+    public int getViewTypeCount()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.widget.RemoteViewsAdapter$RemoteViewsMetaData r1, r2;
+        java.lang.Throwable r3, $r6;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache $r4;
+        int $i0;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $r4 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r1 = virtualinvoke $r4.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData getMetaData()>();
+
+        r2 = r1;
+
+        entermonitor r1;
+
+     label1:
+        $i0 = r1.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: int viewTypeCount>;
+
+        exitmonitor r2;
+
+     label2:
+        return $i0;
+
+     label3:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+        exitmonitor r2;
+
+     label4:
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public boolean hasStableIds()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.widget.RemoteViewsAdapter$RemoteViewsMetaData r1, r2;
+        java.lang.Throwable r3, $r6;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache $r4;
+        boolean $z0;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $r4 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r1 = virtualinvoke $r4.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData getMetaData()>();
+
+        r2 = r1;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = r1.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: boolean hasStableIds>;
+
+        exitmonitor r2;
+
+     label2:
+        return $z0;
+
+     label3:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+        exitmonitor r2;
+
+     label4:
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public boolean isEmpty()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $i0 = virtualinvoke r0.<android.widget.RemoteViewsAdapter: int getCount()>();
+
+        if $i0 > 0 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    private void onNotifyDataSetChanged()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        com.android.internal.widget.IRemoteViewsFactory r1;
+        android.os.RemoteException r2, $r24;
+        java.lang.Throwable r3, r5, $r17, $r25;
+        android.widget.RemoteViewsAdapter$RemoteViewsMetaData r4, $r10, $r12;
+        android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection $r6;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache $r7, $r8, $r9, $r11, r32;
+        int $i0, $i1, i4, i5;
+        android.widget.RemoteViewsAdapter$5 $r13;
+        boolean $z0;
+        android.os.Handler $r14;
+        java.lang.Integer $r15;
+        java.lang.Object $r16;
+        java.lang.RuntimeException $r18, r31;
+        java.lang.StringBuilder $r19, $r20, $r22, $r26, $r28, $r29;
+        java.lang.String $r21, $r23, $r27, $r30;
+        java.util.ArrayList r33;
+        java.util.Iterator r34;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $r6 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection>;
+
+        r1 = virtualinvoke $r6.<android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection: com.android.internal.widget.IRemoteViewsFactory getRemoteViewsFactory()>();
+
+     label01:
+        interfaceinvoke r1.<com.android.internal.widget.IRemoteViewsFactory: void onDataSetChanged()>();
+
+     label02:
+        goto label05;
+
+     label03:
+        $r24 := @caughtexception;
+
+        r2 = $r24;
+
+        $r28 = new java.lang.StringBuilder;
+
+        specialinvoke $r28.<java.lang.StringBuilder: void <init>()>();
+
+        $r26 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error in updateNotifyDataSetChanged(): ");
+
+        $r27 = virtualinvoke r2.<android.os.RemoteException: java.lang.String getMessage()>();
+
+        $r29 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r27);
+
+        $r30 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("RemoteViewsAdapter", $r30);
+
+        return;
+
+     label04:
+        $r18 := @caughtexception;
+
+        r31 = $r18;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r22 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error in updateNotifyDataSetChanged(): ");
+
+        $r23 = virtualinvoke r31.<java.lang.RuntimeException: java.lang.String getMessage()>();
+
+        $r20 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r23);
+
+        $r21 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("RemoteViewsAdapter", $r21);
+
+        return;
+
+     label05:
+        $r7 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        r32 = $r7;
+
+        entermonitor $r7;
+
+     label06:
+        $r8 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        virtualinvoke $r8.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: void reset()>();
+
+        exitmonitor r32;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r17 := @caughtexception;
+
+        r3 = $r17;
+
+        exitmonitor r32;
+
+     label09:
+        throw r3;
+
+     label10:
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void updateTemporaryMetaData()>();
+
+        $r9 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r10 = virtualinvoke $r9.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData getTemporaryMetaData()>();
+
+        r4 = $r10;
+
+        entermonitor $r10;
+
+     label11:
+        $r11 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        $r12 = virtualinvoke $r11.<android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache: android.widget.RemoteViewsAdapter$RemoteViewsMetaData getTemporaryMetaData()>();
+
+        i4 = $r12.<android.widget.RemoteViewsAdapter$RemoteViewsMetaData: int count>;
+
+        $i1 = r0.<android.widget.RemoteViewsAdapter: int mVisibleWindowLowerBound>;
+
+        $i0 = r0.<android.widget.RemoteViewsAdapter: int mVisibleWindowUpperBound>;
+
+        r33 = specialinvoke r0.<android.widget.RemoteViewsAdapter: java.util.ArrayList getVisibleWindow(int,int,int)>($i1, $i0, i4);
+
+        exitmonitor r4;
+
+     label12:
+        goto label15;
+
+     label13:
+        $r25 := @caughtexception;
+
+        r5 = $r25;
+
+        exitmonitor r4;
+
+     label14:
+        throw r5;
+
+     label15:
+        r34 = virtualinvoke r33.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label16:
+        $z0 = interfaceinvoke r34.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label18;
+
+        $r16 = interfaceinvoke r34.<java.util.Iterator: java.lang.Object next()>();
+
+        $r15 = (java.lang.Integer) $r16;
+
+        i5 = virtualinvoke $r15.<java.lang.Integer: int intValue()>();
+
+        if i5 >= i4 goto label17;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void updateRemoteViews(int,boolean)>(i5, 0);
+
+     label17:
+        goto label16;
+
+     label18:
+        $r14 = r0.<android.widget.RemoteViewsAdapter: android.os.Handler mMainQueue>;
+
+        $r13 = new android.widget.RemoteViewsAdapter$5;
+
+        specialinvoke $r13.<android.widget.RemoteViewsAdapter$5: void <init>(android.widget.RemoteViewsAdapter)>(r0);
+
+        virtualinvoke $r14.<android.os.Handler: boolean post(java.lang.Runnable)>($r13);
+
+        r0.<android.widget.RemoteViewsAdapter: boolean mNotifyDataSetChangedAfterOnServiceConnected> = 0;
+
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label03;
+        catch java.lang.RuntimeException from label01 to label02 with label04;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+        catch java.lang.Throwable from label11 to label12 with label13;
+        catch java.lang.Throwable from label13 to label14 with label13;
+    }
+
+    private java.util.ArrayList getVisibleWindow(int, int, int)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        int i0, i1, i2, i3, i4, i5;
+        java.util.ArrayList r1, $r2;
+        java.lang.Integer $r3, $r4, $r5;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        $r2 = new java.util.ArrayList;
+
+        specialinvoke $r2.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r2;
+
+        if i0 != 0 goto label01;
+
+        if i1 == 0 goto label02;
+
+     label01:
+        if i0 < 0 goto label02;
+
+        if i1 >= 0 goto label03;
+
+     label02:
+        return r1;
+
+     label03:
+        if i0 > i1 goto label06;
+
+        i3 = i0;
+
+     label04:
+        if i3 > i1 goto label05;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>($r5);
+
+        i3 = i3 + 1;
+
+        goto label04;
+
+     label05:
+        goto label10;
+
+     label06:
+        i4 = i0;
+
+     label07:
+        if i4 >= i2 goto label08;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i4);
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>($r4);
+
+        i4 = i4 + 1;
+
+        goto label07;
+
+     label08:
+        i5 = 0;
+
+     label09:
+        if i5 > i1 goto label10;
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i5);
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>($r3);
+
+        i5 = i5 + 1;
+
+        goto label09;
+
+     label10:
+        return r1;
+    }
+
+    public void notifyDataSetChanged()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.os.Handler $r1, $r4;
+        android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection $r2;
+        boolean $z0, $z2;
+        android.widget.RemoteViewsAdapter$6 $r3;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $r1 = r0.<android.widget.RemoteViewsAdapter: android.os.Handler mMainQueue>;
+
+        virtualinvoke $r1.<android.os.Handler: void removeMessages(int)>(1);
+
+        $r2 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection>;
+
+        $z0 = virtualinvoke $r2.<android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection: boolean isConnected()>();
+
+        if $z0 != 0 goto label2;
+
+        $z2 = r0.<android.widget.RemoteViewsAdapter: boolean mNotifyDataSetChangedAfterOnServiceConnected>;
+
+        if $z2 == 0 goto label1;
+
+        return;
+
+     label1:
+        r0.<android.widget.RemoteViewsAdapter: boolean mNotifyDataSetChangedAfterOnServiceConnected> = 1;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: boolean requestBindService()>();
+
+        return;
+
+     label2:
+        $r4 = r0.<android.widget.RemoteViewsAdapter: android.os.Handler mWorkerQueue>;
+
+        $r3 = new android.widget.RemoteViewsAdapter$6;
+
+        specialinvoke $r3.<android.widget.RemoteViewsAdapter$6: void <init>(android.widget.RemoteViewsAdapter)>(r0);
+
+        virtualinvoke $r4.<android.os.Handler: boolean post(java.lang.Runnable)>($r3);
+
+        return;
+    }
+
+    void superNotifyDataSetChanged()
+    {
+        android.widget.RemoteViewsAdapter r0;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        specialinvoke r0.<android.widget.BaseAdapter: void notifyDataSetChanged()>();
+
+        return;
+    }
+
+    public boolean handleMessage(android.os.Message)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.os.Message r1;
+        boolean z0, $z1;
+        int $i0, $i1;
+        android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection $r2, $r5;
+        android.content.Intent $r3;
+        android.content.Context $r4;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        r1 := @parameter0: android.os.Message;
+
+        z0 = 0;
+
+        $i0 = r1.<android.os.Message: int what>;
+
+        lookupswitch($i0)
+        {
+            case 1: goto label1;
+            default: goto label3;
+        };
+
+     label1:
+        $r2 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection>;
+
+        $z1 = virtualinvoke $r2.<android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection: boolean isConnected()>();
+
+        if $z1 == 0 goto label2;
+
+        $r5 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection>;
+
+        $r4 = r0.<android.widget.RemoteViewsAdapter: android.content.Context mContext>;
+
+        $i1 = r0.<android.widget.RemoteViewsAdapter: int mAppWidgetId>;
+
+        $r3 = r0.<android.widget.RemoteViewsAdapter: android.content.Intent mIntent>;
+
+        virtualinvoke $r5.<android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection: void unbind(android.content.Context,int,android.content.Intent)>($r4, $i1, $r3);
+
+     label2:
+        z0 = 1;
+
+        goto label3;
+
+     label3:
+        return z0;
+    }
+
+    private void enqueueDeferredUnbindServiceMessage()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.os.Handler $r1, $r2;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $r1 = r0.<android.widget.RemoteViewsAdapter: android.os.Handler mMainQueue>;
+
+        virtualinvoke $r1.<android.os.Handler: void removeMessages(int)>(1);
+
+        $r2 = r0.<android.widget.RemoteViewsAdapter: android.os.Handler mMainQueue>;
+
+        virtualinvoke $r2.<android.os.Handler: boolean sendEmptyMessageDelayed(int,long)>(1, 5000L);
+
+        return;
+    }
+
+    private boolean requestBindService()
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection $r1, $r3, $r6;
+        boolean $z0, $z1;
+        android.os.Handler $r2;
+        android.content.Intent $r4;
+        int $i0;
+        android.content.Context $r5;
+
+        r0 := @this: android.widget.RemoteViewsAdapter;
+
+        $r1 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection>;
+
+        $z0 = virtualinvoke $r1.<android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection: boolean isConnected()>();
+
+        if $z0 != 0 goto label1;
+
+        $r6 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection>;
+
+        $r5 = r0.<android.widget.RemoteViewsAdapter: android.content.Context mContext>;
+
+        $i0 = r0.<android.widget.RemoteViewsAdapter: int mAppWidgetId>;
+
+        $r4 = r0.<android.widget.RemoteViewsAdapter: android.content.Intent mIntent>;
+
+        virtualinvoke $r6.<android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection: void bind(android.content.Context,int,android.content.Intent)>($r5, $i0, $r4);
+
+     label1:
+        $r2 = r0.<android.widget.RemoteViewsAdapter: android.os.Handler mMainQueue>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeMessages(int)>(1);
+
+        $r3 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection>;
+
+        $z1 = virtualinvoke $r3.<android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection: boolean isConnected()>();
+
+        return $z1;
+    }
+
+    static boolean access$000(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        boolean $z0;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        $z0 = r0.<android.widget.RemoteViewsAdapter: boolean mNotifyDataSetChangedAfterOnServiceConnected>;
+
+        return $z0;
+    }
+
+    static void access$100(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void onNotifyDataSetChanged()>();
+
+        return;
+    }
+
+    static android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection access$200(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection $r1;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        $r1 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsAdapterServiceConnection mServiceConnection>;
+
+        return $r1;
+    }
+
+    static void access$300(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void updateTemporaryMetaData()>();
+
+        return;
+    }
+
+    static android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache access$400(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache $r1;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        $r1 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$FixedSizeRemoteViewsCache mCache>;
+
+        return $r1;
+    }
+
+    static java.lang.ref.WeakReference access$500(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        java.lang.ref.WeakReference $r1;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        $r1 = r0.<android.widget.RemoteViewsAdapter: java.lang.ref.WeakReference mCallback>;
+
+        return $r1;
+    }
+
+    static android.os.Handler access$600(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.os.Handler $r1;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        $r1 = r0.<android.widget.RemoteViewsAdapter: android.os.Handler mMainQueue>;
+
+        return $r1;
+    }
+
+    static void access$700(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void enqueueDeferredUnbindServiceMessage()>();
+
+        return;
+    }
+
+    static android.os.Handler access$1000(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.os.Handler $r1;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        $r1 = r0.<android.widget.RemoteViewsAdapter: android.os.Handler mWorkerQueue>;
+
+        return $r1;
+    }
+
+    static android.widget.RemoteViews$OnClickHandler access$1100(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.widget.RemoteViews$OnClickHandler $r1;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        $r1 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViews$OnClickHandler mRemoteViewsOnClickHandler>;
+
+        return $r1;
+    }
+
+    static java.util.HashMap access$1400()
+    {
+        java.util.HashMap $r0;
+
+        $r0 = <android.widget.RemoteViewsAdapter: java.util.HashMap sCachedRemoteViewsCaches>;
+
+        return $r0;
+    }
+
+    static java.util.HashMap access$1500()
+    {
+        java.util.HashMap $r0;
+
+        $r0 = <android.widget.RemoteViewsAdapter: java.util.HashMap sRemoteViewsCacheRemoveRunnables>;
+
+        return $r0;
+    }
+
+    static void access$1600(android.widget.RemoteViewsAdapter, int, boolean)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        int i0;
+        boolean z0;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void updateRemoteViews(int,boolean)>(i0, z0);
+
+        return;
+    }
+
+    static void access$1700(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        specialinvoke r0.<android.widget.RemoteViewsAdapter: void loadNextIndexInBackground()>();
+
+        return;
+    }
+
+    static android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet access$1800(android.widget.RemoteViewsAdapter)
+    {
+        android.widget.RemoteViewsAdapter r0;
+        android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet $r1;
+
+        r0 := @parameter0: android.widget.RemoteViewsAdapter;
+
+        $r1 = r0.<android.widget.RemoteViewsAdapter: android.widget.RemoteViewsAdapter$RemoteViewsFrameLayoutRefSet mRequestedViews>;
+
+        return $r1;
+    }
+
+    static void <clinit>()
+    {
+        java.util.HashMap $r0, $r1;
+
+        <android.widget.RemoteViewsAdapter: int REMOTE_VIEWS_CACHE_DURATION> = 5000;
+
+        <android.widget.RemoteViewsAdapter: int sUnbindServiceMessageType> = 1;
+
+        <android.widget.RemoteViewsAdapter: int sDefaultMessageType> = 0;
+
+        <android.widget.RemoteViewsAdapter: int sDefaultLoadingViewHeight> = 50;
+
+        <android.widget.RemoteViewsAdapter: int sUnbindServiceDelay> = 5000;
+
+        <android.widget.RemoteViewsAdapter: int sDefaultCacheSize> = 40;
+
+        <android.widget.RemoteViewsAdapter: java.lang.String TAG> = "RemoteViewsAdapter";
+
+        <android.widget.RemoteViewsAdapter: java.lang.String MULTI_USER_PERM> = "android.permission.INTERACT_ACROSS_USERS_FULL";
+
+        $r0 = new java.util.HashMap;
+
+        specialinvoke $r0.<java.util.HashMap: void <init>()>();
+
+        <android.widget.RemoteViewsAdapter: java.util.HashMap sCachedRemoteViewsCaches> = $r0;
+
+        $r1 = new java.util.HashMap;
+
+        specialinvoke $r1.<java.util.HashMap: void <init>()>();
+
+        <android.widget.RemoteViewsAdapter: java.util.HashMap sRemoteViewsCacheRemoveRunnables> = $r1;
+
+        return;
+    }
+}

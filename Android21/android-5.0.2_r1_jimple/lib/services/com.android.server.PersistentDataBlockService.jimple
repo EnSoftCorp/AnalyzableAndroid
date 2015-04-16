@@ -1,0 +1,411 @@
+public class com.android.server.PersistentDataBlockService extends com.android.server.SystemService
+{
+    private static final java.lang.String TAG;
+    private static final java.lang.String PERSISTENT_DATA_BLOCK_PROP;
+    private static final int HEADER_SIZE;
+    private static final int PARTITION_TYPE_MARKER;
+    private static final int MAX_DATA_BLOCK_SIZE;
+    private final android.content.Context mContext;
+    private final java.lang.String mDataBlockFile;
+    private final java.lang.Object mLock;
+    private int mAllowedAppId;
+    private final java.lang.Object mOemLock;
+    private long mBlockDeviceSize;
+    private final android.os.IBinder mService;
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.PersistentDataBlockService r0;
+        android.content.Context r1;
+        java.lang.Object $r2, $r3;
+        com.android.server.PersistentDataBlockService$1 $r4;
+        java.lang.String $r5;
+        int $i0;
+
+        r0 := @this: com.android.server.PersistentDataBlockService;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<com.android.server.SystemService: void <init>(android.content.Context)>(r1);
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.PersistentDataBlockService: java.lang.Object mLock> = $r2;
+
+        r0.<com.android.server.PersistentDataBlockService: int mAllowedAppId> = -1;
+
+        $r3 = new java.lang.Object;
+
+        specialinvoke $r3.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.PersistentDataBlockService: java.lang.Object mOemLock> = $r3;
+
+        $r4 = new com.android.server.PersistentDataBlockService$1;
+
+        specialinvoke $r4.<com.android.server.PersistentDataBlockService$1: void <init>(com.android.server.PersistentDataBlockService)>(r0);
+
+        r0.<com.android.server.PersistentDataBlockService: android.os.IBinder mService> = $r4;
+
+        r0.<com.android.server.PersistentDataBlockService: android.content.Context mContext> = r1;
+
+        $r5 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("ro.frp.pst");
+
+        r0.<com.android.server.PersistentDataBlockService: java.lang.String mDataBlockFile> = $r5;
+
+        r0.<com.android.server.PersistentDataBlockService: long mBlockDeviceSize> = -1L;
+
+        $i0 = specialinvoke r0.<com.android.server.PersistentDataBlockService: int getAllowedAppId(int)>(0);
+
+        r0.<com.android.server.PersistentDataBlockService: int mAllowedAppId> = $i0;
+
+        return;
+    }
+
+    private int getAllowedAppId(int)
+    {
+        com.android.server.PersistentDataBlockService r0;
+        int i0, i1, $i2;
+        java.lang.String r1, $r9, $r12;
+        android.content.pm.PackageManager r2;
+        android.content.pm.PackageManager$NameNotFoundException r3, $r7;
+        android.content.Context $r4, $r6;
+        android.content.res.Resources $r5;
+        java.lang.StringBuilder $r8, $r10, $r11;
+
+        r0 := @this: com.android.server.PersistentDataBlockService;
+
+        i0 := @parameter0: int;
+
+        $r4 = r0.<com.android.server.PersistentDataBlockService: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r1 = virtualinvoke $r5.<android.content.res.Resources: java.lang.String getString(int)>(17039429);
+
+        $r6 = r0.<com.android.server.PersistentDataBlockService: android.content.Context mContext>;
+
+        r2 = virtualinvoke $r6.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        i1 = -1;
+
+     label1:
+        i1 = virtualinvoke r2.<android.content.pm.PackageManager: int getPackageUid(java.lang.String,int)>(r1, i0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r3 = $r7;
+
+        $r9 = <com.android.server.PersistentDataBlockService: java.lang.String TAG>;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("not able to find package ");
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r9, $r12, r3);
+
+     label4:
+        $i2 = staticinvoke <android.os.UserHandle: int getAppId(int)>(i1);
+
+        return $i2;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label1 to label2 with label3;
+    }
+
+    public void onStart()
+    {
+        com.android.server.PersistentDataBlockService r0;
+        android.os.IBinder $r1;
+
+        r0 := @this: com.android.server.PersistentDataBlockService;
+
+        $r1 = r0.<com.android.server.PersistentDataBlockService: android.os.IBinder mService>;
+
+        virtualinvoke r0.<com.android.server.PersistentDataBlockService: void publishBinderService(java.lang.String,android.os.IBinder)>("persistent_data_block", $r1);
+
+        return;
+    }
+
+    private void enforceOemUnlockPermission()
+    {
+        com.android.server.PersistentDataBlockService r0;
+        android.content.Context $r1;
+
+        r0 := @this: com.android.server.PersistentDataBlockService;
+
+        $r1 = r0.<com.android.server.PersistentDataBlockService: android.content.Context mContext>;
+
+        virtualinvoke $r1.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.OEM_UNLOCK_STATE", "Can\'t access OEM unlock state");
+
+        return;
+    }
+
+    private void enforceUid(int)
+    {
+        com.android.server.PersistentDataBlockService r0;
+        int i0, $i1, $i2;
+        java.lang.SecurityException $r1;
+        java.lang.StringBuilder $r2, $r3, $r4, $r5;
+        java.lang.String $r6;
+
+        r0 := @this: com.android.server.PersistentDataBlockService;
+
+        i0 := @parameter0: int;
+
+        $i1 = staticinvoke <android.os.UserHandle: int getAppId(int)>(i0);
+
+        $i2 = r0.<com.android.server.PersistentDataBlockService: int mAllowedAppId>;
+
+        if $i1 == $i2 goto label1;
+
+        $r1 = new java.lang.SecurityException;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("uid ");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" not allowed to access PST");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r1.<java.lang.SecurityException: void <init>(java.lang.String)>($r6);
+
+        throw $r1;
+
+     label1:
+        return;
+    }
+
+    private int getTotalDataSizeLocked(java.io.DataInputStream) throws java.io.IOException
+    {
+        com.android.server.PersistentDataBlockService r0;
+        java.io.DataInputStream r1;
+        int i0, i1;
+
+        r0 := @this: com.android.server.PersistentDataBlockService;
+
+        r1 := @parameter0: java.io.DataInputStream;
+
+        i1 = virtualinvoke r1.<java.io.DataInputStream: int readInt()>();
+
+        if i1 != 6544 goto label1;
+
+        i0 = virtualinvoke r1.<java.io.DataInputStream: int readInt()>();
+
+        goto label2;
+
+     label1:
+        i0 = 0;
+
+     label2:
+        return i0;
+    }
+
+    private long getBlockDeviceSize()
+    {
+        com.android.server.PersistentDataBlockService r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r5;
+        long $l0, $l2, $l3;
+        byte $b1;
+        java.lang.String $r4;
+
+        r0 := @this: com.android.server.PersistentDataBlockService;
+
+        $r3 = r0.<com.android.server.PersistentDataBlockService: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $l0 = r0.<com.android.server.PersistentDataBlockService: long mBlockDeviceSize>;
+
+        $b1 = $l0 cmp -1L;
+
+        if $b1 != 0 goto label2;
+
+        $r4 = r0.<com.android.server.PersistentDataBlockService: java.lang.String mDataBlockFile>;
+
+        $l3 = specialinvoke r0.<com.android.server.PersistentDataBlockService: long nativeGetBlockDeviceSize(java.lang.String)>($r4);
+
+        r0.<com.android.server.PersistentDataBlockService: long mBlockDeviceSize> = $l3;
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+     label6:
+        $l2 = r0.<com.android.server.PersistentDataBlockService: long mBlockDeviceSize>;
+
+        return $l2;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    private native long nativeGetBlockDeviceSize(java.lang.String);
+
+    private native int nativeWipe(java.lang.String);
+
+    static void access$000(com.android.server.PersistentDataBlockService, int)
+    {
+        com.android.server.PersistentDataBlockService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.PersistentDataBlockService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.PersistentDataBlockService: void enforceUid(int)>(i0);
+
+        return;
+    }
+
+    static long access$100(com.android.server.PersistentDataBlockService)
+    {
+        com.android.server.PersistentDataBlockService r0;
+        long $l0;
+
+        r0 := @parameter0: com.android.server.PersistentDataBlockService;
+
+        $l0 = specialinvoke r0.<com.android.server.PersistentDataBlockService: long getBlockDeviceSize()>();
+
+        return $l0;
+    }
+
+    static java.lang.String access$200(com.android.server.PersistentDataBlockService)
+    {
+        com.android.server.PersistentDataBlockService r0;
+        java.lang.String $r1;
+
+        r0 := @parameter0: com.android.server.PersistentDataBlockService;
+
+        $r1 = r0.<com.android.server.PersistentDataBlockService: java.lang.String mDataBlockFile>;
+
+        return $r1;
+    }
+
+    static java.lang.String access$300()
+    {
+        java.lang.String $r0;
+
+        $r0 = <com.android.server.PersistentDataBlockService: java.lang.String TAG>;
+
+        return $r0;
+    }
+
+    static java.lang.Object access$400(com.android.server.PersistentDataBlockService)
+    {
+        com.android.server.PersistentDataBlockService r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.PersistentDataBlockService;
+
+        $r1 = r0.<com.android.server.PersistentDataBlockService: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static int access$500(com.android.server.PersistentDataBlockService, java.io.DataInputStream) throws java.io.IOException
+    {
+        com.android.server.PersistentDataBlockService r0;
+        java.io.DataInputStream r1;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.PersistentDataBlockService;
+
+        r1 := @parameter1: java.io.DataInputStream;
+
+        $i0 = specialinvoke r0.<com.android.server.PersistentDataBlockService: int getTotalDataSizeLocked(java.io.DataInputStream)>(r1);
+
+        return $i0;
+    }
+
+    static void access$600(com.android.server.PersistentDataBlockService)
+    {
+        com.android.server.PersistentDataBlockService r0;
+
+        r0 := @parameter0: com.android.server.PersistentDataBlockService;
+
+        specialinvoke r0.<com.android.server.PersistentDataBlockService: void enforceOemUnlockPermission()>();
+
+        return;
+    }
+
+    static int access$700(com.android.server.PersistentDataBlockService, java.lang.String)
+    {
+        com.android.server.PersistentDataBlockService r0;
+        java.lang.String r1;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.PersistentDataBlockService;
+
+        r1 := @parameter1: java.lang.String;
+
+        $i0 = specialinvoke r0.<com.android.server.PersistentDataBlockService: int nativeWipe(java.lang.String)>(r1);
+
+        return $i0;
+    }
+
+    static java.lang.Object access$800(com.android.server.PersistentDataBlockService)
+    {
+        com.android.server.PersistentDataBlockService r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.PersistentDataBlockService;
+
+        $r1 = r0.<com.android.server.PersistentDataBlockService: java.lang.Object mOemLock>;
+
+        return $r1;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+
+        <com.android.server.PersistentDataBlockService: int MAX_DATA_BLOCK_SIZE> = 102400;
+
+        <com.android.server.PersistentDataBlockService: int PARTITION_TYPE_MARKER> = 6544;
+
+        <com.android.server.PersistentDataBlockService: int HEADER_SIZE> = 8;
+
+        <com.android.server.PersistentDataBlockService: java.lang.String PERSISTENT_DATA_BLOCK_PROP> = "ro.frp.pst";
+
+        $r0 = class "com/android/server/PersistentDataBlockService";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.server.PersistentDataBlockService: java.lang.String TAG> = $r1;
+
+        return;
+    }
+}

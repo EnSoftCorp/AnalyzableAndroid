@@ -1,0 +1,1510 @@
+final class com.android.server.NativeDaemonConnector extends java.lang.Object implements java.lang.Runnable, android.os.Handler$Callback, com.android.server.Watchdog$Monitor
+{
+    private static final boolean LOGD;
+    private static final boolean VDBG;
+    private final java.lang.String TAG;
+    private java.lang.String mSocket;
+    private java.io.OutputStream mOutputStream;
+    private android.util.LocalLog mLocalLog;
+    private final com.android.server.NativeDaemonConnector$ResponseQueue mResponseQueue;
+    private final android.os.PowerManager$WakeLock mWakeLock;
+    private final android.os.Looper mLooper;
+    private com.android.server.INativeDaemonConnectorCallbacks mCallbacks;
+    private android.os.Handler mCallbackHandler;
+    private java.util.concurrent.atomic.AtomicInteger mSequenceNumber;
+    private static final int DEFAULT_TIMEOUT;
+    private static final long WARN_EXECUTE_DELAY_MS;
+    private final java.lang.Object mDaemonLock;
+    private final int BUFFER_SIZE;
+
+    void <init>(com.android.server.INativeDaemonConnectorCallbacks, java.lang.String, int, java.lang.String, int, android.os.PowerManager$WakeLock)
+    {
+        com.android.server.NativeDaemonConnector r0;
+        com.android.server.INativeDaemonConnectorCallbacks r1;
+        java.lang.String r2, r3;
+        int i0, i1;
+        android.os.PowerManager$WakeLock r4;
+        com.android.server.FgThread $r5;
+        android.os.Looper $r6;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        r1 := @parameter0: com.android.server.INativeDaemonConnectorCallbacks;
+
+        r2 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        r3 := @parameter3: java.lang.String;
+
+        i1 := @parameter4: int;
+
+        r4 := @parameter5: android.os.PowerManager$WakeLock;
+
+        $r5 = staticinvoke <com.android.server.FgThread: com.android.server.FgThread get()>();
+
+        $r6 = virtualinvoke $r5.<com.android.server.FgThread: android.os.Looper getLooper()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void <init>(com.android.server.INativeDaemonConnectorCallbacks,java.lang.String,int,java.lang.String,int,android.os.PowerManager$WakeLock,android.os.Looper)>(r1, r2, i0, r3, i1, r4, $r6);
+
+        return;
+    }
+
+    void <init>(com.android.server.INativeDaemonConnectorCallbacks, java.lang.String, int, java.lang.String, int, android.os.PowerManager$WakeLock, android.os.Looper)
+    {
+        com.android.server.NativeDaemonConnector r0;
+        com.android.server.INativeDaemonConnectorCallbacks r1;
+        java.lang.String r2, r3, $r11;
+        int i0, i1;
+        android.os.PowerManager$WakeLock r4, $r8, $r12;
+        android.os.Looper r5;
+        java.lang.Object $r6;
+        com.android.server.NativeDaemonConnector$ResponseQueue $r7;
+        java.util.concurrent.atomic.AtomicInteger $r9;
+        android.util.LocalLog $r10;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        r1 := @parameter0: com.android.server.INativeDaemonConnectorCallbacks;
+
+        r2 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        r3 := @parameter3: java.lang.String;
+
+        i1 := @parameter4: int;
+
+        r4 := @parameter5: android.os.PowerManager$WakeLock;
+
+        r5 := @parameter6: android.os.Looper;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r6 = new java.lang.Object;
+
+        specialinvoke $r6.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.NativeDaemonConnector: java.lang.Object mDaemonLock> = $r6;
+
+        r0.<com.android.server.NativeDaemonConnector: int BUFFER_SIZE> = 4096;
+
+        r0.<com.android.server.NativeDaemonConnector: com.android.server.INativeDaemonConnectorCallbacks mCallbacks> = r1;
+
+        r0.<com.android.server.NativeDaemonConnector: java.lang.String mSocket> = r2;
+
+        $r7 = new com.android.server.NativeDaemonConnector$ResponseQueue;
+
+        specialinvoke $r7.<com.android.server.NativeDaemonConnector$ResponseQueue: void <init>(int)>(i0);
+
+        r0.<com.android.server.NativeDaemonConnector: com.android.server.NativeDaemonConnector$ResponseQueue mResponseQueue> = $r7;
+
+        r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock> = r4;
+
+        $r8 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        if $r8 == null goto label1;
+
+        $r12 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r12.<android.os.PowerManager$WakeLock: void setReferenceCounted(boolean)>(1);
+
+     label1:
+        r0.<com.android.server.NativeDaemonConnector: android.os.Looper mLooper> = r5;
+
+        $r9 = new java.util.concurrent.atomic.AtomicInteger;
+
+        specialinvoke $r9.<java.util.concurrent.atomic.AtomicInteger: void <init>(int)>(0);
+
+        r0.<com.android.server.NativeDaemonConnector: java.util.concurrent.atomic.AtomicInteger mSequenceNumber> = $r9;
+
+        if r3 == null goto label2;
+
+        $r11 = r3;
+
+        goto label3;
+
+     label2:
+        $r11 = "NativeDaemonConnector";
+
+     label3:
+        r0.<com.android.server.NativeDaemonConnector: java.lang.String TAG> = $r11;
+
+        $r10 = new android.util.LocalLog;
+
+        specialinvoke $r10.<android.util.LocalLog: void <init>(int)>(i1);
+
+        r0.<com.android.server.NativeDaemonConnector: android.util.LocalLog mLocalLog> = $r10;
+
+        return;
+    }
+
+    public void run()
+    {
+        com.android.server.NativeDaemonConnector r0;
+        java.lang.Exception r1, $r4;
+        android.os.Handler $r2;
+        android.os.Looper $r3;
+        java.lang.StringBuilder $r5, $r6, $r7;
+        java.lang.String $r8;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        $r2 = new android.os.Handler;
+
+        $r3 = r0.<com.android.server.NativeDaemonConnector: android.os.Looper mLooper>;
+
+        specialinvoke $r2.<android.os.Handler: void <init>(android.os.Looper,android.os.Handler$Callback)>($r3, r0);
+
+        r0.<com.android.server.NativeDaemonConnector: android.os.Handler mCallbackHandler> = $r2;
+
+     label1:
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void listenToSocket()>();
+
+     label2:
+        goto label1;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error in NativeDaemonConnector: ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r8);
+
+        staticinvoke <android.os.SystemClock: void sleep(long)>(5000L);
+
+        goto label1;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public boolean handleMessage(android.os.Message)
+    {
+        com.android.server.NativeDaemonConnector r0;
+        android.os.Message r1;
+        java.lang.String r2, $r13, $r22;
+        java.lang.Exception r3, $r16;
+        java.lang.Throwable r4, $r12;
+        java.lang.Object $r5;
+        com.android.server.INativeDaemonConnectorCallbacks $r6, $r8, $r14, $r24;
+        int $i0, $i1, $i2, $i3;
+        java.lang.String[] $r7;
+        boolean $z0, $z1, $z2, $z3;
+        android.os.PowerManager$WakeLock $r9, $r10, $r15, $r17, $r25, $r26;
+        java.lang.Object[] $r11;
+        java.lang.StringBuilder $r18, $r19, $r20, $r21, $r23;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        r1 := @parameter0: android.os.Message;
+
+        $r5 = r1.<android.os.Message: java.lang.Object obj>;
+
+        r2 = (java.lang.String) $r5;
+
+     label1:
+        $r6 = r0.<com.android.server.NativeDaemonConnector: com.android.server.INativeDaemonConnectorCallbacks mCallbacks>;
+
+        $i0 = r1.<android.os.Message: int what>;
+
+        $r7 = staticinvoke <com.android.server.NativeDaemonEvent: java.lang.String[] unescapeArgs(java.lang.String)>(r2);
+
+        $z0 = interfaceinvoke $r6.<com.android.server.INativeDaemonConnectorCallbacks: boolean onEvent(int,java.lang.String,java.lang.String[])>($i0, r2, $r7);
+
+        if $z0 != 0 goto label2;
+
+        $r11 = newarray (java.lang.Object)[1];
+
+        $r11[0] = r2;
+
+        $r13 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("Unhandled event \'%s\'", $r11);
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void log(java.lang.String)>($r13);
+
+     label2:
+        $r8 = r0.<com.android.server.NativeDaemonConnector: com.android.server.INativeDaemonConnectorCallbacks mCallbacks>;
+
+        $i1 = r1.<android.os.Message: int what>;
+
+        $z1 = interfaceinvoke $r8.<com.android.server.INativeDaemonConnectorCallbacks: boolean onCheckHoldWakeLock(int)>($i1);
+
+        if $z1 == 0 goto label8;
+
+        $r9 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        if $r9 == null goto label8;
+
+        $r10 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r10.<android.os.PowerManager$WakeLock: void release()>();
+
+        goto label8;
+
+     label3:
+        $r16 := @caughtexception;
+
+        r3 = $r16;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error handling \'");
+
+        $r21 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\': ");
+
+        $r23 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r22 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r22);
+
+     label4:
+        $r24 = r0.<com.android.server.NativeDaemonConnector: com.android.server.INativeDaemonConnectorCallbacks mCallbacks>;
+
+        $i3 = r1.<android.os.Message: int what>;
+
+        $z3 = interfaceinvoke $r24.<com.android.server.INativeDaemonConnectorCallbacks: boolean onCheckHoldWakeLock(int)>($i3);
+
+        if $z3 == 0 goto label8;
+
+        $r26 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        if $r26 == null goto label8;
+
+        $r25 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r25.<android.os.PowerManager$WakeLock: void release()>();
+
+        goto label8;
+
+     label5:
+        $r12 := @caughtexception;
+
+        r4 = $r12;
+
+     label6:
+        $r14 = r0.<com.android.server.NativeDaemonConnector: com.android.server.INativeDaemonConnectorCallbacks mCallbacks>;
+
+        $i2 = r1.<android.os.Message: int what>;
+
+        $z2 = interfaceinvoke $r14.<com.android.server.INativeDaemonConnectorCallbacks: boolean onCheckHoldWakeLock(int)>($i2);
+
+        if $z2 == 0 goto label7;
+
+        $r15 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        if $r15 == null goto label7;
+
+        $r17 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r17.<android.os.PowerManager$WakeLock: void release()>();
+
+     label7:
+        throw r4;
+
+     label8:
+        return 1;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private android.net.LocalSocketAddress determineSocketAddress()
+    {
+        com.android.server.NativeDaemonConnector r0;
+        java.lang.String $r1, $r4, $r6;
+        boolean $z0, $z1;
+        android.net.LocalSocketAddress $r2, $r5;
+        android.net.LocalSocketAddress$Namespace $r3;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        $r1 = r0.<com.android.server.NativeDaemonConnector: java.lang.String mSocket>;
+
+        $z0 = virtualinvoke $r1.<java.lang.String: boolean startsWith(java.lang.String)>("__test__");
+
+        if $z0 == 0 goto label1;
+
+        $z1 = <android.os.Build: boolean IS_DEBUGGABLE>;
+
+        if $z1 == 0 goto label1;
+
+        $r5 = new android.net.LocalSocketAddress;
+
+        $r6 = r0.<com.android.server.NativeDaemonConnector: java.lang.String mSocket>;
+
+        specialinvoke $r5.<android.net.LocalSocketAddress: void <init>(java.lang.String)>($r6);
+
+        return $r5;
+
+     label1:
+        $r2 = new android.net.LocalSocketAddress;
+
+        $r4 = r0.<com.android.server.NativeDaemonConnector: java.lang.String mSocket>;
+
+        $r3 = <android.net.LocalSocketAddress$Namespace: android.net.LocalSocketAddress$Namespace RESERVED>;
+
+        specialinvoke $r2.<android.net.LocalSocketAddress: void <init>(java.lang.String,android.net.LocalSocketAddress$Namespace)>($r4, $r3);
+
+        return $r2;
+    }
+
+    private void listenToSocket() throws java.io.IOException
+    {
+        com.android.server.NativeDaemonConnector r0;
+        android.net.LocalSocket r1, $r13;
+        android.net.LocalSocketAddress r2;
+        java.io.InputStream r3;
+        java.lang.Object r4, r11, $r16, $r36, $r65, r89;
+        java.lang.Throwable r5, r8, r9, r10, r14, $r42, $r51, $r54, $r55, $r71;
+        int i0, i1, $i2, $i4, $i5, $i6, $i7, i8, i9, i10, i11;
+        java.lang.String r6, $r19, $r20, $r25, $r37, $r39, $r44, $r49, $r53, $r60, $r62, $r74, $r81, $r83;
+        boolean z0, $z1, $z2, $z3;
+        com.android.server.NativeDaemonEvent r7;
+        java.io.IOException r12, $r52, $r56, $r67, $r75, $r78, r90, r91, r92, r93;
+        java.io.OutputStream $r15, $r35, $r43, $r64, $r72;
+        com.android.server.INativeDaemonConnectorCallbacks $r17, $r24;
+        java.nio.charset.Charset $r18, $r21;
+        byte $b3;
+        com.android.server.NativeDaemonConnector$ResponseQueue $r22;
+        android.os.PowerManager$WakeLock $r23, $r28, $r29, $r50, $r68;
+        android.os.Handler $r26, $r27;
+        android.os.Message $r30;
+        java.lang.StringBuilder $r31, $r32, $r33, $r34, $r38, $r40, $r41, $r45, $r46, $r47, $r48, $r57, $r58, $r59, $r61, $r63, $r66, $r69, $r70, $r76, $r77, $r79, $r80, $r82, $r84, $r85;
+        java.lang.IllegalArgumentException $r73;
+        byte[] r86;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        r1 = null;
+
+     label01:
+        $r13 = new android.net.LocalSocket;
+
+        specialinvoke $r13.<android.net.LocalSocket: void <init>()>();
+
+        r1 = $r13;
+
+        r2 = specialinvoke r0.<com.android.server.NativeDaemonConnector: android.net.LocalSocketAddress determineSocketAddress()>();
+
+        virtualinvoke r1.<android.net.LocalSocket: void connect(android.net.LocalSocketAddress)>(r2);
+
+        r3 = virtualinvoke r1.<android.net.LocalSocket: java.io.InputStream getInputStream()>();
+
+        $r16 = r0.<com.android.server.NativeDaemonConnector: java.lang.Object mDaemonLock>;
+
+        r4 = $r16;
+
+        entermonitor $r16;
+
+     label02:
+        $r15 = virtualinvoke r1.<android.net.LocalSocket: java.io.OutputStream getOutputStream()>();
+
+        r0.<com.android.server.NativeDaemonConnector: java.io.OutputStream mOutputStream> = $r15;
+
+        exitmonitor r4;
+
+     label03:
+        goto label06;
+
+     label04:
+        $r51 := @caughtexception;
+
+        r5 = $r51;
+
+        exitmonitor r4;
+
+     label05:
+        throw r5;
+
+     label06:
+        $r17 = r0.<com.android.server.NativeDaemonConnector: com.android.server.INativeDaemonConnectorCallbacks mCallbacks>;
+
+        interfaceinvoke $r17.<com.android.server.INativeDaemonConnectorCallbacks: void onDaemonConnected()>();
+
+        r86 = newarray (byte)[4096];
+
+        i8 = 0;
+
+     label07:
+        $i2 = 4096 - i8;
+
+        i0 = virtualinvoke r3.<java.io.InputStream: int read(byte[],int,int)>(r86, i8, $i2);
+
+        if i0 >= 0 goto label08;
+
+        $r34 = new java.lang.StringBuilder;
+
+        specialinvoke $r34.<java.lang.StringBuilder: void <init>()>();
+
+        $r33 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("got ");
+
+        $r32 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r31 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" reading with start = ");
+
+        $r38 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i8);
+
+        $r37 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r37);
+
+        goto label25;
+
+     label08:
+        i9 = i0 + i8;
+
+        i10 = 0;
+
+        i1 = 0;
+
+     label09:
+        if i1 >= i9 goto label21;
+
+        $b3 = r86[i1];
+
+        if $b3 != 0 goto label20;
+
+        $r20 = new java.lang.String;
+
+        $i4 = i1 - i10;
+
+        $r21 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset UTF_8>;
+
+        specialinvoke $r20.<java.lang.String: void <init>(byte[],int,int,java.nio.charset.Charset)>(r86, i10, $i4, $r21);
+
+        r6 = $r20;
+
+        z0 = 0;
+
+     label10:
+        r7 = staticinvoke <com.android.server.NativeDaemonEvent: com.android.server.NativeDaemonEvent parseRawEvent(java.lang.String)>(r6);
+
+        $z1 = virtualinvoke r7.<com.android.server.NativeDaemonEvent: boolean isClassUnsolicited()>();
+
+        if $z1 == 0 goto label12;
+
+        $r24 = r0.<com.android.server.NativeDaemonConnector: com.android.server.INativeDaemonConnectorCallbacks mCallbacks>;
+
+        $i6 = virtualinvoke r7.<com.android.server.NativeDaemonEvent: int getCode()>();
+
+        $z2 = interfaceinvoke $r24.<com.android.server.INativeDaemonConnectorCallbacks: boolean onCheckHoldWakeLock(int)>($i6);
+
+        if $z2 == 0 goto label11;
+
+        $r28 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        if $r28 == null goto label11;
+
+        $r29 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r29.<android.os.PowerManager$WakeLock: void acquire()>();
+
+        z0 = 1;
+
+     label11:
+        $r26 = r0.<com.android.server.NativeDaemonConnector: android.os.Handler mCallbackHandler>;
+
+        $r27 = r0.<com.android.server.NativeDaemonConnector: android.os.Handler mCallbackHandler>;
+
+        $i7 = virtualinvoke r7.<com.android.server.NativeDaemonEvent: int getCode()>();
+
+        $r25 = virtualinvoke r7.<com.android.server.NativeDaemonEvent: java.lang.String getRawEvent()>();
+
+        $r30 = virtualinvoke $r27.<android.os.Handler: android.os.Message obtainMessage(int,java.lang.Object)>($i7, $r25);
+
+        $z3 = virtualinvoke $r26.<android.os.Handler: boolean sendMessage(android.os.Message)>($r30);
+
+        if $z3 == 0 goto label13;
+
+        z0 = 0;
+
+        goto label13;
+
+     label12:
+        $r22 = r0.<com.android.server.NativeDaemonConnector: com.android.server.NativeDaemonConnector$ResponseQueue mResponseQueue>;
+
+        $i5 = virtualinvoke r7.<com.android.server.NativeDaemonEvent: int getCmdNumber()>();
+
+        virtualinvoke $r22.<com.android.server.NativeDaemonConnector$ResponseQueue: void add(int,com.android.server.NativeDaemonEvent)>($i5, r7);
+
+     label13:
+        if z0 == 0 goto label19;
+
+        $r23 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r23.<android.os.PowerManager$WakeLock: void acquire()>();
+
+        goto label19;
+
+     label14:
+        $r73 := @caughtexception;
+
+     label15:
+        if z0 == 0 goto label19;
+
+        $r68 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r68.<android.os.PowerManager$WakeLock: void acquire()>();
+
+        goto label19;
+
+     label16:
+        $r42 := @caughtexception;
+
+        r8 = $r42;
+
+     label17:
+        if z0 == 0 goto label18;
+
+        $r50 = r0.<com.android.server.NativeDaemonConnector: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r50.<android.os.PowerManager$WakeLock: void acquire()>();
+
+     label18:
+        throw r8;
+
+     label19:
+        i10 = i1 + 1;
+
+     label20:
+        i1 = i1 + 1;
+
+        goto label09;
+
+     label21:
+        if i10 != 0 goto label22;
+
+        $r19 = new java.lang.String;
+
+        $r18 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset UTF_8>;
+
+        specialinvoke $r19.<java.lang.String: void <init>(byte[],int,int,java.nio.charset.Charset)>(r86, i10, i9, $r18);
+
+     label22:
+        if i10 == i9 goto label23;
+
+        i11 = 4096 - i10;
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>(r86, i10, r86, 0, i11);
+
+        i8 = i11;
+
+        goto label24;
+
+     label23:
+        i8 = 0;
+
+     label24:
+        goto label07;
+
+     label25:
+        $r36 = r0.<com.android.server.NativeDaemonConnector: java.lang.Object mDaemonLock>;
+
+        r89 = $r36;
+
+        entermonitor $r36;
+
+     label26:
+        $r35 = r0.<com.android.server.NativeDaemonConnector: java.io.OutputStream mOutputStream>;
+
+        if $r35 == null goto label31;
+
+     label27:
+        $r41 = new java.lang.StringBuilder;
+
+        specialinvoke $r41.<java.lang.StringBuilder: void <init>()>();
+
+        $r40 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("closing stream for ");
+
+        $r39 = r0.<com.android.server.NativeDaemonConnector: java.lang.String mSocket>;
+
+        $r45 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r39);
+
+        $r44 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r44);
+
+        $r43 = r0.<com.android.server.NativeDaemonConnector: java.io.OutputStream mOutputStream>;
+
+        virtualinvoke $r43.<java.io.OutputStream: void close()>();
+
+     label28:
+        goto label30;
+
+     label29:
+        $r52 := @caughtexception;
+
+        r90 = $r52;
+
+        $r46 = new java.lang.StringBuilder;
+
+        specialinvoke $r46.<java.lang.StringBuilder: void <init>()>();
+
+        $r47 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed closing output stream: ");
+
+        $r48 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r90);
+
+        $r49 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r49);
+
+     label30:
+        r0.<com.android.server.NativeDaemonConnector: java.io.OutputStream mOutputStream> = null;
+
+     label31:
+        exitmonitor r89;
+
+     label32:
+        goto label35;
+
+     label33:
+        $r54 := @caughtexception;
+
+        r9 = $r54;
+
+        exitmonitor r89;
+
+     label34:
+        throw r9;
+
+     label35:
+        if r1 == null goto label36;
+
+        virtualinvoke r1.<android.net.LocalSocket: void close()>();
+
+     label36:
+        goto label54;
+
+     label37:
+        $r56 := @caughtexception;
+
+        r91 = $r56;
+
+        $r57 = new java.lang.StringBuilder;
+
+        specialinvoke $r57.<java.lang.StringBuilder: void <init>()>();
+
+        $r58 = virtualinvoke $r57.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed closing socket: ");
+
+        $r59 = virtualinvoke $r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r91);
+
+        $r53 = virtualinvoke $r59.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r53);
+
+        goto label54;
+
+     label38:
+        $r78 := @caughtexception;
+
+        r92 = $r78;
+
+        $r79 = new java.lang.StringBuilder;
+
+        specialinvoke $r79.<java.lang.StringBuilder: void <init>()>();
+
+        $r76 = virtualinvoke $r79.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Communications error: ");
+
+        $r77 = virtualinvoke $r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r92);
+
+        $r74 = virtualinvoke $r77.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r74);
+
+        throw r92;
+
+     label39:
+        $r55 := @caughtexception;
+
+        r10 = $r55;
+
+     label40:
+        $r65 = r0.<com.android.server.NativeDaemonConnector: java.lang.Object mDaemonLock>;
+
+        r11 = $r65;
+
+        entermonitor $r65;
+
+     label41:
+        $r64 = r0.<com.android.server.NativeDaemonConnector: java.io.OutputStream mOutputStream>;
+
+        if $r64 == null goto label46;
+
+     label42:
+        $r66 = new java.lang.StringBuilder;
+
+        specialinvoke $r66.<java.lang.StringBuilder: void <init>()>();
+
+        $r61 = virtualinvoke $r66.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("closing stream for ");
+
+        $r60 = r0.<com.android.server.NativeDaemonConnector: java.lang.String mSocket>;
+
+        $r63 = virtualinvoke $r61.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r60);
+
+        $r62 = virtualinvoke $r63.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r62);
+
+        $r72 = r0.<com.android.server.NativeDaemonConnector: java.io.OutputStream mOutputStream>;
+
+        virtualinvoke $r72.<java.io.OutputStream: void close()>();
+
+     label43:
+        goto label45;
+
+     label44:
+        $r67 := @caughtexception;
+
+        r12 = $r67;
+
+        $r70 = new java.lang.StringBuilder;
+
+        specialinvoke $r70.<java.lang.StringBuilder: void <init>()>();
+
+        $r69 = virtualinvoke $r70.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed closing output stream: ");
+
+        $r80 = virtualinvoke $r69.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r12);
+
+        $r81 = virtualinvoke $r80.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r81);
+
+     label45:
+        r0.<com.android.server.NativeDaemonConnector: java.io.OutputStream mOutputStream> = null;
+
+     label46:
+        exitmonitor r11;
+
+     label47:
+        goto label50;
+
+     label48:
+        $r71 := @caughtexception;
+
+        r14 = $r71;
+
+        exitmonitor r11;
+
+     label49:
+        throw r14;
+
+     label50:
+        if r1 == null goto label51;
+
+        virtualinvoke r1.<android.net.LocalSocket: void close()>();
+
+     label51:
+        goto label53;
+
+     label52:
+        $r75 := @caughtexception;
+
+        r93 = $r75;
+
+        $r84 = new java.lang.StringBuilder;
+
+        specialinvoke $r84.<java.lang.StringBuilder: void <init>()>();
+
+        $r85 = virtualinvoke $r84.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed closing socket: ");
+
+        $r82 = virtualinvoke $r85.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r93);
+
+        $r83 = virtualinvoke $r82.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r83);
+
+     label53:
+        throw r10;
+
+     label54:
+        return;
+
+        catch java.lang.Throwable from label02 to label03 with label04;
+        catch java.lang.Throwable from label04 to label05 with label04;
+        catch java.lang.IllegalArgumentException from label10 to label13 with label14;
+        catch java.lang.Throwable from label10 to label13 with label16;
+        catch java.lang.Throwable from label14 to label15 with label16;
+        catch java.lang.Throwable from label16 to label17 with label16;
+        catch java.io.IOException from label27 to label28 with label29;
+        catch java.lang.Throwable from label26 to label32 with label33;
+        catch java.lang.Throwable from label33 to label34 with label33;
+        catch java.io.IOException from label35 to label36 with label37;
+        catch java.io.IOException from label01 to label25 with label38;
+        catch java.lang.Throwable from label01 to label25 with label39;
+        catch java.io.IOException from label42 to label43 with label44;
+        catch java.lang.Throwable from label41 to label47 with label48;
+        catch java.lang.Throwable from label48 to label49 with label48;
+        catch java.io.IOException from label50 to label51 with label52;
+        catch java.lang.Throwable from label38 to label40 with label39;
+    }
+
+    static transient void makeCommand(java.lang.StringBuilder, java.lang.StringBuilder, int, java.lang.String, java.lang.Object[])
+    {
+        java.lang.StringBuilder r0, r1, $r7, $r8, $r10, $r12, $r18, $r19, $r21, $r24, $r26, $r27;
+        int i0, i1, i2, $i3, $i4, $i5;
+        java.lang.String r2, r6, $r20, $r25;
+        java.lang.Object[] r3, r4;
+        java.lang.Object r5;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r16, $r22, $r23;
+
+        r0 := @parameter0: java.lang.StringBuilder;
+
+        r1 := @parameter1: java.lang.StringBuilder;
+
+        i0 := @parameter2: int;
+
+        r2 := @parameter3: java.lang.String;
+
+        r3 := @parameter4: java.lang.Object[];
+
+        $i3 = virtualinvoke r2.<java.lang.String: int indexOf(int)>(0);
+
+        if $i3 < 0 goto label1;
+
+        $r22 = new java.lang.IllegalArgumentException;
+
+        $r26 = new java.lang.StringBuilder;
+
+        specialinvoke $r26.<java.lang.StringBuilder: void <init>()>();
+
+        $r27 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unexpected command: ");
+
+        $r24 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r25 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r22.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r25);
+
+        throw $r22;
+
+     label1:
+        $i4 = virtualinvoke r2.<java.lang.String: int indexOf(int)>(32);
+
+        if $i4 < 0 goto label2;
+
+        $r23 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r23.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Arguments must be separate from command");
+
+        throw $r23;
+
+     label2:
+        $r7 = virtualinvoke r0.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r10 = virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        r4 = r3;
+
+        i1 = lengthof r4;
+
+        i2 = 0;
+
+     label3:
+        if i2 >= i1 goto label7;
+
+        r5 = r4[i2];
+
+        r6 = staticinvoke <java.lang.String: java.lang.String valueOf(java.lang.Object)>(r5);
+
+        $i5 = virtualinvoke r6.<java.lang.String: int indexOf(int)>(0);
+
+        if $i5 < 0 goto label4;
+
+        $r16 = new java.lang.IllegalArgumentException;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unexpected argument: ");
+
+        $r21 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r5);
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r16.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r20);
+
+        throw $r16;
+
+     label4:
+        virtualinvoke r0.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+        staticinvoke <com.android.server.NativeDaemonConnector: void appendEscaped(java.lang.StringBuilder,java.lang.String)>(r0, r6);
+
+        $z0 = r5 instanceof com.android.server.NativeDaemonConnector$SensitiveArg;
+
+        if $z0 == 0 goto label5;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("[scrubbed]");
+
+        goto label6;
+
+     label5:
+        staticinvoke <com.android.server.NativeDaemonConnector: void appendEscaped(java.lang.StringBuilder,java.lang.String)>(r1, r6);
+
+     label6:
+        i2 = i2 + 1;
+
+        goto label3;
+
+     label7:
+        virtualinvoke r0.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(0);
+
+        return;
+    }
+
+    public com.android.server.NativeDaemonEvent execute(com.android.server.NativeDaemonConnector$Command) throws com.android.server.NativeDaemonConnectorException
+    {
+        com.android.server.NativeDaemonConnector r0;
+        com.android.server.NativeDaemonConnector$Command r1;
+        java.lang.String $r2;
+        java.util.ArrayList $r3;
+        java.lang.Object[] $r4;
+        com.android.server.NativeDaemonEvent $r5;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        r1 := @parameter0: com.android.server.NativeDaemonConnector$Command;
+
+        $r2 = staticinvoke <com.android.server.NativeDaemonConnector$Command: java.lang.String access$000(com.android.server.NativeDaemonConnector$Command)>(r1);
+
+        $r3 = staticinvoke <com.android.server.NativeDaemonConnector$Command: java.util.ArrayList access$100(com.android.server.NativeDaemonConnector$Command)>(r1);
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object[] toArray()>();
+
+        $r5 = virtualinvoke r0.<com.android.server.NativeDaemonConnector: com.android.server.NativeDaemonEvent execute(java.lang.String,java.lang.Object[])>($r2, $r4);
+
+        return $r5;
+    }
+
+    public transient com.android.server.NativeDaemonEvent execute(java.lang.String, java.lang.Object[]) throws com.android.server.NativeDaemonConnectorException
+    {
+        com.android.server.NativeDaemonConnector r0;
+        java.lang.String r1, $r9;
+        java.lang.Object[] r2;
+        com.android.server.NativeDaemonEvent[] r3;
+        int $i0, $i1;
+        com.android.server.NativeDaemonEvent $r4;
+        com.android.server.NativeDaemonConnectorException $r5;
+        java.lang.StringBuilder $r6, $r7, $r8;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.Object[];
+
+        r3 = virtualinvoke r0.<com.android.server.NativeDaemonConnector: com.android.server.NativeDaemonEvent[] executeForList(java.lang.String,java.lang.Object[])>(r1, r2);
+
+        $i0 = lengthof r3;
+
+        if $i0 == 1 goto label1;
+
+        $r5 = new com.android.server.NativeDaemonConnectorException;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Expected exactly one response, but received ");
+
+        $i1 = lengthof r3;
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r5.<com.android.server.NativeDaemonConnectorException: void <init>(java.lang.String)>($r9);
+
+        throw $r5;
+
+     label1:
+        $r4 = r3[0];
+
+        return $r4;
+    }
+
+    public com.android.server.NativeDaemonEvent[] executeForList(com.android.server.NativeDaemonConnector$Command) throws com.android.server.NativeDaemonConnectorException
+    {
+        com.android.server.NativeDaemonConnector r0;
+        com.android.server.NativeDaemonConnector$Command r1;
+        java.lang.String $r2;
+        java.util.ArrayList $r3;
+        java.lang.Object[] $r4;
+        com.android.server.NativeDaemonEvent[] $r5;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        r1 := @parameter0: com.android.server.NativeDaemonConnector$Command;
+
+        $r2 = staticinvoke <com.android.server.NativeDaemonConnector$Command: java.lang.String access$000(com.android.server.NativeDaemonConnector$Command)>(r1);
+
+        $r3 = staticinvoke <com.android.server.NativeDaemonConnector$Command: java.util.ArrayList access$100(com.android.server.NativeDaemonConnector$Command)>(r1);
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object[] toArray()>();
+
+        $r5 = virtualinvoke r0.<com.android.server.NativeDaemonConnector: com.android.server.NativeDaemonEvent[] executeForList(java.lang.String,java.lang.Object[])>($r2, $r4);
+
+        return $r5;
+    }
+
+    public transient com.android.server.NativeDaemonEvent[] executeForList(java.lang.String, java.lang.Object[]) throws com.android.server.NativeDaemonConnectorException
+    {
+        com.android.server.NativeDaemonConnector r0;
+        java.lang.String r1;
+        java.lang.Object[] r2;
+        com.android.server.NativeDaemonEvent[] $r3;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.Object[];
+
+        $r3 = virtualinvoke r0.<com.android.server.NativeDaemonConnector: com.android.server.NativeDaemonEvent[] execute(int,java.lang.String,java.lang.Object[])>(60000, r1, r2);
+
+        return $r3;
+    }
+
+    public transient com.android.server.NativeDaemonEvent[] execute(int, java.lang.String, java.lang.Object[]) throws com.android.server.NativeDaemonConnectorException
+    {
+        com.android.server.NativeDaemonConnector r0;
+        int i0, i2, $i4;
+        java.lang.String r1, r6, r7, $r17, $r39, $r43;
+        java.lang.Object[] r2, $r28;
+        long l1, $l3, $l6, l7;
+        java.util.ArrayList r3;
+        java.lang.StringBuilder r4, r5, $r11, $r13, $r14, $r15, $r16, $r18, $r29, $r30, $r31, $r33, $r34, $r35, $r36, $r37, $r38;
+        java.lang.Object r8, $r20;
+        java.io.IOException r9, $r44;
+        java.lang.Throwable r10, $r40;
+        java.util.concurrent.atomic.AtomicInteger $r12;
+        java.io.OutputStream $r19, $r21;
+        java.nio.charset.Charset $r22;
+        com.android.server.NativeDaemonConnector$ResponseQueue $r23;
+        byte[] $r24;
+        boolean $z0, $z1, $z2;
+        byte $b5;
+        com.android.server.NativeDaemonEvent[] $r25, $r27;
+        com.android.server.NativeDaemonConnector$NativeDaemonFailureException $r26, $r42;
+        com.android.server.NativeDaemonConnector$NativeDaemonArgumentException $r32;
+        com.android.server.NativeDaemonConnectorException $r41, $r45;
+        com.android.server.NativeDaemonEvent r46;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.Object[];
+
+        l1 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        r3 = staticinvoke <com.google.android.collect.Lists: java.util.ArrayList newArrayList()>();
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        r4 = $r11;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        r5 = $r13;
+
+        $r12 = r0.<com.android.server.NativeDaemonConnector: java.util.concurrent.atomic.AtomicInteger mSequenceNumber>;
+
+        i2 = virtualinvoke $r12.<java.util.concurrent.atomic.AtomicInteger: int incrementAndGet()>();
+
+        staticinvoke <com.android.server.NativeDaemonConnector: void makeCommand(java.lang.StringBuilder,java.lang.StringBuilder,int,java.lang.String,java.lang.Object[])>(r4, r5, i2, r1, r2);
+
+        r6 = virtualinvoke r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r7 = virtualinvoke r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("SND -> {");
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r7);
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("}");
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void log(java.lang.String)>($r17);
+
+        $r20 = r0.<com.android.server.NativeDaemonConnector: java.lang.Object mDaemonLock>;
+
+        r8 = $r20;
+
+        entermonitor $r20;
+
+     label01:
+        $r19 = r0.<com.android.server.NativeDaemonConnector: java.io.OutputStream mOutputStream>;
+
+        if $r19 != null goto label02;
+
+        $r41 = new com.android.server.NativeDaemonConnectorException;
+
+        specialinvoke $r41.<com.android.server.NativeDaemonConnectorException: void <init>(java.lang.String)>("missing output stream");
+
+        throw $r41;
+
+     label02:
+        $r21 = r0.<com.android.server.NativeDaemonConnector: java.io.OutputStream mOutputStream>;
+
+        $r22 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset UTF_8>;
+
+        $r24 = virtualinvoke r6.<java.lang.String: byte[] getBytes(java.nio.charset.Charset)>($r22);
+
+        virtualinvoke $r21.<java.io.OutputStream: void write(byte[])>($r24);
+
+     label03:
+        goto label05;
+
+     label04:
+        $r44 := @caughtexception;
+
+        r9 = $r44;
+
+        $r45 = new com.android.server.NativeDaemonConnectorException;
+
+        specialinvoke $r45.<com.android.server.NativeDaemonConnectorException: void <init>(java.lang.String,java.lang.Throwable)>("problem sending command", r9);
+
+        throw $r45;
+
+     label05:
+        exitmonitor r8;
+
+     label06:
+        goto label09;
+
+     label07:
+        $r40 := @caughtexception;
+
+        r10 = $r40;
+
+        exitmonitor r8;
+
+     label08:
+        throw r10;
+
+     label09:
+        $r23 = r0.<com.android.server.NativeDaemonConnector: com.android.server.NativeDaemonConnector$ResponseQueue mResponseQueue>;
+
+        r46 = virtualinvoke $r23.<com.android.server.NativeDaemonConnector$ResponseQueue: com.android.server.NativeDaemonEvent remove(int,int,java.lang.String)>(i2, i0, r7);
+
+        if r46 != null goto label10;
+
+        $r38 = new java.lang.StringBuilder;
+
+        specialinvoke $r38.<java.lang.StringBuilder: void <init>()>();
+
+        $r37 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("timed-out waiting for response to ");
+
+        $r36 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r7);
+
+        $r43 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r43);
+
+        $r42 = new com.android.server.NativeDaemonConnector$NativeDaemonFailureException;
+
+        specialinvoke $r42.<com.android.server.NativeDaemonConnector$NativeDaemonFailureException: void <init>(java.lang.String,com.android.server.NativeDaemonEvent)>(r7, r46);
+
+        throw $r42;
+
+     label10:
+        virtualinvoke r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r46);
+
+        $z0 = virtualinvoke r46.<com.android.server.NativeDaemonEvent: boolean isClassContinue()>();
+
+        if $z0 != 0 goto label09;
+
+        l7 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l3 = l7 - l1;
+
+        $b5 = $l3 cmp 500L;
+
+        if $b5 <= 0 goto label11;
+
+        $r31 = new java.lang.StringBuilder;
+
+        specialinvoke $r31.<java.lang.StringBuilder: void <init>()>();
+
+        $r30 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("NDC Command {");
+
+        $r29 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r7);
+
+        $r35 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("} took too long (");
+
+        $l6 = l7 - l1;
+
+        $r34 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l6);
+
+        $r33 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms)");
+
+        $r39 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.NativeDaemonConnector: void loge(java.lang.String)>($r39);
+
+     label11:
+        $z2 = virtualinvoke r46.<com.android.server.NativeDaemonEvent: boolean isClassClientError()>();
+
+        if $z2 == 0 goto label12;
+
+        $r32 = new com.android.server.NativeDaemonConnector$NativeDaemonArgumentException;
+
+        specialinvoke $r32.<com.android.server.NativeDaemonConnector$NativeDaemonArgumentException: void <init>(java.lang.String,com.android.server.NativeDaemonEvent)>(r7, r46);
+
+        throw $r32;
+
+     label12:
+        $z1 = virtualinvoke r46.<com.android.server.NativeDaemonEvent: boolean isClassServerError()>();
+
+        if $z1 == 0 goto label13;
+
+        $r26 = new com.android.server.NativeDaemonConnector$NativeDaemonFailureException;
+
+        specialinvoke $r26.<com.android.server.NativeDaemonConnector$NativeDaemonFailureException: void <init>(java.lang.String,com.android.server.NativeDaemonEvent)>(r7, r46);
+
+        throw $r26;
+
+     label13:
+        $i4 = virtualinvoke r3.<java.util.ArrayList: int size()>();
+
+        $r27 = newarray (com.android.server.NativeDaemonEvent)[$i4];
+
+        $r28 = virtualinvoke r3.<java.util.ArrayList: java.lang.Object[] toArray(java.lang.Object[])>($r27);
+
+        $r25 = (com.android.server.NativeDaemonEvent[]) $r28;
+
+        return $r25;
+
+        catch java.io.IOException from label02 to label03 with label04;
+        catch java.lang.Throwable from label01 to label06 with label07;
+        catch java.lang.Throwable from label07 to label08 with label07;
+    }
+
+    static void appendEscaped(java.lang.StringBuilder, java.lang.String)
+    {
+        java.lang.StringBuilder r0;
+        java.lang.String r1;
+        boolean z0, $z1;
+        int i0, i1, $i3;
+        char c2;
+
+        r0 := @parameter0: java.lang.StringBuilder;
+
+        r1 := @parameter1: java.lang.String;
+
+        $i3 = virtualinvoke r1.<java.lang.String: int indexOf(int)>(32);
+
+        if $i3 < 0 goto label1;
+
+        $z1 = 1;
+
+        goto label2;
+
+     label1:
+        $z1 = 0;
+
+     label2:
+        z0 = $z1;
+
+        if z0 == 0 goto label3;
+
+        virtualinvoke r0.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(34);
+
+     label3:
+        i0 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        i1 = 0;
+
+     label4:
+        if i1 >= i0 goto label8;
+
+        c2 = virtualinvoke r1.<java.lang.String: char charAt(int)>(i1);
+
+        if c2 != 34 goto label5;
+
+        virtualinvoke r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\\\"");
+
+        goto label7;
+
+     label5:
+        if c2 != 92 goto label6;
+
+        virtualinvoke r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\\\\");
+
+        goto label7;
+
+     label6:
+        virtualinvoke r0.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(c2);
+
+     label7:
+        i1 = i1 + 1;
+
+        goto label4;
+
+     label8:
+        if z0 == 0 goto label9;
+
+        virtualinvoke r0.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(34);
+
+     label9:
+        return;
+    }
+
+    public void monitor()
+    {
+        com.android.server.NativeDaemonConnector r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        $r3 = r0.<com.android.server.NativeDaemonConnector: java.lang.Object mDaemonLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.server.NativeDaemonConnector r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        android.util.LocalLog $r4;
+        com.android.server.NativeDaemonConnector$ResponseQueue $r5;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        $r4 = r0.<com.android.server.NativeDaemonConnector: android.util.LocalLog mLocalLog>;
+
+        virtualinvoke $r4.<android.util.LocalLog: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r1, r2, r3);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+        $r5 = r0.<com.android.server.NativeDaemonConnector: com.android.server.NativeDaemonConnector$ResponseQueue mResponseQueue>;
+
+        virtualinvoke $r5.<com.android.server.NativeDaemonConnector$ResponseQueue: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r1, r2, r3);
+
+        return;
+    }
+
+    private void log(java.lang.String)
+    {
+        com.android.server.NativeDaemonConnector r0;
+        java.lang.String r1;
+        android.util.LocalLog $r2;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.server.NativeDaemonConnector: android.util.LocalLog mLocalLog>;
+
+        virtualinvoke $r2.<android.util.LocalLog: void log(java.lang.String)>(r1);
+
+        return;
+    }
+
+    private void loge(java.lang.String)
+    {
+        com.android.server.NativeDaemonConnector r0;
+        java.lang.String r1, $r2;
+        android.util.LocalLog $r3;
+
+        r0 := @this: com.android.server.NativeDaemonConnector;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.server.NativeDaemonConnector: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r2, r1);
+
+        $r3 = r0.<com.android.server.NativeDaemonConnector: android.util.LocalLog mLocalLog>;
+
+        virtualinvoke $r3.<android.util.LocalLog: void log(java.lang.String)>(r1);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.NativeDaemonConnector: long WARN_EXECUTE_DELAY_MS> = 500L;
+
+        <com.android.server.NativeDaemonConnector: int DEFAULT_TIMEOUT> = 60000;
+
+        <com.android.server.NativeDaemonConnector: boolean VDBG> = 0;
+
+        <com.android.server.NativeDaemonConnector: boolean LOGD> = 0;
+
+        return;
+    }
+}

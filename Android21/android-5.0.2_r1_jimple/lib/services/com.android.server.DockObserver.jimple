@@ -1,0 +1,659 @@
+final class com.android.server.DockObserver extends com.android.server.SystemService
+{
+    private static final java.lang.String TAG;
+    private static final java.lang.String DOCK_UEVENT_MATCH;
+    private static final java.lang.String DOCK_STATE_PATH;
+    private static final int MSG_DOCK_STATE_CHANGED;
+    private final android.os.PowerManager mPowerManager;
+    private final android.os.PowerManager$WakeLock mWakeLock;
+    private final java.lang.Object mLock;
+    private boolean mSystemReady;
+    private int mActualDockState;
+    private int mReportedDockState;
+    private int mPreviousDockState;
+    private boolean mUpdatesStopped;
+    private final android.os.Handler mHandler;
+    private final android.os.UEventObserver mObserver;
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.DockObserver r0;
+        android.content.Context r1;
+        java.lang.Object $r2, $r5;
+        com.android.server.DockObserver$1 $r3;
+        com.android.server.DockObserver$2 $r4;
+        android.os.PowerManager $r6, $r7;
+        android.os.PowerManager$WakeLock $r8;
+        android.os.UEventObserver $r9;
+
+        r0 := @this: com.android.server.DockObserver;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<com.android.server.SystemService: void <init>(android.content.Context)>(r1);
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.DockObserver: java.lang.Object mLock> = $r2;
+
+        r0.<com.android.server.DockObserver: int mActualDockState> = 0;
+
+        r0.<com.android.server.DockObserver: int mReportedDockState> = 0;
+
+        r0.<com.android.server.DockObserver: int mPreviousDockState> = 0;
+
+        $r3 = new com.android.server.DockObserver$1;
+
+        specialinvoke $r3.<com.android.server.DockObserver$1: void <init>(com.android.server.DockObserver,boolean)>(r0, 1);
+
+        r0.<com.android.server.DockObserver: android.os.Handler mHandler> = $r3;
+
+        $r4 = new com.android.server.DockObserver$2;
+
+        specialinvoke $r4.<com.android.server.DockObserver$2: void <init>(com.android.server.DockObserver)>(r0);
+
+        r0.<com.android.server.DockObserver: android.os.UEventObserver mObserver> = $r4;
+
+        $r5 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r6 = (android.os.PowerManager) $r5;
+
+        r0.<com.android.server.DockObserver: android.os.PowerManager mPowerManager> = $r6;
+
+        $r7 = r0.<com.android.server.DockObserver: android.os.PowerManager mPowerManager>;
+
+        $r8 = virtualinvoke $r7.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, "DockObserver");
+
+        r0.<com.android.server.DockObserver: android.os.PowerManager$WakeLock mWakeLock> = $r8;
+
+        specialinvoke r0.<com.android.server.DockObserver: void init()>();
+
+        $r9 = r0.<com.android.server.DockObserver: android.os.UEventObserver mObserver>;
+
+        virtualinvoke $r9.<android.os.UEventObserver: void startObserving(java.lang.String)>("DEVPATH=/devices/virtual/switch/dock");
+
+        return;
+    }
+
+    public void onStart()
+    {
+        com.android.server.DockObserver r0;
+        com.android.server.DockObserver$BinderService $r1;
+
+        r0 := @this: com.android.server.DockObserver;
+
+        $r1 = new com.android.server.DockObserver$BinderService;
+
+        specialinvoke $r1.<com.android.server.DockObserver$BinderService: void <init>(com.android.server.DockObserver,com.android.server.DockObserver$1)>(r0, null);
+
+        virtualinvoke r0.<com.android.server.DockObserver: void publishBinderService(java.lang.String,android.os.IBinder)>("DockObserver", $r1);
+
+        return;
+    }
+
+    public void onBootPhase(int)
+    {
+        com.android.server.DockObserver r0;
+        int i0, $i1;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.server.DockObserver;
+
+        i0 := @parameter0: int;
+
+        if i0 != 550 goto label6;
+
+        $r3 = r0.<com.android.server.DockObserver: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        r0.<com.android.server.DockObserver: boolean mSystemReady> = 1;
+
+        $i1 = r0.<com.android.server.DockObserver: int mReportedDockState>;
+
+        if $i1 == 0 goto label2;
+
+        specialinvoke r0.<com.android.server.DockObserver: void updateLocked()>();
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    private void init()
+    {
+        com.android.server.DockObserver r0;
+        java.lang.Object r1, $r6;
+        char[] r2;
+        java.io.FileReader r3, $r7;
+        int i0, $i1, $i2;
+        java.lang.Throwable r4, r5, $r13, $r14;
+        java.lang.String $r8, $r9;
+        java.lang.Integer $r10;
+        java.lang.Exception $r11, r16;
+        java.io.FileNotFoundException $r12;
+
+        r0 := @this: com.android.server.DockObserver;
+
+        $r6 = r0.<com.android.server.DockObserver: java.lang.Object mLock>;
+
+        r1 = $r6;
+
+        entermonitor $r6;
+
+     label01:
+        r2 = newarray (char)[1024];
+
+        $r7 = new java.io.FileReader;
+
+        specialinvoke $r7.<java.io.FileReader: void <init>(java.lang.String)>("/sys/class/switch/dock/state");
+
+        r3 = $r7;
+
+     label02:
+        i0 = virtualinvoke r3.<java.io.FileReader: int read(char[],int,int)>(r2, 0, 1024);
+
+        $r8 = new java.lang.String;
+
+        specialinvoke $r8.<java.lang.String: void <init>(char[],int,int)>(r2, 0, i0);
+
+        $r9 = virtualinvoke $r8.<java.lang.String: java.lang.String trim()>();
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(java.lang.String)>($r9);
+
+        $i1 = virtualinvoke $r10.<java.lang.Integer: int intValue()>();
+
+        specialinvoke r0.<com.android.server.DockObserver: void setActualDockStateLocked(int)>($i1);
+
+        $i2 = r0.<com.android.server.DockObserver: int mActualDockState>;
+
+        r0.<com.android.server.DockObserver: int mPreviousDockState> = $i2;
+
+     label03:
+        virtualinvoke r3.<java.io.FileReader: void close()>();
+
+        goto label06;
+
+     label04:
+        $r14 := @caughtexception;
+
+        r4 = $r14;
+
+     label05:
+        virtualinvoke r3.<java.io.FileReader: void close()>();
+
+        throw r4;
+
+     label06:
+        goto label09;
+
+     label07:
+        $r12 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("DockObserver", "This kernel does not have dock station support");
+
+        goto label09;
+
+     label08:
+        $r11 := @caughtexception;
+
+        r16 = $r11;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("DockObserver", "", r16);
+
+     label09:
+        exitmonitor r1;
+
+     label10:
+        goto label13;
+
+     label11:
+        $r13 := @caughtexception;
+
+        r5 = $r13;
+
+        exitmonitor r1;
+
+     label12:
+        throw r5;
+
+     label13:
+        return;
+
+        catch java.lang.Throwable from label02 to label03 with label04;
+        catch java.lang.Throwable from label04 to label05 with label04;
+        catch java.io.FileNotFoundException from label01 to label06 with label07;
+        catch java.lang.Exception from label01 to label06 with label08;
+        catch java.lang.Throwable from label01 to label10 with label11;
+        catch java.lang.Throwable from label11 to label12 with label11;
+    }
+
+    private void setActualDockStateLocked(int)
+    {
+        com.android.server.DockObserver r0;
+        int i0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.DockObserver;
+
+        i0 := @parameter0: int;
+
+        r0.<com.android.server.DockObserver: int mActualDockState> = i0;
+
+        $z0 = r0.<com.android.server.DockObserver: boolean mUpdatesStopped>;
+
+        if $z0 != 0 goto label1;
+
+        specialinvoke r0.<com.android.server.DockObserver: void setDockStateLocked(int)>(i0);
+
+     label1:
+        return;
+    }
+
+    private void setDockStateLocked(int)
+    {
+        com.android.server.DockObserver r0;
+        int i0, $i1;
+        boolean $z0;
+        android.os.PowerManager $r1;
+        long $l2;
+
+        r0 := @this: com.android.server.DockObserver;
+
+        i0 := @parameter0: int;
+
+        $i1 = r0.<com.android.server.DockObserver: int mReportedDockState>;
+
+        if i0 == $i1 goto label1;
+
+        r0.<com.android.server.DockObserver: int mReportedDockState> = i0;
+
+        $z0 = r0.<com.android.server.DockObserver: boolean mSystemReady>;
+
+        if $z0 == 0 goto label1;
+
+        $r1 = r0.<com.android.server.DockObserver: android.os.PowerManager mPowerManager>;
+
+        $l2 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        virtualinvoke $r1.<android.os.PowerManager: void wakeUp(long)>($l2);
+
+        specialinvoke r0.<com.android.server.DockObserver: void updateLocked()>();
+
+     label1:
+        return;
+    }
+
+    private void updateLocked()
+    {
+        com.android.server.DockObserver r0;
+        android.os.PowerManager$WakeLock $r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.server.DockObserver;
+
+        $r1 = r0.<com.android.server.DockObserver: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r1.<android.os.PowerManager$WakeLock: void acquire()>();
+
+        $r2 = r0.<com.android.server.DockObserver: android.os.Handler mHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: boolean sendEmptyMessage(int)>(0);
+
+        return;
+    }
+
+    private void handleDockStateChange()
+    {
+        com.android.server.DockObserver r0;
+        java.lang.Object r1, $r9;
+        int i0, $i1, $i2, $i3, $i5, $i6, $i7, $i8, $i9, $i10, $i12, $i13;
+        android.content.ContentResolver r2;
+        android.content.Intent r3, $r17;
+        java.lang.String r4, r5, $r14, $r23;
+        android.net.Uri r6;
+        android.media.Ringtone r7;
+        java.lang.Throwable r8, $r27;
+        java.lang.StringBuilder $r10, $r11, $r12, $r13, $r15, $r22, $r24, $r25;
+        android.content.Context $r16, $r21, $r26;
+        android.os.UserHandle $r20;
+
+        r0 := @this: com.android.server.DockObserver;
+
+        $r9 = r0.<com.android.server.DockObserver: java.lang.Object mLock>;
+
+        r1 = $r9;
+
+        entermonitor $r9;
+
+     label01:
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Dock state changed from ");
+
+        $i1 = r0.<com.android.server.DockObserver: int mPreviousDockState>;
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to ");
+
+        $i2 = r0.<com.android.server.DockObserver: int mReportedDockState>;
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("DockObserver", $r14);
+
+        i0 = r0.<com.android.server.DockObserver: int mPreviousDockState>;
+
+        $i3 = r0.<com.android.server.DockObserver: int mReportedDockState>;
+
+        r0.<com.android.server.DockObserver: int mPreviousDockState> = $i3;
+
+        $r16 = virtualinvoke r0.<com.android.server.DockObserver: android.content.Context getContext()>();
+
+        r2 = virtualinvoke $r16.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i5 = staticinvoke <android.provider.Settings$Global: int getInt(android.content.ContentResolver,java.lang.String,int)>(r2, "device_provisioned", 0);
+
+        if $i5 != 0 goto label03;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("DockObserver", "Device not provisioned, skipping dock broadcast");
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        $r17 = new android.content.Intent;
+
+        specialinvoke $r17.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.DOCK_EVENT");
+
+        r3 = $r17;
+
+        virtualinvoke r3.<android.content.Intent: android.content.Intent addFlags(int)>(536870912);
+
+        $i6 = r0.<com.android.server.DockObserver: int mReportedDockState>;
+
+        virtualinvoke r3.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("android.intent.extra.DOCK_STATE", $i6);
+
+        $i7 = staticinvoke <android.provider.Settings$Global: int getInt(android.content.ContentResolver,java.lang.String,int)>(r2, "dock_sounds_enabled", 1);
+
+        if $i7 != 1 goto label10;
+
+        r4 = null;
+
+        $i9 = r0.<com.android.server.DockObserver: int mReportedDockState>;
+
+        if $i9 != 0 goto label06;
+
+        if i0 == 1 goto label04;
+
+        if i0 == 3 goto label04;
+
+        if i0 != 4 goto label05;
+
+     label04:
+        r4 = "desk_undock_sound";
+
+        goto label09;
+
+     label05:
+        if i0 != 2 goto label09;
+
+        r4 = "car_undock_sound";
+
+        goto label09;
+
+     label06:
+        $i8 = r0.<com.android.server.DockObserver: int mReportedDockState>;
+
+        if $i8 == 1 goto label07;
+
+        $i10 = r0.<com.android.server.DockObserver: int mReportedDockState>;
+
+        if $i10 == 3 goto label07;
+
+        $i12 = r0.<com.android.server.DockObserver: int mReportedDockState>;
+
+        if $i12 != 4 goto label08;
+
+     label07:
+        r4 = "desk_dock_sound";
+
+        goto label09;
+
+     label08:
+        $i13 = r0.<com.android.server.DockObserver: int mReportedDockState>;
+
+        if $i13 != 2 goto label09;
+
+        r4 = "car_dock_sound";
+
+     label09:
+        if r4 == null goto label10;
+
+        r5 = staticinvoke <android.provider.Settings$Global: java.lang.String getString(android.content.ContentResolver,java.lang.String)>(r2, r4);
+
+        if r5 == null goto label10;
+
+        $r24 = new java.lang.StringBuilder;
+
+        specialinvoke $r24.<java.lang.StringBuilder: void <init>()>();
+
+        $r25 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("file://");
+
+        $r22 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r5);
+
+        $r23 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r6 = staticinvoke <android.net.Uri: android.net.Uri parse(java.lang.String)>($r23);
+
+        if r6 == null goto label10;
+
+        $r26 = virtualinvoke r0.<com.android.server.DockObserver: android.content.Context getContext()>();
+
+        r7 = staticinvoke <android.media.RingtoneManager: android.media.Ringtone getRingtone(android.content.Context,android.net.Uri)>($r26, r6);
+
+        if r7 == null goto label10;
+
+        virtualinvoke r7.<android.media.Ringtone: void setStreamType(int)>(1);
+
+        virtualinvoke r7.<android.media.Ringtone: void play()>();
+
+     label10:
+        $r21 = virtualinvoke r0.<com.android.server.DockObserver: android.content.Context getContext()>();
+
+        $r20 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r21.<android.content.Context: void sendStickyBroadcastAsUser(android.content.Intent,android.os.UserHandle)>(r3, $r20);
+
+        exitmonitor r1;
+
+     label11:
+        goto label14;
+
+     label12:
+        $r27 := @caughtexception;
+
+        r8 = $r27;
+
+        exitmonitor r1;
+
+     label13:
+        throw r8;
+
+     label14:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label12;
+        catch java.lang.Throwable from label03 to label11 with label12;
+        catch java.lang.Throwable from label12 to label13 with label12;
+    }
+
+    static void access$100(com.android.server.DockObserver)
+    {
+        com.android.server.DockObserver r0;
+
+        r0 := @parameter0: com.android.server.DockObserver;
+
+        specialinvoke r0.<com.android.server.DockObserver: void handleDockStateChange()>();
+
+        return;
+    }
+
+    static android.os.PowerManager$WakeLock access$200(com.android.server.DockObserver)
+    {
+        com.android.server.DockObserver r0;
+        android.os.PowerManager$WakeLock $r1;
+
+        r0 := @parameter0: com.android.server.DockObserver;
+
+        $r1 = r0.<com.android.server.DockObserver: android.os.PowerManager$WakeLock mWakeLock>;
+
+        return $r1;
+    }
+
+    static java.lang.Object access$300(com.android.server.DockObserver)
+    {
+        com.android.server.DockObserver r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.DockObserver;
+
+        $r1 = r0.<com.android.server.DockObserver: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static void access$400(com.android.server.DockObserver, int)
+    {
+        com.android.server.DockObserver r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.DockObserver;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.DockObserver: void setActualDockStateLocked(int)>(i0);
+
+        return;
+    }
+
+    static boolean access$500(com.android.server.DockObserver)
+    {
+        com.android.server.DockObserver r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.DockObserver;
+
+        $z0 = r0.<com.android.server.DockObserver: boolean mUpdatesStopped>;
+
+        return $z0;
+    }
+
+    static int access$600(com.android.server.DockObserver)
+    {
+        com.android.server.DockObserver r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.DockObserver;
+
+        $i0 = r0.<com.android.server.DockObserver: int mReportedDockState>;
+
+        return $i0;
+    }
+
+    static int access$700(com.android.server.DockObserver)
+    {
+        com.android.server.DockObserver r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.DockObserver;
+
+        $i0 = r0.<com.android.server.DockObserver: int mPreviousDockState>;
+
+        return $i0;
+    }
+
+    static int access$800(com.android.server.DockObserver)
+    {
+        com.android.server.DockObserver r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.DockObserver;
+
+        $i0 = r0.<com.android.server.DockObserver: int mActualDockState>;
+
+        return $i0;
+    }
+
+    static boolean access$502(com.android.server.DockObserver, boolean)
+    {
+        com.android.server.DockObserver r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.DockObserver;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.DockObserver: boolean mUpdatesStopped> = z0;
+
+        return z0;
+    }
+
+    static void access$900(com.android.server.DockObserver, int)
+    {
+        com.android.server.DockObserver r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.DockObserver;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.DockObserver: void setDockStateLocked(int)>(i0);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.DockObserver: int MSG_DOCK_STATE_CHANGED> = 0;
+
+        <com.android.server.DockObserver: java.lang.String DOCK_STATE_PATH> = "/sys/class/switch/dock/state";
+
+        <com.android.server.DockObserver: java.lang.String DOCK_UEVENT_MATCH> = "DEVPATH=/devices/virtual/switch/dock";
+
+        <com.android.server.DockObserver: java.lang.String TAG> = "DockObserver";
+
+        return;
+    }
+}

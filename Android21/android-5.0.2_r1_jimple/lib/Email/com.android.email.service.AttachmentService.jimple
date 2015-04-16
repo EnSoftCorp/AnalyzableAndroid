@@ -1,0 +1,2762 @@
+public class com.android.email.service.AttachmentService extends android.app.Service implements java.lang.Runnable
+{
+    public static final java.lang.String LOG_TAG;
+    private static final int ENABLE_ATTACHMENT_SERVICE_DEBUG;
+    private static final long CONNECTION_ERROR_RETRY_MILLIS;
+    private static final long CONNECTION_ERROR_DELAY_THRESHOLD;
+    private static final long CONNECTION_ERROR_MAX_RETRIES;
+    private static final int PROCESS_QUEUE_WAIT_TIME;
+    private static final int CALLBACK_TIMEOUT;
+    private static final int MAX_DOWNLOAD_RETRIES;
+    static final int PRIORITY_NONE;
+    static final int PRIORITY_FOREGROUND;
+    static final int PRIORITY_HIGHEST;
+    static final int PRIORITY_SEND_MAIL;
+    static final int PRIORITY_BACKGROUND;
+    static final int PRIORITY_LOWEST;
+    private static final float PREFETCH_MINIMUM_STORAGE_AVAILABLE;
+    private static final float PREFETCH_MAXIMUM_ATTACHMENT_STORAGE;
+    private static final int MAX_SIMULTANEOUS_DOWNLOADS;
+    private static final int MAX_SIMULTANEOUS_DOWNLOADS_PER_ACCOUNT;
+    private static final int MAX_ATTACHMENTS_TO_CHECK;
+    private static final java.lang.String EXTRA_ATTACHMENT_ID;
+    private static final java.lang.String EXTRA_ATTACHMENT_FLAGS;
+    final com.android.email.service.AttachmentService$ServiceCallback mServiceCallback;
+    static volatile com.android.email.service.AttachmentService sRunningService;
+    private volatile boolean mStop;
+    com.android.email.EmailConnectivityManager mConnectivityManager;
+    final com.android.email.service.AttachmentService$AttachmentWatchdog mWatchdog;
+    private final java.lang.Object mLock;
+    final java.util.concurrent.ConcurrentHashMap mAttachmentStorageMap;
+    final java.util.concurrent.ConcurrentHashMap mAttachmentFailureMap;
+    final java.util.concurrent.ConcurrentHashMap mDownloadsInProgress;
+    final com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue;
+    private static final java.util.Queue sAttachmentChangedQueue;
+    com.android.email.service.AttachmentService$AccountManagerStub mAccountManagerStub;
+    private final java.util.HashMap mAccountServiceMap;
+
+    public void <init>()
+    {
+        com.android.email.service.AttachmentService r0;
+        com.android.email.service.AttachmentService$ServiceCallback $r1;
+        com.android.email.service.AttachmentService$AttachmentWatchdog $r2;
+        java.lang.Object $r3;
+        java.util.concurrent.ConcurrentHashMap $r4, $r5, $r6;
+        com.android.email.service.AttachmentService$DownloadQueue $r7;
+        java.util.HashMap $r8;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        specialinvoke r0.<android.app.Service: void <init>()>();
+
+        $r1 = new com.android.email.service.AttachmentService$ServiceCallback;
+
+        specialinvoke $r1.<com.android.email.service.AttachmentService$ServiceCallback: void <init>(com.android.email.service.AttachmentService)>(r0);
+
+        r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$ServiceCallback mServiceCallback> = $r1;
+
+        r0.<com.android.email.service.AttachmentService: boolean mStop> = 0;
+
+        $r2 = new com.android.email.service.AttachmentService$AttachmentWatchdog;
+
+        specialinvoke $r2.<com.android.email.service.AttachmentService$AttachmentWatchdog: void <init>()>();
+
+        r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$AttachmentWatchdog mWatchdog> = $r2;
+
+        $r3 = new java.lang.Object;
+
+        specialinvoke $r3.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.email.service.AttachmentService: java.lang.Object mLock> = $r3;
+
+        $r4 = new java.util.concurrent.ConcurrentHashMap;
+
+        specialinvoke $r4.<java.util.concurrent.ConcurrentHashMap: void <init>()>();
+
+        r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mAttachmentStorageMap> = $r4;
+
+        $r5 = new java.util.concurrent.ConcurrentHashMap;
+
+        specialinvoke $r5.<java.util.concurrent.ConcurrentHashMap: void <init>()>();
+
+        r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mAttachmentFailureMap> = $r5;
+
+        $r6 = new java.util.concurrent.ConcurrentHashMap;
+
+        specialinvoke $r6.<java.util.concurrent.ConcurrentHashMap: void <init>()>();
+
+        r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mDownloadsInProgress> = $r6;
+
+        $r7 = new com.android.email.service.AttachmentService$DownloadQueue;
+
+        specialinvoke $r7.<com.android.email.service.AttachmentService$DownloadQueue: void <init>()>();
+
+        r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue> = $r7;
+
+        $r8 = new java.util.HashMap;
+
+        specialinvoke $r8.<java.util.HashMap: void <init>()>();
+
+        r0.<com.android.email.service.AttachmentService: java.util.HashMap mAccountServiceMap> = $r8;
+
+        return;
+    }
+
+    private static transient void debugTrace(java.lang.String, java.lang.Object[])
+    {
+        java.lang.String r0;
+        java.lang.Object[] r1;
+
+        r0 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.Object[];
+
+        return;
+    }
+
+    public static void attachmentChanged(android.content.Context, long, int)
+    {
+        android.content.Context r0;
+        long l0;
+        int i1;
+        android.content.Intent r1, $r4;
+        java.lang.Object[] $r2, $r5;
+        java.lang.Long $r3, $r6;
+        java.lang.Integer $r7;
+
+        r0 := @parameter0: android.content.Context;
+
+        l0 := @parameter1: long;
+
+        i1 := @parameter2: int;
+
+        $r2 = newarray (java.lang.Object)[1];
+
+        $r3 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r2[0] = $r3;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Attachment with id: %d will potentially be queued for download", $r2);
+
+        $r4 = new android.content.Intent;
+
+        specialinvoke $r4.<android.content.Intent: void <init>(android.content.Context,java.lang.Class)>(r0, class "com/android/email/service/AttachmentService");
+
+        r1 = $r4;
+
+        $r5 = newarray (java.lang.Object)[2];
+
+        $r6 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r5[0] = $r6;
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        $r5[1] = $r7;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Calling startService with extras %d & %d", $r5);
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,long)>("com.android.email.AttachmentService.attachment_id", l0);
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("com.android.email.AttachmentService.attachment_flags", i1);
+
+        virtualinvoke r0.<android.content.Context: android.content.ComponentName startService(android.content.Intent)>(r1);
+
+        return;
+    }
+
+    public int onStartCommand(android.content.Intent, int, int)
+    {
+        com.android.email.service.AttachmentService r0, $r2;
+        android.content.Intent r1;
+        int i0, i1, i3;
+        long l2, $l5;
+        java.lang.Object[] $r3, $r4;
+        byte $b4;
+        java.lang.Long $r5;
+        java.lang.Integer $r6;
+        long[] $r7;
+        java.util.Queue $r8;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        r1 := @parameter0: android.content.Intent;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $r2 = <com.android.email.service.AttachmentService: com.android.email.service.AttachmentService sRunningService>;
+
+        if $r2 != null goto label1;
+
+        <com.android.email.service.AttachmentService: com.android.email.service.AttachmentService sRunningService> = r0;
+
+     label1:
+        if r1 == null goto label4;
+
+        l2 = virtualinvoke r1.<android.content.Intent: long getLongExtra(java.lang.String,long)>("com.android.email.AttachmentService.attachment_id", -1L);
+
+        i3 = virtualinvoke r1.<android.content.Intent: int getIntExtra(java.lang.String,int)>("com.android.email.AttachmentService.attachment_flags", -1);
+
+        $b4 = l2 cmp 0L;
+
+        if $b4 < 0 goto label2;
+
+        if i3 < 0 goto label2;
+
+        $r8 = <com.android.email.service.AttachmentService: java.util.Queue sAttachmentChangedQueue>;
+
+        $r7 = newarray (long)[2];
+
+        $r7[0] = l2;
+
+        $l5 = (long) i3;
+
+        $r7[1] = $l5;
+
+        interfaceinvoke $r8.<java.util.Queue: boolean add(java.lang.Object)>($r7);
+
+        specialinvoke r0.<com.android.email.service.AttachmentService: void kick()>();
+
+        goto label3;
+
+     label2:
+        $r4 = newarray (java.lang.Object)[2];
+
+        $r5 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l2);
+
+        $r4[0] = $r5;
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        $r4[1] = $r6;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Received an invalid intent w/o the required extras %d & %d", $r4);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r3 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Received a null intent in onStartCommand", $r3);
+
+     label5:
+        return 1;
+    }
+
+    public void onCreate()
+    {
+        com.android.email.service.AttachmentService r0;
+        java.lang.Thread $r1;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        $r1 = new java.lang.Thread;
+
+        specialinvoke $r1.<java.lang.Thread: void <init>(java.lang.Runnable,java.lang.String)>(r0, "AttachmentService");
+
+        virtualinvoke $r1.<java.lang.Thread: void start()>();
+
+        return;
+    }
+
+    public android.os.IBinder onBind(android.content.Intent)
+    {
+        com.android.email.service.AttachmentService r0;
+        android.content.Intent r1;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        r1 := @parameter0: android.content.Intent;
+
+        return null;
+    }
+
+    public void onDestroy()
+    {
+        com.android.email.service.AttachmentService r0, $r2;
+        java.lang.Object[] $r1;
+        com.android.email.EmailConnectivityManager $r3, $r4, $r5;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        $r1 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Destroying AttachmentService object", $r1);
+
+        virtualinvoke r0.<com.android.email.service.AttachmentService: void dumpInProgressDownloads()>();
+
+        r0.<com.android.email.service.AttachmentService: boolean mStop> = 1;
+
+        $r2 = <com.android.email.service.AttachmentService: com.android.email.service.AttachmentService sRunningService>;
+
+        if $r2 == null goto label1;
+
+        specialinvoke r0.<com.android.email.service.AttachmentService: void kick()>();
+
+        <com.android.email.service.AttachmentService: com.android.email.service.AttachmentService sRunningService> = null;
+
+     label1:
+        $r3 = r0.<com.android.email.service.AttachmentService: com.android.email.EmailConnectivityManager mConnectivityManager>;
+
+        if $r3 == null goto label2;
+
+        $r4 = r0.<com.android.email.service.AttachmentService: com.android.email.EmailConnectivityManager mConnectivityManager>;
+
+        virtualinvoke $r4.<com.android.email.EmailConnectivityManager: void unregister()>();
+
+        $r5 = r0.<com.android.email.service.AttachmentService: com.android.email.EmailConnectivityManager mConnectivityManager>;
+
+        virtualinvoke $r5.<com.android.email.EmailConnectivityManager: void stopWait()>();
+
+        r0.<com.android.email.service.AttachmentService: com.android.email.EmailConnectivityManager mConnectivityManager> = null;
+
+     label2:
+        return;
+    }
+
+    public void run()
+    {
+        com.android.email.service.AttachmentService r0;
+        android.database.Cursor r1;
+        com.android.emailcommon.provider.EmailContent$Attachment r2;
+        java.lang.Throwable r3, r5, $r28, $r30;
+        com.android.email.EmailConnectivityManager $r6, r32, r34;
+        com.android.email.service.AttachmentService$AccountManagerStub $r7;
+        android.content.ContentResolver $r8;
+        java.lang.String[] $r9, $r11;
+        android.net.Uri $r10;
+        java.lang.String $r12;
+        java.lang.Object[] $r13, $r15, $r17, $r18, $r19, $r22, $r24, $r25;
+        int $i1, $i4;
+        java.lang.Integer $r14;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.email.service.AttachmentService$DownloadQueue $r16;
+        java.lang.Object $r20, $r21, r33;
+        java.util.concurrent.ConcurrentHashMap $r23;
+        long $l5, $l7;
+        java.lang.Exception $r26, r31;
+        java.lang.InterruptedException $r27;
+        java.lang.Long $r29;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        $r6 = new com.android.email.EmailConnectivityManager;
+
+        specialinvoke $r6.<com.android.email.EmailConnectivityManager: void <init>(android.content.Context,java.lang.String)>(r0, "AttachmentService");
+
+        r0.<com.android.email.service.AttachmentService: com.android.email.EmailConnectivityManager mConnectivityManager> = $r6;
+
+        $r7 = new com.android.email.service.AttachmentService$AccountManagerStub;
+
+        specialinvoke $r7.<com.android.email.service.AttachmentService$AccountManagerStub: void <init>(android.content.Context)>(r0);
+
+        r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$AccountManagerStub mAccountManagerStub> = $r7;
+
+        $r8 = virtualinvoke r0.<com.android.email.service.AttachmentService: android.content.ContentResolver getContentResolver()>();
+
+        $r10 = <com.android.emailcommon.provider.EmailContent$Attachment: android.net.Uri CONTENT_URI>;
+
+        $r11 = <com.android.emailcommon.provider.EmailContent: java.lang.String[] ID_PROJECTION>;
+
+        $r9 = newarray (java.lang.String)[1];
+
+        $r12 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>(6);
+
+        $r9[0] = $r12;
+
+        r1 = virtualinvoke $r8.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r10, $r11, "(flags & ?) != 0", $r9, null);
+
+     label01:
+        $r13 = newarray (java.lang.Object)[1];
+
+        $i1 = interfaceinvoke r1.<android.database.Cursor: int getCount()>();
+
+        $r14 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i1);
+
+        $r13[0] = $r14;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Count of previous downloads to resume (from db): %d", $r13);
+
+     label02:
+        $z1 = interfaceinvoke r1.<android.database.Cursor: boolean moveToNext()>();
+
+        if $z1 == 0 goto label04;
+
+        $l5 = interfaceinvoke r1.<android.database.Cursor: long getLong(int)>(0);
+
+        r2 = staticinvoke <com.android.emailcommon.provider.EmailContent$Attachment: com.android.emailcommon.provider.EmailContent$Attachment restoreAttachmentWithId(android.content.Context,long)>(r0, $l5);
+
+        if r2 == null goto label03;
+
+        $r25 = newarray (java.lang.Object)[1];
+
+        $l7 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r29 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l7);
+
+        $r25[0] = $r29;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Attempting to download attachment #%d again.", $r25);
+
+        virtualinvoke r0.<com.android.email.service.AttachmentService: void onChange(android.content.Context,com.android.emailcommon.provider.EmailContent$Attachment)>(r0, r2);
+
+     label03:
+        goto label02;
+
+     label04:
+        interfaceinvoke r1.<android.database.Cursor: void close()>();
+
+        goto label09;
+
+     label05:
+        $r26 := @caughtexception;
+
+        r31 = $r26;
+
+        virtualinvoke r31.<java.lang.Exception: void printStackTrace()>();
+
+     label06:
+        interfaceinvoke r1.<android.database.Cursor: void close()>();
+
+        goto label09;
+
+     label07:
+        $r28 := @caughtexception;
+
+        r3 = $r28;
+
+     label08:
+        interfaceinvoke r1.<android.database.Cursor: void close()>();
+
+        throw r3;
+
+     label09:
+        $z0 = r0.<com.android.email.service.AttachmentService: boolean mStop>;
+
+        if $z0 != 0 goto label21;
+
+        r32 = r0.<com.android.email.service.AttachmentService: com.android.email.EmailConnectivityManager mConnectivityManager>;
+
+        if r32 == null goto label10;
+
+        virtualinvoke r32.<com.android.email.EmailConnectivityManager: void waitForConnectivity()>();
+
+     label10:
+        $z2 = r0.<com.android.email.service.AttachmentService: boolean mStop>;
+
+        if $z2 == 0 goto label11;
+
+        $r24 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "AttachmentService has been instructed to stop", $r24);
+
+        goto label21;
+
+     label11:
+        $r15 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Downloads Map before processQueue", $r15);
+
+        virtualinvoke r0.<com.android.email.service.AttachmentService: void dumpInProgressDownloads()>();
+
+        virtualinvoke r0.<com.android.email.service.AttachmentService: void processQueue()>();
+
+        $r17 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Downloads Map after processQueue", $r17);
+
+        virtualinvoke r0.<com.android.email.service.AttachmentService: void dumpInProgressDownloads()>();
+
+        $r16 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        $z3 = virtualinvoke $r16.<com.android.email.service.AttachmentService$DownloadQueue: boolean isEmpty()>();
+
+        if $z3 == 0 goto label12;
+
+        $r23 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mDownloadsInProgress>;
+
+        $i4 = virtualinvoke $r23.<java.util.concurrent.ConcurrentHashMap: int size()>();
+
+        if $i4 >= 1 goto label12;
+
+        $r22 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Shutting down service. No in-progress or pending downloads.", $r22);
+
+        virtualinvoke r0.<com.android.email.service.AttachmentService: void stopSelf()>();
+
+        goto label21;
+
+     label12:
+        $r18 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Run() wait for mLock", $r18);
+
+        $r20 = r0.<com.android.email.service.AttachmentService: java.lang.Object mLock>;
+
+        r33 = $r20;
+
+        entermonitor $r20;
+
+     label13:
+        $r21 = r0.<com.android.email.service.AttachmentService: java.lang.Object mLock>;
+
+        virtualinvoke $r21.<java.lang.Object: void wait(long)>(1800000L);
+
+     label14:
+        goto label16;
+
+     label15:
+        $r27 := @caughtexception;
+
+     label16:
+        exitmonitor r33;
+
+     label17:
+        goto label20;
+
+     label18:
+        $r30 := @caughtexception;
+
+        r5 = $r30;
+
+        exitmonitor r33;
+
+     label19:
+        throw r5;
+
+     label20:
+        $r19 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Run() got mLock", $r19);
+
+        goto label09;
+
+     label21:
+        r34 = r0.<com.android.email.service.AttachmentService: com.android.email.EmailConnectivityManager mConnectivityManager>;
+
+        if r34 == null goto label22;
+
+        virtualinvoke r34.<com.android.email.EmailConnectivityManager: void unregister()>();
+
+     label22:
+        return;
+
+        catch java.lang.Exception from label01 to label04 with label05;
+        catch java.lang.Throwable from label01 to label04 with label07;
+        catch java.lang.Throwable from label05 to label06 with label07;
+        catch java.lang.Throwable from label07 to label08 with label07;
+        catch java.lang.InterruptedException from label13 to label14 with label15;
+        catch java.lang.Throwable from label13 to label17 with label18;
+        catch java.lang.Throwable from label18 to label19 with label18;
+    }
+
+    private void kick()
+    {
+        com.android.email.service.AttachmentService r0;
+        java.lang.Object r1, $r3, $r4;
+        java.lang.Throwable r2, $r5;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        $r3 = r0.<com.android.email.service.AttachmentService: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $r4 = r0.<com.android.email.service.AttachmentService: java.lang.Object mLock>;
+
+        virtualinvoke $r4.<java.lang.Object: void notify()>();
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public synchronized void onChange(android.content.Context, com.android.emailcommon.provider.EmailContent$Attachment)
+    {
+        com.android.email.service.AttachmentService r0;
+        android.content.Context r1;
+        com.android.emailcommon.provider.EmailContent$Attachment r2;
+        com.android.email.service.AttachmentService$DownloadRequest r3, $r17;
+        long l0, $l1, $l2, $l4, $l6, $l8, $l9, $l12, $l16, $l20, $l21;
+        com.android.email.AttachmentInfo r4, $r16;
+        java.lang.Object[] $r5, $r10, $r13, $r18, $r21, $r24, $r25;
+        java.lang.Long $r6, $r8, $r11, $r14, $r15, $r20, $r22, $r23, $r27;
+        com.android.email.service.AttachmentService$DownloadQueue $r7, $r19, $r26;
+        int $i3, $i7, $i13, $i14, $i17, $i18;
+        byte $b5;
+        java.util.concurrent.ConcurrentHashMap $r9;
+        boolean $z0, $z1;
+        java.lang.Integer $r12;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.emailcommon.provider.EmailContent$Attachment;
+
+        $r5 = newarray (java.lang.Object)[1];
+
+        $l1 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r6 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l1);
+
+        $r5[0] = $r6;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("onChange() for Attachment: #%d", $r5);
+
+        $r7 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        $l2 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        r3 = virtualinvoke $r7.<com.android.email.service.AttachmentService$DownloadQueue: com.android.email.service.AttachmentService$DownloadRequest findRequestById(long)>($l2);
+
+        $i3 = staticinvoke <com.android.email.service.AttachmentService: int getAttachmentPriority(com.android.emailcommon.provider.EmailContent$Attachment)>(r2);
+
+        l0 = (long) $i3;
+
+        $b5 = l0 cmp -1L;
+
+        if $b5 != 0 goto label1;
+
+        $r24 = newarray (java.lang.Object)[1];
+
+        $l20 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r27 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l20);
+
+        $r24[0] = $r27;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Attachment #%d has no priority and will not be downloaded", $r24);
+
+        if r3 == null goto label6;
+
+        $r26 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        virtualinvoke $r26.<com.android.email.service.AttachmentService$DownloadQueue: boolean removeRequest(com.android.email.service.AttachmentService$DownloadRequest)>(r3);
+
+        goto label6;
+
+     label1:
+        $r9 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mDownloadsInProgress>;
+
+        $l4 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r8 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l4);
+
+        $z0 = virtualinvoke $r9.<java.util.concurrent.ConcurrentHashMap: boolean containsKey(java.lang.Object)>($r8);
+
+        if $z0 == 0 goto label2;
+
+        $r25 = newarray (java.lang.Object)[1];
+
+        $l21 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r23 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l21);
+
+        $r25[0] = $r23;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Attachment #%d was already in the queue", $r25);
+
+        return;
+
+     label2:
+        if r3 != null goto label5;
+
+        $r13 = newarray (java.lang.Object)[1];
+
+        $l9 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r15 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l9);
+
+        $r13[0] = $r15;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Attachment #%d is a new download request", $r13);
+
+        $r17 = new com.android.email.service.AttachmentService$DownloadRequest;
+
+        specialinvoke $r17.<com.android.email.service.AttachmentService$DownloadRequest: void <init>(android.content.Context,com.android.emailcommon.provider.EmailContent$Attachment,com.android.email.service.AttachmentService$1)>(r1, r2, null);
+
+        r3 = $r17;
+
+        $r16 = new com.android.email.AttachmentInfo;
+
+        specialinvoke $r16.<com.android.email.AttachmentInfo: void <init>(android.content.Context,com.android.emailcommon.provider.EmailContent$Attachment)>(r1, r2);
+
+        r4 = $r16;
+
+        $z1 = virtualinvoke r4.<com.android.email.AttachmentInfo: boolean isEligibleForDownload()>();
+
+        if $z1 != 0 goto label4;
+
+        $r18 = newarray (java.lang.Object)[1];
+
+        $l12 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r20 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l12);
+
+        $r18[0] = $r20;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Attachment #%d is not eligible for download", $r18);
+
+        $i14 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: int mFlags>;
+
+        $i13 = $i14 & 2;
+
+        if $i13 != 0 goto label3;
+
+        $i18 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: int mFlags>;
+
+        $i17 = $i18 & 512;
+
+        if $i17 == 0 goto label4;
+
+     label3:
+        $r21 = newarray (java.lang.Object)[1];
+
+        $l16 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r22 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l16);
+
+        $r21[0] = $r22;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Attachment #%d cannot be downloaded ever", $r21);
+
+        virtualinvoke r0.<com.android.email.service.AttachmentService: void markAttachmentAsFailed(com.android.emailcommon.provider.EmailContent$Attachment)>(r2);
+
+        return;
+
+     label4:
+        $r19 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        virtualinvoke $r19.<com.android.email.service.AttachmentService$DownloadQueue: boolean addRequest(com.android.email.service.AttachmentService$DownloadRequest)>(r3);
+
+     label5:
+        $r10 = newarray (java.lang.Object)[3];
+
+        $l6 = r2.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r11 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l6);
+
+        $r10[0] = $r11;
+
+        $i7 = r3.<com.android.email.service.AttachmentService$DownloadRequest: int mPriority>;
+
+        $r12 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i7);
+
+        $r10[1] = $r12;
+
+        $l8 = r3.<com.android.email.service.AttachmentService$DownloadRequest: long mCreatedTime>;
+
+        $r14 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l8);
+
+        $r10[2] = $r14;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Attachment #%d queued for download, priority: %d, created time: %d", $r10);
+
+     label6:
+        specialinvoke r0.<com.android.email.service.AttachmentService: void kick()>();
+
+        return;
+    }
+
+    void markAttachmentAsFailed(com.android.emailcommon.provider.EmailContent$Attachment)
+    {
+        com.android.email.service.AttachmentService r0;
+        com.android.emailcommon.provider.EmailContent$Attachment r1;
+        android.content.ContentValues r2, $r3;
+        int $i1, $i2;
+        java.lang.Integer $r4, $r5;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        r1 := @parameter0: com.android.emailcommon.provider.EmailContent$Attachment;
+
+        $r3 = new android.content.ContentValues;
+
+        specialinvoke $r3.<android.content.ContentValues: void <init>()>();
+
+        r2 = $r3;
+
+        $i1 = r1.<com.android.emailcommon.provider.EmailContent$Attachment: int mFlags>;
+
+        $i2 = $i1 & -7;
+
+        r1.<com.android.emailcommon.provider.EmailContent$Attachment: int mFlags> = $i2;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        virtualinvoke r2.<android.content.ContentValues: void put(java.lang.String,java.lang.Integer)>("flags", $r4);
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(1);
+
+        virtualinvoke r2.<android.content.ContentValues: void put(java.lang.String,java.lang.Integer)>("uiState", $r5);
+
+        virtualinvoke r1.<com.android.emailcommon.provider.EmailContent$Attachment: int update(android.content.Context,android.content.ContentValues)>(r0, r2);
+
+        return;
+    }
+
+    void markAttachmentAsCompleted(com.android.emailcommon.provider.EmailContent$Attachment)
+    {
+        com.android.email.service.AttachmentService r0;
+        com.android.emailcommon.provider.EmailContent$Attachment r1;
+        android.content.ContentValues r2, $r3;
+        int $i1, $i2;
+        java.lang.Integer $r4, $r5;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        r1 := @parameter0: com.android.emailcommon.provider.EmailContent$Attachment;
+
+        $r3 = new android.content.ContentValues;
+
+        specialinvoke $r3.<android.content.ContentValues: void <init>()>();
+
+        r2 = $r3;
+
+        $i1 = r1.<com.android.emailcommon.provider.EmailContent$Attachment: int mFlags>;
+
+        $i2 = $i1 & -7;
+
+        r1.<com.android.emailcommon.provider.EmailContent$Attachment: int mFlags> = $i2;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        virtualinvoke r2.<android.content.ContentValues: void put(java.lang.String,java.lang.Integer)>("flags", $r4);
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(3);
+
+        virtualinvoke r2.<android.content.ContentValues: void put(java.lang.String,java.lang.Integer)>("uiState", $r5);
+
+        virtualinvoke r1.<com.android.emailcommon.provider.EmailContent$Attachment: int update(android.content.Context,android.content.ContentValues)>(r0, r2);
+
+        return;
+    }
+
+    synchronized void processQueue()
+    {
+        com.android.email.service.AttachmentService r0;
+        long[] r1;
+        long l0, l1, l2, $l10, $l11, $l13, $l14, $l16, $l18, $l21, $l22, $l25, $l26, $l28, $l29, $l30, $l34;
+        android.database.Cursor r2;
+        com.android.emailcommon.provider.EmailContent$Attachment r3, r4, $r27, $r41;
+        com.android.emailcommon.provider.Account r5;
+        com.android.email.AttachmentInfo r6, $r26;
+        java.lang.Integer r7, $r13, $r18, $r23, $r42;
+        com.android.email.service.AttachmentService$DownloadRequest r8, $r35, r57;
+        java.lang.Throwable r9, $r52;
+        java.lang.Object[] $r10, $r14, $r19, $r21, $r28, $r33, $r36, $r38, $r44, $r46, $r48, $r55;
+        java.util.Queue $r11, $r12, $r54;
+        int $i3, $i4, $i5, $i7, $i8, $i9, $i15, $i20, $i32, i36;
+        java.lang.Object $r15, $r34, $r53;
+        com.android.email.service.AttachmentService$DownloadQueue $r16, $r43;
+        java.util.concurrent.ConcurrentHashMap $r17, $r20, $r31;
+        boolean $z0, $z1, $z2, $z4, $z6;
+        android.content.ContentResolver $r22;
+        android.net.Uri $r24, $r40, r59;
+        java.lang.String[] $r25;
+        java.lang.Long $r29, $r30, $r37, $r39, $r47, $r49, $r50, $r51, $r56;
+        java.lang.String $r32;
+        byte $b24, $b27;
+        com.android.email.service.AttachmentService$AttachmentWatchdog $r45;
+        com.android.email.EmailConnectivityManager r58;
+        java.io.File r60;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        $r10 = newarray (java.lang.Object)[1];
+
+        $r11 = <com.android.email.service.AttachmentService: java.util.Queue sAttachmentChangedQueue>;
+
+        $i3 = interfaceinvoke $r11.<java.util.Queue: int size()>();
+
+        $r13 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i3);
+
+        $r10[0] = $r13;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Processing changed queue, num entries: %d", $r10);
+
+        $r12 = <com.android.email.service.AttachmentService: java.util.Queue sAttachmentChangedQueue>;
+
+        $r15 = interfaceinvoke $r12.<java.util.Queue: java.lang.Object poll()>();
+
+        r1 = (long[]) $r15;
+
+     label01:
+        if r1 == null goto label03;
+
+        l0 = r1[0];
+
+        l2 = r1[1];
+
+        r3 = staticinvoke <com.android.emailcommon.provider.EmailContent$Attachment: com.android.emailcommon.provider.EmailContent$Attachment restoreAttachmentWithId(android.content.Context,long)>(r0, l0);
+
+        if r3 != null goto label02;
+
+        $r55 = newarray (java.lang.Object)[1];
+
+        $r56 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r55[0] = $r56;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Could not restore attachment #%d", $r55);
+
+        goto label01;
+
+     label02:
+        $i32 = (int) l2;
+
+        r3.<com.android.emailcommon.provider.EmailContent$Attachment: int mFlags> = $i32;
+
+        virtualinvoke r0.<com.android.email.service.AttachmentService: void onChange(android.content.Context,com.android.emailcommon.provider.EmailContent$Attachment)>(r0, r3);
+
+        $r54 = <com.android.email.service.AttachmentService: java.util.Queue sAttachmentChangedQueue>;
+
+        $r53 = interfaceinvoke $r54.<java.util.Queue: java.lang.Object poll()>();
+
+        r1 = (long[]) $r53;
+
+        goto label01;
+
+     label03:
+        $r14 = newarray (java.lang.Object)[1];
+
+        $r16 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        $i4 = virtualinvoke $r16.<com.android.email.service.AttachmentService$DownloadQueue: int getSize()>();
+
+        $r18 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i4);
+
+        $r14[0] = $r18;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Processing download queue, num entries: %d", $r14);
+
+     label04:
+        $r17 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mDownloadsInProgress>;
+
+        $i5 = virtualinvoke $r17.<java.util.concurrent.ConcurrentHashMap: int size()>();
+
+        if $i5 >= 2 goto label10;
+
+        $r43 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        r57 = virtualinvoke $r43.<com.android.email.service.AttachmentService$DownloadQueue: com.android.email.service.AttachmentService$DownloadRequest getNextRequest()>();
+
+        if r57 != null goto label05;
+
+        goto label10;
+
+     label05:
+        $l21 = r57.<com.android.email.service.AttachmentService$DownloadRequest: long mAccountId>;
+
+        $i20 = virtualinvoke r0.<com.android.email.service.AttachmentService: int getDownloadsForAccount(long)>($l21);
+
+        if $i20 < 1 goto label06;
+
+        $r48 = newarray (java.lang.Object)[2];
+
+        $l30 = r57.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r51 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l30);
+
+        $r48[0] = $r51;
+
+        $l34 = r57.<com.android.email.service.AttachmentService$DownloadRequest: long mAccountId>;
+
+        $r50 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l34);
+
+        $r48[1] = $r50;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Skipping #%d; maxed for acct %d", $r48);
+
+        goto label04;
+
+     label06:
+        $l22 = r57.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r41 = staticinvoke <com.android.emailcommon.provider.EmailContent$Attachment: com.android.emailcommon.provider.EmailContent$Attachment restoreAttachmentWithId(android.content.Context,long)>(r0, $l22);
+
+        if $r41 != null goto label07;
+
+        $r46 = newarray (java.lang.Object)[1];
+
+        $l28 = r57.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r49 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l28);
+
+        $r46[0] = $r49;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Could not load attachment: #%d", $r46);
+
+        goto label04;
+
+     label07:
+        $z6 = r57.<com.android.email.service.AttachmentService$DownloadRequest: boolean mInProgress>;
+
+        if $z6 != 0 goto label09;
+
+        l1 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l26 = r57.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryCount>;
+
+        $b27 = $l26 cmp 0L;
+
+        if $b27 <= 0 goto label08;
+
+        $l25 = r57.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryStartTime>;
+
+        $b24 = $l25 cmp l1;
+
+        if $b24 <= 0 goto label08;
+
+        $r44 = newarray (java.lang.Object)[1];
+
+        $l29 = r57.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r47 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l29);
+
+        $r44[0] = $r47;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Need to wait before retrying attachment #%d", $r44);
+
+        $r45 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$AttachmentWatchdog mWatchdog>;
+
+        virtualinvoke $r45.<com.android.email.service.AttachmentService$AttachmentWatchdog: void setWatchdogAlarm(android.content.Context,long,int)>(r0, 10000L, 30000);
+
+        goto label04;
+
+     label08:
+        virtualinvoke r0.<com.android.email.service.AttachmentService: boolean tryStartDownload(com.android.email.service.AttachmentService$DownloadRequest)>(r57);
+
+     label09:
+        goto label04;
+
+     label10:
+        r58 = r0.<com.android.email.service.AttachmentService: com.android.email.EmailConnectivityManager mConnectivityManager>;
+
+        if r58 == null goto label11;
+
+        $z0 = virtualinvoke r58.<com.android.email.EmailConnectivityManager: boolean isAutoSyncAllowed()>();
+
+        if $z0 == 0 goto label11;
+
+        $i8 = virtualinvoke r58.<com.android.email.EmailConnectivityManager: int getActiveNetworkType()>();
+
+        if $i8 == 1 goto label12;
+
+     label11:
+        $r19 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Skipping opportunistic downloads since WIFI is not available", $r19);
+
+        return;
+
+     label12:
+        $r20 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mDownloadsInProgress>;
+
+        $i7 = virtualinvoke $r20.<java.util.concurrent.ConcurrentHashMap: int size()>();
+
+        $i9 = 2 - $i7;
+
+        i36 = $i9 - 1;
+
+        if i36 >= 1 goto label13;
+
+        $r38 = newarray (java.lang.Object)[1];
+
+        $r42 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i36);
+
+        $r38[0] = $r42;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Skipping opportunistic downloads, %d threads available", $r38);
+
+        return;
+
+     label13:
+        $r21 = newarray (java.lang.Object)[1];
+
+        $r23 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i36);
+
+        $r21[0] = $r23;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Launching up to %d opportunistic downloads", $r21);
+
+        $r24 = <com.android.emailcommon.provider.EmailContent$Attachment: android.net.Uri CONTENT_URI>;
+
+        r59 = staticinvoke <com.android.emailcommon.provider.EmailContent: android.net.Uri uriWithLimit(android.net.Uri,int)>($r24, 25);
+
+        $r22 = virtualinvoke r0.<com.android.email.service.AttachmentService: android.content.ContentResolver getContentResolver()>();
+
+        $r25 = <com.android.emailcommon.provider.EmailContent$Attachment: java.lang.String[] CONTENT_PROJECTION>;
+
+        r2 = virtualinvoke $r22.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>(r59, $r25, "contentUri isnull AND flags=0 AND messageKey IN (SELECT _id FROM Message WHERE mailboxKey IN (SELECT _id FROM Mailbox WHERE type = 0) AND flagLoaded IN (2,1))", null, "_id DESC");
+
+        r60 = virtualinvoke r0.<com.android.email.service.AttachmentService: java.io.File getCacheDir()>();
+
+     label14:
+        $z1 = interfaceinvoke r2.<android.database.Cursor: boolean moveToNext()>();
+
+        if $z1 == 0 goto label20;
+
+        $r27 = new com.android.emailcommon.provider.EmailContent$Attachment;
+
+        specialinvoke $r27.<com.android.emailcommon.provider.EmailContent$Attachment: void <init>()>();
+
+        r4 = $r27;
+
+        virtualinvoke r4.<com.android.emailcommon.provider.EmailContent$Attachment: void restore(android.database.Cursor)>(r2);
+
+        $l10 = r4.<com.android.emailcommon.provider.EmailContent$Attachment: long mAccountKey>;
+
+        r5 = staticinvoke <com.android.emailcommon.provider.Account: com.android.emailcommon.provider.Account restoreAccountWithId(android.content.Context,long)>(r0, $l10);
+
+        if r5 != null goto label15;
+
+        $r36 = newarray (java.lang.Object)[1];
+
+        $l16 = r4.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r39 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l16);
+
+        $r36[0] = $r39;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Found orphaned attachment #%d", $r36);
+
+        $r40 = <com.android.emailcommon.provider.EmailContent$Attachment: android.net.Uri CONTENT_URI>;
+
+        $l18 = r4.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        staticinvoke <com.android.emailcommon.provider.EmailContent: int delete(android.content.Context,android.net.Uri,long)>(r0, $r40, $l18);
+
+        goto label19;
+
+     label15:
+        $r26 = new com.android.email.AttachmentInfo;
+
+        specialinvoke $r26.<com.android.email.AttachmentInfo: void <init>(android.content.Context,com.android.emailcommon.provider.EmailContent$Attachment)>(r0, r4);
+
+        r6 = $r26;
+
+        $z2 = virtualinvoke r6.<com.android.email.AttachmentInfo: boolean isEligibleForDownload()>();
+
+        if $z2 == 0 goto label18;
+
+        $r32 = r4.<com.android.emailcommon.provider.EmailContent$Attachment: java.lang.String mContentId>;
+
+        if $r32 != null goto label16;
+
+        $z4 = virtualinvoke r0.<com.android.email.service.AttachmentService: boolean canPrefetchForAccount(com.android.emailcommon.provider.Account,java.io.File)>(r5, r60);
+
+        if $z4 == 0 goto label19;
+
+     label16:
+        $r31 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mAttachmentFailureMap>;
+
+        $l13 = r4.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r30 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l13);
+
+        $r34 = virtualinvoke $r31.<java.util.concurrent.ConcurrentHashMap: java.lang.Object get(java.lang.Object)>($r30);
+
+        r7 = (java.lang.Integer) $r34;
+
+        if r7 == null goto label17;
+
+        $i15 = virtualinvoke r7.<java.lang.Integer: int intValue()>();
+
+        if $i15 <= 5 goto label17;
+
+        $r33 = newarray (java.lang.Object)[1];
+
+        $l14 = r4.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r37 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l14);
+
+        $r33[0] = $r37;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Too many failed attempts for attachment #%d ", $r33);
+
+        goto label14;
+
+     label17:
+        $r35 = new com.android.email.service.AttachmentService$DownloadRequest;
+
+        specialinvoke $r35.<com.android.email.service.AttachmentService$DownloadRequest: void <init>(android.content.Context,com.android.emailcommon.provider.EmailContent$Attachment,com.android.email.service.AttachmentService$1)>(r0, r4, null);
+
+        r8 = $r35;
+
+        virtualinvoke r0.<com.android.email.service.AttachmentService: boolean tryStartDownload(com.android.email.service.AttachmentService$DownloadRequest)>(r8);
+
+        goto label20;
+
+     label18:
+        $r28 = newarray (java.lang.Object)[1];
+
+        $l11 = r4.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r29 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l11);
+
+        $r28[0] = $r29;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Skipping attachment #%d, it is ineligible", $r28);
+
+     label19:
+        goto label14;
+
+     label20:
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        goto label23;
+
+     label21:
+        $r52 := @caughtexception;
+
+        r9 = $r52;
+
+     label22:
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        throw r9;
+
+     label23:
+        return;
+
+        catch java.lang.Throwable from label14 to label20 with label21;
+        catch java.lang.Throwable from label21 to label22 with label21;
+    }
+
+    synchronized boolean tryStartDownload(com.android.email.service.AttachmentService$DownloadRequest)
+    {
+        com.android.email.service.AttachmentService r0;
+        com.android.email.service.AttachmentService$DownloadRequest r1;
+        com.android.emailcommon.service.EmailServiceProxy r2;
+        boolean z0, $z1;
+        long $l0, $l1, $l2;
+        java.util.concurrent.ConcurrentHashMap $r4;
+        java.lang.Long $r5, $r8;
+        java.lang.Object $r6;
+        java.lang.Object[] $r7;
+        android.os.RemoteException $r9;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        r1 := @parameter0: com.android.email.service.AttachmentService$DownloadRequest;
+
+        $l0 = r1.<com.android.email.service.AttachmentService$DownloadRequest: long mAccountId>;
+
+        r2 = staticinvoke <com.android.email.service.EmailServiceUtils: com.android.emailcommon.service.EmailServiceProxy getServiceForAccount(android.content.Context,long)>(r0, $l0);
+
+        $r4 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mDownloadsInProgress>;
+
+        $l1 = r1.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r5 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l1);
+
+        $r6 = virtualinvoke $r4.<java.util.concurrent.ConcurrentHashMap: java.lang.Object get(java.lang.Object)>($r5);
+
+        if $r6 == null goto label1;
+
+        $z1 = 1;
+
+        goto label2;
+
+     label1:
+        $z1 = 0;
+
+     label2:
+        z0 = $z1;
+
+        if z0 == 0 goto label3;
+
+        $r7 = newarray (java.lang.Object)[1];
+
+        $l2 = r1.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r8 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l2);
+
+        $r7[0] = $r8;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("This attachment #%d is already in progress", $r7);
+
+        return 0;
+
+     label3:
+        specialinvoke r0.<com.android.email.service.AttachmentService: void startDownload(com.android.emailcommon.service.EmailServiceProxy,com.android.email.service.AttachmentService$DownloadRequest)>(r2, r1);
+
+     label4:
+        goto label6;
+
+     label5:
+        $r9 := @caughtexception;
+
+        virtualinvoke r0.<com.android.email.service.AttachmentService: void cancelDownload(com.android.email.service.AttachmentService$DownloadRequest)>(r1);
+
+     label6:
+        return 1;
+
+        catch android.os.RemoteException from label3 to label4 with label5;
+    }
+
+    private void startDownload(com.android.emailcommon.service.EmailServiceProxy, com.android.email.service.AttachmentService$DownloadRequest) throws android.os.RemoteException
+    {
+        com.android.email.service.AttachmentService r0;
+        com.android.emailcommon.service.EmailServiceProxy r1;
+        com.android.email.service.AttachmentService$DownloadRequest r2;
+        java.lang.Object[] $r3;
+        long $l0, $l2, $l3, $l5, $l6;
+        java.lang.Long $r4, $r6;
+        java.util.concurrent.ConcurrentHashMap $r5;
+        int $i4;
+        com.android.email.service.AttachmentService$AttachmentWatchdog $r8;
+        com.android.email.service.AttachmentService$ServiceCallback $r9;
+        boolean $z0;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        r1 := @parameter0: com.android.emailcommon.service.EmailServiceProxy;
+
+        r2 := @parameter1: com.android.email.service.AttachmentService$DownloadRequest;
+
+        $r3 = newarray (java.lang.Object)[1];
+
+        $l0 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r4 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l0);
+
+        $r3[0] = $r4;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Starting download for Attachment #%d", $r3);
+
+        $l2 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        r2.<com.android.email.service.AttachmentService$DownloadRequest: long mStartTime> = $l2;
+
+        r2.<com.android.email.service.AttachmentService$DownloadRequest: boolean mInProgress> = 1;
+
+        $r5 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mDownloadsInProgress>;
+
+        $l3 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r6 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l3);
+
+        virtualinvoke $r5.<java.util.concurrent.ConcurrentHashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r6, r2);
+
+        $r9 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$ServiceCallback mServiceCallback>;
+
+        $l5 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mAccountId>;
+
+        $l6 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $i4 = r2.<com.android.email.service.AttachmentService$DownloadRequest: int mPriority>;
+
+        if $i4 == 0 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        virtualinvoke r1.<com.android.emailcommon.service.EmailServiceProxy: void loadAttachment(com.android.emailcommon.service.IEmailServiceCallback,long,long,boolean)>($r9, $l5, $l6, $z0);
+
+        $r8 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$AttachmentWatchdog mWatchdog>;
+
+        virtualinvoke $r8.<com.android.email.service.AttachmentService$AttachmentWatchdog: void setWatchdogAlarm(android.content.Context)>(r0);
+
+        return;
+    }
+
+    synchronized void cancelDownload(com.android.email.service.AttachmentService$DownloadRequest)
+    {
+        com.android.email.service.AttachmentService r0;
+        com.android.email.service.AttachmentService$DownloadRequest r1, r2, $r10;
+        java.lang.Object[] $r3, $r9, $r13;
+        long $l0, $l2, $l3, $l4, $l6, $l7, $l8, $l9;
+        java.lang.Long $r4, $r6, $r11, $r14;
+        java.util.concurrent.ConcurrentHashMap $r5;
+        com.android.email.service.AttachmentService$DownloadQueue $r8, $r12;
+        byte $b5;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        r1 := @parameter0: com.android.email.service.AttachmentService$DownloadRequest;
+
+        $r3 = newarray (java.lang.Object)[1];
+
+        $l0 = r1.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r4 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l0);
+
+        $r3[0] = $r4;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Cancelling download for Attachment #%d", $r3);
+
+        r1.<com.android.email.service.AttachmentService$DownloadRequest: boolean mInProgress> = 0;
+
+        $r5 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mDownloadsInProgress>;
+
+        $l2 = r1.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r6 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l2);
+
+        virtualinvoke $r5.<java.util.concurrent.ConcurrentHashMap: java.lang.Object remove(java.lang.Object)>($r6);
+
+        $r8 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        virtualinvoke $r8.<com.android.email.service.AttachmentService$DownloadQueue: boolean removeRequest(com.android.email.service.AttachmentService$DownloadRequest)>(r1);
+
+        $l4 = r1.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryCount>;
+
+        $l3 = $l4 + 1L;
+
+        r1.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryCount> = $l3;
+
+        $l6 = r1.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryCount>;
+
+        $b5 = $l6 cmp 10L;
+
+        if $b5 <= 0 goto label1;
+
+        $r13 = newarray (java.lang.Object)[1];
+
+        $l9 = r1.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r14 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l9);
+
+        $r13[0] = $r14;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Too many failures giving up on Attachment #%d", $r13);
+
+        goto label2;
+
+     label1:
+        $r9 = newarray (java.lang.Object)[1];
+
+        $l7 = r1.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r11 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l7);
+
+        $r9[0] = $r11;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Moving to end of queue, will retry #%d", $r9);
+
+        $r10 = new com.android.email.service.AttachmentService$DownloadRequest;
+
+        $l8 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        specialinvoke $r10.<com.android.email.service.AttachmentService$DownloadRequest: void <init>(com.android.email.service.AttachmentService$DownloadRequest,long,com.android.email.service.AttachmentService$1)>(r1, $l8, null);
+
+        r2 = $r10;
+
+        $r12 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        virtualinvoke $r12.<com.android.email.service.AttachmentService$DownloadQueue: boolean addRequest(com.android.email.service.AttachmentService$DownloadRequest)>(r2);
+
+     label2:
+        return;
+    }
+
+    synchronized void endDownload(long, int)
+    {
+        com.android.email.service.AttachmentService r0;
+        long l0, l2, $l4, $l5, $l6, $l9, $l11, $l12, $l13, $l15, $l17, $l19, $l20, $l21, $l22, $l25, $l26, $l28, $l30, $l31, $l33, $l35, $l36, $l37, $l43;
+        int i1, $i7, $i8, $i40, $i41;
+        java.lang.Integer r1, r58;
+        com.android.email.service.AttachmentService$DownloadRequest r2;
+        com.android.emailcommon.provider.EmailContent$Attachment r3;
+        java.lang.Long r4, $r8, $r11, $r12, $r16, $r20, $r21, $r24, $r26, $r28, $r30, $r31, $r32, $r37, $r38, $r41, $r42, $r43, $r44, $r45, $r48, $r49, $r57;
+        boolean z0, $z1;
+        com.android.email.NotificationController r5;
+        android.os.RemoteException r6, $r55;
+        java.lang.Object[] $r7, $r23, $r25, $r27, $r33, $r34, $r39, $r40, $r46, $r53, $r56;
+        java.util.concurrent.ConcurrentHashMap $r9, $r13, $r17, $r18, $r50;
+        com.android.email.service.AttachmentService$DownloadQueue $r14, $r36, $r52;
+        java.lang.Object $r15, $r19;
+        android.net.Uri $r29, $r35;
+        byte $b27, $b29;
+        com.android.email.service.AttachmentService$AttachmentWatchdog $r47;
+        java.lang.String $r54;
+        com.android.emailcommon.service.EmailServiceProxy r59;
+        com.android.emailcommon.provider.EmailContent$Message r60;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        $r7 = newarray (java.lang.Object)[1];
+
+        $r8 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r7[0] = $r8;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Finishing download #%d", $r7);
+
+        $r9 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mDownloadsInProgress>;
+
+        $r11 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        virtualinvoke $r9.<java.util.concurrent.ConcurrentHashMap: java.lang.Object remove(java.lang.Object)>($r11);
+
+        $r13 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mAttachmentFailureMap>;
+
+        $r12 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r15 = virtualinvoke $r13.<java.util.concurrent.ConcurrentHashMap: java.lang.Object remove(java.lang.Object)>($r12);
+
+        r1 = (java.lang.Integer) $r15;
+
+        if i1 == 0 goto label02;
+
+        if r1 != null goto label01;
+
+        r1 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(0);
+
+     label01:
+        $i40 = virtualinvoke r1.<java.lang.Integer: int intValue()>();
+
+        $i41 = $i40 + 1;
+
+        r58 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i41);
+
+        $r53 = newarray (java.lang.Object)[1];
+
+        $r48 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r53[0] = $r48;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "This attachment failed, adding #%d to failure map", $r53);
+
+        $r50 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mAttachmentFailureMap>;
+
+        $r49 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        virtualinvoke $r50.<java.util.concurrent.ConcurrentHashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r49, r58);
+
+     label02:
+        $r14 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        r2 = virtualinvoke $r14.<com.android.email.service.AttachmentService$DownloadQueue: com.android.email.service.AttachmentService$DownloadRequest findRequestById(long)>(l0);
+
+        if i1 != 32 goto label06;
+
+        if r2 == null goto label05;
+
+        $l30 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryCount>;
+
+        $l31 = $l30 + 1L;
+
+        r2.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryCount> = $l31;
+
+        $l28 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryCount>;
+
+        $b29 = $l28 cmp 10L;
+
+        if $b29 <= 0 goto label03;
+
+        $r46 = newarray (java.lang.Object)[1];
+
+        $r45 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r46[0] = $r45;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Too many tried for connection errors, giving up #%d", $r46);
+
+        $r52 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        virtualinvoke $r52.<com.android.email.service.AttachmentService$DownloadQueue: boolean removeRequest(com.android.email.service.AttachmentService$DownloadRequest)>(r2);
+
+        goto label05;
+
+     label03:
+        $l26 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryCount>;
+
+        $b27 = $l26 cmp 5L;
+
+        if $b27 <= 0 goto label04;
+
+        $r40 = newarray (java.lang.Object)[2];
+
+        $r44 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r40[0] = $r44;
+
+        $l35 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryCount>;
+
+        $r43 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l35);
+
+        $r40[1] = $r43;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "ConnectionError #%d, retried %d times, adding delay", $r40);
+
+        r2.<com.android.email.service.AttachmentService$DownloadRequest: boolean mInProgress> = 0;
+
+        $l37 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l36 = $l37 + 10000L;
+
+        r2.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryStartTime> = $l36;
+
+        $r47 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$AttachmentWatchdog mWatchdog>;
+
+        virtualinvoke $r47.<com.android.email.service.AttachmentService$AttachmentWatchdog: void setWatchdogAlarm(android.content.Context,long,int)>(r0, 10000L, 30000);
+
+        goto label05;
+
+     label04:
+        $r39 = newarray (java.lang.Object)[2];
+
+        $r42 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r39[0] = $r42;
+
+        $l33 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryCount>;
+
+        $r41 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l33);
+
+        $r39[1] = $r41;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "ConnectionError for #%d, retried %d times, adding delay", $r39);
+
+        r2.<com.android.email.service.AttachmentService$DownloadRequest: boolean mInProgress> = 0;
+
+        r2.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryStartTime> = 0L;
+
+        specialinvoke r0.<com.android.email.service.AttachmentService: void kick()>();
+
+     label05:
+        return;
+
+     label06:
+        if r2 == null goto label07;
+
+        $r36 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        virtualinvoke $r36.<com.android.email.service.AttachmentService$DownloadQueue: boolean removeRequest(com.android.email.service.AttachmentService$DownloadRequest)>(r2);
+
+     label07:
+        r3 = staticinvoke <com.android.emailcommon.provider.EmailContent$Attachment: com.android.emailcommon.provider.EmailContent$Attachment restoreAttachmentWithId(android.content.Context,long)>(r0, l0);
+
+        if r3 == null goto label17;
+
+        l2 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mAccountKey>;
+
+        $r17 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mAttachmentStorageMap>;
+
+        $r16 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l2);
+
+        $r19 = virtualinvoke $r17.<java.util.concurrent.ConcurrentHashMap: java.lang.Object get(java.lang.Object)>($r16);
+
+        r4 = (java.lang.Long) $r19;
+
+        if r4 != null goto label08;
+
+        r4 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(0L);
+
+     label08:
+        $r18 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mAttachmentStorageMap>;
+
+        $r20 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l2);
+
+        $l6 = virtualinvoke r4.<java.lang.Long: long longValue()>();
+
+        $l4 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mSize>;
+
+        $l5 = $l6 + $l4;
+
+        $r21 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l5);
+
+        virtualinvoke $r18.<java.util.concurrent.ConcurrentHashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r20, $r21);
+
+        z0 = 0;
+
+        $i7 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: int mFlags>;
+
+        $i8 = $i7 & 4;
+
+        if $i8 == 0 goto label13;
+
+        if i1 != 17 goto label09;
+
+        $r35 = <com.android.emailcommon.provider.EmailContent$Attachment: android.net.Uri CONTENT_URI>;
+
+        $l22 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        staticinvoke <com.android.emailcommon.provider.EmailContent: int delete(android.content.Context,android.net.Uri,long)>(r0, $r35, $l22);
+
+        r5 = staticinvoke <com.android.email.NotificationController: com.android.email.NotificationController getInstance(android.content.Context)>(r0);
+
+        virtualinvoke r5.<com.android.email.NotificationController: void showDownloadForwardFailedNotificationSynchronous(com.android.emailcommon.provider.EmailContent$Attachment)>(r3);
+
+        z0 = 1;
+
+        $r34 = newarray (java.lang.Object)[2];
+
+        $r37 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r34[0] = $r37;
+
+        $l25 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mMessageKey>;
+
+        $r38 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l25);
+
+        $r34[1] = $r38;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Deleting forwarded attachment #%d for message #%d", $r34);
+
+     label09:
+        if r2 == null goto label13;
+
+        $l20 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mMessageKey>;
+
+        $z1 = staticinvoke <com.android.emailcommon.utility.Utility: boolean hasUnloadedAttachments(android.content.Context,long)>(r0, $l20);
+
+        if $z1 != 0 goto label13;
+
+        $r33 = newarray (java.lang.Object)[1];
+
+        $l21 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mMessageId>;
+
+        $r32 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l21);
+
+        $r33[0] = $r32;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Downloads finished for outgoing msg #%d", $r33);
+
+        r59 = staticinvoke <com.android.email.service.EmailServiceUtils: com.android.emailcommon.service.EmailServiceProxy getServiceForAccount(android.content.Context,long)>(r0, l2);
+
+     label10:
+        virtualinvoke r59.<com.android.emailcommon.service.EmailServiceProxy: void sendMail(long)>(l2);
+
+     label11:
+        goto label13;
+
+     label12:
+        $r55 := @caughtexception;
+
+        r6 = $r55;
+
+        $r56 = newarray (java.lang.Object)[2];
+
+        $l43 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mMessageId>;
+
+        $r57 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l43);
+
+        $r56[0] = $r57;
+
+        $r54 = virtualinvoke r6.<android.os.RemoteException: java.lang.String toString()>();
+
+        $r56[1] = $r54;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "RemoteException while trying to send message: #%d, %s", $r56);
+
+     label13:
+        if i1 != 16 goto label16;
+
+        $l11 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mMessageKey>;
+
+        r60 = staticinvoke <com.android.emailcommon.provider.EmailContent$Message: com.android.emailcommon.provider.EmailContent$Message restoreMessageWithId(android.content.Context,long)>(r0, $l11);
+
+        if r60 != null goto label14;
+
+        $r27 = newarray (java.lang.Object)[2];
+
+        $l15 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r30 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l15);
+
+        $r27[0] = $r30;
+
+        $l19 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mMessageKey>;
+
+        $r31 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l19);
+
+        $r27[1] = $r31;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Deleting attachment #%d with no associated message #%d", $r27);
+
+        $r29 = <com.android.emailcommon.provider.EmailContent$Attachment: android.net.Uri CONTENT_URI>;
+
+        $l17 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        staticinvoke <com.android.emailcommon.provider.EmailContent: int delete(android.content.Context,android.net.Uri,long)>(r0, $r29, $l17);
+
+        goto label15;
+
+     label14:
+        $r25 = newarray (java.lang.Object)[2];
+
+        $l12 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r26 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l12);
+
+        $r25[0] = $r26;
+
+        $l13 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mMessageKey>;
+
+        $r28 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l13);
+
+        $r25[1] = $r28;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Retrying attachment #%d with associated message #%d", $r25);
+
+        specialinvoke r0.<com.android.email.service.AttachmentService: void kick()>();
+
+        return;
+
+     label15:
+        goto label17;
+
+     label16:
+        if z0 != 0 goto label17;
+
+        $r23 = newarray (java.lang.Object)[1];
+
+        $l9 = r3.<com.android.emailcommon.provider.EmailContent$Attachment: long mId>;
+
+        $r24 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l9);
+
+        $r23[0] = $r24;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Attachment #%d successfully downloaded!", $r23);
+
+        virtualinvoke r0.<com.android.email.service.AttachmentService: void markAttachmentAsCompleted(com.android.emailcommon.provider.EmailContent$Attachment)>(r3);
+
+     label17:
+        specialinvoke r0.<com.android.email.service.AttachmentService: void kick()>();
+
+        return;
+
+        catch android.os.RemoteException from label10 to label11 with label12;
+    }
+
+    synchronized int getDownloadsForAccount(long)
+    {
+        com.android.email.service.AttachmentService r0;
+        long l0, $l2;
+        int i1;
+        java.util.Iterator r1;
+        com.android.email.service.AttachmentService$DownloadRequest r2;
+        java.util.concurrent.ConcurrentHashMap $r3;
+        java.util.Collection $r4;
+        boolean $z0;
+        java.lang.Object $r5;
+        byte $b3;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        l0 := @parameter0: long;
+
+        i1 = 0;
+
+        $r3 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mDownloadsInProgress>;
+
+        $r4 = virtualinvoke $r3.<java.util.concurrent.ConcurrentHashMap: java.util.Collection values()>();
+
+        r1 = interfaceinvoke $r4.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r5 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.email.service.AttachmentService$DownloadRequest) $r5;
+
+        $l2 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mAccountId>;
+
+        $b3 = $l2 cmp l0;
+
+        if $b3 != 0 goto label2;
+
+        i1 = i1 + 1;
+
+     label2:
+        goto label1;
+
+     label3:
+        return i1;
+    }
+
+    private static int getAttachmentPriority(com.android.emailcommon.provider.EmailContent$Attachment)
+    {
+        com.android.emailcommon.provider.EmailContent$Attachment r0;
+        byte b0;
+        int i1, $i2, $i3;
+
+        r0 := @parameter0: com.android.emailcommon.provider.EmailContent$Attachment;
+
+        b0 = -1;
+
+        i1 = r0.<com.android.emailcommon.provider.EmailContent$Attachment: int mFlags>;
+
+        $i2 = i1 & 4;
+
+        if $i2 == 0 goto label1;
+
+        b0 = 1;
+
+        goto label2;
+
+     label1:
+        $i3 = i1 & 2;
+
+        if $i3 == 0 goto label2;
+
+        b0 = 0;
+
+     label2:
+        return b0;
+    }
+
+    public boolean canPrefetchForAccount(com.android.emailcommon.provider.Account, java.io.File)
+    {
+        com.android.email.service.AttachmentService r0;
+        com.android.emailcommon.provider.Account r1;
+        java.io.File r2, r6;
+        long l0, l1, l2, l4, $l10, $l11, $l13, $l14, $l15, $l16, $l18, $l19, $l20;
+        int i3, i5, i6, $i7, $i8;
+        java.lang.Long r3, $r10, $r12, $r15, $r16, $r19;
+        java.io.File[] r4, r5;
+        float $f0, $f1, $f2, $f3, $f4, $f5;
+        com.android.email.service.AttachmentService$AccountManagerStub $r7;
+        byte $b9, $b12, $b17;
+        java.lang.Object $r8;
+        java.util.concurrent.ConcurrentHashMap $r9, $r11;
+        java.lang.Object[] $r13, $r17, $r18;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        r1 := @parameter0: com.android.emailcommon.provider.Account;
+
+        r2 := @parameter1: java.io.File;
+
+        if r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        $i8 = r1.<com.android.emailcommon.provider.Account: int mFlags>;
+
+        $i7 = $i8 & 256;
+
+        if $i7 != 0 goto label2;
+
+        $r17 = newarray (java.lang.Object)[1];
+
+        $l20 = virtualinvoke r1.<com.android.emailcommon.provider.Account: long getId()>();
+
+        $r19 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l20);
+
+        $r17[0] = $r19;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Prefetch is not allowed for this account: %d", $r17);
+
+        return 0;
+
+     label2:
+        l0 = virtualinvoke r2.<java.io.File: long getTotalSpace()>();
+
+        l1 = virtualinvoke r2.<java.io.File: long getUsableSpace()>();
+
+        $f1 = (float) l0;
+
+        $f0 = $f1 * 0.25F;
+
+        l2 = (long) $f0;
+
+        $b9 = l1 cmp l2;
+
+        if $b9 >= 0 goto label3;
+
+        $r18 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Not enough physical storage for prefetch", $r18);
+
+        return 0;
+
+     label3:
+        $r7 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$AccountManagerStub mAccountManagerStub>;
+
+        i3 = virtualinvoke $r7.<com.android.email.service.AttachmentService$AccountManagerStub: int getNumberOfAccounts()>();
+
+        $f2 = (float) l0;
+
+        $f3 = $f2 * 0.25F;
+
+        $f4 = (float) i3;
+
+        $f5 = $f3 / $f4;
+
+        l4 = (long) $f5;
+
+        $r9 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mAttachmentStorageMap>;
+
+        $l10 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $r10 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l10);
+
+        $r8 = virtualinvoke $r9.<java.util.concurrent.ConcurrentHashMap: java.lang.Object get(java.lang.Object)>($r10);
+
+        r3 = (java.lang.Long) $r8;
+
+        if r3 == null goto label4;
+
+        $l18 = virtualinvoke r3.<java.lang.Long: long longValue()>();
+
+        $b17 = $l18 cmp l4;
+
+        if $b17 <= 0 goto label7;
+
+     label4:
+        r3 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(0L);
+
+        r4 = virtualinvoke r2.<java.io.File: java.io.File[] listFiles()>();
+
+        if r4 == null goto label6;
+
+        r5 = r4;
+
+        i5 = lengthof r5;
+
+        i6 = 0;
+
+     label5:
+        if i6 >= i5 goto label6;
+
+        r6 = r5[i6];
+
+        $l16 = virtualinvoke r3.<java.lang.Long: long longValue()>();
+
+        $l15 = virtualinvoke r6.<java.io.File: long length()>();
+
+        $l19 = $l16 + $l15;
+
+        r3 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l19);
+
+        i6 = i6 + 1;
+
+        goto label5;
+
+     label6:
+        $r11 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mAttachmentStorageMap>;
+
+        $l11 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $r12 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l11);
+
+        virtualinvoke $r11.<java.util.concurrent.ConcurrentHashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r12, r3);
+
+     label7:
+        $l13 = virtualinvoke r3.<java.lang.Long: long longValue()>();
+
+        $b12 = $l13 cmp l4;
+
+        if $b12 < 0 goto label8;
+
+        $r13 = newarray (java.lang.Object)[3];
+
+        $l14 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $r15 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l14);
+
+        $r13[0] = $r15;
+
+        $r13[1] = r3;
+
+        $r16 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l4);
+
+        $r13[2] = $r16;
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>("Prefetch not allowed for account %d; used: %d, limit %d", $r13);
+
+        return 0;
+
+     label8:
+        return 1;
+    }
+
+    boolean isConnected()
+    {
+        com.android.email.service.AttachmentService r0;
+        com.android.email.EmailConnectivityManager $r1, $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        $r1 = r0.<com.android.email.service.AttachmentService: com.android.email.EmailConnectivityManager mConnectivityManager>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.email.service.AttachmentService: com.android.email.EmailConnectivityManager mConnectivityManager>;
+
+        $z0 = virtualinvoke $r2.<com.android.email.EmailConnectivityManager: boolean hasConnectivity()>();
+
+        return $z0;
+
+     label1:
+        return 0;
+    }
+
+    public synchronized void dumpInProgressDownloads()
+    {
+        com.android.email.service.AttachmentService r0;
+        java.util.Iterator r1;
+        com.android.email.service.AttachmentService$DownloadRequest r2;
+        java.lang.Object[] $r3, $r7, $r8, $r10, $r12, $r14, $r16, $r18, $r19, $r21, $r24, $r25, $r27, $r28, $r30, $r31;
+        java.util.concurrent.ConcurrentHashMap $r4;
+        java.util.Collection $r5;
+        boolean $z0, $z1;
+        java.lang.Object $r6;
+        long $l2, $l4, $l6, $l7, $l12, $l14, $l18, $l23;
+        java.lang.Long $r9, $r11, $r13, $r15, $r20, $r22, $r23, $r32;
+        int $i10, $i20, $i21;
+        java.lang.Integer $r17, $r26, $r29;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        $r3 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Advanced logging not configured.", $r3);
+
+        $r4 = r0.<com.android.email.service.AttachmentService: java.util.concurrent.ConcurrentHashMap mDownloadsInProgress>;
+
+        $r5 = virtualinvoke $r4.<java.util.concurrent.ConcurrentHashMap: java.util.Collection values()>();
+
+        r1 = interfaceinvoke $r5.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r6 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.email.service.AttachmentService$DownloadRequest) $r6;
+
+        $r7 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "--BEGIN DownloadRequest DUMP--", $r7);
+
+        $r8 = newarray (java.lang.Object)[1];
+
+        $l2 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mAccountId>;
+
+        $r9 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l2);
+
+        $r8[0] = $r9;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Account: #%d", $r8);
+
+        $r10 = newarray (java.lang.Object)[1];
+
+        $l4 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mMessageId>;
+
+        $r11 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l4);
+
+        $r10[0] = $r11;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Message: #%d", $r10);
+
+        $r12 = newarray (java.lang.Object)[1];
+
+        $l6 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r13 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l6);
+
+        $r12[0] = $r13;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Attachment: #%d", $r12);
+
+        $r14 = newarray (java.lang.Object)[1];
+
+        $l7 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mCreatedTime>;
+
+        $r15 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l7);
+
+        $r14[0] = $r15;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Created Time: %d", $r14);
+
+        $r16 = newarray (java.lang.Object)[1];
+
+        $i10 = r2.<com.android.email.service.AttachmentService$DownloadRequest: int mPriority>;
+
+        $r17 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i10);
+
+        $r16[0] = $r17;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Priority: %d", $r16);
+
+        $z1 = r2.<com.android.email.service.AttachmentService$DownloadRequest: boolean mInProgress>;
+
+        if $z1 != 1 goto label2;
+
+        $r31 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "This download is in progress", $r31);
+
+        goto label3;
+
+     label2:
+        $r19 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "This download is not in progress", $r19);
+
+     label3:
+        $r18 = newarray (java.lang.Object)[1];
+
+        $l12 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mStartTime>;
+
+        $r20 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l12);
+
+        $r18[0] = $r20;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Start Time: %d", $r18);
+
+        $r21 = newarray (java.lang.Object)[1];
+
+        $l14 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryCount>;
+
+        $r22 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l14);
+
+        $r21[0] = $r22;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Retry Count: %d", $r21);
+
+        $r25 = newarray (java.lang.Object)[1];
+
+        $l18 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mRetryStartTime>;
+
+        $r23 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l18);
+
+        $r25[0] = $r23;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Retry Start Tiome: %d", $r25);
+
+        $r24 = newarray (java.lang.Object)[1];
+
+        $i21 = r2.<com.android.email.service.AttachmentService$DownloadRequest: int mLastStatusCode>;
+
+        $r26 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i21);
+
+        $r24[0] = $r26;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Last Status Code: %d", $r24);
+
+        $r27 = newarray (java.lang.Object)[1];
+
+        $i20 = r2.<com.android.email.service.AttachmentService$DownloadRequest: int mLastProgress>;
+
+        $r29 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i20);
+
+        $r27[0] = $r29;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Last Progress: %d", $r27);
+
+        $r28 = newarray (java.lang.Object)[1];
+
+        $l23 = r2.<com.android.email.service.AttachmentService$DownloadRequest: long mLastCallbackTime>;
+
+        $r32 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l23);
+
+        $r28[0] = $r32;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "Last Callback Time: %d", $r28);
+
+        $r30 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("AttachmentService", "------------------------------", $r30);
+
+        goto label1;
+
+     label4:
+        return;
+    }
+
+    public void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.email.service.AttachmentService r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        long l0, $l3, $l4, $l5, $l7, $l10, $l11, $l12, $l13, $l14, $l16, $l17, $l18, $l19, $l20;
+        com.android.email.service.AttachmentService$DownloadQueue r4, $r11, $r14, $r17;
+        java.util.Iterator r5;
+        com.android.email.service.AttachmentService$DownloadRequest r6;
+        com.android.emailcommon.provider.EmailContent$Attachment r7;
+        java.lang.String r8, r9, $r18, $r29, $r33, $r35, $r39, $r49, $r54, $r55, $r59, $r60, $r65, $r66, $r67, $r71, $r72, $r74, $r76;
+        int i1, $i2, $i6, $i8, $i9;
+        java.lang.Throwable r10, $r75;
+        java.lang.StringBuilder $r12, $r13, $r15, $r16, $r22, $r23, $r24, $r25, $r26, $r27, $r28, $r30, $r31, $r32, $r34, $r36, $r37, $r38, $r40, $r41, $r42, $r43, $r44, $r45, $r46, $r47, $r48, $r50, $r51, $r52, $r53, $r56, $r57, $r58, $r61, $r62, $r63, $r64, $r68, $r69, $r70, $r73;
+        java.util.Collection $r19;
+        java.util.concurrent.ConcurrentHashMap $r20;
+        boolean $z0, $z1, $z2;
+        java.lang.Object $r21;
+        byte $b15;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("AttachmentService");
+
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r11 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        r4 = $r11;
+
+        entermonitor $r11;
+
+     label01:
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Queue, ");
+
+        $r14 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        $i2 = virtualinvoke $r14.<com.android.email.service.AttachmentService$DownloadQueue: int getSize()>();
+
+        $r16 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" entries");
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r18);
+
+        $r17 = r0.<com.android.email.service.AttachmentService: com.android.email.service.AttachmentService$DownloadQueue mDownloadQueue>;
+
+        $r20 = $r17.<com.android.email.service.AttachmentService$DownloadQueue: java.util.concurrent.ConcurrentHashMap mRequestMap>;
+
+        $r19 = virtualinvoke $r20.<java.util.concurrent.ConcurrentHashMap: java.util.Collection values()>();
+
+        r5 = interfaceinvoke $r19.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label02:
+        $z0 = interfaceinvoke r5.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label13;
+
+        $r21 = interfaceinvoke r5.<java.util.Iterator: java.lang.Object next()>();
+
+        r6 = (com.android.email.service.AttachmentService$DownloadRequest) $r21;
+
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        $r22 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("    Account: ");
+
+        $l4 = r6.<com.android.email.service.AttachmentService$DownloadRequest: long mAccountId>;
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l4);
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", Attachment: ");
+
+        $l3 = r6.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        $r28 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l3);
+
+        $r29 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r29);
+
+        $r26 = new java.lang.StringBuilder;
+
+        specialinvoke $r26.<java.lang.StringBuilder: void <init>()>();
+
+        $r27 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("      Priority: ");
+
+        $i6 = r6.<com.android.email.service.AttachmentService$DownloadRequest: int mPriority>;
+
+        $r31 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i6);
+
+        $r30 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", Time: ");
+
+        $l5 = r6.<com.android.email.service.AttachmentService$DownloadRequest: long mCreatedTime>;
+
+        $r34 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l5);
+
+        $z1 = r6.<com.android.email.service.AttachmentService$DownloadRequest: boolean mInProgress>;
+
+        if $z1 == 0 goto label03;
+
+        $r74 = " [In progress]";
+
+        goto label04;
+
+     label03:
+        $r74 = "";
+
+     label04:
+        $r32 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r74);
+
+        $r33 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r33);
+
+        $l7 = r6.<com.android.email.service.AttachmentService$DownloadRequest: long mAttachmentId>;
+
+        r7 = staticinvoke <com.android.emailcommon.provider.EmailContent$Attachment: com.android.emailcommon.provider.EmailContent$Attachment restoreAttachmentWithId(android.content.Context,long)>(r0, $l7);
+
+        if r7 != null goto label05;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("      Attachment not in database?");
+
+        goto label11;
+
+     label05:
+        $r35 = r7.<com.android.emailcommon.provider.EmailContent$Attachment: java.lang.String mFileName>;
+
+        if $r35 == null goto label11;
+
+        r8 = r7.<com.android.emailcommon.provider.EmailContent$Attachment: java.lang.String mFileName>;
+
+        i1 = virtualinvoke r8.<java.lang.String: int lastIndexOf(int)>(46);
+
+        if i1 < 0 goto label06;
+
+        r9 = virtualinvoke r8.<java.lang.String: java.lang.String substring(int)>(i1);
+
+        goto label07;
+
+     label06:
+        r9 = "[none]";
+
+     label07:
+        $r57 = new java.lang.StringBuilder;
+
+        specialinvoke $r57.<java.lang.StringBuilder: void <init>()>();
+
+        $r64 = virtualinvoke $r57.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("      Suffix: ");
+
+        $r63 = virtualinvoke $r64.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r9);
+
+        $r66 = virtualinvoke $r63.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r66);
+
+        $r65 = virtualinvoke r7.<com.android.emailcommon.provider.EmailContent$Attachment: java.lang.String getContentUri()>();
+
+        if $r65 == null goto label08;
+
+        $r69 = new java.lang.StringBuilder;
+
+        specialinvoke $r69.<java.lang.StringBuilder: void <init>()>();
+
+        $r70 = virtualinvoke $r69.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ContentUri: ");
+
+        $r67 = virtualinvoke r7.<com.android.emailcommon.provider.EmailContent$Attachment: java.lang.String getContentUri()>();
+
+        $r68 = virtualinvoke $r70.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r67);
+
+        $r76 = virtualinvoke $r68.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r76);
+
+     label08:
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" Mime: ");
+
+        $r60 = r7.<com.android.emailcommon.provider.EmailContent$Attachment: java.lang.String mMimeType>;
+
+        if $r60 == null goto label09;
+
+        $r72 = r7.<com.android.emailcommon.provider.EmailContent$Attachment: java.lang.String mMimeType>;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r72);
+
+        goto label10;
+
+     label09:
+        $r59 = staticinvoke <com.android.emailcommon.utility.AttachmentUtilities: java.lang.String inferMimeType(java.lang.String,java.lang.String)>(r8, null);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r59);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(" [inferred]");
+
+     label10:
+        $r62 = new java.lang.StringBuilder;
+
+        specialinvoke $r62.<java.lang.StringBuilder: void <init>()>();
+
+        $r61 = virtualinvoke $r62.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Size: ");
+
+        $l20 = r7.<com.android.emailcommon.provider.EmailContent$Attachment: long mSize>;
+
+        $r73 = virtualinvoke $r61.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l20);
+
+        $r71 = virtualinvoke $r73.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r71);
+
+     label11:
+        $z2 = r6.<com.android.email.service.AttachmentService$DownloadRequest: boolean mInProgress>;
+
+        if $z2 == 0 goto label12;
+
+        $r38 = new java.lang.StringBuilder;
+
+        specialinvoke $r38.<java.lang.StringBuilder: void <init>()>();
+
+        $r37 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("      Status: ");
+
+        $i8 = r6.<com.android.email.service.AttachmentService$DownloadRequest: int mLastStatusCode>;
+
+        $r36 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i8);
+
+        $r41 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", Progress: ");
+
+        $i9 = r6.<com.android.email.service.AttachmentService$DownloadRequest: int mLastProgress>;
+
+        $r40 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i9);
+
+        $r39 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r39);
+
+        $r44 = new java.lang.StringBuilder;
+
+        specialinvoke $r44.<java.lang.StringBuilder: void <init>()>();
+
+        $r43 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("      Started: ");
+
+        $l10 = r6.<com.android.email.service.AttachmentService$DownloadRequest: long mStartTime>;
+
+        $r42 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l10);
+
+        $r47 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", Callback: ");
+
+        $l13 = r6.<com.android.email.service.AttachmentService$DownloadRequest: long mLastCallbackTime>;
+
+        $r48 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l13);
+
+        $r49 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r49);
+
+        $r45 = new java.lang.StringBuilder;
+
+        specialinvoke $r45.<java.lang.StringBuilder: void <init>()>();
+
+        $r46 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("      Elapsed: ");
+
+        $l11 = r6.<com.android.email.service.AttachmentService$DownloadRequest: long mStartTime>;
+
+        $l12 = l0 - $l11;
+
+        $l16 = $l12 / 1000L;
+
+        $r52 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l16);
+
+        $r53 = virtualinvoke $r52.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("s");
+
+        $r54 = virtualinvoke $r53.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r54);
+
+        $l14 = r6.<com.android.email.service.AttachmentService$DownloadRequest: long mLastCallbackTime>;
+
+        $b15 = $l14 cmp 0L;
+
+        if $b15 <= 0 goto label12;
+
+        $r50 = new java.lang.StringBuilder;
+
+        specialinvoke $r50.<java.lang.StringBuilder: void <init>()>();
+
+        $r51 = virtualinvoke $r50.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("      CB: ");
+
+        $l18 = r6.<com.android.email.service.AttachmentService$DownloadRequest: long mLastCallbackTime>;
+
+        $l17 = l0 - $l18;
+
+        $l19 = $l17 / 1000L;
+
+        $r58 = virtualinvoke $r51.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l19);
+
+        $r56 = virtualinvoke $r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("s");
+
+        $r55 = virtualinvoke $r56.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r55);
+
+     label12:
+        goto label02;
+
+     label13:
+        exitmonitor r4;
+
+     label14:
+        goto label17;
+
+     label15:
+        $r75 := @caughtexception;
+
+        r10 = $r75;
+
+        exitmonitor r4;
+
+     label16:
+        throw r10;
+
+     label17:
+        return;
+
+        catch java.lang.Throwable from label01 to label14 with label15;
+        catch java.lang.Throwable from label15 to label16 with label15;
+    }
+
+    void addServiceIntentForTest(long, android.content.Intent)
+    {
+        com.android.email.service.AttachmentService r0;
+        long l0;
+        android.content.Intent r1;
+        java.util.HashMap $r2;
+        java.lang.Long $r3;
+
+        r0 := @this: com.android.email.service.AttachmentService;
+
+        l0 := @parameter0: long;
+
+        r1 := @parameter1: android.content.Intent;
+
+        $r2 = r0.<com.android.email.service.AttachmentService: java.util.HashMap mAccountServiceMap>;
+
+        $r3 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        virtualinvoke $r2.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r3, r1);
+
+        return;
+    }
+
+    static int access$000(com.android.emailcommon.provider.EmailContent$Attachment)
+    {
+        com.android.emailcommon.provider.EmailContent$Attachment r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.emailcommon.provider.EmailContent$Attachment;
+
+        $i0 = staticinvoke <com.android.email.service.AttachmentService: int getAttachmentPriority(com.android.emailcommon.provider.EmailContent$Attachment)>(r0);
+
+        return $i0;
+    }
+
+    static void access$200(java.lang.String, java.lang.Object[])
+    {
+        java.lang.String r0;
+        java.lang.Object[] r1;
+
+        r0 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.Object[];
+
+        staticinvoke <com.android.email.service.AttachmentService: void debugTrace(java.lang.String,java.lang.Object[])>(r0, r1);
+
+        return;
+    }
+
+    static boolean access$300(com.android.email.service.AttachmentService)
+    {
+        com.android.email.service.AttachmentService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.email.service.AttachmentService;
+
+        $z0 = r0.<com.android.email.service.AttachmentService: boolean mStop>;
+
+        return $z0;
+    }
+
+    static void <clinit>()
+    {
+        java.util.concurrent.ConcurrentLinkedQueue $r0;
+
+        <com.android.email.service.AttachmentService: java.lang.String EXTRA_ATTACHMENT_FLAGS> = "com.android.email.AttachmentService.attachment_flags";
+
+        <com.android.email.service.AttachmentService: java.lang.String EXTRA_ATTACHMENT_ID> = "com.android.email.AttachmentService.attachment_id";
+
+        <com.android.email.service.AttachmentService: int MAX_ATTACHMENTS_TO_CHECK> = 25;
+
+        <com.android.email.service.AttachmentService: int MAX_SIMULTANEOUS_DOWNLOADS_PER_ACCOUNT> = 1;
+
+        <com.android.email.service.AttachmentService: int MAX_SIMULTANEOUS_DOWNLOADS> = 2;
+
+        <com.android.email.service.AttachmentService: float PREFETCH_MAXIMUM_ATTACHMENT_STORAGE> = 0.25F;
+
+        <com.android.email.service.AttachmentService: float PREFETCH_MINIMUM_STORAGE_AVAILABLE> = 0.25F;
+
+        <com.android.email.service.AttachmentService: int PRIORITY_LOWEST> = 2;
+
+        <com.android.email.service.AttachmentService: int PRIORITY_BACKGROUND> = 2;
+
+        <com.android.email.service.AttachmentService: int PRIORITY_SEND_MAIL> = 1;
+
+        <com.android.email.service.AttachmentService: int PRIORITY_HIGHEST> = 0;
+
+        <com.android.email.service.AttachmentService: int PRIORITY_FOREGROUND> = 0;
+
+        <com.android.email.service.AttachmentService: int PRIORITY_NONE> = -1;
+
+        <com.android.email.service.AttachmentService: int MAX_DOWNLOAD_RETRIES> = 5;
+
+        <com.android.email.service.AttachmentService: int CALLBACK_TIMEOUT> = 30000;
+
+        <com.android.email.service.AttachmentService: int PROCESS_QUEUE_WAIT_TIME> = 1800000;
+
+        <com.android.email.service.AttachmentService: long CONNECTION_ERROR_MAX_RETRIES> = 10L;
+
+        <com.android.email.service.AttachmentService: long CONNECTION_ERROR_DELAY_THRESHOLD> = 5L;
+
+        <com.android.email.service.AttachmentService: long CONNECTION_ERROR_RETRY_MILLIS> = 10000L;
+
+        <com.android.email.service.AttachmentService: int ENABLE_ATTACHMENT_SERVICE_DEBUG> = 0;
+
+        <com.android.email.service.AttachmentService: java.lang.String LOG_TAG> = "AttachmentService";
+
+        <com.android.email.service.AttachmentService: com.android.email.service.AttachmentService sRunningService> = null;
+
+        $r0 = new java.util.concurrent.ConcurrentLinkedQueue;
+
+        specialinvoke $r0.<java.util.concurrent.ConcurrentLinkedQueue: void <init>()>();
+
+        <com.android.email.service.AttachmentService: java.util.Queue sAttachmentChangedQueue> = $r0;
+
+        return;
+    }
+}

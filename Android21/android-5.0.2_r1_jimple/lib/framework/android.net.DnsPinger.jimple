@@ -1,0 +1,865 @@
+public final class android.net.DnsPinger extends android.os.Handler
+{
+    private static final boolean DBG;
+    private static final int RECEIVE_POLL_INTERVAL_MS;
+    private static final int DNS_PORT;
+    private static final int SOCKET_TIMEOUT_MS;
+    private static final java.util.Random sRandom;
+    private static final java.util.concurrent.atomic.AtomicInteger sCounter;
+    private android.net.ConnectivityManager mConnectivityManager;
+    private final android.content.Context mContext;
+    private final int mConnectionType;
+    private final android.os.Handler mTarget;
+    private final java.util.ArrayList mDefaultDns;
+    private java.lang.String TAG;
+    private java.util.concurrent.atomic.AtomicInteger mCurrentToken;
+    private static final int BASE;
+    public static final int DNS_PING_RESULT;
+    public static final int TIMEOUT;
+    public static final int SOCKET_EXCEPTION;
+    private static final int ACTION_PING_DNS;
+    private static final int ACTION_LISTEN_FOR_RESPONSE;
+    private static final int ACTION_CANCEL_ALL_PINGS;
+    private java.util.List mActivePings;
+    private int mEventCounter;
+    private static final byte[] mDnsQuery;
+
+    public void <init>(android.content.Context, java.lang.String, android.os.Looper, android.os.Handler, int)
+    {
+        android.net.DnsPinger r0;
+        android.content.Context r1;
+        java.lang.String r2, $r13;
+        android.os.Looper r3;
+        android.os.Handler r4;
+        int i0;
+        java.util.concurrent.atomic.AtomicInteger $r5;
+        java.util.ArrayList $r6, $r7, $r8;
+        boolean $z0;
+        java.net.InetAddress $r9;
+        java.lang.IllegalArgumentException $r10;
+        java.lang.StringBuilder $r11, $r12, $r14;
+
+        r0 := @this: android.net.DnsPinger;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: android.os.Looper;
+
+        r4 := @parameter3: android.os.Handler;
+
+        i0 := @parameter4: int;
+
+        specialinvoke r0.<android.os.Handler: void <init>(android.os.Looper)>(r3);
+
+        r0.<android.net.DnsPinger: android.net.ConnectivityManager mConnectivityManager> = null;
+
+        $r5 = new java.util.concurrent.atomic.AtomicInteger;
+
+        specialinvoke $r5.<java.util.concurrent.atomic.AtomicInteger: void <init>()>();
+
+        r0.<android.net.DnsPinger: java.util.concurrent.atomic.AtomicInteger mCurrentToken> = $r5;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>()>();
+
+        r0.<android.net.DnsPinger: java.util.List mActivePings> = $r6;
+
+        r0.<android.net.DnsPinger: java.lang.String TAG> = r2;
+
+        r0.<android.net.DnsPinger: android.content.Context mContext> = r1;
+
+        r0.<android.net.DnsPinger: android.os.Handler mTarget> = r4;
+
+        r0.<android.net.DnsPinger: int mConnectionType> = i0;
+
+        $z0 = staticinvoke <android.net.ConnectivityManager: boolean isNetworkTypeValid(int)>(i0);
+
+        if $z0 != 0 goto label1;
+
+        $r10 = new java.lang.IllegalArgumentException;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid connectionType in constructor: ");
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r10.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r13);
+
+        throw $r10;
+
+     label1:
+        $r7 = new java.util.ArrayList;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>()>();
+
+        r0.<android.net.DnsPinger: java.util.ArrayList mDefaultDns> = $r7;
+
+        $r8 = r0.<android.net.DnsPinger: java.util.ArrayList mDefaultDns>;
+
+        $r9 = specialinvoke r0.<android.net.DnsPinger: java.net.InetAddress getDefaultDns()>();
+
+        virtualinvoke $r8.<java.util.ArrayList: boolean add(java.lang.Object)>($r9);
+
+        r0.<android.net.DnsPinger: int mEventCounter> = 0;
+
+        return;
+    }
+
+    public void handleMessage(android.os.Message)
+    {
+        android.net.DnsPinger r0;
+        android.os.Message r1, $r22, $r30;
+        android.net.DnsPinger$DnsArg r2;
+        android.net.DnsPinger$ActivePing r3, $r9, r52, r58, r60;
+        java.net.InetAddress r4;
+        java.lang.Exception r5, $r43, $r47;
+        java.net.DatagramPacket r6, $r19, $r36, r54;
+        int $i0, $i1, $i2, $i3, $i4, $i6, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i22, $i28, $i30, $i39, $i41;
+        java.lang.Object $r7, $r17, $r26, $r32, $r35;
+        java.util.concurrent.atomic.AtomicInteger $r8;
+        java.net.DatagramSocket $r10, $r11, $r12, $r21, $r24, $r33, $r37, $r38;
+        java.lang.String $r13, $r41;
+        android.net.LinkProperties $r14;
+        java.util.Random $r15;
+        java.net.NetworkInterface $r16;
+        short $s5, $s7, $s8, $s9, $s21, $s27, $s29, $s36, $s37;
+        byte[] $r18, r49, r53;
+        byte $b10, $b11, $b26, $b31, $b32, $b35, $b38;
+        java.util.List $r20, $r23, $r25, $r27, $r28, $r29;
+        boolean $z1, $z3, $z4, $z6;
+        long $l20, $l23, $l24, $l25, $l33, $l34, $l40;
+        java.lang.Integer $r31, $r34, $r44, $r48;
+        java.lang.StringBuilder $r39, $r40, $r42;
+        java.net.SocketTimeoutException $r45;
+        java.io.IOException $r46;
+        java.util.Iterator r51, r57, r59;
+
+        r0 := @this: android.net.DnsPinger;
+
+        r1 := @parameter0: android.os.Message;
+
+        $i0 = r1.<android.os.Message: int what>;
+
+        tableswitch($i0)
+        {
+            case 327681: goto label01;
+            case 327682: goto label09;
+            case 327683: goto label22;
+            default: goto label25;
+        };
+
+     label01:
+        $r7 = r1.<android.os.Message: java.lang.Object obj>;
+
+        r2 = (android.net.DnsPinger$DnsArg) $r7;
+
+        $i1 = r2.<android.net.DnsPinger$DnsArg: int seq>;
+
+        $r8 = r0.<android.net.DnsPinger: java.util.concurrent.atomic.AtomicInteger mCurrentToken>;
+
+        $i2 = virtualinvoke $r8.<java.util.concurrent.atomic.AtomicInteger: int get()>();
+
+        if $i1 == $i2 goto label02;
+
+        goto label25;
+
+     label02:
+        $r9 = new android.net.DnsPinger$ActivePing;
+
+        specialinvoke $r9.<android.net.DnsPinger$ActivePing: void <init>(android.net.DnsPinger,android.net.DnsPinger$1)>(r0, null);
+
+        r3 = $r9;
+
+        r4 = r2.<android.net.DnsPinger$DnsArg: java.net.InetAddress dns>;
+
+        $i3 = r1.<android.os.Message: int arg1>;
+
+        r3.<android.net.DnsPinger$ActivePing: int internalId> = $i3;
+
+        $i4 = r1.<android.os.Message: int arg2>;
+
+        r3.<android.net.DnsPinger$ActivePing: int timeout> = $i4;
+
+        $r10 = new java.net.DatagramSocket;
+
+        specialinvoke $r10.<java.net.DatagramSocket: void <init>()>();
+
+        r3.<android.net.DnsPinger$ActivePing: java.net.DatagramSocket socket> = $r10;
+
+        $r12 = r3.<android.net.DnsPinger$ActivePing: java.net.DatagramSocket socket>;
+
+        virtualinvoke $r12.<java.net.DatagramSocket: void setSoTimeout(int)>(1);
+
+     label03:
+        $r11 = r3.<android.net.DnsPinger$ActivePing: java.net.DatagramSocket socket>;
+
+        $r14 = specialinvoke r0.<android.net.DnsPinger: android.net.LinkProperties getCurrentLinkProperties()>();
+
+        $r13 = virtualinvoke $r14.<android.net.LinkProperties: java.lang.String getInterfaceName()>();
+
+        $r16 = staticinvoke <java.net.NetworkInterface: java.net.NetworkInterface getByName(java.lang.String)>($r13);
+
+        virtualinvoke $r11.<java.net.DatagramSocket: void setNetworkInterface(java.net.NetworkInterface)>($r16);
+
+     label04:
+        goto label06;
+
+     label05:
+        $r43 := @caughtexception;
+
+        r5 = $r43;
+
+        $r40 = new java.lang.StringBuilder;
+
+        specialinvoke $r40.<java.lang.StringBuilder: void <init>()>();
+
+        $r39 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sendDnsPing::Error binding to socket ");
+
+        $r42 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r5);
+
+        $r41 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.DnsPinger: void loge(java.lang.String)>($r41);
+
+     label06:
+        $r15 = <android.net.DnsPinger: java.util.Random sRandom>;
+
+        $i6 = virtualinvoke $r15.<java.util.Random: int nextInt()>();
+
+        $s5 = (short) $i6;
+
+        r3.<android.net.DnsPinger$ActivePing: short packetId> = $s5;
+
+        $r18 = <android.net.DnsPinger: byte[] mDnsQuery>;
+
+        $r17 = virtualinvoke $r18.<java.lang.Object: java.lang.Object clone()>();
+
+        r49 = (byte[]) $r17;
+
+        $s8 = r3.<android.net.DnsPinger$ActivePing: short packetId>;
+
+        $s7 = $s8 >> 8;
+
+        $b10 = (byte) $s7;
+
+        r49[0] = $b10;
+
+        $s9 = r3.<android.net.DnsPinger$ActivePing: short packetId>;
+
+        $b11 = (byte) $s9;
+
+        r49[1] = $b11;
+
+        $r19 = new java.net.DatagramPacket;
+
+        $i12 = lengthof r49;
+
+        specialinvoke $r19.<java.net.DatagramPacket: void <init>(byte[],int,java.net.InetAddress,int)>(r49, $i12, r4, 53);
+
+        r6 = $r19;
+
+        $r21 = r3.<android.net.DnsPinger$ActivePing: java.net.DatagramSocket socket>;
+
+        virtualinvoke $r21.<java.net.DatagramSocket: void send(java.net.DatagramPacket)>(r6);
+
+        $r20 = r0.<android.net.DnsPinger: java.util.List mActivePings>;
+
+        interfaceinvoke $r20.<java.util.List: boolean add(java.lang.Object)>(r3);
+
+        $i14 = r0.<android.net.DnsPinger: int mEventCounter>;
+
+        $i15 = $i14 + 1;
+
+        r0.<android.net.DnsPinger: int mEventCounter> = $i15;
+
+        $i13 = r0.<android.net.DnsPinger: int mEventCounter>;
+
+        $r22 = virtualinvoke r0.<android.net.DnsPinger: android.os.Message obtainMessage(int,int,int)>(327682, $i13, 0);
+
+        virtualinvoke r0.<android.net.DnsPinger: boolean sendMessageDelayed(android.os.Message,long)>($r22, 200L);
+
+     label07:
+        goto label25;
+
+     label08:
+        $r46 := @caughtexception;
+
+        $i41 = r1.<android.os.Message: int arg1>;
+
+        specialinvoke r0.<android.net.DnsPinger: void sendResponse(int,int,int)>($i41, -9999, -2);
+
+        goto label25;
+
+     label09:
+        $i17 = r1.<android.os.Message: int arg1>;
+
+        $i16 = r0.<android.net.DnsPinger: int mEventCounter>;
+
+        if $i17 == $i16 goto label10;
+
+        goto label25;
+
+     label10:
+        $r27 = r0.<android.net.DnsPinger: java.util.List mActivePings>;
+
+        r51 = interfaceinvoke $r27.<java.util.List: java.util.Iterator iterator()>();
+
+     label11:
+        $z3 = interfaceinvoke r51.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label17;
+
+        $r35 = interfaceinvoke r51.<java.util.Iterator: java.lang.Object next()>();
+
+        r52 = (android.net.DnsPinger$ActivePing) $r35;
+
+     label12:
+        r53 = newarray (byte)[2];
+
+        $r36 = new java.net.DatagramPacket;
+
+        specialinvoke $r36.<java.net.DatagramPacket: void <init>(byte[],int)>(r53, 2);
+
+        r54 = $r36;
+
+        $r37 = r52.<android.net.DnsPinger$ActivePing: java.net.DatagramSocket socket>;
+
+        virtualinvoke $r37.<java.net.DatagramSocket: void receive(java.net.DatagramPacket)>(r54);
+
+        $b38 = r53[0];
+
+        $s27 = r52.<android.net.DnsPinger$ActivePing: short packetId>;
+
+        $s36 = $s27 >> 8;
+
+        $b35 = (byte) $s36;
+
+        if $b38 != $b35 goto label13;
+
+        $b31 = r53[1];
+
+        $s37 = r52.<android.net.DnsPinger$ActivePing: short packetId>;
+
+        $b32 = (byte) $s37;
+
+        if $b31 != $b32 goto label13;
+
+        $l34 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l33 = r52.<android.net.DnsPinger$ActivePing: long start>;
+
+        $l40 = $l34 - $l33;
+
+        $i39 = (int) $l40;
+
+        $r44 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i39);
+
+        r52.<android.net.DnsPinger$ActivePing: java.lang.Integer result> = $r44;
+
+     label13:
+        goto label16;
+
+     label14:
+        $r45 := @caughtexception;
+
+        goto label16;
+
+     label15:
+        $r47 := @caughtexception;
+
+        $r48 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(-2);
+
+        r52.<android.net.DnsPinger$ActivePing: java.lang.Integer result> = $r48;
+
+     label16:
+        goto label11;
+
+     label17:
+        $r29 = r0.<android.net.DnsPinger: java.util.List mActivePings>;
+
+        r57 = interfaceinvoke $r29.<java.util.List: java.util.Iterator iterator()>();
+
+     label18:
+        $z4 = interfaceinvoke r57.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label21;
+
+        $r32 = interfaceinvoke r57.<java.util.Iterator: java.lang.Object next()>();
+
+        r58 = (android.net.DnsPinger$ActivePing) $r32;
+
+        $r31 = r58.<android.net.DnsPinger$ActivePing: java.lang.Integer result>;
+
+        if $r31 == null goto label19;
+
+        $i28 = r58.<android.net.DnsPinger$ActivePing: int internalId>;
+
+        $s29 = r58.<android.net.DnsPinger$ActivePing: short packetId>;
+
+        $r34 = r58.<android.net.DnsPinger$ActivePing: java.lang.Integer result>;
+
+        $i30 = virtualinvoke $r34.<java.lang.Integer: int intValue()>();
+
+        specialinvoke r0.<android.net.DnsPinger: void sendResponse(int,int,int)>($i28, $s29, $i30);
+
+        $r38 = r58.<android.net.DnsPinger$ActivePing: java.net.DatagramSocket socket>;
+
+        virtualinvoke $r38.<java.net.DatagramSocket: void close()>();
+
+        interfaceinvoke r57.<java.util.Iterator: void remove()>();
+
+        goto label20;
+
+     label19:
+        $l20 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l24 = r58.<android.net.DnsPinger$ActivePing: long start>;
+
+        $i19 = r58.<android.net.DnsPinger$ActivePing: int timeout>;
+
+        $l23 = (long) $i19;
+
+        $l25 = $l24 + $l23;
+
+        $b26 = $l20 cmp $l25;
+
+        if $b26 <= 0 goto label20;
+
+        $i22 = r58.<android.net.DnsPinger$ActivePing: int internalId>;
+
+        $s21 = r58.<android.net.DnsPinger$ActivePing: short packetId>;
+
+        specialinvoke r0.<android.net.DnsPinger: void sendResponse(int,int,int)>($i22, $s21, -1);
+
+        $r33 = r58.<android.net.DnsPinger$ActivePing: java.net.DatagramSocket socket>;
+
+        virtualinvoke $r33.<java.net.DatagramSocket: void close()>();
+
+        interfaceinvoke r57.<java.util.Iterator: void remove()>();
+
+     label20:
+        goto label18;
+
+     label21:
+        $r28 = r0.<android.net.DnsPinger: java.util.List mActivePings>;
+
+        $z6 = interfaceinvoke $r28.<java.util.List: boolean isEmpty()>();
+
+        if $z6 != 0 goto label25;
+
+        $i18 = r0.<android.net.DnsPinger: int mEventCounter>;
+
+        $r30 = virtualinvoke r0.<android.net.DnsPinger: android.os.Message obtainMessage(int,int,int)>(327682, $i18, 0);
+
+        virtualinvoke r0.<android.net.DnsPinger: boolean sendMessageDelayed(android.os.Message,long)>($r30, 200L);
+
+        goto label25;
+
+     label22:
+        $r23 = r0.<android.net.DnsPinger: java.util.List mActivePings>;
+
+        r59 = interfaceinvoke $r23.<java.util.List: java.util.Iterator iterator()>();
+
+     label23:
+        $z1 = interfaceinvoke r59.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label24;
+
+        $r26 = interfaceinvoke r59.<java.util.Iterator: java.lang.Object next()>();
+
+        r60 = (android.net.DnsPinger$ActivePing) $r26;
+
+        $r24 = r60.<android.net.DnsPinger$ActivePing: java.net.DatagramSocket socket>;
+
+        virtualinvoke $r24.<java.net.DatagramSocket: void close()>();
+
+        goto label23;
+
+     label24:
+        $r25 = r0.<android.net.DnsPinger: java.util.List mActivePings>;
+
+        interfaceinvoke $r25.<java.util.List: void clear()>();
+
+     label25:
+        return;
+
+        catch java.lang.Exception from label03 to label04 with label05;
+        catch java.io.IOException from label02 to label07 with label08;
+        catch java.net.SocketTimeoutException from label12 to label13 with label14;
+        catch java.lang.Exception from label12 to label13 with label15;
+    }
+
+    public java.util.List getDnsList()
+    {
+        android.net.DnsPinger r0;
+        android.net.LinkProperties r1;
+        java.util.List r2;
+        java.util.ArrayList $r3, $r4, $r10;
+        int $i0, $i1;
+        java.lang.StringBuilder $r5, $r6, $r7, $r8;
+        java.lang.String $r9;
+
+        r0 := @this: android.net.DnsPinger;
+
+        r1 = specialinvoke r0.<android.net.DnsPinger: android.net.LinkProperties getCurrentLinkProperties()>();
+
+        if r1 != null goto label1;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("getCurLinkProperties:: LP for type");
+
+        $i1 = r0.<android.net.DnsPinger: int mConnectionType>;
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is null!");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.DnsPinger: void loge(java.lang.String)>($r9);
+
+        $r10 = r0.<android.net.DnsPinger: java.util.ArrayList mDefaultDns>;
+
+        return $r10;
+
+     label1:
+        r2 = virtualinvoke r1.<android.net.LinkProperties: java.util.List getDnsServers()>();
+
+        if r2 == null goto label2;
+
+        $i0 = interfaceinvoke r2.<java.util.Collection: int size()>();
+
+        if $i0 != 0 goto label3;
+
+     label2:
+        specialinvoke r0.<android.net.DnsPinger: void loge(java.lang.String)>("getDns::LinkProps has null dns - returning default");
+
+        $r3 = r0.<android.net.DnsPinger: java.util.ArrayList mDefaultDns>;
+
+        return $r3;
+
+     label3:
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>(java.util.Collection)>(r2);
+
+        return $r4;
+    }
+
+    public int pingDnsAsync(java.net.InetAddress, int, int)
+    {
+        android.net.DnsPinger r0;
+        java.net.InetAddress r1;
+        int i0, i1, i2, $i3;
+        java.util.concurrent.atomic.AtomicInteger $r2, $r4;
+        android.net.DnsPinger$DnsArg $r3;
+        android.os.Message $r5;
+        long $l4;
+
+        r0 := @this: android.net.DnsPinger;
+
+        r1 := @parameter0: java.net.InetAddress;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $r2 = <android.net.DnsPinger: java.util.concurrent.atomic.AtomicInteger sCounter>;
+
+        i2 = virtualinvoke $r2.<java.util.concurrent.atomic.AtomicInteger: int incrementAndGet()>();
+
+        $r3 = new android.net.DnsPinger$DnsArg;
+
+        $r4 = r0.<android.net.DnsPinger: java.util.concurrent.atomic.AtomicInteger mCurrentToken>;
+
+        $i3 = virtualinvoke $r4.<java.util.concurrent.atomic.AtomicInteger: int get()>();
+
+        specialinvoke $r3.<android.net.DnsPinger$DnsArg: void <init>(android.net.DnsPinger,java.net.InetAddress,int)>(r0, r1, $i3);
+
+        $r5 = virtualinvoke r0.<android.net.DnsPinger: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(327681, i2, i0, $r3);
+
+        $l4 = (long) i1;
+
+        virtualinvoke r0.<android.net.DnsPinger: boolean sendMessageDelayed(android.os.Message,long)>($r5, $l4);
+
+        return i2;
+    }
+
+    public void cancelPings()
+    {
+        android.net.DnsPinger r0;
+        java.util.concurrent.atomic.AtomicInteger $r1;
+        android.os.Message $r2;
+
+        r0 := @this: android.net.DnsPinger;
+
+        $r1 = r0.<android.net.DnsPinger: java.util.concurrent.atomic.AtomicInteger mCurrentToken>;
+
+        virtualinvoke $r1.<java.util.concurrent.atomic.AtomicInteger: int incrementAndGet()>();
+
+        $r2 = virtualinvoke r0.<android.net.DnsPinger: android.os.Message obtainMessage(int)>(327683);
+
+        virtualinvoke $r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    private void sendResponse(int, int, int)
+    {
+        android.net.DnsPinger r0;
+        int i0, i1, i2;
+        android.os.Handler $r1;
+        android.os.Message $r2;
+
+        r0 := @this: android.net.DnsPinger;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        $r1 = r0.<android.net.DnsPinger: android.os.Handler mTarget>;
+
+        $r2 = virtualinvoke r0.<android.net.DnsPinger: android.os.Message obtainMessage(int,int,int)>(327680, i0, i2);
+
+        virtualinvoke $r1.<android.os.Handler: boolean sendMessage(android.os.Message)>($r2);
+
+        return;
+    }
+
+    private android.net.LinkProperties getCurrentLinkProperties()
+    {
+        android.net.DnsPinger r0;
+        android.net.ConnectivityManager $r1, $r2, $r6;
+        int $i0;
+        android.net.LinkProperties $r3;
+        android.content.Context $r4;
+        java.lang.Object $r5;
+
+        r0 := @this: android.net.DnsPinger;
+
+        $r1 = r0.<android.net.DnsPinger: android.net.ConnectivityManager mConnectivityManager>;
+
+        if $r1 != null goto label1;
+
+        $r4 = r0.<android.net.DnsPinger: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("connectivity");
+
+        $r6 = (android.net.ConnectivityManager) $r5;
+
+        r0.<android.net.DnsPinger: android.net.ConnectivityManager mConnectivityManager> = $r6;
+
+     label1:
+        $r2 = r0.<android.net.DnsPinger: android.net.ConnectivityManager mConnectivityManager>;
+
+        $i0 = r0.<android.net.DnsPinger: int mConnectionType>;
+
+        $r3 = virtualinvoke $r2.<android.net.ConnectivityManager: android.net.LinkProperties getLinkProperties(int)>($i0);
+
+        return $r3;
+    }
+
+    private java.net.InetAddress getDefaultDns()
+    {
+        android.net.DnsPinger r0;
+        java.lang.String r1;
+        android.content.Context $r3, $r5;
+        android.content.ContentResolver $r4;
+        android.content.res.Resources $r6;
+        java.net.InetAddress $r7;
+        int $i0;
+        java.lang.IllegalArgumentException $r8;
+
+        r0 := @this: android.net.DnsPinger;
+
+        $r3 = r0.<android.net.DnsPinger: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r1 = staticinvoke <android.provider.Settings$Global: java.lang.String getString(android.content.ContentResolver,java.lang.String)>($r4, "default_dns_server");
+
+        if r1 == null goto label1;
+
+        $i0 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i0 != 0 goto label2;
+
+     label1:
+        $r5 = r0.<android.net.DnsPinger: android.content.Context mContext>;
+
+        $r6 = virtualinvoke $r5.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r1 = virtualinvoke $r6.<android.content.res.Resources: java.lang.String getString(int)>(17039400);
+
+     label2:
+        $r7 = staticinvoke <android.net.NetworkUtils: java.net.InetAddress numericToInetAddress(java.lang.String)>(r1);
+
+     label3:
+        return $r7;
+
+     label4:
+        $r8 := @caughtexception;
+
+        specialinvoke r0.<android.net.DnsPinger: void loge(java.lang.String)>("getDefaultDns::malformed default dns address");
+
+        return null;
+
+        catch java.lang.IllegalArgumentException from label2 to label3 with label4;
+    }
+
+    private void log(java.lang.String)
+    {
+        android.net.DnsPinger r0;
+        java.lang.String r1, $r2;
+
+        r0 := @this: android.net.DnsPinger;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<android.net.DnsPinger: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>($r2, r1);
+
+        return;
+    }
+
+    private void loge(java.lang.String)
+    {
+        android.net.DnsPinger r0;
+        java.lang.String r1, $r2;
+
+        r0 := @this: android.net.DnsPinger;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<android.net.DnsPinger: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r2, r1);
+
+        return;
+    }
+
+    static void <clinit>()
+    {
+        java.util.Random $r0;
+        java.util.concurrent.atomic.AtomicInteger $r1;
+        byte[] $r2;
+
+        <android.net.DnsPinger: int ACTION_CANCEL_ALL_PINGS> = 327683;
+
+        <android.net.DnsPinger: int ACTION_LISTEN_FOR_RESPONSE> = 327682;
+
+        <android.net.DnsPinger: int ACTION_PING_DNS> = 327681;
+
+        <android.net.DnsPinger: int SOCKET_EXCEPTION> = -2;
+
+        <android.net.DnsPinger: int TIMEOUT> = -1;
+
+        <android.net.DnsPinger: int DNS_PING_RESULT> = 327680;
+
+        <android.net.DnsPinger: int BASE> = 327680;
+
+        <android.net.DnsPinger: int SOCKET_TIMEOUT_MS> = 1;
+
+        <android.net.DnsPinger: int DNS_PORT> = 53;
+
+        <android.net.DnsPinger: int RECEIVE_POLL_INTERVAL_MS> = 200;
+
+        <android.net.DnsPinger: boolean DBG> = 0;
+
+        $r0 = new java.util.Random;
+
+        specialinvoke $r0.<java.util.Random: void <init>()>();
+
+        <android.net.DnsPinger: java.util.Random sRandom> = $r0;
+
+        $r1 = new java.util.concurrent.atomic.AtomicInteger;
+
+        specialinvoke $r1.<java.util.concurrent.atomic.AtomicInteger: void <init>()>();
+
+        <android.net.DnsPinger: java.util.concurrent.atomic.AtomicInteger sCounter> = $r1;
+
+        $r2 = newarray (byte)[32];
+
+        $r2[0] = 0;
+
+        $r2[1] = 0;
+
+        $r2[2] = 1;
+
+        $r2[3] = 0;
+
+        $r2[4] = 0;
+
+        $r2[5] = 1;
+
+        $r2[6] = 0;
+
+        $r2[7] = 0;
+
+        $r2[8] = 0;
+
+        $r2[9] = 0;
+
+        $r2[10] = 0;
+
+        $r2[11] = 0;
+
+        $r2[12] = 3;
+
+        $r2[13] = 119;
+
+        $r2[14] = 119;
+
+        $r2[15] = 119;
+
+        $r2[16] = 6;
+
+        $r2[17] = 103;
+
+        $r2[18] = 111;
+
+        $r2[19] = 111;
+
+        $r2[20] = 103;
+
+        $r2[21] = 108;
+
+        $r2[22] = 101;
+
+        $r2[23] = 3;
+
+        $r2[24] = 99;
+
+        $r2[25] = 111;
+
+        $r2[26] = 109;
+
+        $r2[27] = 0;
+
+        $r2[28] = 0;
+
+        $r2[29] = 1;
+
+        $r2[30] = 0;
+
+        $r2[31] = 1;
+
+        <android.net.DnsPinger: byte[] mDnsQuery> = $r2;
+
+        return;
+    }
+}

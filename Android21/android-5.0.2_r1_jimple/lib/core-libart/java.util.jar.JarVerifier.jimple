@@ -1,0 +1,876 @@
+class java.util.jar.JarVerifier extends java.lang.Object
+{
+    private static final java.lang.String[] DIGEST_ALGORITHMS;
+    private final java.lang.String jarName;
+    private final java.util.jar.Manifest manifest;
+    private final java.util.HashMap metaEntries;
+    private final int mainAttributesEnd;
+    private final java.util.Hashtable signatures;
+    private final java.util.Hashtable certificates;
+    private final java.util.Hashtable verifiedEntries;
+
+    private static java.lang.SecurityException invalidDigest(java.lang.String, java.lang.String, java.lang.String)
+    {
+        java.lang.String r0, r1, r2, $r10;
+        java.lang.SecurityException $r3;
+        java.lang.StringBuilder $r4, $r5, $r6, $r7, $r8, $r9;
+
+        r0 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        $r3 = new java.lang.SecurityException;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" has invalid digest for ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" in ");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r3.<java.lang.SecurityException: void <init>(java.lang.String)>($r10);
+
+        throw $r3;
+    }
+
+    private static java.lang.SecurityException failedVerification(java.lang.String, java.lang.String)
+    {
+        java.lang.String r0, r1, $r7;
+        java.lang.SecurityException $r2;
+        java.lang.StringBuilder $r3, $r4, $r5, $r6;
+
+        r0 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r2 = new java.lang.SecurityException;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" failed verification of ");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r2.<java.lang.SecurityException: void <init>(java.lang.String)>($r7);
+
+        throw $r2;
+    }
+
+    void <init>(java.lang.String, java.util.jar.Manifest, java.util.HashMap)
+    {
+        java.util.jar.JarVerifier r0;
+        java.lang.String r1;
+        java.util.jar.Manifest r2;
+        java.util.HashMap r3;
+        java.util.Hashtable $r4, $r5, $r6;
+        int $i0;
+
+        r0 := @this: java.util.jar.JarVerifier;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.util.jar.Manifest;
+
+        r3 := @parameter2: java.util.HashMap;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r4 = new java.util.Hashtable;
+
+        specialinvoke $r4.<java.util.Hashtable: void <init>(int)>(5);
+
+        r0.<java.util.jar.JarVerifier: java.util.Hashtable signatures> = $r4;
+
+        $r5 = new java.util.Hashtable;
+
+        specialinvoke $r5.<java.util.Hashtable: void <init>(int)>(5);
+
+        r0.<java.util.jar.JarVerifier: java.util.Hashtable certificates> = $r5;
+
+        $r6 = new java.util.Hashtable;
+
+        specialinvoke $r6.<java.util.Hashtable: void <init>()>();
+
+        r0.<java.util.jar.JarVerifier: java.util.Hashtable verifiedEntries> = $r6;
+
+        r0.<java.util.jar.JarVerifier: java.lang.String jarName> = r1;
+
+        r0.<java.util.jar.JarVerifier: java.util.jar.Manifest manifest> = r2;
+
+        r0.<java.util.jar.JarVerifier: java.util.HashMap metaEntries> = r3;
+
+        $i0 = virtualinvoke r2.<java.util.jar.Manifest: int getMainAttributesEnd()>();
+
+        r0.<java.util.jar.JarVerifier: int mainAttributesEnd> = $i0;
+
+        return;
+    }
+
+    java.util.jar.JarVerifier$VerifierEntry initEntry(java.lang.String)
+    {
+        java.util.jar.JarVerifier r0;
+        java.lang.String r1, r7, $r23, r37, r38;
+        java.util.jar.Attributes r2;
+        java.util.ArrayList r3, $r15;
+        java.util.Iterator r4;
+        java.util.Map$Entry r5;
+        java.util.HashMap r6;
+        java.security.cert.Certificate[] r8;
+        byte[] r9;
+        java.util.jar.Manifest $r11, $r13;
+        java.util.Hashtable $r12, $r14, $r30, $r31;
+        boolean $z0, $z1, $z2;
+        java.util.Set $r16;
+        java.security.cert.Certificate[][] $r17, r36;
+        int $i0, $i1, i2;
+        java.lang.String[] $r18, $r20;
+        java.lang.Object[] $r19;
+        java.lang.StringBuilder $r21, $r22, $r24;
+        java.util.jar.JarVerifier$VerifierEntry $r25;
+        java.nio.charset.Charset $r26;
+        java.lang.Object $r27, $r28, $r32, $r33, $r34;
+        java.security.MessageDigest $r29;
+        java.security.NoSuchAlgorithmException $r35;
+
+        r0 := @this: java.util.jar.JarVerifier;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r11 = r0.<java.util.jar.JarVerifier: java.util.jar.Manifest manifest>;
+
+        if $r11 == null goto label01;
+
+        $r12 = r0.<java.util.jar.JarVerifier: java.util.Hashtable signatures>;
+
+        $z0 = virtualinvoke $r12.<java.util.Hashtable: boolean isEmpty()>();
+
+        if $z0 == 0 goto label02;
+
+     label01:
+        return null;
+
+     label02:
+        $r13 = r0.<java.util.jar.JarVerifier: java.util.jar.Manifest manifest>;
+
+        r2 = virtualinvoke $r13.<java.util.jar.Manifest: java.util.jar.Attributes getAttributes(java.lang.String)>(r1);
+
+        if r2 != null goto label03;
+
+        return null;
+
+     label03:
+        $r15 = new java.util.ArrayList;
+
+        specialinvoke $r15.<java.util.ArrayList: void <init>()>();
+
+        r3 = $r15;
+
+        $r14 = r0.<java.util.jar.JarVerifier: java.util.Hashtable signatures>;
+
+        $r16 = virtualinvoke $r14.<java.util.Hashtable: java.util.Set entrySet()>();
+
+        r4 = interfaceinvoke $r16.<java.util.Set: java.util.Iterator iterator()>();
+
+     label04:
+        $z2 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label06;
+
+        $r27 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (java.util.Map$Entry) $r27;
+
+        $r28 = interfaceinvoke r5.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        r6 = (java.util.HashMap) $r28;
+
+        $r33 = virtualinvoke r6.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        if $r33 == null goto label05;
+
+        $r34 = interfaceinvoke r5.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        r7 = (java.lang.String) $r34;
+
+        $r31 = r0.<java.util.jar.JarVerifier: java.util.Hashtable certificates>;
+
+        $r32 = virtualinvoke $r31.<java.util.Hashtable: java.lang.Object get(java.lang.Object)>(r7);
+
+        r8 = (java.security.cert.Certificate[]) $r32;
+
+        if r8 == null goto label05;
+
+        virtualinvoke r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r8);
+
+     label05:
+        goto label04;
+
+     label06:
+        $z1 = virtualinvoke r3.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z1 == 0 goto label07;
+
+        return null;
+
+     label07:
+        $i0 = virtualinvoke r3.<java.util.ArrayList: int size()>();
+
+        $r17 = newarray (java.security.cert.Certificate[])[$i0];
+
+        $r19 = virtualinvoke r3.<java.util.ArrayList: java.lang.Object[] toArray(java.lang.Object[])>($r17);
+
+        r36 = (java.security.cert.Certificate[][]) $r19;
+
+        i2 = 0;
+
+     label08:
+        $r18 = <java.util.jar.JarVerifier: java.lang.String[] DIGEST_ALGORITHMS>;
+
+        $i1 = lengthof $r18;
+
+        if i2 >= $i1 goto label14;
+
+        $r20 = <java.util.jar.JarVerifier: java.lang.String[] DIGEST_ALGORITHMS>;
+
+        r37 = $r20[i2];
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r37);
+
+        $r24 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("-Digest");
+
+        $r23 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r38 = virtualinvoke r2.<java.util.jar.Attributes: java.lang.String getValue(java.lang.String)>($r23);
+
+        if r38 != null goto label09;
+
+        goto label13;
+
+     label09:
+        $r26 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset ISO_8859_1>;
+
+        r9 = virtualinvoke r38.<java.lang.String: byte[] getBytes(java.nio.charset.Charset)>($r26);
+
+     label10:
+        $r25 = new java.util.jar.JarVerifier$VerifierEntry;
+
+        $r29 = staticinvoke <java.security.MessageDigest: java.security.MessageDigest getInstance(java.lang.String)>(r37);
+
+        $r30 = r0.<java.util.jar.JarVerifier: java.util.Hashtable verifiedEntries>;
+
+        specialinvoke $r25.<java.util.jar.JarVerifier$VerifierEntry: void <init>(java.lang.String,java.security.MessageDigest,byte[],java.security.cert.Certificate[][],java.util.Hashtable)>(r1, $r29, r9, r36, $r30);
+
+     label11:
+        return $r25;
+
+     label12:
+        $r35 := @caughtexception;
+
+     label13:
+        i2 = i2 + 1;
+
+        goto label08;
+
+     label14:
+        return null;
+
+        catch java.security.NoSuchAlgorithmException from label10 to label11 with label12;
+    }
+
+    void addMetaEntry(java.lang.String, byte[])
+    {
+        java.util.jar.JarVerifier r0;
+        java.lang.String r1, $r5;
+        byte[] r2;
+        java.util.Locale $r3;
+        java.util.HashMap $r4;
+
+        r0 := @this: java.util.jar.JarVerifier;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: byte[];
+
+        $r4 = r0.<java.util.jar.JarVerifier: java.util.HashMap metaEntries>;
+
+        $r3 = <java.util.Locale: java.util.Locale US>;
+
+        $r5 = virtualinvoke r1.<java.lang.String: java.lang.String toUpperCase(java.util.Locale)>($r3);
+
+        virtualinvoke $r4.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r5, r2);
+
+        return;
+    }
+
+    synchronized boolean readCertificates()
+    {
+        java.util.jar.JarVerifier r0;
+        java.util.Iterator r1;
+        java.lang.String r2;
+        java.util.HashMap $r3, $r4;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        java.util.Set $r5;
+        java.lang.Object $r6;
+
+        r0 := @this: java.util.jar.JarVerifier;
+
+        $r3 = r0.<java.util.jar.JarVerifier: java.util.HashMap metaEntries>;
+
+        $z0 = virtualinvoke $r3.<java.util.HashMap: boolean isEmpty()>();
+
+        if $z0 == 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r4 = r0.<java.util.jar.JarVerifier: java.util.HashMap metaEntries>;
+
+        $r5 = virtualinvoke $r4.<java.util.HashMap: java.util.Set keySet()>();
+
+        r1 = interfaceinvoke $r5.<java.util.Set: java.util.Iterator iterator()>();
+
+     label2:
+        $z1 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label5;
+
+        $r6 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (java.lang.String) $r6;
+
+        $z2 = virtualinvoke r2.<java.lang.String: boolean endsWith(java.lang.String)>(".DSA");
+
+        if $z2 != 0 goto label3;
+
+        $z3 = virtualinvoke r2.<java.lang.String: boolean endsWith(java.lang.String)>(".RSA");
+
+        if $z3 != 0 goto label3;
+
+        $z4 = virtualinvoke r2.<java.lang.String: boolean endsWith(java.lang.String)>(".EC");
+
+        if $z4 == 0 goto label4;
+
+     label3:
+        specialinvoke r0.<java.util.jar.JarVerifier: void verifyCertificate(java.lang.String)>(r2);
+
+        interfaceinvoke r1.<java.util.Iterator: void remove()>();
+
+     label4:
+        goto label2;
+
+     label5:
+        return 1;
+    }
+
+    private void verifyCertificate(java.lang.String)
+    {
+        java.util.jar.JarVerifier r0;
+        java.lang.String r1, r2, r9, r10, $r15, $r39, $r43, $r44, $r46, $r47, $r50, r60;
+        byte[] r3, r4, r5;
+        java.security.cert.Certificate[] r6;
+        java.util.HashMap r7, $r18, $r19, $r21, $r26, $r31;
+        java.util.jar.ManifestReader r8, $r29;
+        java.util.Iterator r11;
+        java.util.Map$Entry r12;
+        java.util.jar.Manifest$Chunk r13;
+        java.lang.StringBuilder $r14, $r16, $r17;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6;
+        java.lang.Object $r20, $r22, $r24, $r28, $r36, $r38, $r40, $r45;
+        java.io.ByteArrayInputStream $r23, $r25;
+        java.util.jar.Attributes $r27, $r41, r58;
+        java.util.jar.Attributes$Name $r30;
+        boolean $z0, $z1, $z2, $z3, $z4, z5;
+        java.util.Set $r33;
+        java.util.Hashtable $r35, $r53;
+        java.util.jar.Manifest $r37;
+        java.lang.SecurityException $r42, $r51, $r52;
+        java.security.GeneralSecurityException $r49;
+        java.io.IOException $r54, $r55;
+
+        r0 := @this: java.util.jar.JarVerifier;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $i0 = virtualinvoke r1.<java.lang.String: int lastIndexOf(int)>(46);
+
+        $r15 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int,int)>(0, $i0);
+
+        $r17 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r15);
+
+        $r16 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".SF");
+
+        r2 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r18 = r0.<java.util.jar.JarVerifier: java.util.HashMap metaEntries>;
+
+        $r20 = virtualinvoke $r18.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r2);
+
+        r3 = (byte[]) $r20;
+
+        if r3 != null goto label01;
+
+        return;
+
+     label01:
+        $r19 = r0.<java.util.jar.JarVerifier: java.util.HashMap metaEntries>;
+
+        $r22 = virtualinvoke $r19.<java.util.HashMap: java.lang.Object get(java.lang.Object)>("META-INF/MANIFEST.MF");
+
+        r4 = (byte[]) $r22;
+
+        if r4 != null goto label02;
+
+        return;
+
+     label02:
+        $r21 = r0.<java.util.jar.JarVerifier: java.util.HashMap metaEntries>;
+
+        $r24 = virtualinvoke $r21.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r5 = (byte[]) $r24;
+
+     label03:
+        $r23 = new java.io.ByteArrayInputStream;
+
+        specialinvoke $r23.<java.io.ByteArrayInputStream: void <init>(byte[])>(r3);
+
+        $r25 = new java.io.ByteArrayInputStream;
+
+        specialinvoke $r25.<java.io.ByteArrayInputStream: void <init>(byte[])>(r5);
+
+        r6 = staticinvoke <org.apache.harmony.security.utils.JarUtils: java.security.cert.Certificate[] verifySignature(java.io.InputStream,java.io.InputStream)>($r23, $r25);
+
+        if r6 == null goto label04;
+
+        $r53 = r0.<java.util.jar.JarVerifier: java.util.Hashtable certificates>;
+
+        virtualinvoke $r53.<java.util.Hashtable: java.lang.Object put(java.lang.Object,java.lang.Object)>(r2, r6);
+
+     label04:
+        goto label07;
+
+     label05:
+        $r54 := @caughtexception;
+
+        return;
+
+     label06:
+        $r49 := @caughtexception;
+
+        $r50 = r0.<java.util.jar.JarVerifier: java.lang.String jarName>;
+
+        $r51 = staticinvoke <java.util.jar.JarVerifier: java.lang.SecurityException failedVerification(java.lang.String,java.lang.String)>($r50, r2);
+
+        throw $r51;
+
+     label07:
+        $r27 = new java.util.jar.Attributes;
+
+        specialinvoke $r27.<java.util.jar.Attributes: void <init>()>();
+
+        r58 = $r27;
+
+        $r26 = new java.util.HashMap;
+
+        specialinvoke $r26.<java.util.HashMap: void <init>()>();
+
+        r7 = $r26;
+
+     label08:
+        $r29 = new java.util.jar.ManifestReader;
+
+        specialinvoke $r29.<java.util.jar.ManifestReader: void <init>(byte[],java.util.jar.Attributes)>(r3, r58);
+
+        r8 = $r29;
+
+        virtualinvoke r8.<java.util.jar.ManifestReader: void readEntries(java.util.Map,java.util.Map)>(r7, null);
+
+     label09:
+        goto label11;
+
+     label10:
+        $r55 := @caughtexception;
+
+        return;
+
+     label11:
+        $r30 = <java.util.jar.Attributes$Name: java.util.jar.Attributes$Name SIGNATURE_VERSION>;
+
+        $r28 = virtualinvoke r58.<java.util.jar.Attributes: java.lang.Object get(java.lang.Object)>($r30);
+
+        if $r28 != null goto label12;
+
+        return;
+
+     label12:
+        z5 = 0;
+
+        r9 = virtualinvoke r58.<java.util.jar.Attributes: java.lang.String getValue(java.lang.String)>("Created-By");
+
+        if r9 == null goto label15;
+
+        $i6 = virtualinvoke r9.<java.lang.String: int indexOf(java.lang.String)>("signtool");
+
+        if $i6 == -1 goto label13;
+
+        $z4 = 1;
+
+        goto label14;
+
+     label13:
+        $z4 = 0;
+
+     label14:
+        z5 = $z4;
+
+     label15:
+        $i1 = r0.<java.util.jar.JarVerifier: int mainAttributesEnd>;
+
+        if $i1 <= 0 goto label16;
+
+        if z5 != 0 goto label16;
+
+        r10 = "-Digest-Manifest-Main-Attributes";
+
+        $i5 = r0.<java.util.jar.JarVerifier: int mainAttributesEnd>;
+
+        $z3 = specialinvoke r0.<java.util.jar.JarVerifier: boolean verify(java.util.jar.Attributes,java.lang.String,byte[],int,int,boolean,boolean)>(r58, r10, r4, 0, $i5, 0, 1);
+
+        if $z3 != 0 goto label16;
+
+        $r46 = r0.<java.util.jar.JarVerifier: java.lang.String jarName>;
+
+        $r52 = staticinvoke <java.util.jar.JarVerifier: java.lang.SecurityException failedVerification(java.lang.String,java.lang.String)>($r46, r2);
+
+        throw $r52;
+
+     label16:
+        if z5 == 0 goto label17;
+
+        $r47 = "-Digest";
+
+        goto label18;
+
+     label17:
+        $r47 = "-Digest-Manifest";
+
+     label18:
+        r60 = $r47;
+
+        $i2 = lengthof r4;
+
+        $z0 = specialinvoke r0.<java.util.jar.JarVerifier: boolean verify(java.util.jar.Attributes,java.lang.String,byte[],int,int,boolean,boolean)>(r58, r60, r4, 0, $i2, 0, 0);
+
+        if $z0 != 0 goto label22;
+
+        $r33 = virtualinvoke r7.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r11 = interfaceinvoke $r33.<java.util.Set: java.util.Iterator iterator()>();
+
+     label19:
+        $z1 = interfaceinvoke r11.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label22;
+
+        $r36 = interfaceinvoke r11.<java.util.Iterator: java.lang.Object next()>();
+
+        r12 = (java.util.Map$Entry) $r36;
+
+        $r37 = r0.<java.util.jar.JarVerifier: java.util.jar.Manifest manifest>;
+
+        $r40 = interfaceinvoke r12.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r39 = (java.lang.String) $r40;
+
+        r13 = virtualinvoke $r37.<java.util.jar.Manifest: java.util.jar.Manifest$Chunk getChunk(java.lang.String)>($r39);
+
+        if r13 != null goto label20;
+
+        return;
+
+     label20:
+        $r38 = interfaceinvoke r12.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r41 = (java.util.jar.Attributes) $r38;
+
+        $i3 = r13.<java.util.jar.Manifest$Chunk: int start>;
+
+        $i4 = r13.<java.util.jar.Manifest$Chunk: int end>;
+
+        $z2 = specialinvoke r0.<java.util.jar.JarVerifier: boolean verify(java.util.jar.Attributes,java.lang.String,byte[],int,int,boolean,boolean)>($r41, "-Digest", r4, $i3, $i4, z5, 0);
+
+        if $z2 != 0 goto label21;
+
+        $r45 = interfaceinvoke r12.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r43 = (java.lang.String) $r45;
+
+        $r44 = r0.<java.util.jar.JarVerifier: java.lang.String jarName>;
+
+        $r42 = staticinvoke <java.util.jar.JarVerifier: java.lang.SecurityException invalidDigest(java.lang.String,java.lang.String,java.lang.String)>(r2, $r43, $r44);
+
+        throw $r42;
+
+     label21:
+        goto label19;
+
+     label22:
+        $r31 = r0.<java.util.jar.JarVerifier: java.util.HashMap metaEntries>;
+
+        virtualinvoke $r31.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r2, null);
+
+        $r35 = r0.<java.util.jar.JarVerifier: java.util.Hashtable signatures>;
+
+        virtualinvoke $r35.<java.util.Hashtable: java.lang.Object put(java.lang.Object,java.lang.Object)>(r2, r7);
+
+        return;
+
+        catch java.io.IOException from label03 to label04 with label05;
+        catch java.security.GeneralSecurityException from label03 to label04 with label06;
+        catch java.io.IOException from label08 to label09 with label10;
+    }
+
+    boolean isSignedJar()
+    {
+        java.util.jar.JarVerifier r0;
+        java.util.Hashtable $r1;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: java.util.jar.JarVerifier;
+
+        $r1 = r0.<java.util.jar.JarVerifier: java.util.Hashtable certificates>;
+
+        $i0 = virtualinvoke $r1.<java.util.Hashtable: int size()>();
+
+        if $i0 <= 0 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    private boolean verify(java.util.jar.Attributes, java.lang.String, byte[], int, int, boolean, boolean)
+    {
+        java.util.jar.JarVerifier r0;
+        java.util.jar.Attributes r1;
+        java.lang.String r2, r4, r5, $r14;
+        byte[] r3, r8, $r16, r18;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i8, $i10;
+        boolean z0, z1, $z2;
+        java.security.MessageDigest r6;
+        java.lang.String[] $r9, $r11;
+        java.lang.StringBuilder $r10, $r12, $r13;
+        java.nio.charset.Charset $r15;
+        byte $b7, $b9;
+        java.security.NoSuchAlgorithmException $r17;
+
+        r0 := @this: java.util.jar.JarVerifier;
+
+        r1 := @parameter0: java.util.jar.Attributes;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: byte[];
+
+        i0 := @parameter3: int;
+
+        i1 := @parameter4: int;
+
+        z0 := @parameter5: boolean;
+
+        z1 := @parameter6: boolean;
+
+        i2 = 0;
+
+     label1:
+        $r9 = <java.util.jar.JarVerifier: java.lang.String[] DIGEST_ALGORITHMS>;
+
+        $i3 = lengthof $r9;
+
+        if i2 >= $i3 goto label9;
+
+        $r11 = <java.util.jar.JarVerifier: java.lang.String[] DIGEST_ALGORITHMS>;
+
+        r4 = $r11[i2];
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r5 = virtualinvoke r1.<java.util.jar.Attributes: java.lang.String getValue(java.lang.String)>($r14);
+
+        if r5 != null goto label2;
+
+        goto label8;
+
+     label2:
+        r6 = staticinvoke <java.security.MessageDigest: java.security.MessageDigest getInstance(java.lang.String)>(r4);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r17 := @caughtexception;
+
+        goto label8;
+
+     label5:
+        if z0 == 0 goto label6;
+
+        $i5 = i1 - 1;
+
+        $b7 = r3[$i5];
+
+        if $b7 != 10 goto label6;
+
+        $i6 = i1 - 2;
+
+        $b9 = r3[$i6];
+
+        if $b9 != 10 goto label6;
+
+        $i10 = i1 - 1;
+
+        $i8 = $i10 - i0;
+
+        virtualinvoke r6.<java.security.MessageDigest: void update(byte[],int,int)>(r3, i0, $i8);
+
+        goto label7;
+
+     label6:
+        $i4 = i1 - i0;
+
+        virtualinvoke r6.<java.security.MessageDigest: void update(byte[],int,int)>(r3, i0, $i4);
+
+     label7:
+        r18 = virtualinvoke r6.<java.security.MessageDigest: byte[] digest()>();
+
+        $r15 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset ISO_8859_1>;
+
+        r8 = virtualinvoke r5.<java.lang.String: byte[] getBytes(java.nio.charset.Charset)>($r15);
+
+        $r16 = staticinvoke <libcore.io.Base64: byte[] decode(byte[])>(r8);
+
+        $z2 = staticinvoke <java.security.MessageDigest: boolean isEqual(byte[],byte[])>(r18, $r16);
+
+        return $z2;
+
+     label8:
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label9:
+        return z1;
+
+        catch java.security.NoSuchAlgorithmException from label2 to label3 with label4;
+    }
+
+    java.security.cert.Certificate[][] getCertificateChains(java.lang.String)
+    {
+        java.util.jar.JarVerifier r0;
+        java.lang.String r1;
+        java.util.Hashtable $r2;
+        java.lang.Object $r3;
+        java.security.cert.Certificate[][] $r4;
+
+        r0 := @this: java.util.jar.JarVerifier;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<java.util.jar.JarVerifier: java.util.Hashtable verifiedEntries>;
+
+        $r3 = virtualinvoke $r2.<java.util.Hashtable: java.lang.Object get(java.lang.Object)>(r1);
+
+        $r4 = (java.security.cert.Certificate[][]) $r3;
+
+        return $r4;
+    }
+
+    void removeMetaEntries()
+    {
+        java.util.jar.JarVerifier r0;
+        java.util.HashMap $r1;
+
+        r0 := @this: java.util.jar.JarVerifier;
+
+        $r1 = r0.<java.util.jar.JarVerifier: java.util.HashMap metaEntries>;
+
+        virtualinvoke $r1.<java.util.HashMap: void clear()>();
+
+        return;
+    }
+
+    static java.lang.SecurityException access$000(java.lang.String, java.lang.String, java.lang.String)
+    {
+        java.lang.String r0, r1, r2;
+        java.lang.SecurityException $r3;
+
+        r0 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        $r3 = staticinvoke <java.util.jar.JarVerifier: java.lang.SecurityException invalidDigest(java.lang.String,java.lang.String,java.lang.String)>(r0, r1, r2);
+
+        return $r3;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.String[] $r0;
+
+        $r0 = newarray (java.lang.String)[4];
+
+        $r0[0] = "SHA-512";
+
+        $r0[1] = "SHA-384";
+
+        $r0[2] = "SHA-256";
+
+        $r0[3] = "SHA1";
+
+        <java.util.jar.JarVerifier: java.lang.String[] DIGEST_ALGORITHMS> = $r0;
+
+        return;
+    }
+}

@@ -1,0 +1,809 @@
+public class com.android.inputmethod.latin.ContactsBinaryDictionary extends com.android.inputmethod.latin.ExpandableBinaryDictionary
+{
+    private static final java.lang.String[] PROJECTION;
+    private static final java.lang.String[] PROJECTION_ID_ONLY;
+    private static final java.lang.String TAG;
+    private static final java.lang.String NAME;
+    private static final boolean DEBUG;
+    private static final boolean DEBUG_DUMP;
+    private static final int FREQUENCY_FOR_CONTACTS;
+    private static final int FREQUENCY_FOR_CONTACTS_BIGRAM;
+    private static final int MAX_CONTACT_COUNT;
+    private static final int INDEX_NAME;
+    private int mContactCountAtLastRebuild;
+    private int mHashCodeAtLastRebuild;
+    private android.database.ContentObserver mObserver;
+    private final boolean mUseFirstLastBigrams;
+
+    protected void <init>(android.content.Context, java.util.Locale, java.io.File, java.lang.String)
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        android.content.Context r1;
+        java.util.Locale r2;
+        java.io.File r3;
+        java.lang.String r4, $r5;
+        boolean $z0;
+
+        r0 := @this: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: java.util.Locale;
+
+        r3 := @parameter2: java.io.File;
+
+        r4 := @parameter3: java.lang.String;
+
+        $r5 = staticinvoke <com.android.inputmethod.latin.ContactsBinaryDictionary: java.lang.String getDictName(java.lang.String,java.util.Locale,java.io.File)>(r4, r2, r3);
+
+        specialinvoke r0.<com.android.inputmethod.latin.ExpandableBinaryDictionary: void <init>(android.content.Context,java.lang.String,java.util.Locale,java.lang.String,java.io.File)>(r1, $r5, r2, "contacts", r3);
+
+        r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: int mContactCountAtLastRebuild> = 0;
+
+        r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: int mHashCodeAtLastRebuild> = 0;
+
+        $z0 = specialinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: boolean useFirstLastBigramsForLocale(java.util.Locale)>(r2);
+
+        r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: boolean mUseFirstLastBigrams> = $z0;
+
+        specialinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void registerObserver(android.content.Context)>(r1);
+
+        virtualinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void reloadDictionaryIfRequired()>();
+
+        return;
+    }
+
+    public static com.android.inputmethod.latin.ContactsBinaryDictionary getDictionary(android.content.Context, java.util.Locale, java.io.File, java.lang.String)
+    {
+        android.content.Context r0;
+        java.util.Locale r1;
+        java.io.File r2;
+        java.lang.String r3, $r8;
+        com.android.inputmethod.latin.ContactsBinaryDictionary $r4;
+        java.lang.StringBuilder $r5, $r6, $r7;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.util.Locale;
+
+        r2 := @parameter2: java.io.File;
+
+        r3 := @parameter3: java.lang.String;
+
+        $r4 = new com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("contacts");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<com.android.inputmethod.latin.ContactsBinaryDictionary: void <init>(android.content.Context,java.util.Locale,java.io.File,java.lang.String)>(r0, r1, r2, $r8);
+
+        return $r4;
+    }
+
+    private synchronized void registerObserver(android.content.Context)
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        android.content.Context r1;
+        android.content.ContentResolver r2;
+        android.database.ContentObserver $r3;
+        com.android.inputmethod.latin.ContactsBinaryDictionary$1 $r4;
+        android.net.Uri $r5;
+
+        r0 := @this: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        r1 := @parameter0: android.content.Context;
+
+        $r3 = r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: android.database.ContentObserver mObserver>;
+
+        if $r3 == null goto label1;
+
+        return;
+
+     label1:
+        r2 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r5 = <android.provider.ContactsContract$Contacts: android.net.Uri CONTENT_URI>;
+
+        $r4 = new com.android.inputmethod.latin.ContactsBinaryDictionary$1;
+
+        specialinvoke $r4.<com.android.inputmethod.latin.ContactsBinaryDictionary$1: void <init>(com.android.inputmethod.latin.ContactsBinaryDictionary,android.os.Handler)>(r0, null);
+
+        r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: android.database.ContentObserver mObserver> = $r4;
+
+        virtualinvoke r2.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver)>($r5, 1, $r4);
+
+        return;
+    }
+
+    public synchronized void close()
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        android.database.ContentObserver $r1, $r4;
+        android.content.Context $r2;
+        android.content.ContentResolver $r3;
+
+        r0 := @this: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        $r1 = r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: android.database.ContentObserver mObserver>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r4 = r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: android.database.ContentObserver mObserver>;
+
+        virtualinvoke $r3.<android.content.ContentResolver: void unregisterContentObserver(android.database.ContentObserver)>($r4);
+
+        r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: android.database.ContentObserver mObserver> = null;
+
+     label1:
+        specialinvoke r0.<com.android.inputmethod.latin.ExpandableBinaryDictionary: void close()>();
+
+        return;
+    }
+
+    public void loadInitialContentsLocked()
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        android.net.Uri $r1, $r2;
+
+        r0 := @this: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        specialinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void loadDeviceAccountsEmailAddressesLocked()>();
+
+        $r1 = <android.provider.ContactsContract$Profile: android.net.Uri CONTENT_URI>;
+
+        specialinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void loadDictionaryForUriLocked(android.net.Uri)>($r1);
+
+        $r2 = <android.provider.ContactsContract$Contacts: android.net.Uri CONTENT_URI>;
+
+        specialinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void loadDictionaryForUriLocked(android.net.Uri)>($r2);
+
+        return;
+    }
+
+    private void loadDeviceAccountsEmailAddressesLocked()
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        java.util.List r1;
+        java.util.Iterator r2;
+        java.lang.String r3;
+        android.content.Context $r4;
+        boolean $z0, $z1;
+        java.lang.Object $r5;
+
+        r0 := @this: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        $r4 = r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: android.content.Context mContext>;
+
+        r1 = staticinvoke <com.android.inputmethod.latin.personalization.AccountUtils: java.util.List getDeviceAccountsEmailAddresses(android.content.Context)>($r4);
+
+        if r1 == null goto label1;
+
+        $z0 = interfaceinvoke r1.<java.util.List: boolean isEmpty()>();
+
+        if $z0 == 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        r2 = interfaceinvoke r1.<java.util.List: java.util.Iterator iterator()>();
+
+     label3:
+        $z1 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label4;
+
+        $r5 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.lang.String) $r5;
+
+        virtualinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void runGCIfRequiredLocked(boolean)>(1);
+
+        virtualinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void addUnigramLocked(java.lang.String,int,java.lang.String,int,boolean,boolean,int)>(r3, 40, null, 0, 0, 0, -1);
+
+        goto label3;
+
+     label4:
+        return;
+    }
+
+    private void loadDictionaryForUriLocked(android.net.Uri)
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        android.net.Uri r1;
+        android.database.Cursor r2;
+        android.database.sqlite.SQLiteException r3, $r10;
+        java.lang.Throwable r4, $r12;
+        android.content.Context $r5;
+        android.content.ContentResolver $r6;
+        java.lang.String[] $r7;
+        boolean $z0;
+        int $i0;
+        java.lang.IllegalStateException $r8, r13;
+        java.lang.String $r9, $r11;
+
+        r0 := @this: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        r1 := @parameter0: android.net.Uri;
+
+        r2 = null;
+
+     label01:
+        $r5 = r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: android.content.Context mContext>;
+
+        $r6 = virtualinvoke $r5.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r7 = <com.android.inputmethod.latin.ContactsBinaryDictionary: java.lang.String[] PROJECTION>;
+
+        r2 = virtualinvoke $r6.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>(r1, $r7, null, null, null);
+
+        if null != r2 goto label04;
+
+     label02:
+        if null == r2 goto label03;
+
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+     label03:
+        return;
+
+     label04:
+        $z0 = interfaceinvoke r2.<android.database.Cursor: boolean moveToFirst()>();
+
+        if $z0 == 0 goto label05;
+
+        $i0 = specialinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: int getContactCount()>();
+
+        r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: int mContactCountAtLastRebuild> = $i0;
+
+        specialinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void addWordsLocked(android.database.Cursor)>(r2);
+
+     label05:
+        if null == r2 goto label13;
+
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        goto label13;
+
+     label06:
+        $r10 := @caughtexception;
+
+        r3 = $r10;
+
+        $r11 = <com.android.inputmethod.latin.ContactsBinaryDictionary: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r11, "SQLiteException in the remote Contacts process.", r3);
+
+     label07:
+        if null == r2 goto label13;
+
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        goto label13;
+
+     label08:
+        $r8 := @caughtexception;
+
+        r13 = $r8;
+
+        $r9 = <com.android.inputmethod.latin.ContactsBinaryDictionary: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r9, "Contacts DB is having problems", r13);
+
+     label09:
+        if null == r2 goto label13;
+
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        goto label13;
+
+     label10:
+        $r12 := @caughtexception;
+
+        r4 = $r12;
+
+     label11:
+        if null == r2 goto label12;
+
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+     label12:
+        throw r4;
+
+     label13:
+        return;
+
+        catch android.database.sqlite.SQLiteException from label01 to label02 with label06;
+        catch android.database.sqlite.SQLiteException from label04 to label05 with label06;
+        catch java.lang.IllegalStateException from label01 to label02 with label08;
+        catch java.lang.IllegalStateException from label04 to label05 with label08;
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label04 to label05 with label10;
+        catch java.lang.Throwable from label06 to label07 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label10 to label11 with label10;
+    }
+
+    private boolean useFirstLastBigramsForLocale(java.util.Locale)
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        java.util.Locale r1, $r3;
+        java.lang.String $r2, $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        r1 := @parameter0: java.util.Locale;
+
+        if r1 == null goto label1;
+
+        $r2 = virtualinvoke r1.<java.util.Locale: java.lang.String getLanguage()>();
+
+        $r3 = <java.util.Locale: java.util.Locale ENGLISH>;
+
+        $r4 = virtualinvoke $r3.<java.util.Locale: java.lang.String getLanguage()>();
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>($r4);
+
+        if $z0 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private void addWordsLocked(android.database.Cursor)
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        android.database.Cursor r1;
+        int i0, $i1;
+        java.util.ArrayList r2, $r4;
+        java.lang.String r3;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        r1 := @parameter0: android.database.Cursor;
+
+        i0 = 0;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r2 = $r4;
+
+     label1:
+        $z0 = interfaceinvoke r1.<android.database.Cursor: boolean isAfterLast()>();
+
+        if $z0 != 0 goto label3;
+
+        if i0 >= 10000 goto label3;
+
+        r3 = interfaceinvoke r1.<android.database.Cursor: java.lang.String getString(int)>(1);
+
+        $z1 = staticinvoke <com.android.inputmethod.latin.ContactsBinaryDictionary: boolean isValidName(java.lang.String)>(r3);
+
+        if $z1 == 0 goto label2;
+
+        virtualinvoke r2.<java.util.ArrayList: boolean add(java.lang.Object)>(r3);
+
+        specialinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void addNameLocked(java.lang.String)>(r3);
+
+        i0 = i0 + 1;
+
+     label2:
+        interfaceinvoke r1.<android.database.Cursor: boolean moveToNext()>();
+
+        goto label1;
+
+     label3:
+        $i1 = virtualinvoke r2.<java.util.ArrayList: int hashCode()>();
+
+        r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: int mHashCodeAtLastRebuild> = $i1;
+
+        return;
+    }
+
+    private int getContactCount()
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        android.database.Cursor r1;
+        byte b0;
+        java.lang.Throwable r2, $r9;
+        android.content.Context $r3;
+        android.content.ContentResolver $r4;
+        java.lang.String[] $r5;
+        android.net.Uri $r6;
+        android.database.sqlite.SQLiteException $r7, r10;
+        java.lang.String $r8;
+        int i2;
+
+        r0 := @this: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        r1 = null;
+
+     label01:
+        $r3 = r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r6 = <android.provider.ContactsContract$Contacts: android.net.Uri CONTENT_URI>;
+
+        $r5 = <com.android.inputmethod.latin.ContactsBinaryDictionary: java.lang.String[] PROJECTION_ID_ONLY>;
+
+        r1 = virtualinvoke $r4.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r6, $r5, null, null, null);
+
+        if null != r1 goto label04;
+
+        b0 = 0;
+
+     label02:
+        if null == r1 goto label03;
+
+        interfaceinvoke r1.<android.database.Cursor: void close()>();
+
+     label03:
+        return b0;
+
+     label04:
+        i2 = interfaceinvoke r1.<android.database.Cursor: int getCount()>();
+
+     label05:
+        if null == r1 goto label06;
+
+        interfaceinvoke r1.<android.database.Cursor: void close()>();
+
+     label06:
+        return i2;
+
+     label07:
+        $r7 := @caughtexception;
+
+        r10 = $r7;
+
+        $r8 = <com.android.inputmethod.latin.ContactsBinaryDictionary: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r8, "SQLiteException in the remote Contacts process.", r10);
+
+     label08:
+        if null == r1 goto label12;
+
+        interfaceinvoke r1.<android.database.Cursor: void close()>();
+
+        goto label12;
+
+     label09:
+        $r9 := @caughtexception;
+
+        r2 = $r9;
+
+     label10:
+        if null == r1 goto label11;
+
+        interfaceinvoke r1.<android.database.Cursor: void close()>();
+
+     label11:
+        throw r2;
+
+     label12:
+        return 0;
+
+        catch android.database.sqlite.SQLiteException from label01 to label02 with label07;
+        catch android.database.sqlite.SQLiteException from label04 to label05 with label07;
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    private void addNameLocked(java.lang.String)
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        java.lang.String r1, r3;
+        int i0, i1, i2, i3, $i4;
+        com.android.inputmethod.latin.PrevWordsInfo r2;
+        boolean $z0, $z1, $z2;
+        com.android.inputmethod.latin.PrevWordsInfo$WordInfo $r4;
+
+        r0 := @this: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 = staticinvoke <com.android.inputmethod.latin.utils.StringUtils: int codePointCount(java.lang.String)>(r1);
+
+        r2 = <com.android.inputmethod.latin.PrevWordsInfo: com.android.inputmethod.latin.PrevWordsInfo EMPTY_PREV_WORDS_INFO>;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label4;
+
+        $i4 = virtualinvoke r1.<java.lang.String: int codePointAt(int)>(i1);
+
+        $z0 = staticinvoke <java.lang.Character: boolean isLetter(int)>($i4);
+
+        if $z0 == 0 goto label3;
+
+        i2 = staticinvoke <com.android.inputmethod.latin.ContactsBinaryDictionary: int getWordEndPosition(java.lang.String,int,int)>(r1, i0, i1);
+
+        r3 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int,int)>(i1, i2);
+
+        i1 = i2 - 1;
+
+        i3 = staticinvoke <com.android.inputmethod.latin.utils.StringUtils: int codePointCount(java.lang.String)>(r3);
+
+        if i3 > 48 goto label3;
+
+        if i3 <= 1 goto label3;
+
+        virtualinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void runGCIfRequiredLocked(boolean)>(1);
+
+        virtualinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void addUnigramLocked(java.lang.String,int,java.lang.String,int,boolean,boolean,int)>(r3, 40, null, 0, 0, 0, -1);
+
+        $z1 = virtualinvoke r2.<com.android.inputmethod.latin.PrevWordsInfo: boolean isValid()>();
+
+        if $z1 != 0 goto label2;
+
+        $z2 = r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: boolean mUseFirstLastBigrams>;
+
+        if $z2 == 0 goto label2;
+
+        virtualinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void runGCIfRequiredLocked(boolean)>(1);
+
+        virtualinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: void addNgramEntryLocked(com.android.inputmethod.latin.PrevWordsInfo,java.lang.String,int,int)>(r2, r3, 90, -1);
+
+     label2:
+        $r4 = new com.android.inputmethod.latin.PrevWordsInfo$WordInfo;
+
+        specialinvoke $r4.<com.android.inputmethod.latin.PrevWordsInfo$WordInfo: void <init>(java.lang.CharSequence)>(r3);
+
+        r2 = virtualinvoke r2.<com.android.inputmethod.latin.PrevWordsInfo: com.android.inputmethod.latin.PrevWordsInfo getNextPrevWordsInfo(com.android.inputmethod.latin.PrevWordsInfo$WordInfo)>($r4);
+
+     label3:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label4:
+        return;
+    }
+
+    private static int getWordEndPosition(java.lang.String, int, int)
+    {
+        java.lang.String r0;
+        int i0, i1, i2, $i3, i4;
+        boolean $z1;
+
+        r0 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 = i1 + 1;
+
+     label1:
+        if i2 >= i0 goto label3;
+
+        i4 = virtualinvoke r0.<java.lang.String: int codePointAt(int)>(i2);
+
+        if i4 == 45 goto label2;
+
+        if i4 == 39 goto label2;
+
+        $z1 = staticinvoke <java.lang.Character: boolean isLetter(int)>(i4);
+
+        if $z1 != 0 goto label2;
+
+        goto label3;
+
+     label2:
+        $i3 = staticinvoke <java.lang.Character: int charCount(int)>(i4);
+
+        i2 = i2 + $i3;
+
+        goto label1;
+
+     label3:
+        return i2;
+    }
+
+    private boolean haveContentsChanged()
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        int i1, $i2, $i3, $i4;
+        android.database.Cursor r1;
+        java.util.ArrayList r2, $r9;
+        java.lang.String r3;
+        java.lang.Throwable r4, $r10;
+        android.content.Context $r5;
+        android.content.ContentResolver $r6;
+        java.lang.String[] $r7;
+        android.net.Uri $r8;
+        boolean $z0, $z1, $z3, z5;
+
+        r0 := @this: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        i1 = specialinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: int getContactCount()>();
+
+        if i1 <= 10000 goto label01;
+
+        return 0;
+
+     label01:
+        $i2 = r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: int mContactCountAtLastRebuild>;
+
+        if i1 == $i2 goto label02;
+
+        return 1;
+
+     label02:
+        $r5 = r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: android.content.Context mContext>;
+
+        $r6 = virtualinvoke $r5.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r8 = <android.provider.ContactsContract$Contacts: android.net.Uri CONTENT_URI>;
+
+        $r7 = <com.android.inputmethod.latin.ContactsBinaryDictionary: java.lang.String[] PROJECTION>;
+
+        r1 = virtualinvoke $r6.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r8, $r7, null, null, null);
+
+        if null != r1 goto label03;
+
+        return 0;
+
+     label03:
+        $r9 = new java.util.ArrayList;
+
+        specialinvoke $r9.<java.util.ArrayList: void <init>()>();
+
+        r2 = $r9;
+
+     label04:
+        $z0 = interfaceinvoke r1.<android.database.Cursor: boolean moveToFirst()>();
+
+        if $z0 == 0 goto label07;
+
+     label05:
+        $z1 = interfaceinvoke r1.<android.database.Cursor: boolean isAfterLast()>();
+
+        if $z1 != 0 goto label07;
+
+        r3 = interfaceinvoke r1.<android.database.Cursor: java.lang.String getString(int)>(1);
+
+        $z3 = staticinvoke <com.android.inputmethod.latin.ContactsBinaryDictionary: boolean isValidName(java.lang.String)>(r3);
+
+        if $z3 == 0 goto label06;
+
+        virtualinvoke r2.<java.util.ArrayList: boolean add(java.lang.Object)>(r3);
+
+     label06:
+        interfaceinvoke r1.<android.database.Cursor: boolean moveToNext()>();
+
+        goto label05;
+
+     label07:
+        $i4 = virtualinvoke r2.<java.util.ArrayList: int hashCode()>();
+
+        $i3 = r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: int mHashCodeAtLastRebuild>;
+
+        if $i4 == $i3 goto label09;
+
+        z5 = 1;
+
+     label08:
+        interfaceinvoke r1.<android.database.Cursor: void close()>();
+
+        return z5;
+
+     label09:
+        interfaceinvoke r1.<android.database.Cursor: void close()>();
+
+        goto label12;
+
+     label10:
+        $r10 := @caughtexception;
+
+        r4 = $r10;
+
+     label11:
+        interfaceinvoke r1.<android.database.Cursor: void close()>();
+
+        throw r4;
+
+     label12:
+        return 0;
+
+        catch java.lang.Throwable from label04 to label08 with label10;
+        catch java.lang.Throwable from label10 to label11 with label10;
+    }
+
+    private static boolean isValidName(java.lang.String)
+    {
+        java.lang.String r0;
+        int $i0;
+
+        r0 := @parameter0: java.lang.String;
+
+        if r0 == null goto label1;
+
+        $i0 = virtualinvoke r0.<java.lang.String: int indexOf(int)>(64);
+
+        if -1 != $i0 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    static boolean access$000(com.android.inputmethod.latin.ContactsBinaryDictionary)
+    {
+        com.android.inputmethod.latin.ContactsBinaryDictionary r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.inputmethod.latin.ContactsBinaryDictionary;
+
+        $z0 = specialinvoke r0.<com.android.inputmethod.latin.ContactsBinaryDictionary: boolean haveContentsChanged()>();
+
+        return $z0;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.String[] $r0, $r1;
+        java.lang.Class $r2;
+        java.lang.String $r3;
+
+        <com.android.inputmethod.latin.ContactsBinaryDictionary: int INDEX_NAME> = 1;
+
+        <com.android.inputmethod.latin.ContactsBinaryDictionary: int MAX_CONTACT_COUNT> = 10000;
+
+        <com.android.inputmethod.latin.ContactsBinaryDictionary: int FREQUENCY_FOR_CONTACTS_BIGRAM> = 90;
+
+        <com.android.inputmethod.latin.ContactsBinaryDictionary: int FREQUENCY_FOR_CONTACTS> = 40;
+
+        <com.android.inputmethod.latin.ContactsBinaryDictionary: boolean DEBUG_DUMP> = 0;
+
+        <com.android.inputmethod.latin.ContactsBinaryDictionary: boolean DEBUG> = 0;
+
+        <com.android.inputmethod.latin.ContactsBinaryDictionary: java.lang.String NAME> = "contacts";
+
+        $r0 = newarray (java.lang.String)[2];
+
+        $r0[0] = "_id";
+
+        $r0[1] = "display_name";
+
+        <com.android.inputmethod.latin.ContactsBinaryDictionary: java.lang.String[] PROJECTION> = $r0;
+
+        $r1 = newarray (java.lang.String)[1];
+
+        $r1[0] = "_id";
+
+        <com.android.inputmethod.latin.ContactsBinaryDictionary: java.lang.String[] PROJECTION_ID_ONLY> = $r1;
+
+        $r2 = class "com/android/inputmethod/latin/ContactsBinaryDictionary";
+
+        $r3 = virtualinvoke $r2.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.inputmethod.latin.ContactsBinaryDictionary: java.lang.String TAG> = $r3;
+
+        return;
+    }
+}

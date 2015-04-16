@@ -1,0 +1,1727 @@
+public class com.android.org.chromium.base.library_loader.Linker extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private static final boolean DEBUG;
+    public static final int BROWSER_SHARED_RELRO_CONFIG_NEVER;
+    public static final int BROWSER_SHARED_RELRO_CONFIG_LOW_RAM_ONLY;
+    public static final int BROWSER_SHARED_RELRO_CONFIG_ALWAYS;
+    public static final int BROWSER_SHARED_RELRO_CONFIG;
+    public static final int MEMORY_DEVICE_CONFIG_INIT;
+    public static final int MEMORY_DEVICE_CONFIG_LOW;
+    public static final int MEMORY_DEVICE_CONFIG_NORMAL;
+    private static int sMemoryDeviceConfig;
+    private static boolean sInitialized;
+    private static boolean sRelroSharingSupported;
+    private static boolean sInBrowserProcess;
+    private static boolean sWaitForSharedRelros;
+    private static boolean sBrowserUsesSharedRelro;
+    private static android.os.Bundle sSharedRelros;
+    private static long sBaseLoadAddress;
+    private static long sCurrentLoadAddress;
+    private static boolean sLoadAtFixedAddressFailed;
+    private static boolean sPrepareLibraryLoadCalled;
+    static java.lang.String sTestRunnerClassName;
+    private static java.util.HashMap sLoadedLibraries;
+    public static final java.lang.String EXTRA_LINKER_SHARED_RELROS;
+    static final boolean $assertionsDisabled;
+
+    public void <init>()
+    {
+        com.android.org.chromium.base.library_loader.Linker r0;
+
+        r0 := @this: com.android.org.chromium.base.library_loader.Linker;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        return;
+    }
+
+    private static void ensureInitializedLocked()
+    {
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10;
+        int $i0, $i2;
+        java.lang.AssertionError $r1, $r2;
+        byte $b5;
+        java.lang.UnsatisfiedLinkError $r3;
+
+        $z0 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z0 != 0 goto label01;
+
+        $z10 = staticinvoke <java.lang.Thread: boolean holdsLock(java.lang.Object)>(class "com/android/org/chromium/base/library_loader/Linker");
+
+        if $z10 != 0 goto label01;
+
+        $r2 = new java.lang.AssertionError;
+
+        specialinvoke $r2.<java.lang.AssertionError: void <init>()>();
+
+        throw $r2;
+
+     label01:
+        $z1 = <com.android.org.chromium.base.library_loader.Linker: boolean sInitialized>;
+
+        if $z1 != 0 goto label18;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sRelroSharingSupported> = 0;
+
+        $z2 = <com.android.org.chromium.base.library_loader.NativeLibraries: boolean USE_LINKER>;
+
+        if $z2 == 0 goto label16;
+
+     label02:
+        staticinvoke <java.lang.System: void loadLibrary(java.lang.String)>("chromium_android_linker");
+
+     label03:
+        goto label05;
+
+     label04:
+        $r3 := @caughtexception;
+
+        staticinvoke <java.lang.System: void loadLibrary(java.lang.String)>("chromium_android_linker.cr");
+
+     label05:
+        $z4 = staticinvoke <com.android.org.chromium.base.library_loader.Linker: boolean nativeCanUseSharedRelro()>();
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sRelroSharingSupported> = $z4;
+
+        $z5 = <com.android.org.chromium.base.library_loader.Linker: boolean sRelroSharingSupported>;
+
+        if $z5 != 0 goto label06;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("chromium_android_linker", "This system cannot safely share RELRO sections");
+
+     label06:
+        $i0 = <com.android.org.chromium.base.library_loader.Linker: int sMemoryDeviceConfig>;
+
+        if $i0 != 0 goto label09;
+
+        $z9 = staticinvoke <com.android.org.chromium.base.SysUtils: boolean isLowEndDevice()>();
+
+        if $z9 == 0 goto label07;
+
+        $b5 = 1;
+
+        goto label08;
+
+     label07:
+        $b5 = 2;
+
+     label08:
+        <com.android.org.chromium.base.library_loader.Linker: int sMemoryDeviceConfig> = $b5;
+
+     label09:
+        tableswitch(1)
+        {
+            case 0: goto label10;
+            case 1: goto label11;
+            case 2: goto label14;
+            default: goto label15;
+        };
+
+     label10:
+        <com.android.org.chromium.base.library_loader.Linker: boolean sBrowserUsesSharedRelro> = 0;
+
+        goto label16;
+
+     label11:
+        $i2 = <com.android.org.chromium.base.library_loader.Linker: int sMemoryDeviceConfig>;
+
+        if $i2 != 1 goto label12;
+
+        $z7 = 1;
+
+        goto label13;
+
+     label12:
+        $z7 = 0;
+
+     label13:
+        <com.android.org.chromium.base.library_loader.Linker: boolean sBrowserUsesSharedRelro> = $z7;
+
+        $z6 = <com.android.org.chromium.base.library_loader.Linker: boolean sBrowserUsesSharedRelro>;
+
+        if $z6 == 0 goto label16;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("chromium_android_linker", "Low-memory device: shared RELROs used in all processes");
+
+        goto label16;
+
+     label14:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("chromium_android_linker", "Beware: shared RELROs used in all processes!");
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sBrowserUsesSharedRelro> = 1;
+
+        goto label16;
+
+     label15:
+        $z8 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z8 != 0 goto label16;
+
+        $r1 = new java.lang.AssertionError;
+
+        specialinvoke $r1.<java.lang.AssertionError: void <init>(java.lang.Object)>("Unreached");
+
+        throw $r1;
+
+     label16:
+        $z3 = <com.android.org.chromium.base.library_loader.Linker: boolean sRelroSharingSupported>;
+
+        if $z3 != 0 goto label17;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sBrowserUsesSharedRelro> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sWaitForSharedRelros> = 0;
+
+     label17:
+        <com.android.org.chromium.base.library_loader.Linker: boolean sInitialized> = 1;
+
+     label18:
+        return;
+
+        catch java.lang.UnsatisfiedLinkError from label02 to label03 with label04;
+    }
+
+    public static void setTestRunnerClassName(java.lang.String)
+    {
+        java.lang.String r0, $r3;
+        java.lang.Class r1;
+        java.lang.Throwable r2, $r5;
+        boolean $z0, $z1;
+        java.lang.AssertionError $r4;
+
+        r0 := @parameter0: java.lang.String;
+
+        $z0 = <com.android.org.chromium.base.library_loader.NativeLibraries: boolean ENABLE_LINKER_TESTS>;
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        r1 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label2:
+        $z1 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z1 != 0 goto label3;
+
+        $r3 = <com.android.org.chromium.base.library_loader.Linker: java.lang.String sTestRunnerClassName>;
+
+        if $r3 == null goto label3;
+
+        $r4 = new java.lang.AssertionError;
+
+        specialinvoke $r4.<java.lang.AssertionError: void <init>()>();
+
+        throw $r4;
+
+     label3:
+        <com.android.org.chromium.base.library_loader.Linker: java.lang.String sTestRunnerClassName> = r0;
+
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label2 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public static java.lang.String getTestRunnerClassName()
+    {
+        java.lang.Class r0;
+        java.lang.Throwable r1, $r3;
+        java.lang.String $r2;
+
+        r0 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label1:
+        $r2 = <com.android.org.chromium.base.library_loader.Linker: java.lang.String sTestRunnerClassName>;
+
+        exitmonitor r0;
+
+     label2:
+        return $r2;
+
+     label3:
+        $r3 := @caughtexception;
+
+        r1 = $r3;
+
+        exitmonitor r0;
+
+     label4:
+        throw r1;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public static void setMemoryDeviceConfig(int)
+    {
+        int i0, $i1;
+        java.lang.Class r0;
+        java.lang.Throwable r1, $r5;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.AssertionError $r2, $r3, $r4;
+
+        i0 := @parameter0: int;
+
+        $z0 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z0 != 0 goto label1;
+
+        $z3 = <com.android.org.chromium.base.library_loader.NativeLibraries: boolean ENABLE_LINKER_TESTS>;
+
+        if $z3 != 0 goto label1;
+
+        $r4 = new java.lang.AssertionError;
+
+        specialinvoke $r4.<java.lang.AssertionError: void <init>()>();
+
+        throw $r4;
+
+     label1:
+        r0 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label2:
+        $z1 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z1 != 0 goto label3;
+
+        $i1 = <com.android.org.chromium.base.library_loader.Linker: int sMemoryDeviceConfig>;
+
+        if $i1 == 0 goto label3;
+
+        $r3 = new java.lang.AssertionError;
+
+        specialinvoke $r3.<java.lang.AssertionError: void <init>()>();
+
+        throw $r3;
+
+     label3:
+        $z2 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z2 != 0 goto label4;
+
+        if i0 == 1 goto label4;
+
+        if i0 == 2 goto label4;
+
+        $r2 = new java.lang.AssertionError;
+
+        specialinvoke $r2.<java.lang.AssertionError: void <init>()>();
+
+        throw $r2;
+
+     label4:
+        <com.android.org.chromium.base.library_loader.Linker: int sMemoryDeviceConfig> = i0;
+
+        exitmonitor r0;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r5 := @caughtexception;
+
+        r1 = $r5;
+
+        exitmonitor r0;
+
+     label7:
+        throw r1;
+
+     label8:
+        return;
+
+        catch java.lang.Throwable from label2 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    public static boolean isUsed()
+    {
+        java.lang.Class r0;
+        java.lang.Throwable r1, $r2;
+        boolean $z0, $z1;
+
+        $z0 = <com.android.org.chromium.base.library_loader.NativeLibraries: boolean USE_LINKER>;
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        r0 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label2:
+        staticinvoke <com.android.org.chromium.base.library_loader.Linker: void ensureInitializedLocked()>();
+
+        $z1 = <com.android.org.chromium.base.library_loader.Linker: boolean sRelroSharingSupported>;
+
+        exitmonitor r0;
+
+     label3:
+        return $z1;
+
+     label4:
+        $r2 := @caughtexception;
+
+        r1 = $r2;
+
+        exitmonitor r0;
+
+     label5:
+        throw r1;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public static void prepareLibraryLoad()
+    {
+        java.lang.Class r0;
+        java.lang.Throwable r1, $r2;
+        boolean $z0;
+
+        r0 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label1:
+        <com.android.org.chromium.base.library_loader.Linker: boolean sPrepareLibraryLoadCalled> = 1;
+
+        $z0 = <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess>;
+
+        if $z0 == 0 goto label2;
+
+        staticinvoke <com.android.org.chromium.base.library_loader.Linker: void setupBaseLoadAddressLocked()>();
+
+     label2:
+        exitmonitor r0;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r2 := @caughtexception;
+
+        r1 = $r2;
+
+        exitmonitor r0;
+
+     label5:
+        throw r1;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public static void finishLibraryLoad()
+    {
+        java.lang.Class r0, $r6, $r12;
+        java.lang.Exception r1, $r16;
+        java.lang.Throwable r2, $r18;
+        java.util.HashMap $r3, $r13;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8;
+        java.lang.String $r4, $r5;
+        java.lang.Object $r7;
+        int $i0;
+        java.lang.AssertionError $r8, $r14;
+        android.os.Bundle $r9, $r10, $r11, $r15, $r17;
+        java.lang.InterruptedException $r19;
+        com.android.org.chromium.base.library_loader.Linker$TestRunner r20;
+
+        r0 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label01:
+        $r3 = <com.android.org.chromium.base.library_loader.Linker: java.util.HashMap sLoadedLibraries>;
+
+        if $r3 != null goto label02;
+
+        goto label09;
+
+     label02:
+        $z0 = <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess>;
+
+        if $z0 == 0 goto label03;
+
+        $r13 = <com.android.org.chromium.base.library_loader.Linker: java.util.HashMap sLoadedLibraries>;
+
+        $r15 = staticinvoke <com.android.org.chromium.base.library_loader.Linker: android.os.Bundle createBundleFromLibInfoMap(java.util.HashMap)>($r13);
+
+        <com.android.org.chromium.base.library_loader.Linker: android.os.Bundle sSharedRelros> = $r15;
+
+        $z8 = <com.android.org.chromium.base.library_loader.Linker: boolean sBrowserUsesSharedRelro>;
+
+        if $z8 == 0 goto label03;
+
+        $r17 = <com.android.org.chromium.base.library_loader.Linker: android.os.Bundle sSharedRelros>;
+
+        staticinvoke <com.android.org.chromium.base.library_loader.Linker: void useSharedRelrosLocked(android.os.Bundle)>($r17);
+
+     label03:
+        $z1 = <com.android.org.chromium.base.library_loader.Linker: boolean sWaitForSharedRelros>;
+
+        if $z1 == 0 goto label09;
+
+        $z6 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z6 != 0 goto label04;
+
+        $z7 = <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess>;
+
+        if $z7 == 0 goto label04;
+
+        $r14 = new java.lang.AssertionError;
+
+        specialinvoke $r14.<java.lang.AssertionError: void <init>()>();
+
+        throw $r14;
+
+     label04:
+        $r9 = <com.android.org.chromium.base.library_loader.Linker: android.os.Bundle sSharedRelros>;
+
+        if $r9 != null goto label08;
+
+     label05:
+        $r12 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        virtualinvoke $r12.<java.lang.Object: void wait()>();
+
+     label06:
+        goto label04;
+
+     label07:
+        $r19 := @caughtexception;
+
+        goto label04;
+
+     label08:
+        $r11 = <com.android.org.chromium.base.library_loader.Linker: android.os.Bundle sSharedRelros>;
+
+        staticinvoke <com.android.org.chromium.base.library_loader.Linker: void useSharedRelrosLocked(android.os.Bundle)>($r11);
+
+        $r10 = <com.android.org.chromium.base.library_loader.Linker: android.os.Bundle sSharedRelros>;
+
+        virtualinvoke $r10.<android.os.Bundle: void clear()>();
+
+        <com.android.org.chromium.base.library_loader.Linker: android.os.Bundle sSharedRelros> = null;
+
+     label09:
+        $z2 = <com.android.org.chromium.base.library_loader.NativeLibraries: boolean ENABLE_LINKER_TESTS>;
+
+        if $z2 == 0 goto label15;
+
+        $r4 = <com.android.org.chromium.base.library_loader.Linker: java.lang.String sTestRunnerClassName>;
+
+        if $r4 == null goto label15;
+
+     label10:
+        $r5 = <com.android.org.chromium.base.library_loader.Linker: java.lang.String sTestRunnerClassName>;
+
+        $r6 = staticinvoke <java.lang.Class: java.lang.Class forName(java.lang.String)>($r5);
+
+        $r7 = virtualinvoke $r6.<java.lang.Class: java.lang.Object newInstance()>();
+
+        r20 = (com.android.org.chromium.base.library_loader.Linker$TestRunner) $r7;
+
+     label11:
+        goto label13;
+
+     label12:
+        $r16 := @caughtexception;
+
+        r1 = $r16;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("chromium_android_linker", "Could not extract test runner class name", r1);
+
+        r20 = null;
+
+     label13:
+        if r20 == null goto label15;
+
+        $i0 = <com.android.org.chromium.base.library_loader.Linker: int sMemoryDeviceConfig>;
+
+        $z3 = <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess>;
+
+        $z4 = interfaceinvoke r20.<com.android.org.chromium.base.library_loader.Linker$TestRunner: boolean runChecks(int,boolean)>($i0, $z3);
+
+        if $z4 != 0 goto label14;
+
+        staticinvoke <android.util.Log: int wtf(java.lang.String,java.lang.String)>("chromium_android_linker", "Linker runtime tests failed in this process!!");
+
+        $z5 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z5 != 0 goto label15;
+
+        $r8 = new java.lang.AssertionError;
+
+        specialinvoke $r8.<java.lang.AssertionError: void <init>()>();
+
+        throw $r8;
+
+     label14:
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("chromium_android_linker", "All linker tests passed!");
+
+     label15:
+        exitmonitor r0;
+
+     label16:
+        goto label19;
+
+     label17:
+        $r18 := @caughtexception;
+
+        r2 = $r18;
+
+        exitmonitor r0;
+
+     label18:
+        throw r2;
+
+     label19:
+        return;
+
+        catch java.lang.InterruptedException from label05 to label06 with label07;
+        catch java.lang.Exception from label10 to label11 with label12;
+        catch java.lang.Throwable from label01 to label16 with label17;
+        catch java.lang.Throwable from label17 to label18 with label17;
+    }
+
+    public static void useSharedRelros(android.os.Bundle)
+    {
+        android.os.Bundle r0, r1, $r7;
+        android.os.Parcel r2;
+        java.lang.Throwable r3, $r10;
+        java.lang.Class $r4, $r5, $r8, r11;
+        java.lang.ClassLoader $r6, $r9;
+
+        r0 := @parameter0: android.os.Bundle;
+
+        r1 = null;
+
+        if r0 == null goto label1;
+
+        $r5 = class "com/android/org/chromium/base/library_loader/Linker$LibInfo";
+
+        $r6 = virtualinvoke $r5.<java.lang.Class: java.lang.ClassLoader getClassLoader()>();
+
+        virtualinvoke r0.<android.os.Bundle: void setClassLoader(java.lang.ClassLoader)>($r6);
+
+        $r7 = new android.os.Bundle;
+
+        $r8 = class "com/android/org/chromium/base/library_loader/Linker$LibInfo";
+
+        $r9 = virtualinvoke $r8.<java.lang.Class: java.lang.ClassLoader getClassLoader()>();
+
+        specialinvoke $r7.<android.os.Bundle: void <init>(java.lang.ClassLoader)>($r9);
+
+        r1 = $r7;
+
+        r2 = staticinvoke <android.os.Parcel: android.os.Parcel obtain()>();
+
+        virtualinvoke r0.<android.os.Bundle: void writeToParcel(android.os.Parcel,int)>(r2, 0);
+
+        virtualinvoke r2.<android.os.Parcel: void setDataPosition(int)>(0);
+
+        virtualinvoke r1.<android.os.Bundle: void readFromParcel(android.os.Parcel)>(r2);
+
+        virtualinvoke r2.<android.os.Parcel: void recycle()>();
+
+     label1:
+        r11 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label2:
+        <com.android.org.chromium.base.library_loader.Linker: android.os.Bundle sSharedRelros> = r1;
+
+        $r4 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        virtualinvoke $r4.<java.lang.Object: void notifyAll()>();
+
+        exitmonitor r11;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r10 := @caughtexception;
+
+        r3 = $r10;
+
+        exitmonitor r11;
+
+     label5:
+        throw r3;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public static android.os.Bundle getSharedRelros()
+    {
+        java.lang.Class r0;
+        java.lang.Throwable r1, $r3;
+        boolean $z0;
+        android.os.Bundle $r2;
+
+        r0 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label1:
+        $z0 = <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess>;
+
+        if $z0 != 0 goto label3;
+
+        exitmonitor r0;
+
+     label2:
+        return null;
+
+     label3:
+        $r2 = <com.android.org.chromium.base.library_loader.Linker: android.os.Bundle sSharedRelros>;
+
+        exitmonitor r0;
+
+     label4:
+        return $r2;
+
+     label5:
+        $r3 := @caughtexception;
+
+        r1 = $r3;
+
+        exitmonitor r0;
+
+     label6:
+        throw r1;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public static void disableSharedRelros()
+    {
+        java.lang.Class r0;
+        java.lang.Throwable r1, $r2;
+
+        r0 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label1:
+        <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sWaitForSharedRelros> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sBrowserUsesSharedRelro> = 0;
+
+        exitmonitor r0;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r2 := @caughtexception;
+
+        r1 = $r2;
+
+        exitmonitor r0;
+
+     label4:
+        throw r1;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public static void initServiceProcess(long)
+    {
+        long l0;
+        java.lang.Class r0;
+        java.lang.Throwable r1, $r2;
+        boolean $z0;
+
+        l0 := @parameter0: long;
+
+        r0 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label1:
+        staticinvoke <com.android.org.chromium.base.library_loader.Linker: void ensureInitializedLocked()>();
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sBrowserUsesSharedRelro> = 0;
+
+        $z0 = <com.android.org.chromium.base.library_loader.Linker: boolean sRelroSharingSupported>;
+
+        if $z0 == 0 goto label2;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sWaitForSharedRelros> = 1;
+
+        <com.android.org.chromium.base.library_loader.Linker: long sBaseLoadAddress> = l0;
+
+        <com.android.org.chromium.base.library_loader.Linker: long sCurrentLoadAddress> = l0;
+
+     label2:
+        exitmonitor r0;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r2 := @caughtexception;
+
+        r1 = $r2;
+
+        exitmonitor r0;
+
+     label5:
+        throw r1;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public static long getBaseLoadAddress()
+    {
+        java.lang.Class r0;
+        java.lang.Throwable r1, $r2;
+        boolean $z0;
+        long $l0;
+
+        r0 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label1:
+        staticinvoke <com.android.org.chromium.base.library_loader.Linker: void ensureInitializedLocked()>();
+
+        $z0 = <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess>;
+
+        if $z0 != 0 goto label3;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("chromium_android_linker", "Shared RELRO sections are disabled in this process!");
+
+        exitmonitor r0;
+
+     label2:
+        return 0L;
+
+     label3:
+        staticinvoke <com.android.org.chromium.base.library_loader.Linker: void setupBaseLoadAddressLocked()>();
+
+        $l0 = <com.android.org.chromium.base.library_loader.Linker: long sBaseLoadAddress>;
+
+        exitmonitor r0;
+
+     label4:
+        return $l0;
+
+     label5:
+        $r2 := @caughtexception;
+
+        r1 = $r2;
+
+        exitmonitor r0;
+
+     label6:
+        throw r1;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private static void setupBaseLoadAddressLocked()
+    {
+        long l0, $l1;
+        boolean $z0, $z1;
+        byte $b2, $b3;
+        java.lang.AssertionError $r0;
+
+        $z0 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z0 != 0 goto label1;
+
+        $z1 = staticinvoke <java.lang.Thread: boolean holdsLock(java.lang.Object)>(class "com/android/org/chromium/base/library_loader/Linker");
+
+        if $z1 != 0 goto label1;
+
+        $r0 = new java.lang.AssertionError;
+
+        specialinvoke $r0.<java.lang.AssertionError: void <init>()>();
+
+        throw $r0;
+
+     label1:
+        $l1 = <com.android.org.chromium.base.library_loader.Linker: long sBaseLoadAddress>;
+
+        $b2 = $l1 cmp 0L;
+
+        if $b2 != 0 goto label2;
+
+        l0 = staticinvoke <com.android.org.chromium.base.library_loader.Linker: long computeRandomBaseLoadAddress()>();
+
+        <com.android.org.chromium.base.library_loader.Linker: long sBaseLoadAddress> = l0;
+
+        <com.android.org.chromium.base.library_loader.Linker: long sCurrentLoadAddress> = l0;
+
+        $b3 = l0 cmp 0L;
+
+        if $b3 != 0 goto label2;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("chromium_android_linker", "Disabling shared RELROs due to bad entropy sources");
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sBrowserUsesSharedRelro> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sWaitForSharedRelros> = 0;
+
+     label2:
+        return;
+    }
+
+    private static long computeRandomBaseLoadAddress()
+    {
+        long l3, l7, $l8, $l9, $l10;
+        int i4, i5, i6, $i11;
+
+        l3 = staticinvoke <com.android.org.chromium.base.library_loader.Linker: long nativeGetPageSize()>();
+
+        $l8 = 335544320L / l3;
+
+        i4 = (int) $l8;
+
+        i5 = 30;
+
+     label1:
+        if i5 <= 1 goto label3;
+
+        $i11 = 1 << i5;
+
+        if $i11 > i4 goto label2;
+
+        goto label3;
+
+     label2:
+        i5 = i5 + -1;
+
+        goto label1;
+
+     label3:
+        i6 = staticinvoke <com.android.org.chromium.base.library_loader.Linker: int getRandomBits(int)>(i5);
+
+        l7 = 0L;
+
+        if i6 < 0 goto label4;
+
+        $l10 = (long) i6;
+
+        $l9 = $l10 * l3;
+
+        l7 = 536870912L + $l9;
+
+     label4:
+        return l7;
+    }
+
+    private static int getRandomBits(int)
+    {
+        int i0, i1, $i3, $i4, $i5, $i6, $i7, i10, i11;
+        java.io.FileInputStream r0, $r5;
+        java.lang.Exception r1, $r8, $r10, $r11, $r12, $r14, r16;
+        byte b2;
+        java.lang.Throwable r3, $r13;
+        boolean $z0, $z1;
+        java.io.File $r6;
+        java.lang.AssertionError $r7, $r9;
+
+        i0 := @parameter0: int;
+
+        $z0 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z0 != 0 goto label01;
+
+        if i0 > 0 goto label01;
+
+        $r9 = new java.lang.AssertionError;
+
+        specialinvoke $r9.<java.lang.AssertionError: void <init>()>();
+
+        throw $r9;
+
+     label01:
+        $z1 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z1 != 0 goto label02;
+
+        if i0 < 32 goto label02;
+
+        $r7 = new java.lang.AssertionError;
+
+        specialinvoke $r7.<java.lang.AssertionError: void <init>()>();
+
+        throw $r7;
+
+     label02:
+        $r5 = new java.io.FileInputStream;
+
+        $r6 = new java.io.File;
+
+        specialinvoke $r6.<java.io.File: void <init>(java.lang.String)>("/dev/urandom");
+
+        specialinvoke $r5.<java.io.FileInputStream: void <init>(java.io.File)>($r6);
+
+        r0 = $r5;
+
+     label03:
+        goto label05;
+
+     label04:
+        $r8 := @caughtexception;
+
+        r1 = $r8;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("chromium_android_linker", "Could not open /dev/urandom", r1);
+
+        return -1;
+
+     label05:
+        i10 = 0;
+
+     label06:
+        i1 = 0;
+
+     label07:
+        if i1 >= 4 goto label08;
+
+        $i5 = i10 << 8;
+
+        $i6 = virtualinvoke r0.<java.io.FileInputStream: int read()>();
+
+        $i7 = $i6 & 255;
+
+        i10 = $i5 | $i7;
+
+        i1 = i1 + 1;
+
+        goto label07;
+
+     label08:
+        virtualinvoke r0.<java.io.FileInputStream: void close()>();
+
+     label09:
+        goto label21;
+
+     label10:
+        $r12 := @caughtexception;
+
+        goto label21;
+
+     label11:
+        $r10 := @caughtexception;
+
+        r16 = $r10;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("chromium_android_linker", "Could not read /dev/urandom", r16);
+
+        b2 = -1;
+
+     label12:
+        virtualinvoke r0.<java.io.FileInputStream: void close()>();
+
+     label13:
+        goto label15;
+
+     label14:
+        $r14 := @caughtexception;
+
+     label15:
+        return b2;
+
+     label16:
+        $r13 := @caughtexception;
+
+        r3 = $r13;
+
+     label17:
+        virtualinvoke r0.<java.io.FileInputStream: void close()>();
+
+     label18:
+        goto label20;
+
+     label19:
+        $r11 := @caughtexception;
+
+     label20:
+        throw r3;
+
+     label21:
+        $i3 = 1 << i0;
+
+        $i4 = $i3 - 1;
+
+        i11 = i10 & $i4;
+
+        return i11;
+
+        catch java.lang.Exception from label02 to label03 with label04;
+        catch java.lang.Exception from label08 to label09 with label10;
+        catch java.lang.Exception from label06 to label08 with label11;
+        catch java.lang.Exception from label12 to label13 with label14;
+        catch java.lang.Throwable from label06 to label08 with label16;
+        catch java.lang.Throwable from label11 to label12 with label16;
+        catch java.lang.Exception from label17 to label18 with label19;
+        catch java.lang.Throwable from label16 to label17 with label16;
+    }
+
+    private static void dumpBundle(android.os.Bundle)
+    {
+        android.os.Bundle r0;
+
+        r0 := @parameter0: android.os.Bundle;
+
+        return;
+    }
+
+    private static void useSharedRelrosLocked(android.os.Bundle)
+    {
+        android.os.Bundle r0;
+        java.util.HashMap r1, $r6;
+        java.util.Iterator r2;
+        java.util.Map$Entry r3;
+        java.lang.String r4, $r14;
+        com.android.org.chromium.base.library_loader.Linker$LibInfo r5;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        java.util.Set $r7;
+        java.lang.Object $r8, $r9, $r10;
+        java.lang.StringBuilder $r11, $r12, $r13;
+        java.lang.AssertionError $r15;
+
+        r0 := @parameter0: android.os.Bundle;
+
+        $z0 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z0 != 0 goto label1;
+
+        $z5 = staticinvoke <java.lang.Thread: boolean holdsLock(java.lang.Object)>(class "com/android/org/chromium/base/library_loader/Linker");
+
+        if $z5 != 0 goto label1;
+
+        $r15 = new java.lang.AssertionError;
+
+        specialinvoke $r15.<java.lang.AssertionError: void <init>()>();
+
+        throw $r15;
+
+     label1:
+        if r0 != null goto label2;
+
+        return;
+
+     label2:
+        $z1 = <com.android.org.chromium.base.library_loader.Linker: boolean sRelroSharingSupported>;
+
+        if $z1 != 0 goto label3;
+
+        return;
+
+     label3:
+        $r6 = <com.android.org.chromium.base.library_loader.Linker: java.util.HashMap sLoadedLibraries>;
+
+        if $r6 != null goto label4;
+
+        return;
+
+     label4:
+        r1 = staticinvoke <com.android.org.chromium.base.library_loader.Linker: java.util.HashMap createLibInfoMapFromBundle(android.os.Bundle)>(r0);
+
+        $r7 = virtualinvoke r1.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r2 = interfaceinvoke $r7.<java.util.Set: java.util.Iterator iterator()>();
+
+     label5:
+        $z2 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label7;
+
+        $r8 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.util.Map$Entry) $r8;
+
+        $r9 = interfaceinvoke r3.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        r4 = (java.lang.String) $r9;
+
+        $r10 = interfaceinvoke r3.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        r5 = (com.android.org.chromium.base.library_loader.Linker$LibInfo) $r10;
+
+        $z4 = staticinvoke <com.android.org.chromium.base.library_loader.Linker: boolean nativeUseSharedRelro(java.lang.String,com.android.org.chromium.base.library_loader.Linker$LibInfo)>(r4, r5);
+
+        if $z4 != 0 goto label6;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not use shared RELRO section for ");
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("chromium_android_linker", $r14);
+
+     label6:
+        goto label5;
+
+     label7:
+        $z3 = <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess>;
+
+        if $z3 != 0 goto label8;
+
+        staticinvoke <com.android.org.chromium.base.library_loader.Linker: void closeLibInfoMap(java.util.HashMap)>(r1);
+
+     label8:
+        return;
+    }
+
+    public static boolean loadAtFixedAddressFailed()
+    {
+        boolean $z0;
+
+        $z0 = <com.android.org.chromium.base.library_loader.Linker: boolean sLoadAtFixedAddressFailed>;
+
+        return $z0;
+    }
+
+    public static void loadLibrary(java.lang.String)
+    {
+        java.lang.String r0, r2, r4, $r14, $r19, $r20;
+        java.lang.Class r1;
+        com.android.org.chromium.base.library_loader.Linker$LibInfo r3, $r8;
+        long l0, $l3, $l4, $l5, $l6, $l7, $l8, $l9, $l13;
+        java.lang.Throwable r5, $r28;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12;
+        java.util.HashMap $r6, $r7, $r10, $r26;
+        byte $b1, $b2, $b12;
+        java.util.Locale $r11, $r18;
+        java.lang.Object[] $r12, $r15;
+        java.lang.Long $r13, $r21;
+        java.lang.StringBuilder $r22, $r23, $r25;
+        java.lang.UnsatisfiedLinkError $r24;
+        java.lang.AssertionError $r27;
+
+        r0 := @parameter0: java.lang.String;
+
+        $z0 = virtualinvoke r0.<java.lang.String: boolean equals(java.lang.Object)>("chromium_android_linker");
+
+        if $z0 != 0 goto label01;
+
+        $z1 = virtualinvoke r0.<java.lang.String: boolean equals(java.lang.Object)>("chromium_android_linker.cr");
+
+        if $z1 == 0 goto label02;
+
+     label01:
+        return;
+
+     label02:
+        r1 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        entermonitor class "com/android/org/chromium/base/library_loader/Linker";
+
+     label03:
+        staticinvoke <com.android.org.chromium.base.library_loader.Linker: void ensureInitializedLocked()>();
+
+        $z2 = <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled>;
+
+        if $z2 != 0 goto label04;
+
+        $z11 = <com.android.org.chromium.base.library_loader.Linker: boolean sPrepareLibraryLoadCalled>;
+
+        if $z11 != 0 goto label04;
+
+        $r27 = new java.lang.AssertionError;
+
+        specialinvoke $r27.<java.lang.AssertionError: void <init>()>();
+
+        throw $r27;
+
+     label04:
+        r2 = staticinvoke <java.lang.System: java.lang.String mapLibraryName(java.lang.String)>(r0);
+
+        $r6 = <com.android.org.chromium.base.library_loader.Linker: java.util.HashMap sLoadedLibraries>;
+
+        if $r6 != null goto label05;
+
+        $r26 = new java.util.HashMap;
+
+        specialinvoke $r26.<java.util.HashMap: void <init>()>();
+
+        <com.android.org.chromium.base.library_loader.Linker: java.util.HashMap sLoadedLibraries> = $r26;
+
+     label05:
+        $r7 = <com.android.org.chromium.base.library_loader.Linker: java.util.HashMap sLoadedLibraries>;
+
+        $z3 = virtualinvoke $r7.<java.util.HashMap: boolean containsKey(java.lang.Object)>(r2);
+
+        if $z3 == 0 goto label07;
+
+        exitmonitor r1;
+
+     label06:
+        return;
+
+     label07:
+        $r8 = new com.android.org.chromium.base.library_loader.Linker$LibInfo;
+
+        specialinvoke $r8.<com.android.org.chromium.base.library_loader.Linker$LibInfo: void <init>()>();
+
+        r3 = $r8;
+
+        l0 = 0L;
+
+        $z5 = <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess>;
+
+        if $z5 == 0 goto label08;
+
+        $z12 = <com.android.org.chromium.base.library_loader.Linker: boolean sBrowserUsesSharedRelro>;
+
+        if $z12 != 0 goto label09;
+
+     label08:
+        $z4 = <com.android.org.chromium.base.library_loader.Linker: boolean sWaitForSharedRelros>;
+
+        if $z4 == 0 goto label10;
+
+     label09:
+        l0 = <com.android.org.chromium.base.library_loader.Linker: long sCurrentLoadAddress>;
+
+     label10:
+        $z6 = staticinvoke <com.android.org.chromium.base.library_loader.Linker: boolean nativeLoadLibrary(java.lang.String,long,com.android.org.chromium.base.library_loader.Linker$LibInfo)>(r2, l0, r3);
+
+        if $z6 != 0 goto label11;
+
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        $r22 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to load library: ");
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        r4 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("chromium_android_linker", r4);
+
+        $r24 = new java.lang.UnsatisfiedLinkError;
+
+        specialinvoke $r24.<java.lang.UnsatisfiedLinkError: void <init>(java.lang.String)>(r4);
+
+        throw $r24;
+
+     label11:
+        $b1 = l0 cmp 0L;
+
+        if $b1 == 0 goto label12;
+
+        $l13 = r3.<com.android.org.chromium.base.library_loader.Linker$LibInfo: long mLoadAddress>;
+
+        $b12 = l0 cmp $l13;
+
+        if $b12 == 0 goto label12;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sLoadAtFixedAddressFailed> = 1;
+
+     label12:
+        $z8 = <com.android.org.chromium.base.library_loader.NativeLibraries: boolean ENABLE_LINKER_TESTS>;
+
+        if $z8 == 0 goto label15;
+
+        $r18 = <java.util.Locale: java.util.Locale US>;
+
+        $r15 = newarray (java.lang.Object)[3];
+
+        $z10 = <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess>;
+
+        if $z10 == 0 goto label13;
+
+        $r19 = "BROWSER";
+
+        goto label14;
+
+     label13:
+        $r19 = "RENDERER";
+
+     label14:
+        $r15[0] = $r19;
+
+        $r15[1] = r2;
+
+        $l9 = r3.<com.android.org.chromium.base.library_loader.Linker$LibInfo: long mLoadAddress>;
+
+        $r21 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l9);
+
+        $r15[2] = $r21;
+
+        $r20 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r18, "%s_LIBRARY_ADDRESS: %s %x", $r15);
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("chromium_android_linker", $r20);
+
+     label15:
+        $z7 = <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess>;
+
+        if $z7 == 0 goto label16;
+
+        $l7 = <com.android.org.chromium.base.library_loader.Linker: long sCurrentLoadAddress>;
+
+        $z9 = staticinvoke <com.android.org.chromium.base.library_loader.Linker: boolean nativeCreateSharedRelro(java.lang.String,long,com.android.org.chromium.base.library_loader.Linker$LibInfo)>(r2, $l7, r3);
+
+        if $z9 != 0 goto label16;
+
+        $r11 = <java.util.Locale: java.util.Locale US>;
+
+        $r12 = newarray (java.lang.Object)[2];
+
+        $r12[0] = r2;
+
+        $l8 = <com.android.org.chromium.base.library_loader.Linker: long sCurrentLoadAddress>;
+
+        $r13 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l8);
+
+        $r12[1] = $r13;
+
+        $r14 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r11, "Could not create shared RELRO for %s at %x", $r12);
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("chromium_android_linker", $r14);
+
+     label16:
+        $l3 = <com.android.org.chromium.base.library_loader.Linker: long sCurrentLoadAddress>;
+
+        $b2 = $l3 cmp 0L;
+
+        if $b2 == 0 goto label17;
+
+        $l6 = r3.<com.android.org.chromium.base.library_loader.Linker$LibInfo: long mLoadAddress>;
+
+        $l4 = r3.<com.android.org.chromium.base.library_loader.Linker$LibInfo: long mLoadSize>;
+
+        $l5 = $l6 + $l4;
+
+        <com.android.org.chromium.base.library_loader.Linker: long sCurrentLoadAddress> = $l5;
+
+     label17:
+        $r10 = <com.android.org.chromium.base.library_loader.Linker: java.util.HashMap sLoadedLibraries>;
+
+        virtualinvoke $r10.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r2, r3);
+
+        exitmonitor r1;
+
+     label18:
+        goto label21;
+
+     label19:
+        $r28 := @caughtexception;
+
+        r5 = $r28;
+
+        exitmonitor r1;
+
+     label20:
+        throw r5;
+
+     label21:
+        return;
+
+        catch java.lang.Throwable from label03 to label06 with label19;
+        catch java.lang.Throwable from label07 to label18 with label19;
+        catch java.lang.Throwable from label19 to label20 with label19;
+    }
+
+    public static void postCallbackOnMainThread(long)
+    {
+        long l0;
+        com.android.org.chromium.base.library_loader.Linker$1 $r0;
+
+        l0 := @parameter0: long;
+
+        $r0 = new com.android.org.chromium.base.library_loader.Linker$1;
+
+        specialinvoke $r0.<com.android.org.chromium.base.library_loader.Linker$1: void <init>(long)>(l0);
+
+        staticinvoke <com.android.org.chromium.base.ThreadUtils: void postOnUiThread(java.lang.Runnable)>($r0);
+
+        return;
+    }
+
+    private static native void nativeRunCallbackOnUiThread(long);
+
+    private static native boolean nativeLoadLibrary(java.lang.String, long, com.android.org.chromium.base.library_loader.Linker$LibInfo);
+
+    private static native boolean nativeCreateSharedRelro(java.lang.String, long, com.android.org.chromium.base.library_loader.Linker$LibInfo);
+
+    private static native boolean nativeUseSharedRelro(java.lang.String, com.android.org.chromium.base.library_loader.Linker$LibInfo);
+
+    private static native boolean nativeCanUseSharedRelro();
+
+    private static native long nativeGetPageSize();
+
+    private static android.os.Bundle createBundleFromLibInfoMap(java.util.HashMap)
+    {
+        java.util.HashMap r0;
+        android.os.Bundle r1, $r4;
+        java.util.Iterator r2;
+        java.util.Map$Entry r3;
+        int $i0;
+        java.util.Set $r5;
+        boolean $z0;
+        java.lang.Object $r6, $r7, $r9;
+        java.lang.String $r8;
+        android.os.Parcelable $r10;
+
+        r0 := @parameter0: java.util.HashMap;
+
+        $r4 = new android.os.Bundle;
+
+        $i0 = virtualinvoke r0.<java.util.HashMap: int size()>();
+
+        specialinvoke $r4.<android.os.Bundle: void <init>(int)>($i0);
+
+        r1 = $r4;
+
+        $r5 = virtualinvoke r0.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r2 = interfaceinvoke $r5.<java.util.Set: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r6 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.util.Map$Entry) $r6;
+
+        $r7 = interfaceinvoke r3.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r8 = (java.lang.String) $r7;
+
+        $r9 = interfaceinvoke r3.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r10 = (android.os.Parcelable) $r9;
+
+        virtualinvoke r1.<android.os.Bundle: void putParcelable(java.lang.String,android.os.Parcelable)>($r8, $r10);
+
+        goto label1;
+
+     label2:
+        return r1;
+    }
+
+    private static java.util.HashMap createLibInfoMapFromBundle(android.os.Bundle)
+    {
+        android.os.Bundle r0;
+        java.util.HashMap r1, $r5;
+        java.util.Iterator r2;
+        java.lang.String r3;
+        com.android.org.chromium.base.library_loader.Linker$LibInfo r4;
+        java.util.Set $r6;
+        boolean $z0;
+        java.lang.Object $r7;
+        android.os.Parcelable $r8;
+
+        r0 := @parameter0: android.os.Bundle;
+
+        $r5 = new java.util.HashMap;
+
+        specialinvoke $r5.<java.util.HashMap: void <init>()>();
+
+        r1 = $r5;
+
+        $r6 = virtualinvoke r0.<android.os.Bundle: java.util.Set keySet()>();
+
+        r2 = interfaceinvoke $r6.<java.util.Set: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r7 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.lang.String) $r7;
+
+        $r8 = virtualinvoke r0.<android.os.Bundle: android.os.Parcelable getParcelable(java.lang.String)>(r3);
+
+        r4 = (com.android.org.chromium.base.library_loader.Linker$LibInfo) $r8;
+
+        virtualinvoke r1.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r3, r4);
+
+        goto label1;
+
+     label2:
+        return r1;
+    }
+
+    private static void closeLibInfoMap(java.util.HashMap)
+    {
+        java.util.HashMap r0;
+        java.util.Iterator r1;
+        java.util.Map$Entry r2;
+        java.util.Set $r3;
+        boolean $z0;
+        java.lang.Object $r4, $r5;
+        com.android.org.chromium.base.library_loader.Linker$LibInfo $r6;
+
+        r0 := @parameter0: java.util.HashMap;
+
+        $r3 = virtualinvoke r0.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r1 = interfaceinvoke $r3.<java.util.Set: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (java.util.Map$Entry) $r4;
+
+        $r5 = interfaceinvoke r2.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r6 = (com.android.org.chromium.base.library_loader.Linker$LibInfo) $r5;
+
+        virtualinvoke $r6.<com.android.org.chromium.base.library_loader.Linker$LibInfo: void close()>();
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    static void access$000(long)
+    {
+        long l0;
+
+        l0 := @parameter0: long;
+
+        staticinvoke <com.android.org.chromium.base.library_loader.Linker: void nativeRunCallbackOnUiThread(long)>(l0);
+
+        return;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        boolean $z0, $z1;
+
+        <com.android.org.chromium.base.library_loader.Linker: java.lang.String EXTRA_LINKER_SHARED_RELROS> = "com.android.org.chromium.base.android.linker.shared_relros";
+
+        <com.android.org.chromium.base.library_loader.Linker: int MEMORY_DEVICE_CONFIG_NORMAL> = 2;
+
+        <com.android.org.chromium.base.library_loader.Linker: int MEMORY_DEVICE_CONFIG_LOW> = 1;
+
+        <com.android.org.chromium.base.library_loader.Linker: int MEMORY_DEVICE_CONFIG_INIT> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: int BROWSER_SHARED_RELRO_CONFIG> = 1;
+
+        <com.android.org.chromium.base.library_loader.Linker: int BROWSER_SHARED_RELRO_CONFIG_ALWAYS> = 2;
+
+        <com.android.org.chromium.base.library_loader.Linker: int BROWSER_SHARED_RELRO_CONFIG_LOW_RAM_ONLY> = 1;
+
+        <com.android.org.chromium.base.library_loader.Linker: int BROWSER_SHARED_RELRO_CONFIG_NEVER> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean DEBUG> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: java.lang.String TAG> = "chromium_android_linker";
+
+        $r0 = class "com/android/org/chromium/base/library_loader/Linker";
+
+        $z0 = virtualinvoke $r0.<java.lang.Class: boolean desiredAssertionStatus()>();
+
+        if $z0 != 0 goto label1;
+
+        $z1 = 1;
+
+        goto label2;
+
+     label1:
+        $z1 = 0;
+
+     label2:
+        <com.android.org.chromium.base.library_loader.Linker: boolean $assertionsDisabled> = $z1;
+
+        <com.android.org.chromium.base.library_loader.Linker: int sMemoryDeviceConfig> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sInitialized> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sRelroSharingSupported> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sInBrowserProcess> = 1;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sWaitForSharedRelros> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sBrowserUsesSharedRelro> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: android.os.Bundle sSharedRelros> = null;
+
+        <com.android.org.chromium.base.library_loader.Linker: long sBaseLoadAddress> = 0L;
+
+        <com.android.org.chromium.base.library_loader.Linker: long sCurrentLoadAddress> = 0L;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sLoadAtFixedAddressFailed> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: boolean sPrepareLibraryLoadCalled> = 0;
+
+        <com.android.org.chromium.base.library_loader.Linker: java.lang.String sTestRunnerClassName> = null;
+
+        <com.android.org.chromium.base.library_loader.Linker: java.util.HashMap sLoadedLibraries> = null;
+
+        return;
+    }
+}

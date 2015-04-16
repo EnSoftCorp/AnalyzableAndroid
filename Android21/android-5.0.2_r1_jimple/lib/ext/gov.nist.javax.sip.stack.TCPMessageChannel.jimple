@@ -1,0 +1,1889 @@
+public class gov.nist.javax.sip.stack.TCPMessageChannel extends gov.nist.javax.sip.stack.MessageChannel implements gov.nist.javax.sip.parser.SIPMessageListener, java.lang.Runnable, gov.nist.javax.sip.stack.RawMessageChannel
+{
+    private java.net.Socket mySock;
+    private gov.nist.javax.sip.parser.PipelinedMsgParser myParser;
+    protected java.io.InputStream myClientInputStream;
+    protected java.io.OutputStream myClientOutputStream;
+    protected java.lang.String key;
+    protected boolean isCached;
+    protected boolean isRunning;
+    private java.lang.Thread mythread;
+    protected gov.nist.javax.sip.stack.SIPTransactionStack sipStack;
+    protected java.lang.String myAddress;
+    protected int myPort;
+    protected java.net.InetAddress peerAddress;
+    protected int peerPort;
+    protected java.lang.String peerProtocol;
+    private gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor;
+
+    protected void <init>(gov.nist.javax.sip.stack.SIPTransactionStack)
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        gov.nist.javax.sip.stack.SIPTransactionStack r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        r1 := @parameter0: gov.nist.javax.sip.stack.SIPTransactionStack;
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.MessageChannel: void <init>()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack> = r1;
+
+        return;
+    }
+
+    protected void <init>(java.net.Socket, gov.nist.javax.sip.stack.SIPTransactionStack, gov.nist.javax.sip.stack.TCPMessageProcessor) throws java.io.IOException
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        java.net.Socket r1, $r4, $r8, $r10, $r15;
+        gov.nist.javax.sip.stack.SIPTransactionStack r2;
+        gov.nist.javax.sip.stack.TCPMessageProcessor r3, $r16;
+        boolean $z0;
+        java.net.InetAddress $r5, $r6;
+        java.lang.String $r7;
+        java.io.InputStream $r9;
+        java.io.OutputStream $r11;
+        java.lang.Thread $r12, $r13, $r14, $r18;
+        int $i0, $i1;
+        gov.nist.core.StackLogger $r17, $r19;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        r1 := @parameter0: java.net.Socket;
+
+        r2 := @parameter1: gov.nist.javax.sip.stack.SIPTransactionStack;
+
+        r3 := @parameter2: gov.nist.javax.sip.stack.TCPMessageProcessor;
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.MessageChannel: void <init>()>();
+
+        $z0 = virtualinvoke r2.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label1;
+
+        $r17 = virtualinvoke r2.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r17.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>("creating new TCPMessageChannel ");
+
+        $r19 = virtualinvoke r2.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r19.<gov.nist.core.StackLogger: void logStackTrace()>();
+
+     label1:
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock> = r1;
+
+        $r4 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $r5 = virtualinvoke $r4.<java.net.Socket: java.net.InetAddress getInetAddress()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress> = $r5;
+
+        $r6 = virtualinvoke r3.<gov.nist.javax.sip.stack.TCPMessageProcessor: java.net.InetAddress getIpAddress()>();
+
+        $r7 = virtualinvoke $r6.<java.net.InetAddress: java.lang.String getHostAddress()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String myAddress> = $r7;
+
+        $r8 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $r9 = virtualinvoke $r8.<java.net.Socket: java.io.InputStream getInputStream()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.io.InputStream myClientInputStream> = $r9;
+
+        $r10 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $r11 = virtualinvoke $r10.<java.net.Socket: java.io.OutputStream getOutputStream()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.io.OutputStream myClientOutputStream> = $r11;
+
+        $r12 = new java.lang.Thread;
+
+        specialinvoke $r12.<java.lang.Thread: void <init>(java.lang.Runnable)>(r0);
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.Thread mythread> = $r12;
+
+        $r13 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.Thread mythread>;
+
+        virtualinvoke $r13.<java.lang.Thread: void setDaemon(boolean)>(1);
+
+        $r14 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.Thread mythread>;
+
+        virtualinvoke $r14.<java.lang.Thread: void setName(java.lang.String)>("TCPMessageChannelThread");
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack> = r2;
+
+        $r15 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $i0 = virtualinvoke $r15.<java.net.Socket: int getPort()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int peerPort> = $i0;
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor> = r3;
+
+        $r16 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        $i1 = virtualinvoke $r16.<gov.nist.javax.sip.stack.TCPMessageProcessor: int getPort()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int myPort> = $i1;
+
+        r0.<gov.nist.javax.sip.stack.MessageChannel: gov.nist.javax.sip.stack.MessageProcessor messageProcessor> = r3;
+
+        $r18 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.Thread mythread>;
+
+        virtualinvoke $r18.<java.lang.Thread: void start()>();
+
+        return;
+    }
+
+    protected void <init>(java.net.InetAddress, int, gov.nist.javax.sip.stack.SIPTransactionStack, gov.nist.javax.sip.stack.TCPMessageProcessor) throws java.io.IOException
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        java.net.InetAddress r1, $r4, $r6;
+        int i0, $i1, $i2;
+        gov.nist.javax.sip.stack.SIPTransactionStack r2;
+        gov.nist.javax.sip.stack.TCPMessageProcessor r3;
+        boolean $z0;
+        java.lang.String $r5, $r7;
+        gov.nist.core.StackLogger $r8, $r9;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        r1 := @parameter0: java.net.InetAddress;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: gov.nist.javax.sip.stack.SIPTransactionStack;
+
+        r3 := @parameter3: gov.nist.javax.sip.stack.TCPMessageProcessor;
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.MessageChannel: void <init>()>();
+
+        $z0 = virtualinvoke r2.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label1;
+
+        $r8 = virtualinvoke r2.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r8.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>("creating new TCPMessageChannel ");
+
+        $r9 = virtualinvoke r2.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r9.<gov.nist.core.StackLogger: void logStackTrace()>();
+
+     label1:
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress> = r1;
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int peerPort> = i0;
+
+        $i1 = virtualinvoke r3.<gov.nist.javax.sip.stack.TCPMessageProcessor: int getPort()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int myPort> = $i1;
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String peerProtocol> = "TCP";
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack> = r2;
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor> = r3;
+
+        $r4 = virtualinvoke r3.<gov.nist.javax.sip.stack.TCPMessageProcessor: java.net.InetAddress getIpAddress()>();
+
+        $r5 = virtualinvoke $r4.<java.net.InetAddress: java.lang.String getHostAddress()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String myAddress> = $r5;
+
+        $r6 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress>;
+
+        $i2 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int peerPort>;
+
+        $r7 = staticinvoke <gov.nist.javax.sip.stack.MessageChannel: java.lang.String getKey(java.net.InetAddress,int,java.lang.String)>($r6, $i2, "TCP");
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String key> = $r7;
+
+        r0.<gov.nist.javax.sip.stack.MessageChannel: gov.nist.javax.sip.stack.MessageProcessor messageProcessor> = r3;
+
+        return;
+    }
+
+    public boolean isReliable()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        return 1;
+    }
+
+    public void close()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        java.io.IOException r1, $r11;
+        java.net.Socket $r2, $r10;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r3, $r4, $r12, $r13;
+        boolean $z0, $z1;
+        gov.nist.core.StackLogger $r5, $r15;
+        java.lang.StringBuilder $r6, $r7, $r8, $r14, $r16, $r17;
+        java.lang.String $r9, $r18;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+     label1:
+        $r2 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        if $r2 == null goto label2;
+
+        $r10 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        virtualinvoke $r10.<java.net.Socket: void close()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock> = null;
+
+     label2:
+        $r3 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r3.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r5 = virtualinvoke $r4.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Closing message Channel ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r0);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke $r5.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r9);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r11 := @caughtexception;
+
+        r1 = $r11;
+
+        $r12 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z1 = virtualinvoke $r12.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z1 == 0 goto label5;
+
+        $r13 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r15 = virtualinvoke $r13.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r17 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error closing socket ");
+
+        $r16 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke $r15.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r18);
+
+     label5:
+        return;
+
+        catch java.io.IOException from label1 to label3 with label4;
+    }
+
+    public gov.nist.javax.sip.stack.SIPTransactionStack getSIPStack()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        return $r1;
+    }
+
+    public java.lang.String getTransport()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        return "TCP";
+    }
+
+    public java.lang.String getPeerAddress()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        java.net.InetAddress $r1, $r3;
+        java.lang.String $r2, $r4;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress>;
+
+        if $r1 == null goto label1;
+
+        $r3 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress>;
+
+        $r4 = virtualinvoke $r3.<java.net.InetAddress: java.lang.String getHostAddress()>();
+
+        return $r4;
+
+     label1:
+        $r2 = virtualinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String getHost()>();
+
+        return $r2;
+    }
+
+    protected java.net.InetAddress getPeerInetAddress()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        java.net.InetAddress $r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress>;
+
+        return $r1;
+    }
+
+    public java.lang.String getPeerProtocol()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        java.lang.String $r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String peerProtocol>;
+
+        return $r1;
+    }
+
+    private void sendMessage(byte[], boolean) throws java.io.IOException
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        byte[] r1;
+        boolean z0;
+        java.net.Socket r2, $r10, $r11, $r12, $r13, $r18;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r4;
+        gov.nist.javax.sip.stack.MessageProcessor $r5;
+        gov.nist.javax.sip.stack.IOHandler $r6;
+        java.net.InetAddress $r7, $r9;
+        java.lang.String $r8;
+        int $i0;
+        java.io.InputStream $r14;
+        java.lang.Thread $r15, r19;
+        java.io.OutputStream $r16;
+        java.io.IOException $r17;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        r1 := @parameter0: byte[];
+
+        z0 := @parameter1: boolean;
+
+        $r4 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r6 = $r4.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.javax.sip.stack.IOHandler ioHandler>;
+
+        $r5 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.MessageProcessor messageProcessor>;
+
+        $r7 = virtualinvoke $r5.<gov.nist.javax.sip.stack.MessageProcessor: java.net.InetAddress getIpAddress()>();
+
+        $r9 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress>;
+
+        $i0 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int peerPort>;
+
+        $r8 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String peerProtocol>;
+
+        r2 = virtualinvoke $r6.<gov.nist.javax.sip.stack.IOHandler: java.net.Socket sendBytes(java.net.InetAddress,java.net.InetAddress,int,java.lang.String,byte[],boolean,gov.nist.javax.sip.stack.MessageChannel)>($r7, $r9, $i0, $r8, r1, z0, r0);
+
+        $r10 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        if r2 == $r10 goto label5;
+
+        if r2 == null goto label5;
+
+     label1:
+        $r11 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        if $r11 == null goto label2;
+
+        $r18 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        virtualinvoke $r18.<java.net.Socket: void close()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r17 := @caughtexception;
+
+     label4:
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock> = r2;
+
+        $r12 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $r14 = virtualinvoke $r12.<java.net.Socket: java.io.InputStream getInputStream()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.io.InputStream myClientInputStream> = $r14;
+
+        $r13 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $r16 = virtualinvoke $r13.<java.net.Socket: java.io.OutputStream getOutputStream()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.io.OutputStream myClientOutputStream> = $r16;
+
+        $r15 = new java.lang.Thread;
+
+        specialinvoke $r15.<java.lang.Thread: void <init>(java.lang.Runnable)>(r0);
+
+        r19 = $r15;
+
+        virtualinvoke r19.<java.lang.Thread: void setDaemon(boolean)>(1);
+
+        virtualinvoke r19.<java.lang.Thread: void setName(java.lang.String)>("TCPMessageChannelThread");
+
+        virtualinvoke r19.<java.lang.Thread: void start()>();
+
+     label5:
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    public void sendMessage(gov.nist.javax.sip.message.SIPMessage) throws java.io.IOException
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        gov.nist.javax.sip.message.SIPMessage r1;
+        byte[] r2;
+        long l0;
+        java.lang.String $r3;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r4;
+        gov.nist.core.StackLogger $r5;
+        boolean $z0;
+        int $i1;
+        java.net.InetAddress $r6;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        r1 := @parameter0: gov.nist.javax.sip.message.SIPMessage;
+
+        $r3 = virtualinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String getTransport()>();
+
+        r2 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: byte[] encodeAsBytes(java.lang.String)>($r3);
+
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: void sendMessage(byte[],boolean)>(r2, 1);
+
+        $r4 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r5 = virtualinvoke $r4.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $z0 = interfaceinvoke $r5.<gov.nist.core.StackLogger: boolean isLoggingEnabled(int)>(16);
+
+        if $z0 == 0 goto label1;
+
+        $r6 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress>;
+
+        $i1 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int peerPort>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: void logMessage(gov.nist.javax.sip.message.SIPMessage,java.net.InetAddress,int,long)>(r1, $r6, $i1, l0);
+
+     label1:
+        return;
+    }
+
+    public void sendMessage(byte[], java.net.InetAddress, int, boolean) throws java.io.IOException
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        byte[] r1;
+        java.net.InetAddress r2, $r9;
+        int i0;
+        boolean z0;
+        java.net.Socket r3, $r10, $r11, $r12, $r13;
+        java.lang.Thread r4, $r15;
+        java.lang.IllegalArgumentException $r5;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r6, $r18;
+        gov.nist.javax.sip.stack.MessageProcessor $r7;
+        gov.nist.javax.sip.stack.IOHandler $r8;
+        java.io.InputStream $r14;
+        java.io.OutputStream $r16;
+        java.util.Timer $r17;
+        gov.nist.javax.sip.stack.TCPMessageChannel$1 $r19;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        r1 := @parameter0: byte[];
+
+        r2 := @parameter1: java.net.InetAddress;
+
+        i0 := @parameter2: int;
+
+        z0 := @parameter3: boolean;
+
+        if r1 == null goto label1;
+
+        if r2 != null goto label2;
+
+     label1:
+        $r5 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r5.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Null argument");
+
+        throw $r5;
+
+     label2:
+        $r6 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r8 = $r6.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.javax.sip.stack.IOHandler ioHandler>;
+
+        $r7 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.MessageProcessor messageProcessor>;
+
+        $r9 = virtualinvoke $r7.<gov.nist.javax.sip.stack.MessageProcessor: java.net.InetAddress getIpAddress()>();
+
+        r3 = virtualinvoke $r8.<gov.nist.javax.sip.stack.IOHandler: java.net.Socket sendBytes(java.net.InetAddress,java.net.InetAddress,int,java.lang.String,byte[],boolean,gov.nist.javax.sip.stack.MessageChannel)>($r9, r2, i0, "TCP", r1, z0, r0);
+
+        $r10 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        if r3 == $r10 goto label4;
+
+        if r3 == null goto label4;
+
+        $r11 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        if $r11 == null goto label3;
+
+        $r18 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r17 = virtualinvoke $r18.<gov.nist.javax.sip.stack.SIPTransactionStack: java.util.Timer getTimer()>();
+
+        $r19 = new gov.nist.javax.sip.stack.TCPMessageChannel$1;
+
+        specialinvoke $r19.<gov.nist.javax.sip.stack.TCPMessageChannel$1: void <init>(gov.nist.javax.sip.stack.TCPMessageChannel)>(r0);
+
+        virtualinvoke $r17.<java.util.Timer: void schedule(java.util.TimerTask,long)>($r19, 8000L);
+
+     label3:
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock> = r3;
+
+        $r12 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $r14 = virtualinvoke $r12.<java.net.Socket: java.io.InputStream getInputStream()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.io.InputStream myClientInputStream> = $r14;
+
+        $r13 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $r16 = virtualinvoke $r13.<java.net.Socket: java.io.OutputStream getOutputStream()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.io.OutputStream myClientOutputStream> = $r16;
+
+        $r15 = new java.lang.Thread;
+
+        specialinvoke $r15.<java.lang.Thread: void <init>(java.lang.Runnable)>(r0);
+
+        r4 = $r15;
+
+        virtualinvoke r4.<java.lang.Thread: void setDaemon(boolean)>(1);
+
+        virtualinvoke r4.<java.lang.Thread: void setName(java.lang.String)>("TCPMessageChannelThread");
+
+        virtualinvoke r4.<java.lang.Thread: void start()>();
+
+     label4:
+        return;
+    }
+
+    public void handleException(java.text.ParseException, gov.nist.javax.sip.message.SIPMessage, java.lang.Class, java.lang.String, java.lang.String) throws java.text.ParseException
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        java.text.ParseException r1;
+        gov.nist.javax.sip.message.SIPMessage r2;
+        java.lang.Class r3;
+        java.lang.String r4, r5, r6, r7, $r23, $r27;
+        java.io.IOException r8, $r28;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r9, $r10, $r11, $r13, $r14, $r17, $r18, $r20, $r29, $r30;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12;
+        gov.nist.core.StackLogger $r12, $r19, $r21, $r24, $r31, $r32;
+        java.net.InetAddress $r15;
+        byte[] $r16;
+        int $i0;
+        java.lang.StringBuilder $r22, $r25, $r26;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        r1 := @parameter0: java.text.ParseException;
+
+        r2 := @parameter1: gov.nist.javax.sip.message.SIPMessage;
+
+        r3 := @parameter2: java.lang.Class;
+
+        r4 := @parameter3: java.lang.String;
+
+        r5 := @parameter4: java.lang.String;
+
+        $r9 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r9.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label1;
+
+        $r30 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r31 = virtualinvoke $r30.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r31.<gov.nist.core.StackLogger: void logException(java.lang.Throwable)>(r1);
+
+     label1:
+        if r3 == null goto label9;
+
+        $z1 = virtualinvoke r3.<java.lang.Object: boolean equals(java.lang.Object)>(class "gov/nist/javax/sip/header/From");
+
+        if $z1 != 0 goto label2;
+
+        $z7 = virtualinvoke r3.<java.lang.Object: boolean equals(java.lang.Object)>(class "gov/nist/javax/sip/header/To");
+
+        if $z7 != 0 goto label2;
+
+        $z8 = virtualinvoke r3.<java.lang.Object: boolean equals(java.lang.Object)>(class "gov/nist/javax/sip/header/CSeq");
+
+        if $z8 != 0 goto label2;
+
+        $z11 = virtualinvoke r3.<java.lang.Object: boolean equals(java.lang.Object)>(class "gov/nist/javax/sip/header/Via");
+
+        if $z11 != 0 goto label2;
+
+        $z12 = virtualinvoke r3.<java.lang.Object: boolean equals(java.lang.Object)>(class "gov/nist/javax/sip/header/CallID");
+
+        if $z12 != 0 goto label2;
+
+        $z9 = virtualinvoke r3.<java.lang.Object: boolean equals(java.lang.Object)>(class "gov/nist/javax/sip/header/RequestLine");
+
+        if $z9 != 0 goto label2;
+
+        $z10 = virtualinvoke r3.<java.lang.Object: boolean equals(java.lang.Object)>(class "gov/nist/javax/sip/header/StatusLine");
+
+        if $z10 == 0 goto label9;
+
+     label2:
+        $r10 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z2 = virtualinvoke $r10.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z2 == 0 goto label3;
+
+        $r20 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r24 = virtualinvoke $r20.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r25 = new java.lang.StringBuilder;
+
+        specialinvoke $r25.<java.lang.StringBuilder: void <init>()>();
+
+        $r22 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Encountered Bad Message \n");
+
+        $r23 = virtualinvoke r2.<gov.nist.javax.sip.message.SIPMessage: java.lang.String toString()>();
+
+        $r26 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r23);
+
+        $r27 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke $r24.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r27);
+
+     label3:
+        r6 = virtualinvoke r2.<gov.nist.javax.sip.message.SIPMessage: java.lang.String toString()>();
+
+        $z3 = virtualinvoke r6.<java.lang.String: boolean startsWith(java.lang.String)>("SIP/");
+
+        if $z3 != 0 goto label8;
+
+        $z4 = virtualinvoke r6.<java.lang.String: boolean startsWith(java.lang.String)>("ACK ");
+
+        if $z4 != 0 goto label8;
+
+        r7 = virtualinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String createBadReqRes(java.lang.String,java.text.ParseException)>(r6, r1);
+
+        if r7 == null goto label7;
+
+        $r14 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z6 = virtualinvoke $r14.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z6 == 0 goto label4;
+
+        $r17 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r19 = virtualinvoke $r17.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r19.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>("Sending automatic 400 Bad Request:");
+
+        $r18 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r21 = virtualinvoke $r18.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r21.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>(r7);
+
+     label4:
+        $r16 = virtualinvoke r7.<java.lang.String: byte[] getBytes()>();
+
+        $r15 = virtualinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress getPeerInetAddress()>();
+
+        $i0 = virtualinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int getPeerPort()>();
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: void sendMessage(byte[],java.net.InetAddress,int,boolean)>($r16, $r15, $i0, 0);
+
+     label5:
+        goto label8;
+
+     label6:
+        $r28 := @caughtexception;
+
+        r8 = $r28;
+
+        $r29 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r32 = virtualinvoke $r29.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r32.<gov.nist.core.StackLogger: void logException(java.lang.Throwable)>(r8);
+
+        goto label8;
+
+     label7:
+        $r11 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z5 = virtualinvoke $r11.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z5 == 0 goto label8;
+
+        $r13 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r12 = virtualinvoke $r13.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r12.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>("Could not formulate automatic 400 Bad Request");
+
+     label8:
+        throw r1;
+
+     label9:
+        virtualinvoke r2.<gov.nist.javax.sip.message.SIPMessage: void addUnparsed(java.lang.String)>(r4);
+
+        return;
+
+        catch java.io.IOException from label4 to label5 with label6;
+    }
+
+    public void processMessage(gov.nist.javax.sip.message.SIPMessage) throws java.lang.Exception
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        gov.nist.javax.sip.message.SIPMessage r1;
+        java.lang.String r2, r6, $r39, $r59, $r60, $r66, $r75, $r77, $r81, $r87, $r88, $r98, $r102;
+        gov.nist.javax.sip.header.Via r3;
+        javax.sip.address.Hop r4, $r70;
+        java.text.ParseException r5, $r90, $r107;
+        byte[] r7;
+        java.lang.Throwable r8, r10, r11, $r93, $r103, $r112;
+        gov.nist.javax.sip.stack.SIPServerTransaction r9, r117;
+        javax.sip.header.FromHeader $r12;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r13, $r15, $r17, $r22, $r23, $r24, $r29, $r31, $r40, $r42, $r43, $r44, $r45, $r46, $r47, $r51, $r52, $r53, $r61, $r71, $r76, $r92, $r97, $r108, $r109;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z13, $z14, $z15, $z16, $z17, $z18, $z19, $z20, $z21, $z22, $z23;
+        gov.nist.core.StackLogger $r14, $r16, $r25, $r36, $r41, $r48, $r49, $r73, $r91, $r110;
+        javax.sip.header.CallIdHeader $r18;
+        javax.sip.header.ToHeader $r19;
+        gov.nist.javax.sip.header.ViaList $r20, r113;
+        javax.sip.header.CSeqHeader $r21;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, i12;
+        gov.nist.javax.sip.stack.SIPTransaction $r26, $r28, $r30, $r32, $r50, $r104, $r105, $r106;
+        gov.nist.javax.sip.stack.SIPClientTransaction $r27;
+        java.lang.StringBuilder $r33, $r34, $r35, $r58, $r63, $r64, $r67, $r100, $r101, $r111;
+        javax.sip.header.ContentLengthHeader $r37, $r38, $r54, $r55;
+        gov.nist.core.HostPort $r56;
+        gov.nist.core.ServerLogger $r57;
+        java.lang.Exception $r62;
+        gov.nist.javax.sip.stack.MessageProcessor $r65, $r68, $r86;
+        java.net.InetAddress $r69, $r78, $r79, $r89, $r95;
+        gov.nist.core.net.AddressResolver $r72;
+        javax.sip.header.Header $r74;
+        java.net.Socket $r80, $r84, $r94, $r96;
+        java.net.InetSocketAddress $r82;
+        java.net.SocketAddress $r83;
+        gov.nist.javax.sip.stack.TCPMessageProcessor $r85;
+        gov.nist.javax.sip.stack.IOHandler $r99;
+        long l13;
+        gov.nist.javax.sip.message.SIPRequest r114;
+        gov.nist.javax.sip.message.SIPResponse r115, r118;
+        gov.nist.javax.sip.stack.ServerRequestInterface r116;
+        gov.nist.javax.sip.stack.ServerResponseInterface r120;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        r1 := @parameter0: gov.nist.javax.sip.message.SIPMessage;
+
+     label01:
+        $r12 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: javax.sip.header.FromHeader getFrom()>();
+
+        if $r12 == null goto label02;
+
+        $r19 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: javax.sip.header.ToHeader getTo()>();
+
+        if $r19 == null goto label02;
+
+        $r18 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: javax.sip.header.CallIdHeader getCallId()>();
+
+        if $r18 == null goto label02;
+
+        $r21 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: javax.sip.header.CSeqHeader getCSeq()>();
+
+        if $r21 == null goto label02;
+
+        $r20 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: gov.nist.javax.sip.header.ViaList getViaHeaders()>();
+
+        if $r20 != null goto label04;
+
+     label02:
+        r2 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: java.lang.String encode()>();
+
+        $r13 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r13.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label03;
+
+        $r15 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r14 = virtualinvoke $r15.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r14.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>(">>> Dropped Bad Msg");
+
+        $r17 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r16 = virtualinvoke $r17.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r16.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>(r2);
+
+     label03:
+        return;
+
+     label04:
+        r113 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: gov.nist.javax.sip.header.ViaList getViaHeaders()>();
+
+        $z1 = r1 instanceof gov.nist.javax.sip.message.SIPRequest;
+
+        if $z1 == 0 goto label11;
+
+        $r74 = virtualinvoke r113.<gov.nist.javax.sip.header.ViaList: javax.sip.header.Header getFirst()>();
+
+        r3 = (gov.nist.javax.sip.header.Via) $r74;
+
+        $r71 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r72 = $r71.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.net.AddressResolver addressResolver>;
+
+        $r70 = virtualinvoke r3.<gov.nist.javax.sip.header.Via: javax.sip.address.Hop getHop()>();
+
+        r4 = interfaceinvoke $r72.<gov.nist.core.net.AddressResolver: javax.sip.address.Hop resolveAddress(javax.sip.address.Hop)>($r70);
+
+        $r81 = virtualinvoke r3.<gov.nist.javax.sip.header.Via: java.lang.String getTransport()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String peerProtocol> = $r81;
+
+     label05:
+        $r80 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $r79 = virtualinvoke $r80.<java.net.Socket: java.net.InetAddress getInetAddress()>();
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress> = $r79;
+
+        $z16 = virtualinvoke r3.<gov.nist.javax.sip.header.Via: boolean hasParameter(java.lang.String)>("rport");
+
+        if $z16 != 0 goto label06;
+
+        $r98 = interfaceinvoke r4.<javax.sip.address.Hop: java.lang.String getHost()>();
+
+        $r89 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress>;
+
+        $r88 = virtualinvoke $r89.<java.net.InetAddress: java.lang.String getHostAddress()>();
+
+        $z18 = virtualinvoke $r98.<java.lang.String: boolean equals(java.lang.Object)>($r88);
+
+        if $z18 != 0 goto label07;
+
+     label06:
+        $r78 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress>;
+
+        $r77 = virtualinvoke $r78.<java.net.InetAddress: java.lang.String getHostAddress()>();
+
+        virtualinvoke r3.<gov.nist.javax.sip.header.Via: void setParameter(java.lang.String,java.lang.String)>("received", $r77);
+
+     label07:
+        $i11 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int peerPort>;
+
+        $r87 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>($i11);
+
+        virtualinvoke r3.<gov.nist.javax.sip.header.Via: void setParameter(java.lang.String,java.lang.String)>("rport", $r87);
+
+     label08:
+        goto label10;
+
+     label09:
+        $r90 := @caughtexception;
+
+        r5 = $r90;
+
+        $r92 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r91 = virtualinvoke $r92.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        staticinvoke <gov.nist.core.InternalErrorHandler: void handleException(java.lang.Exception,gov.nist.core.StackLogger)>(r5, $r91);
+
+     label10:
+        $z17 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: boolean isCached>;
+
+        if $z17 != 0 goto label11;
+
+        $r86 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.MessageProcessor messageProcessor>;
+
+        $r85 = (gov.nist.javax.sip.stack.TCPMessageProcessor) $r86;
+
+        virtualinvoke $r85.<gov.nist.javax.sip.stack.TCPMessageProcessor: void cacheMessageChannel(gov.nist.javax.sip.stack.TCPMessageChannel)>(r0);
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: boolean isCached> = 1;
+
+        $r84 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $r83 = virtualinvoke $r84.<java.net.Socket: java.net.SocketAddress getRemoteSocketAddress()>();
+
+        $r82 = (java.net.InetSocketAddress) $r83;
+
+        i12 = virtualinvoke $r82.<java.net.InetSocketAddress: int getPort()>();
+
+        $r94 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $r95 = virtualinvoke $r94.<java.net.Socket: java.net.InetAddress getInetAddress()>();
+
+        r6 = staticinvoke <gov.nist.javax.sip.stack.IOHandler: java.lang.String makeKey(java.net.InetAddress,int)>($r95, i12);
+
+        $r97 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r99 = $r97.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.javax.sip.stack.IOHandler ioHandler>;
+
+        $r96 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        virtualinvoke $r99.<gov.nist.javax.sip.stack.IOHandler: void putSocket(java.lang.String,java.net.Socket)>(r6, $r96);
+
+     label11:
+        l13 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $z2 = r1 instanceof gov.nist.javax.sip.message.SIPRequest;
+
+        if $z2 == 0 goto label26;
+
+        r114 = (gov.nist.javax.sip.message.SIPRequest) r1;
+
+        $r46 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z12 = virtualinvoke $r46.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z12 == 0 goto label12;
+
+        $r76 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r73 = virtualinvoke $r76.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r73.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>("----Processing Message---");
+
+     label12:
+        $r47 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r48 = virtualinvoke $r47.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $z11 = interfaceinvoke $r48.<gov.nist.core.StackLogger: boolean isLoggingEnabled(int)>(16);
+
+        if $z11 == 0 goto label13;
+
+        $r61 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r57 = $r61.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.ServerLogger serverLogger>;
+
+        $r56 = virtualinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.core.HostPort getPeerHostPort()>();
+
+        $r59 = virtualinvoke $r56.<gov.nist.core.HostPort: java.lang.String toString()>();
+
+        $r58 = new java.lang.StringBuilder;
+
+        specialinvoke $r58.<java.lang.StringBuilder: void <init>()>();
+
+        $r68 = virtualinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.MessageProcessor getMessageProcessor()>();
+
+        $r69 = virtualinvoke $r68.<gov.nist.javax.sip.stack.MessageProcessor: java.net.InetAddress getIpAddress()>();
+
+        $r66 = virtualinvoke $r69.<java.net.InetAddress: java.lang.String getHostAddress()>();
+
+        $r67 = virtualinvoke $r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r66);
+
+        $r64 = virtualinvoke $r67.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        $r65 = virtualinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.MessageProcessor getMessageProcessor()>();
+
+        $i10 = virtualinvoke $r65.<gov.nist.javax.sip.stack.MessageProcessor: int getPort()>();
+
+        $r63 = virtualinvoke $r64.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i10);
+
+        $r75 = virtualinvoke $r63.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke $r57.<gov.nist.core.ServerLogger: void logMessage(gov.nist.javax.sip.message.SIPMessage,java.lang.String,java.lang.String,boolean,long)>(r1, $r59, $r75, 0, l13);
+
+     label13:
+        $r44 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $i5 = virtualinvoke $r44.<gov.nist.javax.sip.stack.SIPTransactionStack: int getMaxMessageSize()>();
+
+        if $i5 <= 0 goto label16;
+
+        $i8 = virtualinvoke r114.<gov.nist.javax.sip.message.SIPRequest: int getSize()>();
+
+        $r54 = virtualinvoke r114.<gov.nist.javax.sip.message.SIPRequest: javax.sip.header.ContentLengthHeader getContentLength()>();
+
+        if $r54 != null goto label14;
+
+        $i9 = 0;
+
+        goto label15;
+
+     label14:
+        $r55 = virtualinvoke r114.<gov.nist.javax.sip.message.SIPRequest: javax.sip.header.ContentLengthHeader getContentLength()>();
+
+        $i9 = interfaceinvoke $r55.<javax.sip.header.ContentLengthHeader: int getContentLength()>();
+
+     label15:
+        $i6 = $i8 + $i9;
+
+        $r53 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $i7 = virtualinvoke $r53.<gov.nist.javax.sip.stack.SIPTransactionStack: int getMaxMessageSize()>();
+
+        if $i6 <= $i7 goto label16;
+
+        r115 = virtualinvoke r114.<gov.nist.javax.sip.message.SIPRequest: gov.nist.javax.sip.message.SIPResponse createResponse(int)>(513);
+
+        $r60 = virtualinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String getTransport()>();
+
+        r7 = virtualinvoke r115.<gov.nist.javax.sip.message.SIPResponse: byte[] encodeAsBytes(java.lang.String)>($r60);
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.TCPMessageChannel: void sendMessage(byte[],boolean)>(r7, 0);
+
+        $r62 = new java.lang.Exception;
+
+        specialinvoke $r62.<java.lang.Exception: void <init>(java.lang.String)>("Message size exceeded");
+
+        throw $r62;
+
+     label16:
+        $r45 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r116 = virtualinvoke $r45.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.javax.sip.stack.ServerRequestInterface newSIPServerRequest(gov.nist.javax.sip.message.SIPRequest,gov.nist.javax.sip.stack.MessageChannel)>(r114, r0);
+
+        if r116 == null goto label24;
+
+     label17:
+        interfaceinvoke r116.<gov.nist.javax.sip.stack.ServerRequestInterface: void processRequest(gov.nist.javax.sip.message.SIPRequest,gov.nist.javax.sip.stack.MessageChannel)>(r114, r0);
+
+     label18:
+        $z13 = r116 instanceof gov.nist.javax.sip.stack.SIPTransaction;
+
+        if $z13 == 0 goto label23;
+
+        r117 = (gov.nist.javax.sip.stack.SIPServerTransaction) r116;
+
+        $z14 = virtualinvoke r117.<gov.nist.javax.sip.stack.SIPServerTransaction: boolean passToListener()>();
+
+        if $z14 != 0 goto label19;
+
+        $r50 = (gov.nist.javax.sip.stack.SIPTransaction) r116;
+
+        virtualinvoke $r50.<gov.nist.javax.sip.stack.SIPTransaction: void releaseSem()>();
+
+     label19:
+        goto label23;
+
+     label20:
+        $r93 := @caughtexception;
+
+        r8 = $r93;
+
+     label21:
+        $z19 = r116 instanceof gov.nist.javax.sip.stack.SIPTransaction;
+
+        if $z19 == 0 goto label22;
+
+        r9 = (gov.nist.javax.sip.stack.SIPServerTransaction) r116;
+
+        $z22 = virtualinvoke r9.<gov.nist.javax.sip.stack.SIPServerTransaction: boolean passToListener()>();
+
+        if $z22 != 0 goto label22;
+
+        $r106 = (gov.nist.javax.sip.stack.SIPTransaction) r116;
+
+        virtualinvoke $r106.<gov.nist.javax.sip.stack.SIPTransaction: void releaseSem()>();
+
+     label22:
+        throw r8;
+
+     label23:
+        goto label25;
+
+     label24:
+        $r51 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z15 = virtualinvoke $r51.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z15 == 0 goto label25;
+
+        $r52 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r49 = virtualinvoke $r52.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r49.<gov.nist.core.StackLogger: void logWarning(java.lang.String)>("Dropping request -- could not acquire semaphore in 10 sec");
+
+     label25:
+        goto label46;
+
+     label26:
+        r118 = (gov.nist.javax.sip.message.SIPResponse) r1;
+
+     label27:
+        virtualinvoke r118.<gov.nist.javax.sip.message.SIPResponse: void checkHeaders()>();
+
+     label28:
+        goto label31;
+
+     label29:
+        $r107 := @caughtexception;
+
+        $r108 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z23 = virtualinvoke $r108.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z23 == 0 goto label30;
+
+        $r109 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r110 = virtualinvoke $r109.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r111 = new java.lang.StringBuilder;
+
+        specialinvoke $r111.<java.lang.StringBuilder: void <init>()>();
+
+        $r100 = virtualinvoke $r111.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Dropping Badly formatted response message >>> ");
+
+        $r101 = virtualinvoke $r100.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r118);
+
+        $r102 = virtualinvoke $r101.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke $r110.<gov.nist.core.StackLogger: void logError(java.lang.String)>($r102);
+
+     label30:
+        return;
+
+     label31:
+        $r22 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $i0 = virtualinvoke $r22.<gov.nist.javax.sip.stack.SIPTransactionStack: int getMaxMessageSize()>();
+
+        if $i0 <= 0 goto label35;
+
+        $i1 = virtualinvoke r118.<gov.nist.javax.sip.message.SIPResponse: int getSize()>();
+
+        $r38 = virtualinvoke r118.<gov.nist.javax.sip.message.SIPResponse: javax.sip.header.ContentLengthHeader getContentLength()>();
+
+        if $r38 != null goto label32;
+
+        $i4 = 0;
+
+        goto label33;
+
+     label32:
+        $r37 = virtualinvoke r118.<gov.nist.javax.sip.message.SIPResponse: javax.sip.header.ContentLengthHeader getContentLength()>();
+
+        $i4 = interfaceinvoke $r37.<javax.sip.header.ContentLengthHeader: int getContentLength()>();
+
+     label33:
+        $i3 = $i1 + $i4;
+
+        $r40 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $i2 = virtualinvoke $r40.<gov.nist.javax.sip.stack.SIPTransactionStack: int getMaxMessageSize()>();
+
+        if $i3 <= $i2 goto label35;
+
+        $r43 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z10 = virtualinvoke $r43.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z10 == 0 goto label34;
+
+        $r42 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r41 = virtualinvoke $r42.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r41.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>("Message size exceeded");
+
+     label34:
+        return;
+
+     label35:
+        $r23 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r120 = virtualinvoke $r23.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.javax.sip.stack.ServerResponseInterface newSIPServerResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel)>(r118, r0);
+
+        if r120 == null goto label45;
+
+     label36:
+        $z3 = r120 instanceof gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        if $z3 == 0 goto label39;
+
+        $r27 = (gov.nist.javax.sip.stack.SIPClientTransaction) r120;
+
+        $z8 = virtualinvoke $r27.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean checkFromTag(gov.nist.javax.sip.message.SIPResponse)>(r118);
+
+        if $z8 != 0 goto label39;
+
+        $r29 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z6 = virtualinvoke $r29.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z6 == 0 goto label37;
+
+        $r31 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r36 = virtualinvoke $r31.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r35 = new java.lang.StringBuilder;
+
+        specialinvoke $r35.<java.lang.StringBuilder: void <init>()>();
+
+        $r34 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Dropping response message with invalid tag >>> ");
+
+        $r33 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r118);
+
+        $r39 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke $r36.<gov.nist.core.StackLogger: void logError(java.lang.String)>($r39);
+
+     label37:
+        $z7 = r120 instanceof gov.nist.javax.sip.stack.SIPTransaction;
+
+        if $z7 == 0 goto label38;
+
+        $r32 = (gov.nist.javax.sip.stack.SIPTransaction) r120;
+
+        $z9 = virtualinvoke $r32.<gov.nist.javax.sip.stack.SIPTransaction: boolean passToListener()>();
+
+        if $z9 != 0 goto label38;
+
+        $r30 = (gov.nist.javax.sip.stack.SIPTransaction) r120;
+
+        virtualinvoke $r30.<gov.nist.javax.sip.stack.SIPTransaction: void releaseSem()>();
+
+     label38:
+        return;
+
+     label39:
+        interfaceinvoke r120.<gov.nist.javax.sip.stack.ServerResponseInterface: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel)>(r118, r0);
+
+     label40:
+        $z4 = r120 instanceof gov.nist.javax.sip.stack.SIPTransaction;
+
+        if $z4 == 0 goto label44;
+
+        $r28 = (gov.nist.javax.sip.stack.SIPTransaction) r120;
+
+        $z5 = virtualinvoke $r28.<gov.nist.javax.sip.stack.SIPTransaction: boolean passToListener()>();
+
+        if $z5 != 0 goto label44;
+
+        $r26 = (gov.nist.javax.sip.stack.SIPTransaction) r120;
+
+        virtualinvoke $r26.<gov.nist.javax.sip.stack.SIPTransaction: void releaseSem()>();
+
+        goto label44;
+
+     label41:
+        $r103 := @caughtexception;
+
+        r10 = $r103;
+
+     label42:
+        $z20 = r120 instanceof gov.nist.javax.sip.stack.SIPTransaction;
+
+        if $z20 == 0 goto label43;
+
+        $r104 = (gov.nist.javax.sip.stack.SIPTransaction) r120;
+
+        $z21 = virtualinvoke $r104.<gov.nist.javax.sip.stack.SIPTransaction: boolean passToListener()>();
+
+        if $z21 != 0 goto label43;
+
+        $r105 = (gov.nist.javax.sip.stack.SIPTransaction) r120;
+
+        virtualinvoke $r105.<gov.nist.javax.sip.stack.SIPTransaction: void releaseSem()>();
+
+     label43:
+        throw r10;
+
+     label44:
+        goto label46;
+
+     label45:
+        $r24 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r25 = virtualinvoke $r24.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r25.<gov.nist.core.StackLogger: void logWarning(java.lang.String)>("Application is blocked -- could not acquire semaphore -- dropping response");
+
+     label46:
+        goto label49;
+
+     label47:
+        $r112 := @caughtexception;
+
+        r11 = $r112;
+
+     label48:
+        throw r11;
+
+     label49:
+        return;
+
+        catch java.text.ParseException from label05 to label08 with label09;
+        catch java.lang.Throwable from label17 to label18 with label20;
+        catch java.lang.Throwable from label20 to label21 with label20;
+        catch java.text.ParseException from label27 to label28 with label29;
+        catch java.lang.Throwable from label36 to label37 with label41;
+        catch java.lang.Throwable from label39 to label40 with label41;
+        catch java.lang.Throwable from label41 to label42 with label41;
+        catch java.lang.Throwable from label01 to label03 with label47;
+        catch java.lang.Throwable from label04 to label30 with label47;
+        catch java.lang.Throwable from label31 to label34 with label47;
+        catch java.lang.Throwable from label35 to label38 with label47;
+        catch java.lang.Throwable from label39 to label46 with label47;
+        catch java.lang.Throwable from label47 to label48 with label47;
+    }
+
+    public void run()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        byte[] r1, $r16, $r32;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16;
+        gov.nist.javax.sip.stack.TCPMessageProcessor r2, $r13, $r19, $r21, $r22, $r23, $r25, $r27, $r30, $r37, $r38, $r41, $r44, $r45, r59;
+        java.lang.Throwable r3, r4, r5, $r28, $r43, $r53;
+        gov.nist.javax.sip.parser.Pipeline $r6, r57;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r7, $r8, $r12, $r18, $r31, $r36, $r40, $r51;
+        java.io.InputStream $r9, $r15;
+        java.util.Timer $r10;
+        gov.nist.javax.sip.parser.PipelinedMsgParser $r11, $r14, $r24, $r29, $r54;
+        java.lang.String $r17, $r33, $r49;
+        java.net.Socket $r20, $r35;
+        java.io.IOException $r26, $r34, $r55, r58;
+        boolean $z0;
+        gov.nist.core.StackLogger $r39, $r52;
+        java.lang.Exception $r42, $r50, $r56, r60;
+        java.lang.StringBuilder $r46, $r47, $r48;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $r6 = new gov.nist.javax.sip.parser.Pipeline;
+
+        $r9 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.io.InputStream myClientInputStream>;
+
+        $r7 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $i1 = $r7.<gov.nist.javax.sip.stack.SIPTransactionStack: int readTimeout>;
+
+        $r8 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r10 = virtualinvoke $r8.<gov.nist.javax.sip.stack.SIPTransactionStack: java.util.Timer getTimer()>();
+
+        specialinvoke $r6.<gov.nist.javax.sip.parser.Pipeline: void <init>(java.io.InputStream,int,java.util.Timer)>($r9, $i1, $r10);
+
+        r57 = $r6;
+
+        $r11 = new gov.nist.javax.sip.parser.PipelinedMsgParser;
+
+        $r12 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $i2 = virtualinvoke $r12.<gov.nist.javax.sip.stack.SIPTransactionStack: int getMaxMessageSize()>();
+
+        specialinvoke $r11.<gov.nist.javax.sip.parser.PipelinedMsgParser: void <init>(gov.nist.javax.sip.parser.SIPMessageListener,gov.nist.javax.sip.parser.Pipeline,int)>(r0, r57, $i2);
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.parser.PipelinedMsgParser myParser> = $r11;
+
+        $r14 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.parser.PipelinedMsgParser myParser>;
+
+        virtualinvoke $r14.<gov.nist.javax.sip.parser.PipelinedMsgParser: void processInput()>();
+
+        $r13 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        $i4 = $r13.<gov.nist.javax.sip.stack.TCPMessageProcessor: int useCount>;
+
+        $i3 = $i4 + 1;
+
+        $r13.<gov.nist.javax.sip.stack.TCPMessageProcessor: int useCount> = $i3;
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: boolean isRunning> = 1;
+
+     label01:
+        r1 = newarray (byte)[4096];
+
+        $r15 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.io.InputStream myClientInputStream>;
+
+        i0 = virtualinvoke $r15.<java.io.InputStream: int read(byte[],int,int)>(r1, 0, 4096);
+
+        if i0 != -1 goto label11;
+
+        $r17 = "\r\n\r\n";
+
+        $r16 = virtualinvoke $r17.<java.lang.String: byte[] getBytes(java.lang.String)>("UTF-8");
+
+        virtualinvoke r57.<gov.nist.javax.sip.parser.Pipeline: void write(byte[])>($r16);
+
+     label02:
+        $r18 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $i5 = $r18.<gov.nist.javax.sip.stack.SIPTransactionStack: int maxConnections>;
+
+        if $i5 == -1 goto label07;
+
+        $r22 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        r2 = $r22;
+
+        entermonitor $r22;
+
+     label03:
+        $r23 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        $i8 = $r23.<gov.nist.javax.sip.stack.TCPMessageProcessor: int nConnections>;
+
+        $i9 = $i8 - 1;
+
+        $r23.<gov.nist.javax.sip.stack.TCPMessageProcessor: int nConnections> = $i9;
+
+        $r25 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        virtualinvoke $r25.<java.lang.Object: void notify()>();
+
+        exitmonitor r2;
+
+     label04:
+        goto label07;
+
+     label05:
+        $r53 := @caughtexception;
+
+        r3 = $r53;
+
+        exitmonitor r2;
+
+     label06:
+        throw r3;
+
+     label07:
+        virtualinvoke r57.<gov.nist.javax.sip.parser.Pipeline: void close()>();
+
+        $r20 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        virtualinvoke $r20.<java.net.Socket: void close()>();
+
+     label08:
+        goto label10;
+
+     label09:
+        $r55 := @caughtexception;
+
+     label10:
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: boolean isRunning> = 0;
+
+        $r19 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        virtualinvoke $r19.<gov.nist.javax.sip.stack.TCPMessageProcessor: void remove(gov.nist.javax.sip.stack.TCPMessageChannel)>(r0);
+
+        $r21 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        $i6 = $r21.<gov.nist.javax.sip.stack.TCPMessageProcessor: int useCount>;
+
+        $i7 = $i6 - 1;
+
+        $r21.<gov.nist.javax.sip.stack.TCPMessageProcessor: int useCount> = $i7;
+
+        $r24 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.parser.PipelinedMsgParser myParser>;
+
+        virtualinvoke $r24.<gov.nist.javax.sip.parser.PipelinedMsgParser: void close()>();
+
+        return;
+
+     label11:
+        virtualinvoke r57.<gov.nist.javax.sip.parser.Pipeline: void write(byte[],int,int)>(r1, 0, i0);
+
+     label12:
+        goto label01;
+
+     label13:
+        $r34 := @caughtexception;
+
+        r58 = $r34;
+
+     label14:
+        $r33 = "\r\n\r\n";
+
+        $r32 = virtualinvoke $r33.<java.lang.String: byte[] getBytes(java.lang.String)>("UTF-8");
+
+        virtualinvoke r57.<gov.nist.javax.sip.parser.Pipeline: void write(byte[])>($r32);
+
+     label15:
+        goto label17;
+
+     label16:
+        $r42 := @caughtexception;
+
+     label17:
+        $r31 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r31.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label18;
+
+        $r40 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r39 = virtualinvoke $r40.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r46 = new java.lang.StringBuilder;
+
+        specialinvoke $r46.<java.lang.StringBuilder: void <init>()>();
+
+        $r47 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("IOException  closing sock ");
+
+        $r48 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r58);
+
+        $r49 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke $r39.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r49);
+
+     label18:
+        $r36 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $i12 = $r36.<gov.nist.javax.sip.stack.SIPTransactionStack: int maxConnections>;
+
+        if $i12 == -1 goto label23;
+
+        $r38 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        r59 = $r38;
+
+        entermonitor $r38;
+
+     label19:
+        $r37 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        $i14 = $r37.<gov.nist.javax.sip.stack.TCPMessageProcessor: int nConnections>;
+
+        $i13 = $i14 - 1;
+
+        $r37.<gov.nist.javax.sip.stack.TCPMessageProcessor: int nConnections> = $i13;
+
+        $r41 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        virtualinvoke $r41.<java.lang.Object: void notify()>();
+
+        exitmonitor r59;
+
+     label20:
+        goto label23;
+
+     label21:
+        $r28 := @caughtexception;
+
+        r4 = $r28;
+
+        exitmonitor r59;
+
+     label22:
+        throw r4;
+
+     label23:
+        $r35 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        virtualinvoke $r35.<java.net.Socket: void close()>();
+
+        virtualinvoke r57.<gov.nist.javax.sip.parser.Pipeline: void close()>();
+
+     label24:
+        goto label26;
+
+     label25:
+        $r26 := @caughtexception;
+
+     label26:
+        goto label28;
+
+     label27:
+        $r56 := @caughtexception;
+
+     label28:
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: boolean isRunning> = 0;
+
+        $r27 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        virtualinvoke $r27.<gov.nist.javax.sip.stack.TCPMessageProcessor: void remove(gov.nist.javax.sip.stack.TCPMessageChannel)>(r0);
+
+        $r30 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        $i11 = $r30.<gov.nist.javax.sip.stack.TCPMessageProcessor: int useCount>;
+
+        $i10 = $i11 - 1;
+
+        $r30.<gov.nist.javax.sip.stack.TCPMessageProcessor: int useCount> = $i10;
+
+        $r29 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.parser.PipelinedMsgParser myParser>;
+
+        virtualinvoke $r29.<gov.nist.javax.sip.parser.PipelinedMsgParser: void close()>();
+
+        return;
+
+     label29:
+        $r50 := @caughtexception;
+
+        r60 = $r50;
+
+        $r51 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r52 = virtualinvoke $r51.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        staticinvoke <gov.nist.core.InternalErrorHandler: void handleException(java.lang.Exception,gov.nist.core.StackLogger)>(r60, $r52);
+
+        goto label01;
+
+     label30:
+        $r43 := @caughtexception;
+
+        r5 = $r43;
+
+     label31:
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: boolean isRunning> = 0;
+
+        $r44 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        virtualinvoke $r44.<gov.nist.javax.sip.stack.TCPMessageProcessor: void remove(gov.nist.javax.sip.stack.TCPMessageChannel)>(r0);
+
+        $r45 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        $i15 = $r45.<gov.nist.javax.sip.stack.TCPMessageProcessor: int useCount>;
+
+        $i16 = $i15 - 1;
+
+        $r45.<gov.nist.javax.sip.stack.TCPMessageProcessor: int useCount> = $i16;
+
+        $r54 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.parser.PipelinedMsgParser myParser>;
+
+        virtualinvoke $r54.<gov.nist.javax.sip.parser.PipelinedMsgParser: void close()>();
+
+        throw r5;
+
+        catch java.lang.Throwable from label03 to label04 with label05;
+        catch java.lang.Throwable from label05 to label06 with label05;
+        catch java.io.IOException from label02 to label08 with label09;
+        catch java.io.IOException from label01 to label10 with label13;
+        catch java.io.IOException from label11 to label12 with label13;
+        catch java.lang.Exception from label14 to label15 with label16;
+        catch java.lang.Throwable from label19 to label20 with label21;
+        catch java.lang.Throwable from label21 to label22 with label21;
+        catch java.io.IOException from label18 to label24 with label25;
+        catch java.lang.Exception from label17 to label26 with label27;
+        catch java.lang.Exception from label01 to label10 with label29;
+        catch java.lang.Exception from label11 to label12 with label29;
+        catch java.lang.Throwable from label01 to label10 with label30;
+        catch java.lang.Throwable from label11 to label28 with label30;
+        catch java.lang.Throwable from label29 to label31 with label30;
+    }
+
+    protected void uncache()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        boolean $z0, $z1;
+        gov.nist.javax.sip.stack.TCPMessageProcessor $r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $z0 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: boolean isCached>;
+
+        if $z0 == 0 goto label1;
+
+        $z1 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: boolean isRunning>;
+
+        if $z1 != 0 goto label1;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: gov.nist.javax.sip.stack.TCPMessageProcessor tcpMessageProcessor>;
+
+        virtualinvoke $r1.<gov.nist.javax.sip.stack.TCPMessageProcessor: void remove(gov.nist.javax.sip.stack.TCPMessageChannel)>(r0);
+
+     label1:
+        return;
+    }
+
+    public boolean equals(java.lang.Object)
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0, r2;
+        java.lang.Object r1;
+        java.lang.Class $r3, $r4;
+        boolean $z0;
+        java.net.Socket $r5, $r6;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        r1 := @parameter0: java.lang.Object;
+
+        $r3 = virtualinvoke r0.<java.lang.Object: java.lang.Class getClass()>();
+
+        $r4 = virtualinvoke r1.<java.lang.Object: java.lang.Class getClass()>();
+
+        $z0 = virtualinvoke $r3.<java.lang.Object: boolean equals(java.lang.Object)>($r4);
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        r2 = (gov.nist.javax.sip.stack.TCPMessageChannel) r1;
+
+        $r6 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        $r5 = r2.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        if $r6 == $r5 goto label2;
+
+        return 0;
+
+     label2:
+        return 1;
+    }
+
+    public java.lang.String getKey()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        java.lang.String $r1, $r3, $r4, $r5;
+        int $i0;
+        java.net.InetAddress $r2;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String key>;
+
+        if $r1 == null goto label1;
+
+        $r5 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String key>;
+
+        return $r5;
+
+     label1:
+        $r2 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress>;
+
+        $i0 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int peerPort>;
+
+        $r3 = staticinvoke <gov.nist.javax.sip.stack.MessageChannel: java.lang.String getKey(java.net.InetAddress,int,java.lang.String)>($r2, $i0, "TCP");
+
+        r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String key> = $r3;
+
+        $r4 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String key>;
+
+        return $r4;
+    }
+
+    public java.lang.String getViaHost()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        java.lang.String $r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.lang.String myAddress>;
+
+        return $r1;
+    }
+
+    public int getViaPort()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        int $i0;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $i0 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int myPort>;
+
+        return $i0;
+    }
+
+    public int getPeerPort()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        int $i0;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $i0 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int peerPort>;
+
+        return $i0;
+    }
+
+    public int getPeerPacketSourcePort()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        int $i0;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $i0 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: int peerPort>;
+
+        return $i0;
+    }
+
+    public java.net.InetAddress getPeerPacketSourceAddress()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        java.net.InetAddress $r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.InetAddress peerAddress>;
+
+        return $r1;
+    }
+
+    public boolean isSecure()
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+
+        r0 := @this: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        return 0;
+    }
+
+    static java.net.Socket access$000(gov.nist.javax.sip.stack.TCPMessageChannel)
+    {
+        gov.nist.javax.sip.stack.TCPMessageChannel r0;
+        java.net.Socket $r1;
+
+        r0 := @parameter0: gov.nist.javax.sip.stack.TCPMessageChannel;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.TCPMessageChannel: java.net.Socket mySock>;
+
+        return $r1;
+    }
+}

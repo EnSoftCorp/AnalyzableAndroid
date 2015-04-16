@@ -1,0 +1,2402 @@
+class com.android.gallery3d.exif.ExifParser extends java.lang.Object
+{
+    private static final boolean LOGV;
+    private static final java.lang.String TAG;
+    public static final int EVENT_START_OF_IFD;
+    public static final int EVENT_NEW_TAG;
+    public static final int EVENT_VALUE_OF_REGISTERED_TAG;
+    public static final int EVENT_COMPRESSED_IMAGE;
+    public static final int EVENT_UNCOMPRESSED_STRIP;
+    public static final int EVENT_END;
+    public static final int OPTION_IFD_0;
+    public static final int OPTION_IFD_1;
+    public static final int OPTION_IFD_EXIF;
+    public static final int OPTION_IFD_GPS;
+    public static final int OPTION_IFD_INTEROPERABILITY;
+    public static final int OPTION_THUMBNAIL;
+    protected static final int EXIF_HEADER;
+    protected static final short EXIF_HEADER_TAIL;
+    protected static final short LITTLE_ENDIAN_TAG;
+    protected static final short BIG_ENDIAN_TAG;
+    protected static final short TIFF_HEADER_TAIL;
+    protected static final int TAG_SIZE;
+    protected static final int OFFSET_SIZE;
+    private static final java.nio.charset.Charset US_ASCII;
+    protected static final int DEFAULT_IFD0_OFFSET;
+    private final com.android.gallery3d.exif.CountedDataInputStream mTiffStream;
+    private final int mOptions;
+    private int mIfdStartOffset;
+    private int mNumOfTagInIfd;
+    private int mIfdType;
+    private com.android.gallery3d.exif.ExifTag mTag;
+    private com.android.gallery3d.exif.ExifParser$ImageEvent mImageEvent;
+    private int mStripCount;
+    private com.android.gallery3d.exif.ExifTag mStripSizeTag;
+    private com.android.gallery3d.exif.ExifTag mJpegSizeTag;
+    private boolean mNeedToParseOffsetsInCurrentIfd;
+    private boolean mContainExifData;
+    private int mApp1End;
+    private int mOffsetToApp1EndFromSOF;
+    private byte[] mDataAboveIfd0;
+    private int mIfd0Position;
+    private int mTiffStartPosition;
+    private final com.android.gallery3d.exif.ExifInterface mInterface;
+    private static final short TAG_EXIF_IFD;
+    private static final short TAG_GPS_IFD;
+    private static final short TAG_INTEROPERABILITY_IFD;
+    private static final short TAG_JPEG_INTERCHANGE_FORMAT;
+    private static final short TAG_JPEG_INTERCHANGE_FORMAT_LENGTH;
+    private static final short TAG_STRIP_OFFSETS;
+    private static final short TAG_STRIP_BYTE_COUNTS;
+    private final java.util.TreeMap mCorrespondingEvent;
+
+    private boolean isIfdRequested(int)
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10;
+        boolean $z0, $z1, $z2, $z3, $z4;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        i0 := @parameter0: int;
+
+        tableswitch(i0)
+        {
+            case 0: goto label01;
+            case 1: goto label04;
+            case 2: goto label07;
+            case 3: goto label13;
+            case 4: goto label10;
+            default: goto label16;
+        };
+
+     label01:
+        $i1 = r0.<com.android.gallery3d.exif.ExifParser: int mOptions>;
+
+        $i2 = $i1 & 1;
+
+        if $i2 == 0 goto label02;
+
+        $z0 = 1;
+
+        goto label03;
+
+     label02:
+        $z0 = 0;
+
+     label03:
+        return $z0;
+
+     label04:
+        $i9 = r0.<com.android.gallery3d.exif.ExifParser: int mOptions>;
+
+        $i10 = $i9 & 2;
+
+        if $i10 == 0 goto label05;
+
+        $z4 = 1;
+
+        goto label06;
+
+     label05:
+        $z4 = 0;
+
+     label06:
+        return $z4;
+
+     label07:
+        $i7 = r0.<com.android.gallery3d.exif.ExifParser: int mOptions>;
+
+        $i8 = $i7 & 4;
+
+        if $i8 == 0 goto label08;
+
+        $z3 = 1;
+
+        goto label09;
+
+     label08:
+        $z3 = 0;
+
+     label09:
+        return $z3;
+
+     label10:
+        $i3 = r0.<com.android.gallery3d.exif.ExifParser: int mOptions>;
+
+        $i4 = $i3 & 8;
+
+        if $i4 == 0 goto label11;
+
+        $z1 = 1;
+
+        goto label12;
+
+     label11:
+        $z1 = 0;
+
+     label12:
+        return $z1;
+
+     label13:
+        $i5 = r0.<com.android.gallery3d.exif.ExifParser: int mOptions>;
+
+        $i6 = $i5 & 16;
+
+        if $i6 == 0 goto label14;
+
+        $z2 = 1;
+
+        goto label15;
+
+     label14:
+        $z2 = 0;
+
+     label15:
+        return $z2;
+
+     label16:
+        return 0;
+    }
+
+    private boolean isThumbnailRequested()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int $i0, $i1;
+        boolean $z0;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $i0 = r0.<com.android.gallery3d.exif.ExifParser: int mOptions>;
+
+        $i1 = $i0 & 32;
+
+        if $i1 == 0 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    private void <init>(java.io.InputStream, int, com.android.gallery3d.exif.ExifInterface) throws java.io.IOException, com.android.gallery3d.exif.ExifInvalidFormatException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        java.io.InputStream r1;
+        int i0, $i3, $i5, $i6;
+        com.android.gallery3d.exif.ExifInterface r2;
+        long l1;
+        java.util.TreeMap $r3;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.gallery3d.exif.CountedDataInputStream $r4, $r5;
+        byte $b2, $b4;
+        byte[] $r6, $r7;
+        java.lang.StringBuilder $r8, $r10, $r11;
+        com.android.gallery3d.exif.ExifInvalidFormatException $r9;
+        java.io.IOException $r12;
+        java.lang.String $r13;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        r1 := @parameter0: java.io.InputStream;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: com.android.gallery3d.exif.ExifInterface;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mIfdStartOffset> = 0;
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mNumOfTagInIfd> = 0;
+
+        r0.<com.android.gallery3d.exif.ExifParser: boolean mContainExifData> = 0;
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mOffsetToApp1EndFromSOF> = 0;
+
+        $r3 = new java.util.TreeMap;
+
+        specialinvoke $r3.<java.util.TreeMap: void <init>()>();
+
+        r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent> = $r3;
+
+        if r1 != null goto label1;
+
+        $r12 = new java.io.IOException;
+
+        specialinvoke $r12.<java.io.IOException: void <init>(java.lang.String)>("Null argument inputStream to ExifParser");
+
+        throw $r12;
+
+     label1:
+        r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifInterface mInterface> = r2;
+
+        $z0 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean seekTiffData(java.io.InputStream)>(r1);
+
+        r0.<com.android.gallery3d.exif.ExifParser: boolean mContainExifData> = $z0;
+
+        $r4 = new com.android.gallery3d.exif.CountedDataInputStream;
+
+        specialinvoke $r4.<com.android.gallery3d.exif.CountedDataInputStream: void <init>(java.io.InputStream)>(r1);
+
+        r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream> = $r4;
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mOptions> = i0;
+
+        $z1 = r0.<com.android.gallery3d.exif.ExifParser: boolean mContainExifData>;
+
+        if $z1 != 0 goto label2;
+
+        return;
+
+     label2:
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void parseTiffHeader()>();
+
+        $r5 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        l1 = virtualinvoke $r5.<com.android.gallery3d.exif.CountedDataInputStream: long readUnsignedInt()>();
+
+        $b2 = l1 cmp 2147483647L;
+
+        if $b2 <= 0 goto label3;
+
+        $r9 = new com.android.gallery3d.exif.ExifInvalidFormatException;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid offset ");
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l1);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r9.<com.android.gallery3d.exif.ExifInvalidFormatException: void <init>(java.lang.String)>($r13);
+
+        throw $r9;
+
+     label3:
+        $i3 = (int) l1;
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mIfd0Position> = $i3;
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mIfdType> = 0;
+
+        $z2 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(0);
+
+        if $z2 != 0 goto label4;
+
+        $z3 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean needToParseOffsetsInCurrentIfd()>();
+
+        if $z3 == 0 goto label5;
+
+     label4:
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void registerIfd(int,long)>(0, l1);
+
+        $b4 = l1 cmp 8L;
+
+        if $b4 == 0 goto label5;
+
+        $i6 = (int) l1;
+
+        $i5 = $i6 - 8;
+
+        $r7 = newarray (byte)[$i5];
+
+        r0.<com.android.gallery3d.exif.ExifParser: byte[] mDataAboveIfd0> = $r7;
+
+        $r6 = r0.<com.android.gallery3d.exif.ExifParser: byte[] mDataAboveIfd0>;
+
+        virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: int read(byte[])>($r6);
+
+     label5:
+        return;
+    }
+
+    protected static com.android.gallery3d.exif.ExifParser parse(java.io.InputStream, int, com.android.gallery3d.exif.ExifInterface) throws java.io.IOException, com.android.gallery3d.exif.ExifInvalidFormatException
+    {
+        java.io.InputStream r0;
+        int i0;
+        com.android.gallery3d.exif.ExifInterface r1;
+        com.android.gallery3d.exif.ExifParser $r2;
+
+        r0 := @parameter0: java.io.InputStream;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: com.android.gallery3d.exif.ExifInterface;
+
+        $r2 = new com.android.gallery3d.exif.ExifParser;
+
+        specialinvoke $r2.<com.android.gallery3d.exif.ExifParser: void <init>(java.io.InputStream,int,com.android.gallery3d.exif.ExifInterface)>(r0, i0, r1);
+
+        return $r2;
+    }
+
+    protected static com.android.gallery3d.exif.ExifParser parse(java.io.InputStream, com.android.gallery3d.exif.ExifInterface) throws java.io.IOException, com.android.gallery3d.exif.ExifInvalidFormatException
+    {
+        java.io.InputStream r0;
+        com.android.gallery3d.exif.ExifInterface r1;
+        com.android.gallery3d.exif.ExifParser $r2;
+
+        r0 := @parameter0: java.io.InputStream;
+
+        r1 := @parameter1: com.android.gallery3d.exif.ExifInterface;
+
+        $r2 = new com.android.gallery3d.exif.ExifParser;
+
+        specialinvoke $r2.<com.android.gallery3d.exif.ExifParser: void <init>(java.io.InputStream,int,com.android.gallery3d.exif.ExifInterface)>(r0, 63, r1);
+
+        return $r2;
+    }
+
+    protected int next() throws java.io.IOException, com.android.gallery3d.exif.ExifInvalidFormatException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int i0, i1, $i4, $i5, $i6, $i7, $i8, $i9, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i25, $i28, $i29, $i30, i33;
+        long l2, l3;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8;
+        com.android.gallery3d.exif.CountedDataInputStream $r2, $r13, $r31;
+        java.util.TreeMap $r3, $r4, $r22, $r32;
+        java.lang.Integer $r5, $r16, $r35;
+        java.lang.Object $r6, $r15, $r34, $r40, r51;
+        com.android.gallery3d.exif.ExifTag $r7, $r8, $r9, $r11, $r36, $r37, $r38;
+        short $s10;
+        com.android.gallery3d.exif.ExifParser$ImageEvent $r10, $r12;
+        com.android.gallery3d.exif.ExifParser$IfdEvent $r14, $r17;
+        java.lang.StringBuilder $r18, $r19, $r21, $r23, $r24, $r25, $r26, $r27, $r30, $r39, $r42, $r43, $r45, $r46, $r49;
+        java.lang.String $r20, $r28, $r29, $r47, $r48;
+        byte $b24, $b31;
+        java.util.Map$Entry $r33, r50;
+        java.lang.Class $r41;
+        java.io.IOException $r44;
+        com.android.gallery3d.exif.ExifParser$ExifTagEvent r52;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $z0 = r0.<com.android.gallery3d.exif.ExifParser: boolean mContainExifData>;
+
+        if $z0 != 0 goto label01;
+
+        return 5;
+
+     label01:
+        $r2 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        i0 = virtualinvoke $r2.<com.android.gallery3d.exif.CountedDataInputStream: int getReadByteCount()>();
+
+        $i4 = r0.<com.android.gallery3d.exif.ExifParser: int mIfdStartOffset>;
+
+        $i7 = $i4 + 2;
+
+        $i5 = r0.<com.android.gallery3d.exif.ExifParser: int mNumOfTagInIfd>;
+
+        $i6 = 12 * $i5;
+
+        i1 = $i7 + $i6;
+
+        if i0 >= i1 goto label04;
+
+        $r38 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag readTag()>();
+
+        r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mTag> = $r38;
+
+        $r36 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mTag>;
+
+        if $r36 != null goto label02;
+
+        $i30 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: int next()>();
+
+        return $i30;
+
+     label02:
+        $z6 = r0.<com.android.gallery3d.exif.ExifParser: boolean mNeedToParseOffsetsInCurrentIfd>;
+
+        if $z6 == 0 goto label03;
+
+        $r37 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mTag>;
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void checkOffsetOrImageTag(com.android.gallery3d.exif.ExifTag)>($r37);
+
+     label03:
+        return 1;
+
+     label04:
+        if i0 != i1 goto label10;
+
+        $i22 = r0.<com.android.gallery3d.exif.ExifParser: int mIfdType>;
+
+        if $i22 != 0 goto label07;
+
+        l2 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: long readUnsignedLong()>();
+
+        $z7 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(1);
+
+        if $z7 != 0 goto label05;
+
+        $z8 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isThumbnailRequested()>();
+
+        if $z8 == 0 goto label06;
+
+     label05:
+        $b31 = l2 cmp 0L;
+
+        if $b31 == 0 goto label06;
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void registerIfd(int,long)>(1, l2);
+
+     label06:
+        goto label10;
+
+     label07:
+        i33 = 4;
+
+        $r22 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $i25 = virtualinvoke $r22.<java.util.TreeMap: int size()>();
+
+        if $i25 <= 0 goto label08;
+
+        $r32 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $r33 = virtualinvoke $r32.<java.util.TreeMap: java.util.Map$Entry firstEntry()>();
+
+        $r34 = interfaceinvoke $r33.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r35 = (java.lang.Integer) $r34;
+
+        $i28 = virtualinvoke $r35.<java.lang.Integer: int intValue()>();
+
+        $r31 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $i29 = virtualinvoke $r31.<com.android.gallery3d.exif.CountedDataInputStream: int getReadByteCount()>();
+
+        i33 = $i28 - $i29;
+
+     label08:
+        if i33 >= 4 goto label09;
+
+        $r30 = new java.lang.StringBuilder;
+
+        specialinvoke $r30.<java.lang.StringBuilder: void <init>()>();
+
+        $r26 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid size of link to next IFD: ");
+
+        $r27 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i33);
+
+        $r28 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExifParser", $r28);
+
+        goto label10;
+
+     label09:
+        l3 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: long readUnsignedLong()>();
+
+        $b24 = l3 cmp 0L;
+
+        if $b24 == 0 goto label10;
+
+        $r25 = new java.lang.StringBuilder;
+
+        specialinvoke $r25.<java.lang.StringBuilder: void <init>()>();
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid link to next IFD: ");
+
+        $r23 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l3);
+
+        $r29 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExifParser", $r29);
+
+     label10:
+        $r3 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $i8 = virtualinvoke $r3.<java.util.TreeMap: int size()>();
+
+        if $i8 == 0 goto label21;
+
+        $r4 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        r50 = virtualinvoke $r4.<java.util.TreeMap: java.util.Map$Entry pollFirstEntry()>();
+
+        r51 = interfaceinvoke r50.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+     label11:
+        $r6 = interfaceinvoke r50.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r5 = (java.lang.Integer) $r6;
+
+        $i9 = virtualinvoke $r5.<java.lang.Integer: int intValue()>();
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void skipTo(int)>($i9);
+
+     label12:
+        goto label14;
+
+     label13:
+        $r44 := @caughtexception;
+
+        $r43 = new java.lang.StringBuilder;
+
+        specialinvoke $r43.<java.lang.StringBuilder: void <init>()>();
+
+        $r45 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to skip to data at: ");
+
+        $r40 = interfaceinvoke r50.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r39 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r40);
+
+        $r42 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" for ");
+
+        $r41 = virtualinvoke r51.<java.lang.Object: java.lang.Class getClass()>();
+
+        $r48 = virtualinvoke $r41.<java.lang.Class: java.lang.String getName()>();
+
+        $r49 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r48);
+
+        $r46 = virtualinvoke $r49.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", the file may be broken.");
+
+        $r47 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExifParser", $r47);
+
+        goto label10;
+
+     label14:
+        $z1 = r51 instanceof com.android.gallery3d.exif.ExifParser$IfdEvent;
+
+        if $z1 == 0 goto label17;
+
+        $r14 = (com.android.gallery3d.exif.ExifParser$IfdEvent) r51;
+
+        $i13 = $r14.<com.android.gallery3d.exif.ExifParser$IfdEvent: int ifd>;
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mIfdType> = $i13;
+
+        $r13 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $i12 = virtualinvoke $r13.<com.android.gallery3d.exif.CountedDataInputStream: int readUnsignedShort()>();
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mNumOfTagInIfd> = $i12;
+
+        $r15 = interfaceinvoke r50.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r16 = (java.lang.Integer) $r15;
+
+        $i14 = virtualinvoke $r16.<java.lang.Integer: int intValue()>();
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mIfdStartOffset> = $i14;
+
+        $i15 = r0.<com.android.gallery3d.exif.ExifParser: int mNumOfTagInIfd>;
+
+        $i19 = $i15 * 12;
+
+        $i18 = r0.<com.android.gallery3d.exif.ExifParser: int mIfdStartOffset>;
+
+        $i16 = $i19 + $i18;
+
+        $i20 = $i16 + 2;
+
+        $i17 = r0.<com.android.gallery3d.exif.ExifParser: int mApp1End>;
+
+        if $i20 <= $i17 goto label15;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid size of IFD ");
+
+        $i21 = r0.<com.android.gallery3d.exif.ExifParser: int mIfdType>;
+
+        $r21 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i21);
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExifParser", $r20);
+
+        return 5;
+
+     label15:
+        $z5 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean needToParseOffsetsInCurrentIfd()>();
+
+        r0.<com.android.gallery3d.exif.ExifParser: boolean mNeedToParseOffsetsInCurrentIfd> = $z5;
+
+        $r17 = (com.android.gallery3d.exif.ExifParser$IfdEvent) r51;
+
+        $z4 = $r17.<com.android.gallery3d.exif.ExifParser$IfdEvent: boolean isRequested>;
+
+        if $z4 == 0 goto label16;
+
+        return 0;
+
+     label16:
+        virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: void skipRemainingTagsInCurrentIfd()>();
+
+        goto label20;
+
+     label17:
+        $z2 = r51 instanceof com.android.gallery3d.exif.ExifParser$ImageEvent;
+
+        if $z2 == 0 goto label18;
+
+        $r10 = (com.android.gallery3d.exif.ExifParser$ImageEvent) r51;
+
+        r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifParser$ImageEvent mImageEvent> = $r10;
+
+        $r12 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifParser$ImageEvent mImageEvent>;
+
+        $i11 = $r12.<com.android.gallery3d.exif.ExifParser$ImageEvent: int type>;
+
+        return $i11;
+
+     label18:
+        r52 = (com.android.gallery3d.exif.ExifParser$ExifTagEvent) r51;
+
+        $r7 = r52.<com.android.gallery3d.exif.ExifParser$ExifTagEvent: com.android.gallery3d.exif.ExifTag tag>;
+
+        r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mTag> = $r7;
+
+        $r8 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mTag>;
+
+        $s10 = virtualinvoke $r8.<com.android.gallery3d.exif.ExifTag: short getDataType()>();
+
+        if $s10 == 7 goto label19;
+
+        $r9 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mTag>;
+
+        virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: void readFullTagValue(com.android.gallery3d.exif.ExifTag)>($r9);
+
+        $r11 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mTag>;
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void checkOffsetOrImageTag(com.android.gallery3d.exif.ExifTag)>($r11);
+
+     label19:
+        $z3 = r52.<com.android.gallery3d.exif.ExifParser$ExifTagEvent: boolean isRequested>;
+
+        if $z3 == 0 goto label20;
+
+        return 2;
+
+     label20:
+        goto label10;
+
+     label21:
+        return 5;
+
+        catch java.io.IOException from label11 to label12 with label13;
+    }
+
+    protected void skipRemainingTagsInCurrentIfd() throws java.io.IOException, com.android.gallery3d.exif.ExifInvalidFormatException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int i0, i1, $i3, $i4, $i5, $i6, $i7;
+        long l2;
+        com.android.gallery3d.exif.CountedDataInputStream $r1;
+        boolean $z0, $z1, $z2;
+        byte $b8;
+        com.android.gallery3d.exif.ExifTag $r2, $r3, $r4;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $i3 = r0.<com.android.gallery3d.exif.ExifParser: int mIfdStartOffset>;
+
+        $i6 = $i3 + 2;
+
+        $i4 = r0.<com.android.gallery3d.exif.ExifParser: int mNumOfTagInIfd>;
+
+        $i5 = 12 * $i4;
+
+        i0 = $i6 + $i5;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        i1 = virtualinvoke $r1.<com.android.gallery3d.exif.CountedDataInputStream: int getReadByteCount()>();
+
+        if i1 <= i0 goto label1;
+
+        return;
+
+     label1:
+        $z0 = r0.<com.android.gallery3d.exif.ExifParser: boolean mNeedToParseOffsetsInCurrentIfd>;
+
+        if $z0 == 0 goto label4;
+
+     label2:
+        if i1 >= i0 goto label5;
+
+        $r2 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag readTag()>();
+
+        r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mTag> = $r2;
+
+        i1 = i1 + 12;
+
+        $r4 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mTag>;
+
+        if $r4 != null goto label3;
+
+        goto label2;
+
+     label3:
+        $r3 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mTag>;
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void checkOffsetOrImageTag(com.android.gallery3d.exif.ExifTag)>($r3);
+
+        goto label2;
+
+     label4:
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void skipTo(int)>(i0);
+
+     label5:
+        l2 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: long readUnsignedLong()>();
+
+        $i7 = r0.<com.android.gallery3d.exif.ExifParser: int mIfdType>;
+
+        if $i7 != 0 goto label7;
+
+        $z1 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(1);
+
+        if $z1 != 0 goto label6;
+
+        $z2 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isThumbnailRequested()>();
+
+        if $z2 == 0 goto label7;
+
+     label6:
+        $b8 = l2 cmp 0L;
+
+        if $b8 <= 0 goto label7;
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void registerIfd(int,long)>(1, l2);
+
+     label7:
+        return;
+    }
+
+    private boolean needToParseOffsetsInCurrentIfd()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int $i0;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $i0 = r0.<com.android.gallery3d.exif.ExifParser: int mIfdType>;
+
+        tableswitch($i0)
+        {
+            case 0: goto label1;
+            case 1: goto label5;
+            case 2: goto label6;
+            default: goto label7;
+        };
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(2);
+
+        if $z0 != 0 goto label2;
+
+        $z1 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(4);
+
+        if $z1 != 0 goto label2;
+
+        $z2 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(3);
+
+        if $z2 != 0 goto label2;
+
+        $z3 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(1);
+
+        if $z3 == 0 goto label3;
+
+     label2:
+        $z4 = 1;
+
+        goto label4;
+
+     label3:
+        $z4 = 0;
+
+     label4:
+        return $z4;
+
+     label5:
+        $z6 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isThumbnailRequested()>();
+
+        return $z6;
+
+     label6:
+        $z5 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(3);
+
+        return $z5;
+
+     label7:
+        return 0;
+    }
+
+    protected com.android.gallery3d.exif.ExifTag getTag()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        com.android.gallery3d.exif.ExifTag $r1;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mTag>;
+
+        return $r1;
+    }
+
+    protected int getTagCountInCurrentIfd()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int $i0;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $i0 = r0.<com.android.gallery3d.exif.ExifParser: int mNumOfTagInIfd>;
+
+        return $i0;
+    }
+
+    protected int getCurrentIfd()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int $i0;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $i0 = r0.<com.android.gallery3d.exif.ExifParser: int mIfdType>;
+
+        return $i0;
+    }
+
+    protected int getStripIndex()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        com.android.gallery3d.exif.ExifParser$ImageEvent $r1;
+        int $i0;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifParser$ImageEvent mImageEvent>;
+
+        $i0 = $r1.<com.android.gallery3d.exif.ExifParser$ImageEvent: int stripIndex>;
+
+        return $i0;
+    }
+
+    protected int getStripCount()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int $i0;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $i0 = r0.<com.android.gallery3d.exif.ExifParser: int mStripCount>;
+
+        return $i0;
+    }
+
+    protected int getStripSize()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        com.android.gallery3d.exif.ExifTag $r1, $r2;
+        long $l0;
+        int $i1;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mStripSizeTag>;
+
+        if $r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        $r2 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mStripSizeTag>;
+
+        $l0 = virtualinvoke $r2.<com.android.gallery3d.exif.ExifTag: long getValueAt(int)>(0);
+
+        $i1 = (int) $l0;
+
+        return $i1;
+    }
+
+    protected int getCompressedImageSize()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        com.android.gallery3d.exif.ExifTag $r1, $r2;
+        long $l0;
+        int $i1;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mJpegSizeTag>;
+
+        if $r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        $r2 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mJpegSizeTag>;
+
+        $l0 = virtualinvoke $r2.<com.android.gallery3d.exif.ExifTag: long getValueAt(int)>(0);
+
+        $i1 = (int) $l0;
+
+        return $i1;
+    }
+
+    private void skipTo(int) throws java.io.IOException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int i0, $i2;
+        long $l1;
+        com.android.gallery3d.exif.CountedDataInputStream $r1;
+        java.util.TreeMap $r2, $r3, $r6;
+        boolean $z0;
+        java.lang.Object $r4;
+        java.lang.Integer $r5;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $l1 = (long) i0;
+
+        virtualinvoke $r1.<com.android.gallery3d.exif.CountedDataInputStream: void skipTo(long)>($l1);
+
+     label1:
+        $r2 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $z0 = virtualinvoke $r2.<java.util.TreeMap: boolean isEmpty()>();
+
+        if $z0 != 0 goto label2;
+
+        $r3 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $r4 = virtualinvoke $r3.<java.util.TreeMap: java.lang.Object firstKey()>();
+
+        $r5 = (java.lang.Integer) $r4;
+
+        $i2 = virtualinvoke $r5.<java.lang.Integer: int intValue()>();
+
+        if $i2 >= i0 goto label2;
+
+        $r6 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        virtualinvoke $r6.<java.util.TreeMap: java.util.Map$Entry pollFirstEntry()>();
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    protected void registerForTagValue(com.android.gallery3d.exif.ExifTag)
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        com.android.gallery3d.exif.ExifTag r1;
+        int $i0, $i1, $i2;
+        com.android.gallery3d.exif.CountedDataInputStream $r2;
+        java.util.TreeMap $r3;
+        java.lang.Integer $r4;
+        com.android.gallery3d.exif.ExifParser$ExifTagEvent $r5;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        r1 := @parameter0: com.android.gallery3d.exif.ExifTag;
+
+        $i0 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getOffset()>();
+
+        $r2 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $i1 = virtualinvoke $r2.<com.android.gallery3d.exif.CountedDataInputStream: int getReadByteCount()>();
+
+        if $i0 < $i1 goto label1;
+
+        $r3 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $i2 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getOffset()>();
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        $r5 = new com.android.gallery3d.exif.ExifParser$ExifTagEvent;
+
+        specialinvoke $r5.<com.android.gallery3d.exif.ExifParser$ExifTagEvent: void <init>(com.android.gallery3d.exif.ExifTag,boolean)>(r1, 1);
+
+        virtualinvoke $r3.<java.util.TreeMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r4, $r5);
+
+     label1:
+        return;
+    }
+
+    private void registerIfd(int, long)
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int i0, $i2;
+        long l1;
+        java.util.TreeMap $r1;
+        java.lang.Integer $r2;
+        com.android.gallery3d.exif.ExifParser$IfdEvent $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $i2 = (int) l1;
+
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        $r3 = new com.android.gallery3d.exif.ExifParser$IfdEvent;
+
+        $z0 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(i0);
+
+        specialinvoke $r3.<com.android.gallery3d.exif.ExifParser$IfdEvent: void <init>(int,boolean)>(i0, $z0);
+
+        virtualinvoke $r1.<java.util.TreeMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r2, $r3);
+
+        return;
+    }
+
+    private void registerCompressedImage(long)
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        long l0;
+        int $i1;
+        java.util.TreeMap $r1;
+        java.lang.Integer $r2;
+        com.android.gallery3d.exif.ExifParser$ImageEvent $r3;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        l0 := @parameter0: long;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $i1 = (int) l0;
+
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i1);
+
+        $r3 = new com.android.gallery3d.exif.ExifParser$ImageEvent;
+
+        specialinvoke $r3.<com.android.gallery3d.exif.ExifParser$ImageEvent: void <init>(int)>(3);
+
+        virtualinvoke $r1.<java.util.TreeMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r2, $r3);
+
+        return;
+    }
+
+    private void registerUncompressedStrip(int, long)
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int i0, $i2;
+        long l1;
+        java.util.TreeMap $r1;
+        java.lang.Integer $r2;
+        com.android.gallery3d.exif.ExifParser$ImageEvent $r3;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $i2 = (int) l1;
+
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        $r3 = new com.android.gallery3d.exif.ExifParser$ImageEvent;
+
+        specialinvoke $r3.<com.android.gallery3d.exif.ExifParser$ImageEvent: void <init>(int,int)>(4, i0);
+
+        virtualinvoke $r1.<java.util.TreeMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r2, $r3);
+
+        return;
+    }
+
+    private com.android.gallery3d.exif.ExifTag readTag() throws java.io.IOException, com.android.gallery3d.exif.ExifInvalidFormatException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        short s0, s1;
+        long l2, l4, $l9, $l15;
+        com.android.gallery3d.exif.ExifTag r1, $r6;
+        int i3, $i6, $i7, $i8, $i10, $i12, $i13, $i14, $i17, $i18, $i20, $i21, $i22;
+        byte[] r2, $r10;
+        com.android.gallery3d.exif.CountedDataInputStream $r3, $r4, $r5, $r7, $r8, $r9, $r14;
+        boolean $z0, $z2, z3;
+        byte $b5, $b16, $b19;
+        java.lang.Object[] $r11;
+        com.android.gallery3d.exif.ExifInvalidFormatException $r12, $r17;
+        java.lang.Short $r13, $r16;
+        java.lang.String $r15;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $r3 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        s0 = virtualinvoke $r3.<com.android.gallery3d.exif.CountedDataInputStream: short readShort()>();
+
+        $r4 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        s1 = virtualinvoke $r4.<com.android.gallery3d.exif.CountedDataInputStream: short readShort()>();
+
+        $r5 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        l2 = virtualinvoke $r5.<com.android.gallery3d.exif.CountedDataInputStream: long readUnsignedInt()>();
+
+        $b5 = l2 cmp 2147483647L;
+
+        if $b5 <= 0 goto label1;
+
+        $r17 = new com.android.gallery3d.exif.ExifInvalidFormatException;
+
+        specialinvoke $r17.<com.android.gallery3d.exif.ExifInvalidFormatException: void <init>(java.lang.String)>("Number of component is larger then Integer.MAX_VALUE");
+
+        throw $r17;
+
+     label1:
+        $z0 = staticinvoke <com.android.gallery3d.exif.ExifTag: boolean isValidType(short)>(s1);
+
+        if $z0 != 0 goto label2;
+
+        $r11 = newarray (java.lang.Object)[2];
+
+        $r13 = staticinvoke <java.lang.Short: java.lang.Short valueOf(short)>(s0);
+
+        $r11[0] = $r13;
+
+        $r16 = staticinvoke <java.lang.Short: java.lang.Short valueOf(short)>(s1);
+
+        $r11[1] = $r16;
+
+        $r15 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("Tag %04x: Invalid data type %d", $r11);
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExifParser", $r15);
+
+        $r14 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        virtualinvoke $r14.<com.android.gallery3d.exif.CountedDataInputStream: long skip(long)>(4L);
+
+        return null;
+
+     label2:
+        $r6 = new com.android.gallery3d.exif.ExifTag;
+
+        $i7 = (int) l2;
+
+        $i8 = r0.<com.android.gallery3d.exif.ExifParser: int mIfdType>;
+
+        $i6 = (int) l2;
+
+        if $i6 == 0 goto label3;
+
+        $z2 = 1;
+
+        goto label4;
+
+     label3:
+        $z2 = 0;
+
+     label4:
+        specialinvoke $r6.<com.android.gallery3d.exif.ExifTag: void <init>(short,short,int,int,boolean)>(s0, s1, $i7, $i8, $z2);
+
+        r1 = $r6;
+
+        i3 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getDataSize()>();
+
+        if i3 <= 4 goto label8;
+
+        $r9 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        l4 = virtualinvoke $r9.<com.android.gallery3d.exif.CountedDataInputStream: long readUnsignedInt()>();
+
+        $b16 = l4 cmp 2147483647L;
+
+        if $b16 <= 0 goto label5;
+
+        $r12 = new com.android.gallery3d.exif.ExifInvalidFormatException;
+
+        specialinvoke $r12.<com.android.gallery3d.exif.ExifInvalidFormatException: void <init>(java.lang.String)>("offset is larger then Integer.MAX_VALUE");
+
+        throw $r12;
+
+     label5:
+        $i14 = r0.<com.android.gallery3d.exif.ExifParser: int mIfd0Position>;
+
+        $l15 = (long) $i14;
+
+        $b19 = l4 cmp $l15;
+
+        if $b19 >= 0 goto label6;
+
+        if s1 != 7 goto label6;
+
+        $i17 = (int) l2;
+
+        r2 = newarray (byte)[$i17];
+
+        $r10 = r0.<com.android.gallery3d.exif.ExifParser: byte[] mDataAboveIfd0>;
+
+        $i18 = (int) l4;
+
+        $i22 = $i18 - 8;
+
+        $i21 = (int) l2;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r10, $i22, r2, 0, $i21);
+
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: boolean setValue(byte[])>(r2);
+
+        goto label7;
+
+     label6:
+        $i20 = (int) l4;
+
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: void setOffset(int)>($i20);
+
+     label7:
+        goto label9;
+
+     label8:
+        z3 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: boolean hasDefinedCount()>();
+
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: void setHasDefinedCount(boolean)>(0);
+
+        virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: void readFullTagValue(com.android.gallery3d.exif.ExifTag)>(r1);
+
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: void setHasDefinedCount(boolean)>(z3);
+
+        $r7 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $i10 = 4 - i3;
+
+        $l9 = (long) $i10;
+
+        virtualinvoke $r7.<com.android.gallery3d.exif.CountedDataInputStream: long skip(long)>($l9);
+
+        $r8 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $i12 = virtualinvoke $r8.<com.android.gallery3d.exif.CountedDataInputStream: int getReadByteCount()>();
+
+        $i13 = $i12 - 4;
+
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: void setOffset(int)>($i13);
+
+     label9:
+        return r1;
+    }
+
+    private void checkOffsetOrImageTag(com.android.gallery3d.exif.ExifTag)
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        com.android.gallery3d.exif.ExifTag r1;
+        short s0, $s4, $s5, $s6, $s7, $s8, $s9, $s10, $s14;
+        int i1, i2, $i3, $i11, $i12, $i13, $i15, $i18, $i19, $i21, $i23, $i24;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z13, $z14, $z15, $z16;
+        java.util.TreeMap $r2;
+        java.lang.Integer $r3;
+        com.android.gallery3d.exif.ExifParser$ExifTagEvent $r5;
+        long $l16, $l17, $l20, $l22, $l25, $l26;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        r1 := @parameter0: com.android.gallery3d.exif.ExifTag;
+
+        $i3 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getComponentCount()>();
+
+        if $i3 != 0 goto label01;
+
+        return;
+
+     label01:
+        s0 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: short getTagId()>();
+
+        i1 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getIfd()>();
+
+        $s4 = <com.android.gallery3d.exif.ExifParser: short TAG_EXIF_IFD>;
+
+        if s0 != $s4 goto label03;
+
+        $i24 = <com.android.gallery3d.exif.ExifInterface: int TAG_EXIF_IFD>;
+
+        $z15 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean checkAllowed(int,int)>(i1, $i24);
+
+        if $z15 == 0 goto label03;
+
+        $z14 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(2);
+
+        if $z14 != 0 goto label02;
+
+        $z16 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(3);
+
+        if $z16 == 0 goto label14;
+
+     label02:
+        $l26 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: long getValueAt(int)>(0);
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void registerIfd(int,long)>(2, $l26);
+
+        goto label14;
+
+     label03:
+        $s5 = <com.android.gallery3d.exif.ExifParser: short TAG_GPS_IFD>;
+
+        if s0 != $s5 goto label04;
+
+        $i23 = <com.android.gallery3d.exif.ExifInterface: int TAG_GPS_IFD>;
+
+        $z13 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean checkAllowed(int,int)>(i1, $i23);
+
+        if $z13 == 0 goto label04;
+
+        $z12 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(4);
+
+        if $z12 == 0 goto label14;
+
+        $l25 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: long getValueAt(int)>(0);
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void registerIfd(int,long)>(4, $l25);
+
+        goto label14;
+
+     label04:
+        $s6 = <com.android.gallery3d.exif.ExifParser: short TAG_INTEROPERABILITY_IFD>;
+
+        if s0 != $s6 goto label05;
+
+        $i21 = <com.android.gallery3d.exif.ExifInterface: int TAG_INTEROPERABILITY_IFD>;
+
+        $z10 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean checkAllowed(int,int)>(i1, $i21);
+
+        if $z10 == 0 goto label05;
+
+        $z11 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isIfdRequested(int)>(3);
+
+        if $z11 == 0 goto label14;
+
+        $l22 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: long getValueAt(int)>(0);
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void registerIfd(int,long)>(3, $l22);
+
+        goto label14;
+
+     label05:
+        $s7 = <com.android.gallery3d.exif.ExifParser: short TAG_JPEG_INTERCHANGE_FORMAT>;
+
+        if s0 != $s7 goto label06;
+
+        $i18 = <com.android.gallery3d.exif.ExifInterface: int TAG_JPEG_INTERCHANGE_FORMAT>;
+
+        $z8 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean checkAllowed(int,int)>(i1, $i18);
+
+        if $z8 == 0 goto label06;
+
+        $z9 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isThumbnailRequested()>();
+
+        if $z9 == 0 goto label14;
+
+        $l20 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: long getValueAt(int)>(0);
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void registerCompressedImage(long)>($l20);
+
+        goto label14;
+
+     label06:
+        $s8 = <com.android.gallery3d.exif.ExifParser: short TAG_JPEG_INTERCHANGE_FORMAT_LENGTH>;
+
+        if s0 != $s8 goto label07;
+
+        $i19 = <com.android.gallery3d.exif.ExifInterface: int TAG_JPEG_INTERCHANGE_FORMAT_LENGTH>;
+
+        $z7 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean checkAllowed(int,int)>(i1, $i19);
+
+        if $z7 == 0 goto label07;
+
+        $z6 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isThumbnailRequested()>();
+
+        if $z6 == 0 goto label14;
+
+        r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mJpegSizeTag> = r1;
+
+        goto label14;
+
+     label07:
+        $s9 = <com.android.gallery3d.exif.ExifParser: short TAG_STRIP_OFFSETS>;
+
+        if s0 != $s9 goto label13;
+
+        $i12 = <com.android.gallery3d.exif.ExifInterface: int TAG_STRIP_OFFSETS>;
+
+        $z4 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean checkAllowed(int,int)>(i1, $i12);
+
+        if $z4 == 0 goto label13;
+
+        $z3 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isThumbnailRequested()>();
+
+        if $z3 == 0 goto label14;
+
+        $z5 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: boolean hasValue()>();
+
+        if $z5 == 0 goto label12;
+
+        i2 = 0;
+
+     label08:
+        $i15 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getComponentCount()>();
+
+        if i2 >= $i15 goto label11;
+
+        $s14 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: short getDataType()>();
+
+        if $s14 != 3 goto label09;
+
+        $l16 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: long getValueAt(int)>(i2);
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void registerUncompressedStrip(int,long)>(i2, $l16);
+
+        goto label10;
+
+     label09:
+        $l17 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: long getValueAt(int)>(i2);
+
+        specialinvoke r0.<com.android.gallery3d.exif.ExifParser: void registerUncompressedStrip(int,long)>(i2, $l17);
+
+     label10:
+        i2 = i2 + 1;
+
+        goto label08;
+
+     label11:
+        goto label14;
+
+     label12:
+        $r2 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $i13 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getOffset()>();
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i13);
+
+        $r5 = new com.android.gallery3d.exif.ExifParser$ExifTagEvent;
+
+        specialinvoke $r5.<com.android.gallery3d.exif.ExifParser$ExifTagEvent: void <init>(com.android.gallery3d.exif.ExifTag,boolean)>(r1, 0);
+
+        virtualinvoke $r2.<java.util.TreeMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r3, $r5);
+
+        goto label14;
+
+     label13:
+        $s10 = <com.android.gallery3d.exif.ExifParser: short TAG_STRIP_BYTE_COUNTS>;
+
+        if s0 != $s10 goto label14;
+
+        $i11 = <com.android.gallery3d.exif.ExifInterface: int TAG_STRIP_BYTE_COUNTS>;
+
+        $z1 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean checkAllowed(int,int)>(i1, $i11);
+
+        if $z1 == 0 goto label14;
+
+        $z0 = specialinvoke r0.<com.android.gallery3d.exif.ExifParser: boolean isThumbnailRequested()>();
+
+        if $z0 == 0 goto label14;
+
+        $z2 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: boolean hasValue()>();
+
+        if $z2 == 0 goto label14;
+
+        r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifTag mStripSizeTag> = r1;
+
+     label14:
+        return;
+    }
+
+    private boolean checkAllowed(int, int)
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int i0, i1, i2;
+        com.android.gallery3d.exif.ExifInterface $r1;
+        android.util.SparseIntArray $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.ExifInterface mInterface>;
+
+        $r2 = virtualinvoke $r1.<com.android.gallery3d.exif.ExifInterface: android.util.SparseIntArray getTagInfo()>();
+
+        i2 = virtualinvoke $r2.<android.util.SparseIntArray: int get(int)>(i1);
+
+        if i2 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $z0 = staticinvoke <com.android.gallery3d.exif.ExifInterface: boolean isIfdAllowed(int,int)>(i2, i0);
+
+        return $z0;
+    }
+
+    protected void readFullTagValue(com.android.gallery3d.exif.ExifTag) throws java.io.IOException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        com.android.gallery3d.exif.ExifTag r1, $r34;
+        short s0, $s3;
+        int i1, $i2, $i4, $i6, $i7, $i8, $i9, $i10, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i21, i26, i27, i28, i29, i30, i31, i32, i33, i34, i35, i36;
+        java.lang.Object r2, $r8, $r19, $r55;
+        java.util.Map$Entry r3, $r11, $r14, $r16;
+        java.util.TreeMap $r4, $r10, $r13, $r15, $r47;
+        com.android.gallery3d.exif.Rational $r5, $r6;
+        long $l11;
+        java.lang.String $r7, $r25, $r27, $r30, $r35, $r39, $r43, $r45, $r50, $r51, $r53;
+        java.lang.Integer $r9, $r18;
+        com.android.gallery3d.exif.CountedDataInputStream $r12, $r17;
+        boolean $z7, $z8, $z9;
+        java.lang.StringBuilder $r20, $r21, $r22, $r23, $r24, $r26, $r28, $r29, $r31, $r32, $r36, $r38, $r40, $r41, $r42, $r44, $r46, $r48, $r49, $r52, $r54;
+        com.android.gallery3d.exif.ExifParser$ExifTagEvent $r33;
+        com.android.gallery3d.exif.ExifParser$IfdEvent $r37;
+        byte[] r56;
+        long[] r57;
+        com.android.gallery3d.exif.Rational[] r58, r61;
+        int[] r59, r60;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        r1 := @parameter0: com.android.gallery3d.exif.ExifTag;
+
+        s0 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: short getDataType()>();
+
+        if s0 == 2 goto label01;
+
+        if s0 == 7 goto label01;
+
+        if s0 != 1 goto label05;
+
+     label01:
+        i1 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getComponentCount()>();
+
+        $r4 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $i2 = virtualinvoke $r4.<java.util.TreeMap: int size()>();
+
+        if $i2 <= 0 goto label05;
+
+        $r10 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $r11 = virtualinvoke $r10.<java.util.TreeMap: java.util.Map$Entry firstEntry()>();
+
+        $r8 = interfaceinvoke $r11.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r9 = (java.lang.Integer) $r8;
+
+        $i17 = virtualinvoke $r9.<java.lang.Integer: int intValue()>();
+
+        $r12 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $i15 = virtualinvoke $r12.<com.android.gallery3d.exif.CountedDataInputStream: int getReadByteCount()>();
+
+        $i16 = $i15 + i1;
+
+        if $i17 >= $i16 goto label05;
+
+        $r13 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $r14 = virtualinvoke $r13.<java.util.TreeMap: java.util.Map$Entry firstEntry()>();
+
+        r2 = interfaceinvoke $r14.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $z7 = r2 instanceof com.android.gallery3d.exif.ExifParser$ImageEvent;
+
+        if $z7 == 0 goto label02;
+
+        $r41 = new java.lang.StringBuilder;
+
+        specialinvoke $r41.<java.lang.StringBuilder: void <init>()>();
+
+        $r42 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Thumbnail overlaps value for tag: \n");
+
+        $r50 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: java.lang.String toString()>();
+
+        $r49 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r50);
+
+        $r51 = virtualinvoke $r49.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExifParser", $r51);
+
+        $r47 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        r3 = virtualinvoke $r47.<java.util.TreeMap: java.util.Map$Entry pollFirstEntry()>();
+
+        $r48 = new java.lang.StringBuilder;
+
+        specialinvoke $r48.<java.lang.StringBuilder: void <init>()>();
+
+        $r54 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid thumbnail offset: ");
+
+        $r55 = interfaceinvoke r3.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r52 = virtualinvoke $r54.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r55);
+
+        $r53 = virtualinvoke $r52.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExifParser", $r53);
+
+        goto label05;
+
+     label02:
+        $z8 = r2 instanceof com.android.gallery3d.exif.ExifParser$IfdEvent;
+
+        if $z8 == 0 goto label03;
+
+        $r40 = new java.lang.StringBuilder;
+
+        specialinvoke $r40.<java.lang.StringBuilder: void <init>()>();
+
+        $r36 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Ifd ");
+
+        $r37 = (com.android.gallery3d.exif.ExifParser$IfdEvent) r2;
+
+        $i21 = $r37.<com.android.gallery3d.exif.ExifParser$IfdEvent: int ifd>;
+
+        $r38 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i21);
+
+        $r44 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" overlaps value for tag: \n");
+
+        $r43 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: java.lang.String toString()>();
+
+        $r46 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r43);
+
+        $r45 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExifParser", $r45);
+
+        goto label04;
+
+     label03:
+        $z9 = r2 instanceof com.android.gallery3d.exif.ExifParser$ExifTagEvent;
+
+        if $z9 == 0 goto label04;
+
+        $r26 = new java.lang.StringBuilder;
+
+        specialinvoke $r26.<java.lang.StringBuilder: void <init>()>();
+
+        $r32 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Tag value for tag: \n");
+
+        $r33 = (com.android.gallery3d.exif.ExifParser$ExifTagEvent) r2;
+
+        $r34 = $r33.<com.android.gallery3d.exif.ExifParser$ExifTagEvent: com.android.gallery3d.exif.ExifTag tag>;
+
+        $r35 = virtualinvoke $r34.<com.android.gallery3d.exif.ExifTag: java.lang.String toString()>();
+
+        $r28 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r35);
+
+        $r29 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" overlaps value for tag: \n");
+
+        $r30 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: java.lang.String toString()>();
+
+        $r31 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r30);
+
+        $r39 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExifParser", $r39);
+
+     label04:
+        $r15 = r0.<com.android.gallery3d.exif.ExifParser: java.util.TreeMap mCorrespondingEvent>;
+
+        $r16 = virtualinvoke $r15.<java.util.TreeMap: java.util.Map$Entry firstEntry()>();
+
+        $r19 = interfaceinvoke $r16.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r18 = (java.lang.Integer) $r19;
+
+        $i18 = virtualinvoke $r18.<java.lang.Integer: int intValue()>();
+
+        $r17 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $i19 = virtualinvoke $r17.<com.android.gallery3d.exif.CountedDataInputStream: int getReadByteCount()>();
+
+        i26 = $i18 - $i19;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid size of tag: \n");
+
+        $r25 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: java.lang.String toString()>();
+
+        $r24 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r25);
+
+        $r23 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" setting count to: ");
+
+        $r22 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i26);
+
+        $r27 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExifParser", $r27);
+
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: void forceSetComponentCount(int)>(i26);
+
+     label05:
+        $s3 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: short getDataType()>();
+
+        tableswitch($s3)
+        {
+            case 1: goto label06;
+            case 2: goto label07;
+            case 3: goto label14;
+            case 4: goto label08;
+            case 5: goto label11;
+            case 6: goto label23;
+            case 7: goto label06;
+            case 8: goto label23;
+            case 9: goto label17;
+            case 10: goto label20;
+            default: goto label23;
+        };
+
+     label06:
+        $i4 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getComponentCount()>();
+
+        r56 = newarray (byte)[$i4];
+
+        virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: int read(byte[])>(r56);
+
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: boolean setValue(byte[])>(r56);
+
+        goto label23;
+
+     label07:
+        $i13 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getComponentCount()>();
+
+        $r7 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: java.lang.String readString(int)>($i13);
+
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: boolean setValue(java.lang.String)>($r7);
+
+        goto label23;
+
+     label08:
+        $i10 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getComponentCount()>();
+
+        r57 = newarray (long)[$i10];
+
+        i27 = 0;
+
+        i28 = lengthof r57;
+
+     label09:
+        if i27 >= i28 goto label10;
+
+        $l11 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: long readUnsignedLong()>();
+
+        r57[i27] = $l11;
+
+        i27 = i27 + 1;
+
+        goto label09;
+
+     label10:
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: boolean setValue(long[])>(r57);
+
+        goto label23;
+
+     label11:
+        $i9 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getComponentCount()>();
+
+        r58 = newarray (com.android.gallery3d.exif.Rational)[$i9];
+
+        i29 = 0;
+
+        i30 = lengthof r58;
+
+     label12:
+        if i29 >= i30 goto label13;
+
+        $r6 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.Rational readUnsignedRational()>();
+
+        r58[i29] = $r6;
+
+        i29 = i29 + 1;
+
+        goto label12;
+
+     label13:
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: boolean setValue(com.android.gallery3d.exif.Rational[])>(r58);
+
+        goto label23;
+
+     label14:
+        $i12 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getComponentCount()>();
+
+        r59 = newarray (int)[$i12];
+
+        i31 = 0;
+
+        i32 = lengthof r59;
+
+     label15:
+        if i31 >= i32 goto label16;
+
+        $i14 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: int readUnsignedShort()>();
+
+        r59[i31] = $i14;
+
+        i31 = i31 + 1;
+
+        goto label15;
+
+     label16:
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: boolean setValue(int[])>(r59);
+
+        goto label23;
+
+     label17:
+        $i7 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getComponentCount()>();
+
+        r60 = newarray (int)[$i7];
+
+        i33 = 0;
+
+        i34 = lengthof r60;
+
+     label18:
+        if i33 >= i34 goto label19;
+
+        $i8 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: int readLong()>();
+
+        r60[i33] = $i8;
+
+        i33 = i33 + 1;
+
+        goto label18;
+
+     label19:
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: boolean setValue(int[])>(r60);
+
+        goto label23;
+
+     label20:
+        $i6 = virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: int getComponentCount()>();
+
+        r61 = newarray (com.android.gallery3d.exif.Rational)[$i6];
+
+        i35 = 0;
+
+        i36 = lengthof r61;
+
+     label21:
+        if i35 >= i36 goto label22;
+
+        $r5 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.Rational readRational()>();
+
+        r61[i35] = $r5;
+
+        i35 = i35 + 1;
+
+        goto label21;
+
+     label22:
+        virtualinvoke r1.<com.android.gallery3d.exif.ExifTag: boolean setValue(com.android.gallery3d.exif.Rational[])>(r61);
+
+     label23:
+        return;
+    }
+
+    private void parseTiffHeader() throws java.io.IOException, com.android.gallery3d.exif.ExifInvalidFormatException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        short s0, $s1;
+        com.android.gallery3d.exif.CountedDataInputStream $r1, $r4, $r5, $r8;
+        com.android.gallery3d.exif.ExifInvalidFormatException $r2, $r6;
+        java.nio.ByteOrder $r3, $r7;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        s0 = virtualinvoke $r1.<com.android.gallery3d.exif.CountedDataInputStream: short readShort()>();
+
+        if 18761 != s0 goto label1;
+
+        $r8 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $r7 = <java.nio.ByteOrder: java.nio.ByteOrder LITTLE_ENDIAN>;
+
+        virtualinvoke $r8.<com.android.gallery3d.exif.CountedDataInputStream: void setByteOrder(java.nio.ByteOrder)>($r7);
+
+        goto label3;
+
+     label1:
+        if 19789 != s0 goto label2;
+
+        $r4 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $r3 = <java.nio.ByteOrder: java.nio.ByteOrder BIG_ENDIAN>;
+
+        virtualinvoke $r4.<com.android.gallery3d.exif.CountedDataInputStream: void setByteOrder(java.nio.ByteOrder)>($r3);
+
+        goto label3;
+
+     label2:
+        $r2 = new com.android.gallery3d.exif.ExifInvalidFormatException;
+
+        specialinvoke $r2.<com.android.gallery3d.exif.ExifInvalidFormatException: void <init>(java.lang.String)>("Invalid TIFF header");
+
+        throw $r2;
+
+     label3:
+        $r5 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $s1 = virtualinvoke $r5.<com.android.gallery3d.exif.CountedDataInputStream: short readShort()>();
+
+        if $s1 == 42 goto label4;
+
+        $r6 = new com.android.gallery3d.exif.ExifInvalidFormatException;
+
+        specialinvoke $r6.<com.android.gallery3d.exif.ExifInvalidFormatException: void <init>(java.lang.String)>("Invalid TIFF header");
+
+        throw $r6;
+
+     label4:
+        return;
+    }
+
+    private boolean seekTiffData(java.io.InputStream) throws java.io.IOException, com.android.gallery3d.exif.ExifInvalidFormatException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        java.io.InputStream r1;
+        com.android.gallery3d.exif.CountedDataInputStream r2, $r3;
+        short s0, $s2, s15;
+        int i1, $i4, $i5, $i10, $i11, $i12, $i13, i14;
+        boolean $z2;
+        long $l6, $l7, $l8;
+        byte $b9;
+        com.android.gallery3d.exif.ExifInvalidFormatException $r4;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        r1 := @parameter0: java.io.InputStream;
+
+        $r3 = new com.android.gallery3d.exif.CountedDataInputStream;
+
+        specialinvoke $r3.<com.android.gallery3d.exif.CountedDataInputStream: void <init>(java.io.InputStream)>(r1);
+
+        r2 = $r3;
+
+        $s2 = virtualinvoke r2.<com.android.gallery3d.exif.CountedDataInputStream: short readShort()>();
+
+        if $s2 == -40 goto label1;
+
+        $r4 = new com.android.gallery3d.exif.ExifInvalidFormatException;
+
+        specialinvoke $r4.<com.android.gallery3d.exif.ExifInvalidFormatException: void <init>(java.lang.String)>("Invalid JPEG format");
+
+        throw $r4;
+
+     label1:
+        s0 = virtualinvoke r2.<com.android.gallery3d.exif.CountedDataInputStream: short readShort()>();
+
+     label2:
+        if s0 == -39 goto label6;
+
+        $z2 = staticinvoke <com.android.gallery3d.exif.JpegHeader: boolean isSofMarker(short)>(s0);
+
+        if $z2 != 0 goto label6;
+
+        i1 = virtualinvoke r2.<com.android.gallery3d.exif.CountedDataInputStream: int readUnsignedShort()>();
+
+        if s0 != -31 goto label3;
+
+        if i1 < 8 goto label3;
+
+        i14 = virtualinvoke r2.<com.android.gallery3d.exif.CountedDataInputStream: int readInt()>();
+
+        s15 = virtualinvoke r2.<com.android.gallery3d.exif.CountedDataInputStream: short readShort()>();
+
+        i1 = i1 + -6;
+
+        if i14 != 1165519206 goto label3;
+
+        if s15 != 0 goto label3;
+
+        $i11 = virtualinvoke r2.<com.android.gallery3d.exif.CountedDataInputStream: int getReadByteCount()>();
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mTiffStartPosition> = $i11;
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mApp1End> = i1;
+
+        $i13 = r0.<com.android.gallery3d.exif.ExifParser: int mTiffStartPosition>;
+
+        $i10 = r0.<com.android.gallery3d.exif.ExifParser: int mApp1End>;
+
+        $i12 = $i13 + $i10;
+
+        r0.<com.android.gallery3d.exif.ExifParser: int mOffsetToApp1EndFromSOF> = $i12;
+
+        return 1;
+
+     label3:
+        if i1 < 2 goto label4;
+
+        $i4 = i1 - 2;
+
+        $l8 = (long) $i4;
+
+        $i5 = i1 - 2;
+
+        $l6 = (long) $i5;
+
+        $l7 = virtualinvoke r2.<com.android.gallery3d.exif.CountedDataInputStream: long skip(long)>($l6);
+
+        $b9 = $l8 cmp $l7;
+
+        if $b9 == 0 goto label5;
+
+     label4:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ExifParser", "Invalid JPEG format.");
+
+        return 0;
+
+     label5:
+        s0 = virtualinvoke r2.<com.android.gallery3d.exif.CountedDataInputStream: short readShort()>();
+
+        goto label2;
+
+     label6:
+        return 0;
+    }
+
+    protected int getOffsetToExifEndFromSOF()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int $i0;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $i0 = r0.<com.android.gallery3d.exif.ExifParser: int mOffsetToApp1EndFromSOF>;
+
+        return $i0;
+    }
+
+    protected int getTiffStartPosition()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int $i0;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $i0 = r0.<com.android.gallery3d.exif.ExifParser: int mTiffStartPosition>;
+
+        return $i0;
+    }
+
+    protected int read(byte[], int, int) throws java.io.IOException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        byte[] r1;
+        int i0, i1, $i2;
+        com.android.gallery3d.exif.CountedDataInputStream $r2;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $r2 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $i2 = virtualinvoke $r2.<com.android.gallery3d.exif.CountedDataInputStream: int read(byte[],int,int)>(r1, i0, i1);
+
+        return $i2;
+    }
+
+    protected int read(byte[]) throws java.io.IOException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        byte[] r1;
+        com.android.gallery3d.exif.CountedDataInputStream $r2;
+        int $i0;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        r1 := @parameter0: byte[];
+
+        $r2 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $i0 = virtualinvoke $r2.<com.android.gallery3d.exif.CountedDataInputStream: int read(byte[])>(r1);
+
+        return $i0;
+    }
+
+    protected java.lang.String readString(int) throws java.io.IOException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int i0;
+        java.nio.charset.Charset $r1;
+        java.lang.String $r2;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        i0 := @parameter0: int;
+
+        $r1 = <com.android.gallery3d.exif.ExifParser: java.nio.charset.Charset US_ASCII>;
+
+        $r2 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: java.lang.String readString(int,java.nio.charset.Charset)>(i0, $r1);
+
+        return $r2;
+    }
+
+    protected java.lang.String readString(int, java.nio.charset.Charset) throws java.io.IOException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int i0;
+        java.nio.charset.Charset r1;
+        com.android.gallery3d.exif.CountedDataInputStream $r2;
+        java.lang.String $r3;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.nio.charset.Charset;
+
+        if i0 <= 0 goto label1;
+
+        $r2 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $r3 = virtualinvoke $r2.<com.android.gallery3d.exif.CountedDataInputStream: java.lang.String readString(int,java.nio.charset.Charset)>(i0, r1);
+
+        return $r3;
+
+     label1:
+        return "";
+    }
+
+    protected int readUnsignedShort() throws java.io.IOException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        com.android.gallery3d.exif.CountedDataInputStream $r1;
+        short $s0;
+        int $i1;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $s0 = virtualinvoke $r1.<com.android.gallery3d.exif.CountedDataInputStream: short readShort()>();
+
+        $i1 = $s0 & 65535;
+
+        return $i1;
+    }
+
+    protected long readUnsignedLong() throws java.io.IOException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int $i0;
+        long $l1, $l2;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $i0 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: int readLong()>();
+
+        $l1 = (long) $i0;
+
+        $l2 = $l1 & 4294967295L;
+
+        return $l2;
+    }
+
+    protected com.android.gallery3d.exif.Rational readUnsignedRational() throws java.io.IOException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        long l0, l1;
+        com.android.gallery3d.exif.Rational $r1;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        l0 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: long readUnsignedLong()>();
+
+        l1 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: long readUnsignedLong()>();
+
+        $r1 = new com.android.gallery3d.exif.Rational;
+
+        specialinvoke $r1.<com.android.gallery3d.exif.Rational: void <init>(long,long)>(l0, l1);
+
+        return $r1;
+    }
+
+    protected int readLong() throws java.io.IOException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        com.android.gallery3d.exif.CountedDataInputStream $r1;
+        int $i0;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $i0 = virtualinvoke $r1.<com.android.gallery3d.exif.CountedDataInputStream: int readInt()>();
+
+        return $i0;
+    }
+
+    protected com.android.gallery3d.exif.Rational readRational() throws java.io.IOException
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        int i0, i1;
+        com.android.gallery3d.exif.Rational $r1;
+        long $l2, $l3;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        i0 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: int readLong()>();
+
+        i1 = virtualinvoke r0.<com.android.gallery3d.exif.ExifParser: int readLong()>();
+
+        $r1 = new com.android.gallery3d.exif.Rational;
+
+        $l3 = (long) i0;
+
+        $l2 = (long) i1;
+
+        specialinvoke $r1.<com.android.gallery3d.exif.Rational: void <init>(long,long)>($l3, $l2);
+
+        return $r1;
+    }
+
+    protected java.nio.ByteOrder getByteOrder()
+    {
+        com.android.gallery3d.exif.ExifParser r0;
+        com.android.gallery3d.exif.CountedDataInputStream $r1;
+        java.nio.ByteOrder $r2;
+
+        r0 := @this: com.android.gallery3d.exif.ExifParser;
+
+        $r1 = r0.<com.android.gallery3d.exif.ExifParser: com.android.gallery3d.exif.CountedDataInputStream mTiffStream>;
+
+        $r2 = virtualinvoke $r1.<com.android.gallery3d.exif.CountedDataInputStream: java.nio.ByteOrder getByteOrder()>();
+
+        return $r2;
+    }
+
+    static void <clinit>()
+    {
+        java.nio.charset.Charset $r0;
+        int $i0, $i2, $i4, $i6, $i8, $i10, $i12;
+        short $s1, $s3, $s5, $s7, $s9, $s11, $s13;
+
+        <com.android.gallery3d.exif.ExifParser: int DEFAULT_IFD0_OFFSET> = 8;
+
+        <com.android.gallery3d.exif.ExifParser: int OFFSET_SIZE> = 2;
+
+        <com.android.gallery3d.exif.ExifParser: int TAG_SIZE> = 12;
+
+        <com.android.gallery3d.exif.ExifParser: short TIFF_HEADER_TAIL> = 42;
+
+        <com.android.gallery3d.exif.ExifParser: short BIG_ENDIAN_TAG> = 19789;
+
+        <com.android.gallery3d.exif.ExifParser: short LITTLE_ENDIAN_TAG> = 18761;
+
+        <com.android.gallery3d.exif.ExifParser: short EXIF_HEADER_TAIL> = 0;
+
+        <com.android.gallery3d.exif.ExifParser: int EXIF_HEADER> = 1165519206;
+
+        <com.android.gallery3d.exif.ExifParser: int OPTION_THUMBNAIL> = 32;
+
+        <com.android.gallery3d.exif.ExifParser: int OPTION_IFD_INTEROPERABILITY> = 16;
+
+        <com.android.gallery3d.exif.ExifParser: int OPTION_IFD_GPS> = 8;
+
+        <com.android.gallery3d.exif.ExifParser: int OPTION_IFD_EXIF> = 4;
+
+        <com.android.gallery3d.exif.ExifParser: int OPTION_IFD_1> = 2;
+
+        <com.android.gallery3d.exif.ExifParser: int OPTION_IFD_0> = 1;
+
+        <com.android.gallery3d.exif.ExifParser: int EVENT_END> = 5;
+
+        <com.android.gallery3d.exif.ExifParser: int EVENT_UNCOMPRESSED_STRIP> = 4;
+
+        <com.android.gallery3d.exif.ExifParser: int EVENT_COMPRESSED_IMAGE> = 3;
+
+        <com.android.gallery3d.exif.ExifParser: int EVENT_VALUE_OF_REGISTERED_TAG> = 2;
+
+        <com.android.gallery3d.exif.ExifParser: int EVENT_NEW_TAG> = 1;
+
+        <com.android.gallery3d.exif.ExifParser: int EVENT_START_OF_IFD> = 0;
+
+        <com.android.gallery3d.exif.ExifParser: java.lang.String TAG> = "ExifParser";
+
+        <com.android.gallery3d.exif.ExifParser: boolean LOGV> = 0;
+
+        $r0 = staticinvoke <java.nio.charset.Charset: java.nio.charset.Charset forName(java.lang.String)>("US-ASCII");
+
+        <com.android.gallery3d.exif.ExifParser: java.nio.charset.Charset US_ASCII> = $r0;
+
+        $i0 = <com.android.gallery3d.exif.ExifInterface: int TAG_EXIF_IFD>;
+
+        $s1 = staticinvoke <com.android.gallery3d.exif.ExifInterface: short getTrueTagKey(int)>($i0);
+
+        <com.android.gallery3d.exif.ExifParser: short TAG_EXIF_IFD> = $s1;
+
+        $i2 = <com.android.gallery3d.exif.ExifInterface: int TAG_GPS_IFD>;
+
+        $s3 = staticinvoke <com.android.gallery3d.exif.ExifInterface: short getTrueTagKey(int)>($i2);
+
+        <com.android.gallery3d.exif.ExifParser: short TAG_GPS_IFD> = $s3;
+
+        $i4 = <com.android.gallery3d.exif.ExifInterface: int TAG_INTEROPERABILITY_IFD>;
+
+        $s5 = staticinvoke <com.android.gallery3d.exif.ExifInterface: short getTrueTagKey(int)>($i4);
+
+        <com.android.gallery3d.exif.ExifParser: short TAG_INTEROPERABILITY_IFD> = $s5;
+
+        $i6 = <com.android.gallery3d.exif.ExifInterface: int TAG_JPEG_INTERCHANGE_FORMAT>;
+
+        $s7 = staticinvoke <com.android.gallery3d.exif.ExifInterface: short getTrueTagKey(int)>($i6);
+
+        <com.android.gallery3d.exif.ExifParser: short TAG_JPEG_INTERCHANGE_FORMAT> = $s7;
+
+        $i8 = <com.android.gallery3d.exif.ExifInterface: int TAG_JPEG_INTERCHANGE_FORMAT_LENGTH>;
+
+        $s9 = staticinvoke <com.android.gallery3d.exif.ExifInterface: short getTrueTagKey(int)>($i8);
+
+        <com.android.gallery3d.exif.ExifParser: short TAG_JPEG_INTERCHANGE_FORMAT_LENGTH> = $s9;
+
+        $i10 = <com.android.gallery3d.exif.ExifInterface: int TAG_STRIP_OFFSETS>;
+
+        $s11 = staticinvoke <com.android.gallery3d.exif.ExifInterface: short getTrueTagKey(int)>($i10);
+
+        <com.android.gallery3d.exif.ExifParser: short TAG_STRIP_OFFSETS> = $s11;
+
+        $i12 = <com.android.gallery3d.exif.ExifInterface: int TAG_STRIP_BYTE_COUNTS>;
+
+        $s13 = staticinvoke <com.android.gallery3d.exif.ExifInterface: short getTrueTagKey(int)>($i12);
+
+        <com.android.gallery3d.exif.ExifParser: short TAG_STRIP_BYTE_COUNTS> = $s13;
+
+        return;
+    }
+}

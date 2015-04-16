@@ -1,0 +1,592 @@
+public class com.android.camera.ui.FaceView extends android.view.View implements com.android.camera.ui.FocusIndicator, com.android.camera.ui.Rotatable, com.android.camera.ui.PreviewStatusListener$PreviewAreaChangedListener
+{
+    private static final com.android.camera.debug.Log$Tag TAG;
+    private final boolean LOGV;
+    private int mDisplayOrientation;
+    private int mOrientation;
+    private boolean mMirror;
+    private boolean mPause;
+    private android.graphics.Matrix mMatrix;
+    private android.graphics.RectF mRect;
+    private android.hardware.Camera$Face[] mFaces;
+    private android.hardware.Camera$Face[] mPendingFaces;
+    private int mColor;
+    private android.graphics.Paint mPaint;
+    private volatile boolean mBlocked;
+    private static final int MSG_SWITCH_FACES;
+    private static final int SWITCH_DELAY;
+    private boolean mStateSwitchPending;
+    private android.os.Handler mHandler;
+    private final android.graphics.RectF mPreviewArea;
+
+    public void <init>(android.content.Context, android.util.AttributeSet)
+    {
+        com.android.camera.ui.FaceView r0;
+        android.content.Context r1;
+        android.util.AttributeSet r2;
+        android.content.res.Resources r3;
+        android.graphics.Matrix $r4;
+        android.graphics.RectF $r5, $r7;
+        com.android.camera.ui.FaceView$1 $r6;
+        int $i0;
+        android.graphics.Paint $r8, $r9, $r11, $r12;
+        android.graphics.Paint$Style $r10;
+        float $f0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.util.AttributeSet;
+
+        specialinvoke r0.<android.view.View: void <init>(android.content.Context,android.util.AttributeSet)>(r1, r2);
+
+        r0.<com.android.camera.ui.FaceView: boolean LOGV> = 0;
+
+        $r4 = new android.graphics.Matrix;
+
+        specialinvoke $r4.<android.graphics.Matrix: void <init>()>();
+
+        r0.<com.android.camera.ui.FaceView: android.graphics.Matrix mMatrix> = $r4;
+
+        $r5 = new android.graphics.RectF;
+
+        specialinvoke $r5.<android.graphics.RectF: void <init>()>();
+
+        r0.<com.android.camera.ui.FaceView: android.graphics.RectF mRect> = $r5;
+
+        r0.<com.android.camera.ui.FaceView: boolean mStateSwitchPending> = 0;
+
+        $r6 = new com.android.camera.ui.FaceView$1;
+
+        specialinvoke $r6.<com.android.camera.ui.FaceView$1: void <init>(com.android.camera.ui.FaceView)>(r0);
+
+        r0.<com.android.camera.ui.FaceView: android.os.Handler mHandler> = $r6;
+
+        $r7 = new android.graphics.RectF;
+
+        specialinvoke $r7.<android.graphics.RectF: void <init>()>();
+
+        r0.<com.android.camera.ui.FaceView: android.graphics.RectF mPreviewArea> = $r7;
+
+        r3 = virtualinvoke r0.<com.android.camera.ui.FaceView: android.content.res.Resources getResources()>();
+
+        $i0 = virtualinvoke r3.<android.content.res.Resources: int getColor(int)>(2131492900);
+
+        r0.<com.android.camera.ui.FaceView: int mColor> = $i0;
+
+        $r8 = new android.graphics.Paint;
+
+        specialinvoke $r8.<android.graphics.Paint: void <init>()>();
+
+        r0.<com.android.camera.ui.FaceView: android.graphics.Paint mPaint> = $r8;
+
+        $r9 = r0.<com.android.camera.ui.FaceView: android.graphics.Paint mPaint>;
+
+        virtualinvoke $r9.<android.graphics.Paint: void setAntiAlias(boolean)>(1);
+
+        $r11 = r0.<com.android.camera.ui.FaceView: android.graphics.Paint mPaint>;
+
+        $r10 = <android.graphics.Paint$Style: android.graphics.Paint$Style STROKE>;
+
+        virtualinvoke $r11.<android.graphics.Paint: void setStyle(android.graphics.Paint$Style)>($r10);
+
+        $r12 = r0.<com.android.camera.ui.FaceView: android.graphics.Paint mPaint>;
+
+        $f0 = virtualinvoke r3.<android.content.res.Resources: float getDimension(int)>(2131558484);
+
+        virtualinvoke $r12.<android.graphics.Paint: void setStrokeWidth(float)>($f0);
+
+        return;
+    }
+
+    public void setFaces(android.hardware.Camera$Face[])
+    {
+        com.android.camera.ui.FaceView r0;
+        android.hardware.Camera$Face[] r1, $r2, $r4, $r6;
+        boolean $z0, $z1, $z2;
+        android.os.Handler $r3, $r5;
+        int $i0, $i1, $i2, $i3;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        r1 := @parameter0: android.hardware.Camera$Face[];
+
+        $z0 = r0.<com.android.camera.ui.FaceView: boolean mPause>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces>;
+
+        if $r2 == null goto label5;
+
+        $i0 = lengthof r1;
+
+        if $i0 <= 0 goto label2;
+
+        $r6 = r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces>;
+
+        $i3 = lengthof $r6;
+
+        if $i3 == 0 goto label3;
+
+     label2:
+        $i1 = lengthof r1;
+
+        if $i1 != 0 goto label5;
+
+        $r4 = r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces>;
+
+        $i2 = lengthof $r4;
+
+        if $i2 <= 0 goto label5;
+
+     label3:
+        r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mPendingFaces> = r1;
+
+        $z2 = r0.<com.android.camera.ui.FaceView: boolean mStateSwitchPending>;
+
+        if $z2 != 0 goto label4;
+
+        r0.<com.android.camera.ui.FaceView: boolean mStateSwitchPending> = 1;
+
+        $r5 = r0.<com.android.camera.ui.FaceView: android.os.Handler mHandler>;
+
+        virtualinvoke $r5.<android.os.Handler: boolean sendEmptyMessageDelayed(int,long)>(1, 70L);
+
+     label4:
+        return;
+
+     label5:
+        $z1 = r0.<com.android.camera.ui.FaceView: boolean mStateSwitchPending>;
+
+        if $z1 == 0 goto label6;
+
+        r0.<com.android.camera.ui.FaceView: boolean mStateSwitchPending> = 0;
+
+        $r3 = r0.<com.android.camera.ui.FaceView: android.os.Handler mHandler>;
+
+        virtualinvoke $r3.<android.os.Handler: void removeMessages(int)>(1);
+
+     label6:
+        r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces> = r1;
+
+        virtualinvoke r0.<com.android.camera.ui.FaceView: void invalidate()>();
+
+        return;
+    }
+
+    public void setDisplayOrientation(int)
+    {
+        com.android.camera.ui.FaceView r0;
+        int i0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        i0 := @parameter0: int;
+
+        r0.<com.android.camera.ui.FaceView: int mDisplayOrientation> = i0;
+
+        return;
+    }
+
+    public void setOrientation(int, boolean)
+    {
+        com.android.camera.ui.FaceView r0;
+        int i0;
+        boolean z0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.camera.ui.FaceView: int mOrientation> = i0;
+
+        virtualinvoke r0.<com.android.camera.ui.FaceView: void invalidate()>();
+
+        return;
+    }
+
+    public void setMirror(boolean)
+    {
+        com.android.camera.ui.FaceView r0;
+        boolean z0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        z0 := @parameter0: boolean;
+
+        r0.<com.android.camera.ui.FaceView: boolean mMirror> = z0;
+
+        return;
+    }
+
+    public boolean faceExists()
+    {
+        com.android.camera.ui.FaceView r0;
+        android.hardware.Camera$Face[] $r1, $r2;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        $r1 = r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces>;
+
+        $i0 = lengthof $r2;
+
+        if $i0 <= 0 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    public void showStart()
+    {
+        com.android.camera.ui.FaceView r0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        virtualinvoke r0.<com.android.camera.ui.FaceView: void invalidate()>();
+
+        return;
+    }
+
+    public void showSuccess(boolean)
+    {
+        com.android.camera.ui.FaceView r0;
+        boolean z0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        z0 := @parameter0: boolean;
+
+        virtualinvoke r0.<com.android.camera.ui.FaceView: void invalidate()>();
+
+        return;
+    }
+
+    public void showFail(boolean)
+    {
+        com.android.camera.ui.FaceView r0;
+        boolean z0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        z0 := @parameter0: boolean;
+
+        virtualinvoke r0.<com.android.camera.ui.FaceView: void invalidate()>();
+
+        return;
+    }
+
+    public void clear()
+    {
+        com.android.camera.ui.FaceView r0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces> = null;
+
+        virtualinvoke r0.<com.android.camera.ui.FaceView: void invalidate()>();
+
+        return;
+    }
+
+    public void pause()
+    {
+        com.android.camera.ui.FaceView r0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        r0.<com.android.camera.ui.FaceView: boolean mPause> = 1;
+
+        return;
+    }
+
+    public void resume()
+    {
+        com.android.camera.ui.FaceView r0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        r0.<com.android.camera.ui.FaceView: boolean mPause> = 0;
+
+        return;
+    }
+
+    public void setBlockDraw(boolean)
+    {
+        com.android.camera.ui.FaceView r0;
+        boolean z0;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        z0 := @parameter0: boolean;
+
+        r0.<com.android.camera.ui.FaceView: boolean mBlocked> = z0;
+
+        return;
+    }
+
+    protected void onDraw(android.graphics.Canvas)
+    {
+        com.android.camera.ui.FaceView r0;
+        android.graphics.Canvas r1;
+        int i0, i1, i2, $i3, $i4, $i5, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, i16;
+        boolean $z0, $z1;
+        android.hardware.Camera$Face[] $r2, $r3, $r8, $r10, $r11;
+        android.graphics.RectF $r4, $r5, $r15, $r16, $r17, $r18, $r20, $r22;
+        float $f0, $f1, $f2, $f3, $f4, $f5;
+        android.graphics.Matrix $r6, $r7, $r14;
+        android.hardware.Camera$Face $r9, $r13;
+        android.graphics.Rect $r12;
+        android.graphics.Paint $r19, $r21;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        r1 := @parameter0: android.graphics.Canvas;
+
+        $z0 = r0.<com.android.camera.ui.FaceView: boolean mBlocked>;
+
+        if $z0 != 0 goto label8;
+
+        $r2 = r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces>;
+
+        if $r2 == null goto label8;
+
+        $r3 = r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces>;
+
+        $i3 = lengthof $r3;
+
+        if $i3 <= 0 goto label8;
+
+        $r4 = r0.<com.android.camera.ui.FaceView: android.graphics.RectF mPreviewArea>;
+
+        $f0 = virtualinvoke $r4.<android.graphics.RectF: float width()>();
+
+        i0 = (int) $f0;
+
+        $r5 = r0.<com.android.camera.ui.FaceView: android.graphics.RectF mPreviewArea>;
+
+        $f1 = virtualinvoke $r5.<android.graphics.RectF: float height()>();
+
+        i1 = (int) $f1;
+
+        if i1 <= i0 goto label1;
+
+        $i13 = r0.<com.android.camera.ui.FaceView: int mDisplayOrientation>;
+
+        if $i13 == 0 goto label2;
+
+        $i15 = r0.<com.android.camera.ui.FaceView: int mDisplayOrientation>;
+
+        if $i15 == 180 goto label2;
+
+     label1:
+        if i0 <= i1 goto label3;
+
+        $i14 = r0.<com.android.camera.ui.FaceView: int mDisplayOrientation>;
+
+        if $i14 == 90 goto label2;
+
+        $i12 = r0.<com.android.camera.ui.FaceView: int mDisplayOrientation>;
+
+        if $i12 != 270 goto label3;
+
+     label2:
+        i2 = i0;
+
+        i0 = i1;
+
+        i1 = i2;
+
+     label3:
+        $r6 = r0.<com.android.camera.ui.FaceView: android.graphics.Matrix mMatrix>;
+
+        $z1 = r0.<com.android.camera.ui.FaceView: boolean mMirror>;
+
+        $i4 = r0.<com.android.camera.ui.FaceView: int mDisplayOrientation>;
+
+        staticinvoke <com.android.camera.util.CameraUtil: void prepareMatrix(android.graphics.Matrix,boolean,int,int,int)>($r6, $z1, $i4, i0, i1);
+
+        virtualinvoke r1.<android.graphics.Canvas: int save()>();
+
+        $r7 = r0.<com.android.camera.ui.FaceView: android.graphics.Matrix mMatrix>;
+
+        $i5 = r0.<com.android.camera.ui.FaceView: int mOrientation>;
+
+        $f2 = (float) $i5;
+
+        virtualinvoke $r7.<android.graphics.Matrix: boolean postRotate(float)>($f2);
+
+        $i7 = r0.<com.android.camera.ui.FaceView: int mOrientation>;
+
+        $i8 = neg $i7;
+
+        $f3 = (float) $i8;
+
+        virtualinvoke r1.<android.graphics.Canvas: void rotate(float)>($f3);
+
+        i16 = 0;
+
+     label4:
+        $r8 = r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces>;
+
+        $i9 = lengthof $r8;
+
+        if i16 >= $i9 goto label7;
+
+        $r10 = r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces>;
+
+        $r9 = $r10[i16];
+
+        $i10 = $r9.<android.hardware.Camera$Face: int score>;
+
+        if $i10 >= 50 goto label5;
+
+        goto label6;
+
+     label5:
+        $r15 = r0.<com.android.camera.ui.FaceView: android.graphics.RectF mRect>;
+
+        $r11 = r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces>;
+
+        $r13 = $r11[i16];
+
+        $r12 = $r13.<android.hardware.Camera$Face: android.graphics.Rect rect>;
+
+        virtualinvoke $r15.<android.graphics.RectF: void set(android.graphics.Rect)>($r12);
+
+        $r14 = r0.<com.android.camera.ui.FaceView: android.graphics.Matrix mMatrix>;
+
+        $r16 = r0.<com.android.camera.ui.FaceView: android.graphics.RectF mRect>;
+
+        virtualinvoke $r14.<android.graphics.Matrix: boolean mapRect(android.graphics.RectF)>($r16);
+
+        $r19 = r0.<com.android.camera.ui.FaceView: android.graphics.Paint mPaint>;
+
+        $i11 = r0.<com.android.camera.ui.FaceView: int mColor>;
+
+        virtualinvoke $r19.<android.graphics.Paint: void setColor(int)>($i11);
+
+        $r20 = r0.<com.android.camera.ui.FaceView: android.graphics.RectF mRect>;
+
+        $r17 = r0.<com.android.camera.ui.FaceView: android.graphics.RectF mPreviewArea>;
+
+        $f5 = $r17.<android.graphics.RectF: float left>;
+
+        $r18 = r0.<com.android.camera.ui.FaceView: android.graphics.RectF mPreviewArea>;
+
+        $f4 = $r18.<android.graphics.RectF: float top>;
+
+        virtualinvoke $r20.<android.graphics.RectF: void offset(float,float)>($f5, $f4);
+
+        $r22 = r0.<com.android.camera.ui.FaceView: android.graphics.RectF mRect>;
+
+        $r21 = r0.<com.android.camera.ui.FaceView: android.graphics.Paint mPaint>;
+
+        virtualinvoke r1.<android.graphics.Canvas: void drawRect(android.graphics.RectF,android.graphics.Paint)>($r22, $r21);
+
+     label6:
+        i16 = i16 + 1;
+
+        goto label4;
+
+     label7:
+        virtualinvoke r1.<android.graphics.Canvas: void restore()>();
+
+     label8:
+        specialinvoke r0.<android.view.View: void onDraw(android.graphics.Canvas)>(r1);
+
+        return;
+    }
+
+    public void onPreviewAreaChanged(android.graphics.RectF)
+    {
+        com.android.camera.ui.FaceView r0;
+        android.graphics.RectF r1, $r2;
+
+        r0 := @this: com.android.camera.ui.FaceView;
+
+        r1 := @parameter0: android.graphics.RectF;
+
+        $r2 = r0.<com.android.camera.ui.FaceView: android.graphics.RectF mPreviewArea>;
+
+        virtualinvoke $r2.<android.graphics.RectF: void set(android.graphics.RectF)>(r1);
+
+        return;
+    }
+
+    static boolean access$002(com.android.camera.ui.FaceView, boolean)
+    {
+        com.android.camera.ui.FaceView r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.camera.ui.FaceView;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.camera.ui.FaceView: boolean mStateSwitchPending> = z0;
+
+        return z0;
+    }
+
+    static android.hardware.Camera$Face[] access$102(com.android.camera.ui.FaceView, android.hardware.Camera$Face[])
+    {
+        com.android.camera.ui.FaceView r0;
+        android.hardware.Camera$Face[] r1;
+
+        r0 := @parameter0: com.android.camera.ui.FaceView;
+
+        r1 := @parameter1: android.hardware.Camera$Face[];
+
+        r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mFaces> = r1;
+
+        return r1;
+    }
+
+    static android.hardware.Camera$Face[] access$200(com.android.camera.ui.FaceView)
+    {
+        com.android.camera.ui.FaceView r0;
+        android.hardware.Camera$Face[] $r1;
+
+        r0 := @parameter0: com.android.camera.ui.FaceView;
+
+        $r1 = r0.<com.android.camera.ui.FaceView: android.hardware.Camera$Face[] mPendingFaces>;
+
+        return $r1;
+    }
+
+    static void <clinit>()
+    {
+        com.android.camera.debug.Log$Tag $r0;
+
+        <com.android.camera.ui.FaceView: int SWITCH_DELAY> = 70;
+
+        <com.android.camera.ui.FaceView: int MSG_SWITCH_FACES> = 1;
+
+        $r0 = new com.android.camera.debug.Log$Tag;
+
+        specialinvoke $r0.<com.android.camera.debug.Log$Tag: void <init>(java.lang.String)>("FaceView");
+
+        <com.android.camera.ui.FaceView: com.android.camera.debug.Log$Tag TAG> = $r0;
+
+        return;
+    }
+}

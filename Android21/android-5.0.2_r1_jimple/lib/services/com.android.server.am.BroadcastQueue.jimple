@@ -1,0 +1,3952 @@
+public final class com.android.server.am.BroadcastQueue extends java.lang.Object
+{
+    static final java.lang.String TAG;
+    static final java.lang.String TAG_MU;
+    static final boolean DEBUG_BROADCAST;
+    static final boolean DEBUG_BROADCAST_LIGHT;
+    static final boolean DEBUG_MU;
+    static final int MAX_BROADCAST_HISTORY;
+    static final int MAX_BROADCAST_SUMMARY_HISTORY;
+    final com.android.server.am.ActivityManagerService mService;
+    final java.lang.String mQueueName;
+    final long mTimeoutPeriod;
+    final boolean mDelayBehindServices;
+    final java.util.ArrayList mParallelBroadcasts;
+    final java.util.ArrayList mOrderedBroadcasts;
+    final com.android.server.am.BroadcastRecord[] mBroadcastHistory;
+    final android.content.Intent[] mBroadcastSummaryHistory;
+    boolean mBroadcastsScheduled;
+    boolean mPendingBroadcastTimeoutMessage;
+    com.android.server.am.BroadcastRecord mPendingBroadcast;
+    int mPendingBroadcastRecvIndex;
+    static final int BROADCAST_INTENT_MSG;
+    static final int BROADCAST_TIMEOUT_MSG;
+    final com.android.server.am.BroadcastQueue$BroadcastHandler mHandler;
+
+    void <init>(com.android.server.am.ActivityManagerService, android.os.Handler, java.lang.String, long, boolean)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        com.android.server.am.ActivityManagerService r1;
+        android.os.Handler r2;
+        java.lang.String r3;
+        long l0;
+        boolean z0;
+        java.util.ArrayList $r4, $r5;
+        int $i1, $i2;
+        com.android.server.am.BroadcastRecord[] $r6;
+        android.content.Intent[] $r7;
+        com.android.server.am.BroadcastQueue$BroadcastHandler $r8;
+        android.os.Looper $r9;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.ActivityManagerService;
+
+        r2 := @parameter1: android.os.Handler;
+
+        r3 := @parameter2: java.lang.String;
+
+        l0 := @parameter3: long;
+
+        z0 := @parameter4: boolean;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mParallelBroadcasts> = $r4;
+
+        $r5 = new java.util.ArrayList;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts> = $r5;
+
+        $i1 = <com.android.server.am.BroadcastQueue: int MAX_BROADCAST_HISTORY>;
+
+        $r6 = newarray (com.android.server.am.BroadcastRecord)[$i1];
+
+        r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord[] mBroadcastHistory> = $r6;
+
+        $i2 = <com.android.server.am.BroadcastQueue: int MAX_BROADCAST_SUMMARY_HISTORY>;
+
+        $r7 = newarray (android.content.Intent)[$i2];
+
+        r0.<com.android.server.am.BroadcastQueue: android.content.Intent[] mBroadcastSummaryHistory> = $r7;
+
+        r0.<com.android.server.am.BroadcastQueue: boolean mBroadcastsScheduled> = 0;
+
+        r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast> = null;
+
+        r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService> = r1;
+
+        $r8 = new com.android.server.am.BroadcastQueue$BroadcastHandler;
+
+        $r9 = virtualinvoke r2.<android.os.Handler: android.os.Looper getLooper()>();
+
+        specialinvoke $r8.<com.android.server.am.BroadcastQueue$BroadcastHandler: void <init>(com.android.server.am.BroadcastQueue,android.os.Looper)>(r0, $r9);
+
+        r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastQueue$BroadcastHandler mHandler> = $r8;
+
+        r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName> = r3;
+
+        r0.<com.android.server.am.BroadcastQueue: long mTimeoutPeriod> = l0;
+
+        r0.<com.android.server.am.BroadcastQueue: boolean mDelayBehindServices> = z0;
+
+        return;
+    }
+
+    public boolean isPendingBroadcastProcessLocked(int)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        int i0, $i1;
+        com.android.server.am.BroadcastRecord $r1, $r2;
+        com.android.server.am.ProcessRecord $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        $r3 = $r2.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        $i1 = $r3.<com.android.server.am.ProcessRecord: int pid>;
+
+        if $i1 != i0 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    public void enqueueParallelBroadcastLocked(com.android.server.am.BroadcastRecord)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        com.android.server.am.BroadcastRecord r1;
+        java.util.ArrayList $r2;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.BroadcastRecord;
+
+        $r2 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mParallelBroadcasts>;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>(r1);
+
+        return;
+    }
+
+    public void enqueueOrderedBroadcastLocked(com.android.server.am.BroadcastRecord)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        com.android.server.am.BroadcastRecord r1;
+        java.util.ArrayList $r2;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.BroadcastRecord;
+
+        $r2 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>(r1);
+
+        return;
+    }
+
+    public final boolean replaceParallelBroadcastLocked(com.android.server.am.BroadcastRecord)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        com.android.server.am.BroadcastRecord r1, $r6;
+        int i0, $i1;
+        java.util.ArrayList $r2, $r3, $r8;
+        android.content.Intent $r4, $r7;
+        java.lang.Object $r5;
+        boolean $z0;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.BroadcastRecord;
+
+        $r2 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mParallelBroadcasts>;
+
+        $i1 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        i0 = $i1 - 1;
+
+     label1:
+        if i0 < 0 goto label3;
+
+        $r4 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r3 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mParallelBroadcasts>;
+
+        $r5 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        $r6 = (com.android.server.am.BroadcastRecord) $r5;
+
+        $r7 = $r6.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $z0 = virtualinvoke $r4.<android.content.Intent: boolean filterEquals(android.content.Intent)>($r7);
+
+        if $z0 == 0 goto label2;
+
+        $r8 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mParallelBroadcasts>;
+
+        virtualinvoke $r8.<java.util.ArrayList: java.lang.Object set(int,java.lang.Object)>(i0, r1);
+
+        return 1;
+
+     label2:
+        i0 = i0 + -1;
+
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    public final boolean replaceOrderedBroadcastLocked(com.android.server.am.BroadcastRecord)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        com.android.server.am.BroadcastRecord r1, $r6;
+        int i0, $i1;
+        java.util.ArrayList $r2, $r3, $r8;
+        android.content.Intent $r4, $r7;
+        java.lang.Object $r5;
+        boolean $z0;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.BroadcastRecord;
+
+        $r2 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $i1 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        i0 = $i1 - 1;
+
+     label1:
+        if i0 <= 0 goto label3;
+
+        $r4 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r3 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $r5 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        $r6 = (com.android.server.am.BroadcastRecord) $r5;
+
+        $r7 = $r6.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $z0 = virtualinvoke $r4.<android.content.Intent: boolean filterEquals(android.content.Intent)>($r7);
+
+        if $z0 == 0 goto label2;
+
+        $r8 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        virtualinvoke $r8.<java.util.ArrayList: java.lang.Object set(int,java.lang.Object)>(i0, r1);
+
+        return 1;
+
+     label2:
+        i0 = i0 + -1;
+
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    private final void processCurBroadcastLocked(com.android.server.am.BroadcastRecord, com.android.server.am.ProcessRecord) throws android.os.RemoteException
+    {
+        com.android.server.am.BroadcastQueue r0;
+        com.android.server.am.BroadcastRecord r1;
+        com.android.server.am.ProcessRecord r2;
+        boolean z0, $z1, z2;
+        java.lang.Throwable r3, $r27;
+        android.app.IApplicationThread $r4, $r5, $r17;
+        android.os.IBinder $r6;
+        com.android.server.am.ActivityManagerService $r7, $r8, $r13, $r22;
+        android.content.ComponentName $r9, $r14;
+        android.content.Intent $r10, $r12, $r15, $r18;
+        java.lang.String $r16, $r24;
+        android.content.pm.ApplicationInfo $r19;
+        android.content.pm.ActivityInfo $r20, $r21;
+        int $i0, $i1, $i2;
+        android.content.res.CompatibilityInfo $r23;
+        android.os.Bundle $r25;
+        android.os.RemoteException $r26;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.BroadcastRecord;
+
+        r2 := @parameter1: com.android.server.am.ProcessRecord;
+
+        $r4 = r2.<com.android.server.am.ProcessRecord: android.app.IApplicationThread thread>;
+
+        if $r4 != null goto label1;
+
+        $r26 = new android.os.RemoteException;
+
+        specialinvoke $r26.<android.os.RemoteException: void <init>()>();
+
+        throw $r26;
+
+     label1:
+        $r5 = r2.<com.android.server.am.ProcessRecord: android.app.IApplicationThread thread>;
+
+        $r6 = interfaceinvoke $r5.<android.app.IApplicationThread: android.os.IBinder asBinder()>();
+
+        r1.<com.android.server.am.BroadcastRecord: android.os.IBinder receiver> = $r6;
+
+        r1.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp> = r2;
+
+        r2.<com.android.server.am.ProcessRecord: com.android.server.am.BroadcastRecord curReceiver> = r1;
+
+        virtualinvoke r2.<com.android.server.am.ProcessRecord: void forceProcessStateUpTo(int)>(8);
+
+        $r7 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        virtualinvoke $r7.<com.android.server.am.ActivityManagerService: void updateLruProcessLocked(com.android.server.am.ProcessRecord,boolean,com.android.server.am.ProcessRecord)>(r2, 0, null);
+
+        $r8 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        virtualinvoke $r8.<com.android.server.am.ActivityManagerService: void updateOomAdjLocked()>();
+
+        $r10 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r9 = r1.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent>;
+
+        virtualinvoke $r10.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>($r9);
+
+        z0 = 0;
+
+     label2:
+        $r13 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r12 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r14 = virtualinvoke $r12.<android.content.Intent: android.content.ComponentName getComponent()>();
+
+        $r16 = virtualinvoke $r14.<android.content.ComponentName: java.lang.String getPackageName()>();
+
+        virtualinvoke $r13.<com.android.server.am.ActivityManagerService: void ensurePackageDexOpt(java.lang.String)>($r16);
+
+        $r17 = r2.<com.android.server.am.ProcessRecord: android.app.IApplicationThread thread>;
+
+        $r15 = new android.content.Intent;
+
+        $r18 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        specialinvoke $r15.<android.content.Intent: void <init>(android.content.Intent)>($r18);
+
+        $r21 = r1.<com.android.server.am.BroadcastRecord: android.content.pm.ActivityInfo curReceiver>;
+
+        $r22 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r20 = r1.<com.android.server.am.BroadcastRecord: android.content.pm.ActivityInfo curReceiver>;
+
+        $r19 = $r20.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r23 = virtualinvoke $r22.<com.android.server.am.ActivityManagerService: android.content.res.CompatibilityInfo compatibilityInfoForPackageLocked(android.content.pm.ApplicationInfo)>($r19);
+
+        $i2 = r1.<com.android.server.am.BroadcastRecord: int resultCode>;
+
+        $r24 = r1.<com.android.server.am.BroadcastRecord: java.lang.String resultData>;
+
+        $r25 = r1.<com.android.server.am.BroadcastRecord: android.os.Bundle resultExtras>;
+
+        $z1 = r1.<com.android.server.am.BroadcastRecord: boolean ordered>;
+
+        $i1 = r1.<com.android.server.am.BroadcastRecord: int userId>;
+
+        $i0 = r2.<com.android.server.am.ProcessRecord: int repProcState>;
+
+        interfaceinvoke $r17.<android.app.IApplicationThread: void scheduleReceiver(android.content.Intent,android.content.pm.ActivityInfo,android.content.res.CompatibilityInfo,int,java.lang.String,android.os.Bundle,boolean,int,int)>($r15, $r21, $r23, $i2, $r24, $r25, $z1, $i1, $i0);
+
+        z2 = 1;
+
+     label3:
+        if z2 != 0 goto label7;
+
+        r1.<com.android.server.am.BroadcastRecord: android.os.IBinder receiver> = null;
+
+        r1.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp> = null;
+
+        r2.<com.android.server.am.ProcessRecord: com.android.server.am.BroadcastRecord curReceiver> = null;
+
+        goto label7;
+
+     label4:
+        $r27 := @caughtexception;
+
+        r3 = $r27;
+
+     label5:
+        if z0 != 0 goto label6;
+
+        r1.<com.android.server.am.BroadcastRecord: android.os.IBinder receiver> = null;
+
+        r1.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp> = null;
+
+        r2.<com.android.server.am.ProcessRecord: com.android.server.am.BroadcastRecord curReceiver> = null;
+
+     label6:
+        throw r3;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public boolean sendPendingBroadcastsLocked(com.android.server.am.ProcessRecord)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        com.android.server.am.ProcessRecord r1, $r4;
+        boolean z0, $z1;
+        com.android.server.am.BroadcastRecord r2;
+        java.lang.Exception r3, $r5;
+        int $i0, $i1, $i3;
+        java.lang.StringBuilder $r6, $r7, $r10;
+        android.content.ComponentName $r8;
+        java.lang.String $r9, $r11, $r12, $r14;
+        android.os.Bundle $r13;
+        java.lang.RuntimeException $r15;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.ProcessRecord;
+
+        z0 = 0;
+
+        r2 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        if r2 == null goto label4;
+
+        $r4 = r2.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        $i1 = $r4.<com.android.server.am.ProcessRecord: int pid>;
+
+        $i0 = r1.<com.android.server.am.ProcessRecord: int pid>;
+
+        if $i1 != $i0 goto label4;
+
+     label1:
+        r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast> = null;
+
+        specialinvoke r0.<com.android.server.am.BroadcastQueue: void processCurBroadcastLocked(com.android.server.am.BroadcastRecord,com.android.server.am.ProcessRecord)>(r2, r1);
+
+        z0 = 1;
+
+     label2:
+        goto label4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r3 = $r5;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Exception in new application when starting receiver ");
+
+        $r8 = r2.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent>;
+
+        $r9 = virtualinvoke $r8.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        $r10 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("BroadcastQueue", $r11, r3);
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void logBroadcastReceiverDiscardLocked(com.android.server.am.BroadcastRecord)>(r2);
+
+        $i3 = r2.<com.android.server.am.BroadcastRecord: int resultCode>;
+
+        $r12 = r2.<com.android.server.am.BroadcastRecord: java.lang.String resultData>;
+
+        $r13 = r2.<com.android.server.am.BroadcastRecord: android.os.Bundle resultExtras>;
+
+        $z1 = r2.<com.android.server.am.BroadcastRecord: boolean resultAbort>;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: boolean finishReceiverLocked(com.android.server.am.BroadcastRecord,int,java.lang.String,android.os.Bundle,boolean,boolean)>(r2, $i3, $r12, $r13, $z1, 0);
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void scheduleBroadcastsLocked()>();
+
+        r2.<com.android.server.am.BroadcastRecord: int state> = 0;
+
+        $r15 = new java.lang.RuntimeException;
+
+        $r14 = virtualinvoke r3.<java.lang.Exception: java.lang.String getMessage()>();
+
+        specialinvoke $r15.<java.lang.RuntimeException: void <init>(java.lang.String)>($r14);
+
+        throw $r15;
+
+     label4:
+        return z0;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void skipPendingBroadcastLocked(int)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        int i0, $i1, $i2;
+        com.android.server.am.BroadcastRecord r1;
+        com.android.server.am.ProcessRecord $r2;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        if r1 == null goto label1;
+
+        $r2 = r1.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        $i1 = $r2.<com.android.server.am.ProcessRecord: int pid>;
+
+        if $i1 != i0 goto label1;
+
+        r1.<com.android.server.am.BroadcastRecord: int state> = 0;
+
+        $i2 = r0.<com.android.server.am.BroadcastQueue: int mPendingBroadcastRecvIndex>;
+
+        r1.<com.android.server.am.BroadcastRecord: int nextReceiver> = $i2;
+
+        r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast> = null;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void scheduleBroadcastsLocked()>();
+
+     label1:
+        return;
+    }
+
+    public void skipCurrentReceiverLocked(com.android.server.am.ProcessRecord)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        com.android.server.am.ProcessRecord r1, $r3;
+        boolean z0, $z1, $z3;
+        com.android.server.am.BroadcastRecord r2, r8;
+        android.os.Bundle $r4, $r6;
+        java.lang.String $r5, $r7;
+        int $i0, $i1;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.ProcessRecord;
+
+        z0 = 0;
+
+        r2 = r1.<com.android.server.am.ProcessRecord: com.android.server.am.BroadcastRecord curReceiver>;
+
+        if r2 == null goto label1;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void logBroadcastReceiverDiscardLocked(com.android.server.am.BroadcastRecord)>(r2);
+
+        $i1 = r2.<com.android.server.am.BroadcastRecord: int resultCode>;
+
+        $r7 = r2.<com.android.server.am.BroadcastRecord: java.lang.String resultData>;
+
+        $r6 = r2.<com.android.server.am.BroadcastRecord: android.os.Bundle resultExtras>;
+
+        $z3 = r2.<com.android.server.am.BroadcastRecord: boolean resultAbort>;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: boolean finishReceiverLocked(com.android.server.am.BroadcastRecord,int,java.lang.String,android.os.Bundle,boolean,boolean)>(r2, $i1, $r7, $r6, $z3, 0);
+
+        z0 = 1;
+
+     label1:
+        r8 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        if r8 == null goto label2;
+
+        $r3 = r8.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        if $r3 != r1 goto label2;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void logBroadcastReceiverDiscardLocked(com.android.server.am.BroadcastRecord)>(r8);
+
+        $i0 = r8.<com.android.server.am.BroadcastRecord: int resultCode>;
+
+        $r5 = r8.<com.android.server.am.BroadcastRecord: java.lang.String resultData>;
+
+        $r4 = r8.<com.android.server.am.BroadcastRecord: android.os.Bundle resultExtras>;
+
+        $z1 = r8.<com.android.server.am.BroadcastRecord: boolean resultAbort>;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: boolean finishReceiverLocked(com.android.server.am.BroadcastRecord,int,java.lang.String,android.os.Bundle,boolean,boolean)>(r8, $i0, $r5, $r4, $z1, 0);
+
+        z0 = 1;
+
+     label2:
+        if z0 == 0 goto label3;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void scheduleBroadcastsLocked()>();
+
+     label3:
+        return;
+    }
+
+    public void scheduleBroadcastsLocked()
+    {
+        com.android.server.am.BroadcastQueue r0;
+        boolean $z0;
+        com.android.server.am.BroadcastQueue$BroadcastHandler $r1, $r2;
+        android.os.Message $r3;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        $z0 = r0.<com.android.server.am.BroadcastQueue: boolean mBroadcastsScheduled>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastQueue$BroadcastHandler mHandler>;
+
+        $r1 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastQueue$BroadcastHandler mHandler>;
+
+        $r3 = virtualinvoke $r1.<com.android.server.am.BroadcastQueue$BroadcastHandler: android.os.Message obtainMessage(int,java.lang.Object)>(200, r0);
+
+        virtualinvoke $r2.<com.android.server.am.BroadcastQueue$BroadcastHandler: boolean sendMessage(android.os.Message)>($r3);
+
+        r0.<com.android.server.am.BroadcastQueue: boolean mBroadcastsScheduled> = 1;
+
+        return;
+    }
+
+    public com.android.server.am.BroadcastRecord getMatchingOrderedReceiver(android.os.IBinder)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        android.os.IBinder r1, $r6;
+        com.android.server.am.BroadcastRecord r2;
+        java.util.ArrayList $r3, $r4;
+        int $i0;
+        java.lang.Object $r5;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: android.os.IBinder;
+
+        $r3 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $i0 = virtualinvoke $r3.<java.util.ArrayList: int size()>();
+
+        if $i0 <= 0 goto label1;
+
+        $r4 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        r2 = (com.android.server.am.BroadcastRecord) $r5;
+
+        if r2 == null goto label1;
+
+        $r6 = r2.<com.android.server.am.BroadcastRecord: android.os.IBinder receiver>;
+
+        if $r6 != r1 goto label1;
+
+        return r2;
+
+     label1:
+        return null;
+    }
+
+    public boolean finishReceiverLocked(com.android.server.am.BroadcastRecord, int, java.lang.String, android.os.Bundle, boolean, boolean)
+    {
+        com.android.server.am.BroadcastQueue r0, $r11, $r13, $r16;
+        com.android.server.am.BroadcastRecord r1;
+        int i0, i1, $i2, $i3, $i4, $i5, $i7, $i8, $i9, $i10, $i11;
+        java.lang.String r2, $r24, $r25, $r29, $r30, $r40, $r42;
+        android.os.Bundle r3;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6;
+        android.content.pm.ActivityInfo r4, r5, $r31;
+        java.lang.Object r6, $r18;
+        android.content.Intent $r7, $r34;
+        com.android.server.am.ProcessRecord $r9, $r36;
+        com.android.server.am.BroadcastFilter $r10, $r33;
+        android.content.ComponentName $r12, $r22;
+        java.util.ArrayList $r14, $r15;
+        java.util.List $r17, $r32;
+        com.android.server.am.ActivityManagerService $r19;
+        com.android.server.am.ActiveServices $r20;
+        java.lang.StringBuilder $r21, $r23, $r26, $r35, $r38, $r39, $r41;
+        android.content.pm.ApplicationInfo $r27, $r28;
+        com.android.server.am.ReceiverList $r37;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.BroadcastRecord;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.String;
+
+        r3 := @parameter3: android.os.Bundle;
+
+        z0 := @parameter4: boolean;
+
+        z1 := @parameter5: boolean;
+
+        i1 = r1.<com.android.server.am.BroadcastRecord: int state>;
+
+        r4 = r1.<com.android.server.am.BroadcastRecord: android.content.pm.ActivityInfo curReceiver>;
+
+        r1.<com.android.server.am.BroadcastRecord: int state> = 0;
+
+        if i1 != 0 goto label01;
+
+        $r35 = new java.lang.StringBuilder;
+
+        specialinvoke $r35.<java.lang.StringBuilder: void <init>()>();
+
+        $r41 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("finishReceiver [");
+
+        $r40 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r39 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r40);
+
+        $r38 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("] called but state is IDLE");
+
+        $r42 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r42);
+
+     label01:
+        r1.<com.android.server.am.BroadcastRecord: android.os.IBinder receiver> = null;
+
+        $r7 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        virtualinvoke $r7.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>(null);
+
+        $r9 = r1.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        if $r9 == null goto label02;
+
+        $r36 = r1.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        $r36.<com.android.server.am.ProcessRecord: com.android.server.am.BroadcastRecord curReceiver> = null;
+
+     label02:
+        $r10 = r1.<com.android.server.am.BroadcastRecord: com.android.server.am.BroadcastFilter curFilter>;
+
+        if $r10 == null goto label03;
+
+        $r33 = r1.<com.android.server.am.BroadcastRecord: com.android.server.am.BroadcastFilter curFilter>;
+
+        $r37 = $r33.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r37.<com.android.server.am.ReceiverList: com.android.server.am.BroadcastRecord curBroadcast> = null;
+
+     label03:
+        r1.<com.android.server.am.BroadcastRecord: com.android.server.am.BroadcastFilter curFilter> = null;
+
+        r1.<com.android.server.am.BroadcastRecord: android.content.pm.ActivityInfo curReceiver> = null;
+
+        r1.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp> = null;
+
+        r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast> = null;
+
+        r1.<com.android.server.am.BroadcastRecord: int resultCode> = i0;
+
+        r1.<com.android.server.am.BroadcastRecord: java.lang.String resultData> = r2;
+
+        r1.<com.android.server.am.BroadcastRecord: android.os.Bundle resultExtras> = r3;
+
+        if z0 == 0 goto label04;
+
+        $r34 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $i11 = virtualinvoke $r34.<android.content.Intent: int getFlags()>();
+
+        $i10 = $i11 & 134217728;
+
+        if $i10 != 0 goto label04;
+
+        r1.<com.android.server.am.BroadcastRecord: boolean resultAbort> = z0;
+
+        goto label05;
+
+     label04:
+        r1.<com.android.server.am.BroadcastRecord: boolean resultAbort> = 0;
+
+     label05:
+        if z1 == 0 goto label11;
+
+        $r12 = r1.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent>;
+
+        if $r12 == null goto label11;
+
+        $r11 = r1.<com.android.server.am.BroadcastRecord: com.android.server.am.BroadcastQueue queue>;
+
+        $z3 = $r11.<com.android.server.am.BroadcastQueue: boolean mDelayBehindServices>;
+
+        if $z3 == 0 goto label11;
+
+        $r13 = r1.<com.android.server.am.BroadcastRecord: com.android.server.am.BroadcastQueue queue>;
+
+        $r14 = $r13.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $i2 = virtualinvoke $r14.<java.util.ArrayList: int size()>();
+
+        if $i2 <= 0 goto label11;
+
+        $r16 = r1.<com.android.server.am.BroadcastRecord: com.android.server.am.BroadcastQueue queue>;
+
+        $r15 = $r16.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $r18 = virtualinvoke $r15.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        if $r18 != r1 goto label11;
+
+        $i4 = r1.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        $r17 = r1.<com.android.server.am.BroadcastRecord: java.util.List receivers>;
+
+        $i3 = interfaceinvoke $r17.<java.util.List: int size()>();
+
+        if $i4 >= $i3 goto label08;
+
+        $r32 = r1.<com.android.server.am.BroadcastRecord: java.util.List receivers>;
+
+        $i9 = r1.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        r6 = interfaceinvoke $r32.<java.util.List: java.lang.Object get(int)>($i9);
+
+        $z6 = r6 instanceof android.content.pm.ActivityInfo;
+
+        if $z6 == 0 goto label06;
+
+        $r31 = (android.content.pm.ActivityInfo) r6;
+
+        goto label07;
+
+     label06:
+        $r31 = null;
+
+     label07:
+        r5 = $r31;
+
+        goto label09;
+
+     label08:
+        r5 = null;
+
+     label09:
+        if r4 == null goto label10;
+
+        if r5 == null goto label10;
+
+        $r27 = r4.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i8 = $r27.<android.content.pm.ApplicationInfo: int uid>;
+
+        $r28 = r5.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i7 = $r28.<android.content.pm.ApplicationInfo: int uid>;
+
+        if $i8 != $i7 goto label10;
+
+        $r30 = r4.<android.content.pm.ActivityInfo: java.lang.String processName>;
+
+        $r29 = r5.<android.content.pm.ActivityInfo: java.lang.String processName>;
+
+        $z5 = virtualinvoke $r30.<java.lang.String: boolean equals(java.lang.Object)>($r29);
+
+        if $z5 != 0 goto label11;
+
+     label10:
+        $r19 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r20 = $r19.<com.android.server.am.ActivityManagerService: com.android.server.am.ActiveServices mServices>;
+
+        $i5 = r1.<com.android.server.am.BroadcastRecord: int userId>;
+
+        $z4 = virtualinvoke $r20.<com.android.server.am.ActiveServices: boolean hasBackgroundServices(int)>($i5);
+
+        if $z4 == 0 goto label11;
+
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Delay finish: ");
+
+        $r22 = r1.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent>;
+
+        $r25 = virtualinvoke $r22.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        $r26 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r25);
+
+        $r24 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ActivityManager", $r24);
+
+        r1.<com.android.server.am.BroadcastRecord: int state> = 4;
+
+        return 0;
+
+     label11:
+        r1.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent> = null;
+
+        if i1 == 1 goto label12;
+
+        if i1 != 3 goto label13;
+
+     label12:
+        $z2 = 1;
+
+        goto label14;
+
+     label13:
+        $z2 = 0;
+
+     label14:
+        return $z2;
+    }
+
+    public void backgroundServicesFinishedLocked(int)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        int i0, $i1, $i2, $i3;
+        com.android.server.am.BroadcastRecord r1;
+        java.util.ArrayList $r2, $r3;
+        java.lang.Object $r4;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $i1 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        if $i1 <= 0 goto label1;
+
+        $r3 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        r1 = (com.android.server.am.BroadcastRecord) $r4;
+
+        $i2 = r1.<com.android.server.am.BroadcastRecord: int userId>;
+
+        if $i2 != i0 goto label1;
+
+        $i3 = r1.<com.android.server.am.BroadcastRecord: int state>;
+
+        if $i3 != 4 goto label1;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ActivityManager", "Resuming delayed broadcast");
+
+        r1.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent> = null;
+
+        r1.<com.android.server.am.BroadcastRecord: int state> = 0;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void processNextBroadcast(boolean)>(0);
+
+     label1:
+        return;
+    }
+
+    private static void performReceiveLocked(com.android.server.am.ProcessRecord, android.content.IIntentReceiver, android.content.Intent, int, java.lang.String, android.os.Bundle, boolean, boolean, int) throws android.os.RemoteException
+    {
+        com.android.server.am.ProcessRecord r0;
+        android.content.IIntentReceiver r1;
+        android.content.Intent r2;
+        int i0, i1, $i2;
+        java.lang.String r3;
+        android.os.Bundle r4;
+        boolean z0, z1;
+        android.app.IApplicationThread $r5, $r7;
+        android.os.RemoteException $r6;
+
+        r0 := @parameter0: com.android.server.am.ProcessRecord;
+
+        r1 := @parameter1: android.content.IIntentReceiver;
+
+        r2 := @parameter2: android.content.Intent;
+
+        i0 := @parameter3: int;
+
+        r3 := @parameter4: java.lang.String;
+
+        r4 := @parameter5: android.os.Bundle;
+
+        z0 := @parameter6: boolean;
+
+        z1 := @parameter7: boolean;
+
+        i1 := @parameter8: int;
+
+        if r0 == null goto label2;
+
+        $r5 = r0.<com.android.server.am.ProcessRecord: android.app.IApplicationThread thread>;
+
+        if $r5 == null goto label1;
+
+        $r7 = r0.<com.android.server.am.ProcessRecord: android.app.IApplicationThread thread>;
+
+        $i2 = r0.<com.android.server.am.ProcessRecord: int repProcState>;
+
+        interfaceinvoke $r7.<android.app.IApplicationThread: void scheduleRegisteredReceiver(android.content.IIntentReceiver,android.content.Intent,int,java.lang.String,android.os.Bundle,boolean,boolean,int,int)>(r1, r2, i0, r3, r4, z0, z1, i1, $i2);
+
+        goto label3;
+
+     label1:
+        $r6 = new android.os.RemoteException;
+
+        specialinvoke $r6.<android.os.RemoteException: void <init>(java.lang.String)>("app.thread must not be null");
+
+        throw $r6;
+
+     label2:
+        interfaceinvoke r1.<android.content.IIntentReceiver: void performReceive(android.content.Intent,int,java.lang.String,android.os.Bundle,boolean,boolean,int)>(r2, i0, r3, r4, z0, z1, i1);
+
+     label3:
+        return;
+    }
+
+    private final void deliverToRegisteredReceiverLocked(com.android.server.am.BroadcastRecord, com.android.server.am.BroadcastFilter, boolean)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        com.android.server.am.BroadcastRecord r1;
+        com.android.server.am.BroadcastFilter r2;
+        boolean z0, z1, $z2, $z3, $z5, $z6, $z7;
+        int i0, $i1, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i17, $i18, $i19, i22, i23;
+        java.lang.String $r3, $r8, $r15, $r25, $r40, $r44, $r47, $r54, $r61, $r74, $r75, $r78, $r80, $r81, $r84, $r97, $r100, $r104;
+        com.android.server.am.ReceiverList $r4, $r14, $r17, $r19, $r23, $r26, $r27, $r31, $r33, $r39, $r41, $r45, $r48, $r49, $r58, $r62, $r68, $r99, $r107, $r109;
+        com.android.server.am.ProcessRecord $r5, $r20, $r30, $r32, $r35, $r36, $r38, $r57, $r108, $r110;
+        java.lang.StringBuilder $r6, $r7, $r9, $r10, $r11, $r12, $r13, $r16, $r51, $r52, $r56, $r59, $r60, $r63, $r64, $r65, $r66, $r67, $r69, $r70, $r71, $r72, $r73, $r76, $r79, $r82, $r83, $r86, $r87, $r88, $r89, $r90, $r91, $r92, $r93, $r94, $r96, $r98, $r101, $r102, $r103, $r105;
+        android.content.Intent $r18, $r21, $r43, $r53, $r85, $r95;
+        android.content.IIntentReceiver $r22, $r28;
+        android.os.Bundle $r24;
+        android.os.IBinder $r29;
+        com.android.server.am.ActivityManagerService $r34, $r37, $r46, $r55, $r77;
+        com.android.server.firewall.IntentFirewall $r42;
+        com.android.server.AppOpsService $r50;
+        android.os.RemoteException $r106, r111;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.BroadcastRecord;
+
+        r2 := @parameter1: com.android.server.am.BroadcastFilter;
+
+        z0 := @parameter2: boolean;
+
+        z1 = 0;
+
+        $r3 = r2.<com.android.server.am.BroadcastFilter: java.lang.String requiredPermission>;
+
+        if $r3 == null goto label01;
+
+        $r77 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r78 = r2.<com.android.server.am.BroadcastFilter: java.lang.String requiredPermission>;
+
+        $i15 = r1.<com.android.server.am.BroadcastRecord: int callingPid>;
+
+        $i17 = r1.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        i0 = virtualinvoke $r77.<com.android.server.am.ActivityManagerService: int checkComponentPermission(java.lang.String,int,int,int,boolean)>($r78, $i15, $i17, -1, 1);
+
+        if i0 == 0 goto label01;
+
+        $r87 = new java.lang.StringBuilder;
+
+        specialinvoke $r87.<java.lang.StringBuilder: void <init>()>();
+
+        $r86 = virtualinvoke $r87.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Permission Denial: broadcasting ");
+
+        $r85 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r84 = virtualinvoke $r85.<android.content.Intent: java.lang.String toString()>();
+
+        $r83 = virtualinvoke $r86.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r84);
+
+        $r82 = virtualinvoke $r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" from ");
+
+        $r81 = r1.<com.android.server.am.BroadcastRecord: java.lang.String callerPackage>;
+
+        $r93 = virtualinvoke $r82.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r81);
+
+        $r92 = virtualinvoke $r93.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (pid=");
+
+        $i19 = r1.<com.android.server.am.BroadcastRecord: int callingPid>;
+
+        $r91 = virtualinvoke $r92.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i19);
+
+        $r90 = virtualinvoke $r91.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", uid=");
+
+        $i18 = r1.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        $r89 = virtualinvoke $r90.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i18);
+
+        $r88 = virtualinvoke $r89.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r101 = virtualinvoke $r88.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" requires ");
+
+        $r100 = r2.<com.android.server.am.BroadcastFilter: java.lang.String requiredPermission>;
+
+        $r103 = virtualinvoke $r101.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r100);
+
+        $r102 = virtualinvoke $r103.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" due to registered receiver ");
+
+        $r105 = virtualinvoke $r102.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r104 = virtualinvoke $r105.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r104);
+
+        z1 = 1;
+
+     label01:
+        if z1 != 0 goto label02;
+
+        $r47 = r1.<com.android.server.am.BroadcastRecord: java.lang.String requiredPermission>;
+
+        if $r47 == null goto label02;
+
+        $r55 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r54 = r1.<com.android.server.am.BroadcastRecord: java.lang.String requiredPermission>;
+
+        $r48 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $i11 = $r48.<com.android.server.am.ReceiverList: int pid>;
+
+        $r49 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $i8 = $r49.<com.android.server.am.ReceiverList: int uid>;
+
+        i22 = virtualinvoke $r55.<com.android.server.am.ActivityManagerService: int checkComponentPermission(java.lang.String,int,int,int,boolean)>($r54, $i11, $i8, -1, 1);
+
+        if i22 == 0 goto label02;
+
+        $r51 = new java.lang.StringBuilder;
+
+        specialinvoke $r51.<java.lang.StringBuilder: void <init>()>();
+
+        $r52 = virtualinvoke $r51.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Permission Denial: receiving ");
+
+        $r53 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r61 = virtualinvoke $r53.<android.content.Intent: java.lang.String toString()>();
+
+        $r60 = virtualinvoke $r52.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r61);
+
+        $r63 = virtualinvoke $r60.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to ");
+
+        $r62 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r57 = $r62.<com.android.server.am.ReceiverList: com.android.server.am.ProcessRecord app>;
+
+        $r56 = virtualinvoke $r63.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r57);
+
+        $r59 = virtualinvoke $r56.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (pid=");
+
+        $r58 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $i13 = $r58.<com.android.server.am.ReceiverList: int pid>;
+
+        $r67 = virtualinvoke $r59.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i13);
+
+        $r69 = virtualinvoke $r67.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", uid=");
+
+        $r68 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $i12 = $r68.<com.android.server.am.ReceiverList: int uid>;
+
+        $r64 = virtualinvoke $r69.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i12);
+
+        $r66 = virtualinvoke $r64.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r65 = virtualinvoke $r66.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" requires ");
+
+        $r75 = r1.<com.android.server.am.BroadcastRecord: java.lang.String requiredPermission>;
+
+        $r76 = virtualinvoke $r65.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r75);
+
+        $r73 = virtualinvoke $r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" due to sender ");
+
+        $r74 = r1.<com.android.server.am.BroadcastRecord: java.lang.String callerPackage>;
+
+        $r71 = virtualinvoke $r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r74);
+
+        $r72 = virtualinvoke $r71.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (uid ");
+
+        $i14 = r1.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        $r70 = virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i14);
+
+        $r79 = virtualinvoke $r70.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r80 = virtualinvoke $r79.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r80);
+
+        z1 = 1;
+
+     label02:
+        $i1 = r1.<com.android.server.am.BroadcastRecord: int appOp>;
+
+        if $i1 == -1 goto label03;
+
+        $r46 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r50 = $r46.<com.android.server.am.ActivityManagerService: com.android.server.AppOpsService mAppOpsService>;
+
+        $i10 = r1.<com.android.server.am.BroadcastRecord: int appOp>;
+
+        $r45 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $i9 = $r45.<com.android.server.am.ReceiverList: int uid>;
+
+        $r44 = r2.<com.android.server.am.BroadcastFilter: java.lang.String packageName>;
+
+        i23 = virtualinvoke $r50.<com.android.server.AppOpsService: int noteOperation(int,int,java.lang.String)>($i10, $i9, $r44);
+
+        if i23 == 0 goto label03;
+
+        z1 = 1;
+
+     label03:
+        if z1 != 0 goto label06;
+
+        $r37 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r42 = $r37.<com.android.server.am.ActivityManagerService: com.android.server.firewall.IntentFirewall mIntentFirewall>;
+
+        $r43 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $i7 = r1.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        $i5 = r1.<com.android.server.am.BroadcastRecord: int callingPid>;
+
+        $r40 = r1.<com.android.server.am.BroadcastRecord: java.lang.String resolvedType>;
+
+        $r41 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $i6 = $r41.<com.android.server.am.ReceiverList: int uid>;
+
+        $z6 = virtualinvoke $r42.<com.android.server.firewall.IntentFirewall: boolean checkBroadcast(android.content.Intent,int,int,java.lang.String,int)>($r43, $i7, $i5, $r40, $i6);
+
+        if $z6 != 0 goto label04;
+
+        $z7 = 1;
+
+        goto label05;
+
+     label04:
+        $z7 = 0;
+
+     label05:
+        z1 = $z7;
+
+     label06:
+        $r4 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r5 = $r4.<com.android.server.am.ReceiverList: com.android.server.am.ProcessRecord app>;
+
+        if $r5 == null goto label07;
+
+        $r39 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r38 = $r39.<com.android.server.am.ReceiverList: com.android.server.am.ProcessRecord app>;
+
+        $z5 = $r38.<com.android.server.am.ProcessRecord: boolean crashing>;
+
+        if $z5 == 0 goto label08;
+
+     label07:
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Skipping deliver [");
+
+        $r8 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r9 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("] ");
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to ");
+
+        $r14 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r14);
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": process crashing");
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r15);
+
+        z1 = 1;
+
+     label08:
+        if z1 != 0 goto label12;
+
+        if z0 == 0 goto label09;
+
+        $r23 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r28 = $r23.<com.android.server.am.ReceiverList: android.content.IIntentReceiver receiver>;
+
+        $r29 = interfaceinvoke $r28.<android.content.IIntentReceiver: android.os.IBinder asBinder()>();
+
+        r1.<com.android.server.am.BroadcastRecord: android.os.IBinder receiver> = $r29;
+
+        r1.<com.android.server.am.BroadcastRecord: com.android.server.am.BroadcastFilter curFilter> = r2;
+
+        $r26 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r26.<com.android.server.am.ReceiverList: com.android.server.am.BroadcastRecord curBroadcast> = r1;
+
+        r1.<com.android.server.am.BroadcastRecord: int state> = 2;
+
+        $r27 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r32 = $r27.<com.android.server.am.ReceiverList: com.android.server.am.ProcessRecord app>;
+
+        if $r32 == null goto label09;
+
+        $r33 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r30 = $r33.<com.android.server.am.ReceiverList: com.android.server.am.ProcessRecord app>;
+
+        r1.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp> = $r30;
+
+        $r31 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r35 = $r31.<com.android.server.am.ReceiverList: com.android.server.am.ProcessRecord app>;
+
+        $r35.<com.android.server.am.ProcessRecord: com.android.server.am.BroadcastRecord curReceiver> = r1;
+
+        $r34 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r36 = r1.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        virtualinvoke $r34.<com.android.server.am.ActivityManagerService: boolean updateOomAdjLocked(com.android.server.am.ProcessRecord)>($r36);
+
+     label09:
+        $r17 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r20 = $r17.<com.android.server.am.ReceiverList: com.android.server.am.ProcessRecord app>;
+
+        $r19 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r22 = $r19.<com.android.server.am.ReceiverList: android.content.IIntentReceiver receiver>;
+
+        $r18 = new android.content.Intent;
+
+        $r21 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        specialinvoke $r18.<android.content.Intent: void <init>(android.content.Intent)>($r21);
+
+        $i4 = r1.<com.android.server.am.BroadcastRecord: int resultCode>;
+
+        $r25 = r1.<com.android.server.am.BroadcastRecord: java.lang.String resultData>;
+
+        $r24 = r1.<com.android.server.am.BroadcastRecord: android.os.Bundle resultExtras>;
+
+        $z2 = r1.<com.android.server.am.BroadcastRecord: boolean ordered>;
+
+        $z3 = r1.<com.android.server.am.BroadcastRecord: boolean initialSticky>;
+
+        $i3 = r1.<com.android.server.am.BroadcastRecord: int userId>;
+
+        staticinvoke <com.android.server.am.BroadcastQueue: void performReceiveLocked(com.android.server.am.ProcessRecord,android.content.IIntentReceiver,android.content.Intent,int,java.lang.String,android.os.Bundle,boolean,boolean,int)>($r20, $r22, $r18, $i4, $r25, $r24, $z2, $z3, $i3);
+
+        if z0 == 0 goto label10;
+
+        r1.<com.android.server.am.BroadcastRecord: int state> = 3;
+
+     label10:
+        goto label12;
+
+     label11:
+        $r106 := @caughtexception;
+
+        r111 = $r106;
+
+        $r94 = new java.lang.StringBuilder;
+
+        specialinvoke $r94.<java.lang.StringBuilder: void <init>()>();
+
+        $r96 = virtualinvoke $r94.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failure sending broadcast ");
+
+        $r95 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r98 = virtualinvoke $r96.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r95);
+
+        $r97 = virtualinvoke $r98.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("BroadcastQueue", $r97, r111);
+
+        if z0 == 0 goto label12;
+
+        r1.<com.android.server.am.BroadcastRecord: android.os.IBinder receiver> = null;
+
+        r1.<com.android.server.am.BroadcastRecord: com.android.server.am.BroadcastFilter curFilter> = null;
+
+        $r99 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r99.<com.android.server.am.ReceiverList: com.android.server.am.BroadcastRecord curBroadcast> = null;
+
+        $r107 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r108 = $r107.<com.android.server.am.ReceiverList: com.android.server.am.ProcessRecord app>;
+
+        if $r108 == null goto label12;
+
+        $r109 = r2.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $r110 = $r109.<com.android.server.am.ReceiverList: com.android.server.am.ProcessRecord app>;
+
+        $r110.<com.android.server.am.ProcessRecord: com.android.server.am.BroadcastRecord curReceiver> = null;
+
+     label12:
+        return;
+
+        catch android.os.RemoteException from label09 to label10 with label11;
+    }
+
+    final void processNextBroadcast(boolean)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z7, $z9, $z11, $z12, $z13, $z14, $z15, $z16, $z17, $z18, $z19, $z20, $z21, z23, z24, z25, z26, z27;
+        com.android.server.am.ActivityManagerService r1, $r11, $r14, $r19, $r39, $r44, $r61, $r63, $r87, $r91, $r97, $r117, $r137, $r213, $r220, $r222, $r223;
+        com.android.server.am.BroadcastRecord r2, $r15, $r219, $r239, $r252, $r253, r305;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i25, $i26, $i28, $i29, $i30, $i31, $i33, $i34, $i35, $i36, $i37, $i39, $i40, $i42, $i43, $i44, $i45, $i48, $i49, $i62, $i63, $i64, $i66, $i68, $i69, $i72, $i76, $i78, i84, i86, i88, i89, i90;
+        java.lang.Object r3, $r17, $r237, $r249, r307;
+        java.lang.Throwable r4, r12, $r266, $r272;
+        android.content.ComponentName r5, $r28, $r57, $r65, $r267, $r275, $r295;
+        java.lang.SecurityException r7, $r282;
+        java.lang.Exception r8, $r261;
+        android.os.RemoteException r10, $r263, $r284, $r292, $r302, r306;
+        java.util.ArrayList $r13, $r16, $r18, $r23, $r238;
+        java.util.List $r20, $r22, $r25, $r214, $r243, $r244;
+        android.content.IIntentReceiver $r21, $r210;
+        long $l8, $l51, $l52, $l53, $l54, $l55, $l56, $l58, $l59, $l60, $l61, $l65, $l70, $l71, $l73, $l74, l85, l87;
+        android.content.pm.ActivityInfo $r26, $r30, $r31, $r33, $r35, $r38, $r40, $r41, $r45, $r46, $r48, $r49, $r51, $r53, $r55, $r59, $r70, $r77, $r89, $r90, $r96, $r98, $r100, $r101, $r103, $r118, $r130, $r133, $r135, $r158, $r168, $r178, $r299;
+        android.content.pm.ApplicationInfo $r27, $r34, $r37, $r42, $r50, $r60, $r62, $r67, $r76, $r92, $r102, $r107, $r116, $r129, $r132, $r184;
+        java.lang.String $r29, $r32, $r36, $r43, $r47, $r56, $r68, $r80, $r82, $r86, $r93, $r104, $r110, $r120, $r121, $r124, $r128, $r134, $r138, $r141, $r143, $r149, $r150, $r154, $r159, $r164, $r169, $r176, $r185, $r187, $r190, $r191, $r198, $r204, $r212, $r215, $r246, $r251, $r258, $r268, $r270, $r277, $r281, $r283, $r287, $r296, $r298, $r300, r310;
+        com.android.server.am.ProcessRecord $r52, $r72, $r94, $r113, $r209, $r218, $r254, r304, r312;
+        android.content.pm.IPackageManager $r54, $r99, $r127;
+        android.content.Intent $r58, $r66, $r73, $r119, $r147, $r155, $r194, $r207, $r208, $r235, $r279, $r290;
+        java.lang.StringBuilder $r69, $r71, $r74, $r75, $r78, $r79, $r83, $r84, $r95, $r105, $r106, $r108, $r109, $r111, $r112, $r114, $r115, $r122, $r123, $r125, $r126, $r139, $r140, $r142, $r144, $r145, $r146, $r148, $r151, $r152, $r153, $r156, $r157, $r160, $r161, $r162, $r163, $r165, $r166, $r167, $r170, $r171, $r172, $r173, $r174, $r175, $r177, $r179, $r180, $r181, $r182, $r183, $r186, $r189, $r192, $r193, $r195, $r196, $r197, $r199, $r200, $r201, $r202, $r203, $r205, $r206, $r216, $r224, $r225, $r226, $r227, $r228, $r229, $r230, $r231, $r232, $r233, $r234, $r236, $r242, $r245, $r247, $r248, $r250, $r255, $r256, $r257, $r259, $r260, $r262, $r265, $r269, $r273, $r274, $r276, $r278, $r280, $r285, $r286, $r288, $r289, $r291, $r293, $r294, $r297, $r301;
+        android.os.Bundle $r81, $r211, $r271;
+        com.android.server.am.ProcessStatsService $r85;
+        android.app.IApplicationThread $r88;
+        com.android.server.AppOpsService $r131;
+        com.android.server.firewall.IntentFirewall $r136;
+        android.os.IBinder $r188;
+        byte $b50, $b57;
+        android.util.SparseArray $r217, $r221, r303;
+        java.lang.RuntimeException $r240, r313;
+        com.android.server.am.BroadcastFilter $r241, r308;
+        java.lang.IllegalArgumentException $r264, r311;
+        android.content.pm.ResolveInfo r309;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        z0 := @parameter0: boolean;
+
+        $r11 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        r1 = $r11;
+
+        entermonitor $r11;
+
+     label01:
+        $r14 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        virtualinvoke $r14.<com.android.server.am.ActivityManagerService: void updateCpuStats()>();
+
+        if z0 == 0 goto label02;
+
+        r0.<com.android.server.am.BroadcastQueue: boolean mBroadcastsScheduled> = 0;
+
+     label02:
+        $r13 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mParallelBroadcasts>;
+
+        $i3 = virtualinvoke $r13.<java.util.ArrayList: int size()>();
+
+        if $i3 <= 0 goto label05;
+
+        $r238 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mParallelBroadcasts>;
+
+        $r237 = virtualinvoke $r238.<java.util.ArrayList: java.lang.Object remove(int)>(0);
+
+        r2 = (com.android.server.am.BroadcastRecord) $r237;
+
+        $l74 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        r2.<com.android.server.am.BroadcastRecord: long dispatchTime> = $l74;
+
+        $l73 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        r2.<com.android.server.am.BroadcastRecord: long dispatchClockTime> = $l73;
+
+        $r243 = r2.<com.android.server.am.BroadcastRecord: java.util.List receivers>;
+
+        i0 = interfaceinvoke $r243.<java.util.List: int size()>();
+
+        i1 = 0;
+
+     label03:
+        if i1 >= i0 goto label04;
+
+        $r244 = r2.<com.android.server.am.BroadcastRecord: java.util.List receivers>;
+
+        r3 = interfaceinvoke $r244.<java.util.List: java.lang.Object get(int)>(i1);
+
+        $r241 = (com.android.server.am.BroadcastFilter) r3;
+
+        specialinvoke r0.<com.android.server.am.BroadcastQueue: void deliverToRegisteredReceiverLocked(com.android.server.am.BroadcastRecord,com.android.server.am.BroadcastFilter,boolean)>(r2, $r241, 0);
+
+        i1 = i1 + 1;
+
+        goto label03;
+
+     label04:
+        specialinvoke r0.<com.android.server.am.BroadcastQueue: void addBroadcastToHistoryLocked(com.android.server.am.BroadcastRecord)>(r2);
+
+        goto label02;
+
+     label05:
+        $r15 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        if $r15 == null goto label16;
+
+        $r222 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r221 = $r222.<com.android.server.am.ActivityManagerService: android.util.SparseArray mPidsSelfLocked>;
+
+        r303 = $r221;
+
+        entermonitor $r221;
+
+     label06:
+        $r220 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r217 = $r220.<com.android.server.am.ActivityManagerService: android.util.SparseArray mPidsSelfLocked>;
+
+        $r219 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        $r218 = $r219.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        $i69 = $r218.<com.android.server.am.ProcessRecord: int pid>;
+
+        $r249 = virtualinvoke $r217.<android.util.SparseArray: java.lang.Object get(int)>($i69);
+
+        r304 = (com.android.server.am.ProcessRecord) $r249;
+
+        if r304 == null goto label07;
+
+        $z20 = r304.<com.android.server.am.ProcessRecord: boolean crashing>;
+
+        if $z20 == 0 goto label08;
+
+     label07:
+        $z19 = 1;
+
+        goto label09;
+
+     label08:
+        $z19 = 0;
+
+     label09:
+        z23 = $z19;
+
+        exitmonitor r303;
+
+     label10:
+        goto label13;
+
+     label11:
+        $r266 := @caughtexception;
+
+        r4 = $r266;
+
+        exitmonitor r303;
+
+     label12:
+        throw r4;
+
+     label13:
+        if z23 != 0 goto label15;
+
+        exitmonitor r1;
+
+     label14:
+        return;
+
+     label15:
+        $r250 = new java.lang.StringBuilder;
+
+        specialinvoke $r250.<java.lang.StringBuilder: void <init>()>();
+
+        $r245 = virtualinvoke $r250.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("pending app  [");
+
+        $r246 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r247 = virtualinvoke $r245.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r246);
+
+        $r248 = virtualinvoke $r247.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r253 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        $r254 = $r253.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        $r255 = virtualinvoke $r248.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r254);
+
+        $r256 = virtualinvoke $r255.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" died before responding to broadcast");
+
+        $r251 = virtualinvoke $r256.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r251);
+
+        $r252 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        $r252.<com.android.server.am.BroadcastRecord: int state> = 0;
+
+        $r239 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        $i76 = r0.<com.android.server.am.BroadcastQueue: int mPendingBroadcastRecvIndex>;
+
+        $r239.<com.android.server.am.BroadcastRecord: int nextReceiver> = $i76;
+
+        r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast> = null;
+
+     label16:
+        z24 = 0;
+
+     label17:
+        $r16 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $i4 = virtualinvoke $r16.<java.util.ArrayList: int size()>();
+
+        if $i4 != 0 goto label20;
+
+        $r213 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        virtualinvoke $r213.<com.android.server.am.ActivityManagerService: void scheduleAppGcsLocked()>();
+
+        if z24 == 0 goto label18;
+
+        $r223 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        virtualinvoke $r223.<com.android.server.am.ActivityManagerService: void updateOomAdjLocked()>();
+
+     label18:
+        exitmonitor r1;
+
+     label19:
+        return;
+
+     label20:
+        $r18 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $r17 = virtualinvoke $r18.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        r305 = (com.android.server.am.BroadcastRecord) $r17;
+
+        z25 = 0;
+
+        $r20 = r305.<com.android.server.am.BroadcastRecord: java.util.List receivers>;
+
+        if $r20 == null goto label21;
+
+        $r214 = r305.<com.android.server.am.BroadcastRecord: java.util.List receivers>;
+
+        $i66 = interfaceinvoke $r214.<java.util.List: int size()>();
+
+        goto label22;
+
+     label21:
+        $i66 = 0;
+
+     label22:
+        i84 = $i66;
+
+        $r19 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $z2 = $r19.<com.android.server.am.ActivityManagerService: boolean mProcessesReady>;
+
+        if $z2 == 0 goto label23;
+
+        $l65 = r305.<com.android.server.am.BroadcastRecord: long dispatchTime>;
+
+        $b50 = $l65 cmp 0L;
+
+        if $b50 <= 0 goto label23;
+
+        l85 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        if i84 <= 0 goto label23;
+
+        $l56 = r305.<com.android.server.am.BroadcastRecord: long dispatchTime>;
+
+        $l52 = r0.<com.android.server.am.BroadcastQueue: long mTimeoutPeriod>;
+
+        $l54 = 2L * $l52;
+
+        $l51 = (long) i84;
+
+        $l53 = $l54 * $l51;
+
+        $l55 = $l56 + $l53;
+
+        $b57 = l85 cmp $l55;
+
+        if $b57 <= 0 goto label23;
+
+        $r201 = new java.lang.StringBuilder;
+
+        specialinvoke $r201.<java.lang.StringBuilder: void <init>()>();
+
+        $r202 = virtualinvoke $r201.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Hung broadcast [");
+
+        $r204 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r203 = virtualinvoke $r202.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r204);
+
+        $r206 = virtualinvoke $r203.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("] discarded after timeout failure:");
+
+        $r205 = virtualinvoke $r206.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" now=");
+
+        $r228 = virtualinvoke $r205.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l85);
+
+        $r229 = virtualinvoke $r228.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" dispatchTime=");
+
+        $l71 = r305.<com.android.server.am.BroadcastRecord: long dispatchTime>;
+
+        $r227 = virtualinvoke $r229.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l71);
+
+        $r226 = virtualinvoke $r227.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" startTime=");
+
+        $l70 = r305.<com.android.server.am.BroadcastRecord: long receiverTime>;
+
+        $r224 = virtualinvoke $r226.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l70);
+
+        $r225 = virtualinvoke $r224.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" intent=");
+
+        $r235 = r305.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r236 = virtualinvoke $r225.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r235);
+
+        $r233 = virtualinvoke $r236.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" numReceivers=");
+
+        $r234 = virtualinvoke $r233.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i84);
+
+        $r232 = virtualinvoke $r234.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" nextReceiver=");
+
+        $i72 = r305.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        $r230 = virtualinvoke $r232.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i72);
+
+        $r231 = virtualinvoke $r230.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" state=");
+
+        $i68 = r305.<com.android.server.am.BroadcastRecord: int state>;
+
+        $r216 = virtualinvoke $r231.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i68);
+
+        $r215 = virtualinvoke $r216.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r215);
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void broadcastTimeoutLocked(boolean)>(0);
+
+        z25 = 1;
+
+        r305.<com.android.server.am.BroadcastRecord: int state> = 0;
+
+     label23:
+        $i5 = r305.<com.android.server.am.BroadcastRecord: int state>;
+
+        if $i5 == 0 goto label25;
+
+        exitmonitor r1;
+
+     label24:
+        return;
+
+     label25:
+        $r22 = r305.<com.android.server.am.BroadcastRecord: java.util.List receivers>;
+
+        if $r22 == null goto label26;
+
+        $i64 = r305.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        if $i64 >= i84 goto label26;
+
+        $z18 = r305.<com.android.server.am.BroadcastRecord: boolean resultAbort>;
+
+        if $z18 != 0 goto label26;
+
+        if z25 == 0 goto label31;
+
+     label26:
+        $r21 = r305.<com.android.server.am.BroadcastRecord: android.content.IIntentReceiver resultTo>;
+
+        if $r21 == null goto label30;
+
+     label27:
+        $r209 = r305.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord callerApp>;
+
+        $r210 = r305.<com.android.server.am.BroadcastRecord: android.content.IIntentReceiver resultTo>;
+
+        $r207 = new android.content.Intent;
+
+        $r208 = r305.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        specialinvoke $r207.<android.content.Intent: void <init>(android.content.Intent)>($r208);
+
+        $i63 = r305.<com.android.server.am.BroadcastRecord: int resultCode>;
+
+        $r212 = r305.<com.android.server.am.BroadcastRecord: java.lang.String resultData>;
+
+        $r211 = r305.<com.android.server.am.BroadcastRecord: android.os.Bundle resultExtras>;
+
+        $i62 = r305.<com.android.server.am.BroadcastRecord: int userId>;
+
+        staticinvoke <com.android.server.am.BroadcastQueue: void performReceiveLocked(com.android.server.am.ProcessRecord,android.content.IIntentReceiver,android.content.Intent,int,java.lang.String,android.os.Bundle,boolean,boolean,int)>($r209, $r210, $r207, $i63, $r212, $r211, 0, 0, $i62);
+
+        r305.<com.android.server.am.BroadcastRecord: android.content.IIntentReceiver resultTo> = null;
+
+     label28:
+        goto label30;
+
+     label29:
+        $r284 := @caughtexception;
+
+        r306 = $r284;
+
+        r305.<com.android.server.am.BroadcastRecord: android.content.IIntentReceiver resultTo> = null;
+
+        $r285 = new java.lang.StringBuilder;
+
+        specialinvoke $r285.<java.lang.StringBuilder: void <init>()>();
+
+        $r286 = virtualinvoke $r285.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failure [");
+
+        $r287 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r288 = virtualinvoke $r286.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r287);
+
+        $r289 = virtualinvoke $r288.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("] sending broadcast result of ");
+
+        $r290 = r305.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r280 = virtualinvoke $r289.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r290);
+
+        $r281 = virtualinvoke $r280.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("BroadcastQueue", $r281, r306);
+
+     label30:
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void cancelBroadcastTimeoutLocked()>();
+
+        specialinvoke r0.<com.android.server.am.BroadcastQueue: void addBroadcastToHistoryLocked(com.android.server.am.BroadcastRecord)>(r305);
+
+        $r23 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        virtualinvoke $r23.<java.util.ArrayList: java.lang.Object remove(int)>(0);
+
+        r305 = null;
+
+        z24 = 1;
+
+        goto label31;
+
+     label31:
+        if r305 == null goto label17;
+
+        $i6 = r305.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        $i7 = $i6 + 1;
+
+        r305.<com.android.server.am.BroadcastRecord: int nextReceiver> = $i7;
+
+        i86 = $i6;
+
+        $l8 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        r305.<com.android.server.am.BroadcastRecord: long receiverTime> = $l8;
+
+        if i86 != 0 goto label32;
+
+        $l60 = r305.<com.android.server.am.BroadcastRecord: long receiverTime>;
+
+        r305.<com.android.server.am.BroadcastRecord: long dispatchTime> = $l60;
+
+        $l61 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        r305.<com.android.server.am.BroadcastRecord: long dispatchClockTime> = $l61;
+
+     label32:
+        $z3 = r0.<com.android.server.am.BroadcastQueue: boolean mPendingBroadcastTimeoutMessage>;
+
+        if $z3 != 0 goto label33;
+
+        $l59 = r305.<com.android.server.am.BroadcastRecord: long receiverTime>;
+
+        $l58 = r0.<com.android.server.am.BroadcastQueue: long mTimeoutPeriod>;
+
+        l87 = $l59 + $l58;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void setBroadcastTimeoutLocked(long)>(l87);
+
+     label33:
+        $r25 = r305.<com.android.server.am.BroadcastRecord: java.util.List receivers>;
+
+        r307 = interfaceinvoke $r25.<java.util.List: java.lang.Object get(int)>(i86);
+
+        $z4 = r307 instanceof com.android.server.am.BroadcastFilter;
+
+        if $z4 == 0 goto label37;
+
+        r308 = (com.android.server.am.BroadcastFilter) r307;
+
+        $z17 = r305.<com.android.server.am.BroadcastRecord: boolean ordered>;
+
+        specialinvoke r0.<com.android.server.am.BroadcastQueue: void deliverToRegisteredReceiverLocked(com.android.server.am.BroadcastRecord,com.android.server.am.BroadcastFilter,boolean)>(r305, r308, $z17);
+
+        $r188 = r305.<com.android.server.am.BroadcastRecord: android.os.IBinder receiver>;
+
+        if $r188 == null goto label34;
+
+        $z16 = r305.<com.android.server.am.BroadcastRecord: boolean ordered>;
+
+        if $z16 != 0 goto label35;
+
+     label34:
+        r305.<com.android.server.am.BroadcastRecord: int state> = 0;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void scheduleBroadcastsLocked()>();
+
+     label35:
+        exitmonitor r1;
+
+     label36:
+        return;
+
+     label37:
+        r309 = (android.content.pm.ResolveInfo) r307;
+
+        $r28 = new android.content.ComponentName;
+
+        $r26 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r27 = $r26.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r29 = $r27.<android.content.pm.ApplicationInfo: java.lang.String packageName>;
+
+        $r31 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r32 = $r31.<android.content.pm.ActivityInfo: java.lang.String name>;
+
+        specialinvoke $r28.<android.content.ComponentName: void <init>(java.lang.String,java.lang.String)>($r29, $r32);
+
+        r5 = $r28;
+
+        z1 = 0;
+
+        $r39 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r30 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r36 = $r30.<android.content.pm.ActivityInfo: java.lang.String permission>;
+
+        $i9 = r305.<com.android.server.am.BroadcastRecord: int callingPid>;
+
+        $i10 = r305.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        $r35 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r34 = $r35.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i11 = $r34.<android.content.pm.ApplicationInfo: int uid>;
+
+        $r33 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $z5 = $r33.<android.content.pm.ActivityInfo: boolean exported>;
+
+        i2 = virtualinvoke $r39.<com.android.server.am.ActivityManagerService: int checkComponentPermission(java.lang.String,int,int,int,boolean)>($r36, $i9, $i10, $i11, $z5);
+
+        if i2 == 0 goto label40;
+
+        $r158 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $z15 = $r158.<android.content.pm.ActivityInfo: boolean exported>;
+
+        if $z15 != 0 goto label38;
+
+        $r189 = new java.lang.StringBuilder;
+
+        specialinvoke $r189.<java.lang.StringBuilder: void <init>()>();
+
+        $r193 = virtualinvoke $r189.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Permission Denial: broadcasting ");
+
+        $r194 = r305.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r191 = virtualinvoke $r194.<android.content.Intent: java.lang.String toString()>();
+
+        $r192 = virtualinvoke $r193.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r191);
+
+        $r197 = virtualinvoke $r192.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" from ");
+
+        $r198 = r305.<com.android.server.am.BroadcastRecord: java.lang.String callerPackage>;
+
+        $r195 = virtualinvoke $r197.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r198);
+
+        $r196 = virtualinvoke $r195.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (pid=");
+
+        $i49 = r305.<com.android.server.am.BroadcastRecord: int callingPid>;
+
+        $r200 = virtualinvoke $r196.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i49);
+
+        $r199 = virtualinvoke $r200.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", uid=");
+
+        $i48 = r305.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        $r181 = virtualinvoke $r199.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i48);
+
+        $r180 = virtualinvoke $r181.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r179 = virtualinvoke $r180.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is not exported from uid ");
+
+        $r178 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r184 = $r178.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i45 = $r184.<android.content.pm.ApplicationInfo: int uid>;
+
+        $r183 = virtualinvoke $r179.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i45);
+
+        $r182 = virtualinvoke $r183.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" due to receiver ");
+
+        $r187 = virtualinvoke r5.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        $r186 = virtualinvoke $r182.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r187);
+
+        $r185 = virtualinvoke $r186.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r185);
+
+        goto label39;
+
+     label38:
+        $r157 = new java.lang.StringBuilder;
+
+        specialinvoke $r157.<java.lang.StringBuilder: void <init>()>();
+
+        $r156 = virtualinvoke $r157.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Permission Denial: broadcasting ");
+
+        $r155 = r305.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r154 = virtualinvoke $r155.<android.content.Intent: java.lang.String toString()>();
+
+        $r153 = virtualinvoke $r156.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r154);
+
+        $r152 = virtualinvoke $r153.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" from ");
+
+        $r176 = r305.<com.android.server.am.BroadcastRecord: java.lang.String callerPackage>;
+
+        $r177 = virtualinvoke $r152.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r176);
+
+        $r175 = virtualinvoke $r177.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (pid=");
+
+        $i44 = r305.<com.android.server.am.BroadcastRecord: int callingPid>;
+
+        $r173 = virtualinvoke $r175.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i44);
+
+        $r174 = virtualinvoke $r173.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", uid=");
+
+        $i43 = r305.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        $r172 = virtualinvoke $r174.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i43);
+
+        $r170 = virtualinvoke $r172.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r171 = virtualinvoke $r170.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" requires ");
+
+        $r168 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r169 = $r168.<android.content.pm.ActivityInfo: java.lang.String permission>;
+
+        $r166 = virtualinvoke $r171.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r169);
+
+        $r167 = virtualinvoke $r166.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" due to receiver ");
+
+        $r164 = virtualinvoke r5.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        $r165 = virtualinvoke $r167.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r164);
+
+        $r190 = virtualinvoke $r165.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r190);
+
+     label39:
+        z1 = 1;
+
+     label40:
+        $r38 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r37 = $r38.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i13 = $r37.<android.content.pm.ApplicationInfo: int uid>;
+
+        if $i13 == 1000 goto label45;
+
+        $r128 = r305.<com.android.server.am.BroadcastRecord: java.lang.String requiredPermission>;
+
+        if $r128 == null goto label45;
+
+     label41:
+        $r127 = staticinvoke <android.app.AppGlobals: android.content.pm.IPackageManager getPackageManager()>();
+
+        $r150 = r305.<com.android.server.am.BroadcastRecord: java.lang.String requiredPermission>;
+
+        $r130 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r129 = $r130.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r149 = $r129.<android.content.pm.ApplicationInfo: java.lang.String packageName>;
+
+        i88 = interfaceinvoke $r127.<android.content.pm.IPackageManager: int checkPermission(java.lang.String,java.lang.String)>($r150, $r149);
+
+     label42:
+        goto label44;
+
+     label43:
+        $r263 := @caughtexception;
+
+        i88 = -1;
+
+     label44:
+        if i88 == 0 goto label45;
+
+        $r151 = new java.lang.StringBuilder;
+
+        specialinvoke $r151.<java.lang.StringBuilder: void <init>()>();
+
+        $r146 = virtualinvoke $r151.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Permission Denial: receiving ");
+
+        $r147 = r305.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r148 = virtualinvoke $r146.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r147);
+
+        $r142 = virtualinvoke $r148.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to ");
+
+        $r143 = virtualinvoke r5.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        $r144 = virtualinvoke $r142.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r143);
+
+        $r145 = virtualinvoke $r144.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" requires ");
+
+        $r138 = r305.<com.android.server.am.BroadcastRecord: java.lang.String requiredPermission>;
+
+        $r139 = virtualinvoke $r145.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r138);
+
+        $r140 = virtualinvoke $r139.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" due to sender ");
+
+        $r141 = r305.<com.android.server.am.BroadcastRecord: java.lang.String callerPackage>;
+
+        $r163 = virtualinvoke $r140.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r141);
+
+        $r162 = virtualinvoke $r163.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (uid ");
+
+        $i42 = r305.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        $r161 = virtualinvoke $r162.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i42);
+
+        $r160 = virtualinvoke $r161.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r159 = virtualinvoke $r160.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r159);
+
+        z1 = 1;
+
+     label45:
+        $i12 = r305.<com.android.server.am.BroadcastRecord: int appOp>;
+
+        if $i12 == -1 goto label46;
+
+        $r137 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r131 = $r137.<com.android.server.am.ActivityManagerService: com.android.server.AppOpsService mAppOpsService>;
+
+        $i39 = r305.<com.android.server.am.BroadcastRecord: int appOp>;
+
+        $r133 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r132 = $r133.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i40 = $r132.<android.content.pm.ApplicationInfo: int uid>;
+
+        $r135 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r134 = $r135.<android.content.pm.ActivityInfo: java.lang.String packageName>;
+
+        i89 = virtualinvoke $r131.<com.android.server.AppOpsService: int noteOperation(int,int,java.lang.String)>($i39, $i40, $r134);
+
+        if i89 == 0 goto label46;
+
+        z1 = 1;
+
+     label46:
+        if z1 != 0 goto label49;
+
+        $r117 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r136 = $r117.<com.android.server.am.ActivityManagerService: com.android.server.firewall.IntentFirewall mIntentFirewall>;
+
+        $r119 = r305.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $i36 = r305.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        $i37 = r305.<com.android.server.am.BroadcastRecord: int callingPid>;
+
+        $r120 = r305.<com.android.server.am.BroadcastRecord: java.lang.String resolvedType>;
+
+        $r118 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r116 = $r118.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i35 = $r116.<android.content.pm.ApplicationInfo: int uid>;
+
+        $z13 = virtualinvoke $r136.<com.android.server.firewall.IntentFirewall: boolean checkBroadcast(android.content.Intent,int,int,java.lang.String,int)>($r119, $i36, $i37, $r120, $i35);
+
+        if $z13 != 0 goto label47;
+
+        $z14 = 1;
+
+        goto label48;
+
+     label47:
+        $z14 = 0;
+
+     label48:
+        z1 = $z14;
+
+     label49:
+        z26 = 0;
+
+     label50:
+        $r44 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r41 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r43 = $r41.<android.content.pm.ActivityInfo: java.lang.String processName>;
+
+        $r40 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r42 = $r40.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r45 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r47 = $r45.<android.content.pm.ActivityInfo: java.lang.String name>;
+
+        $r46 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $i14 = $r46.<android.content.pm.ActivityInfo: int flags>;
+
+        z26 = virtualinvoke $r44.<com.android.server.am.ActivityManagerService: boolean isSingleton(java.lang.String,android.content.pm.ApplicationInfo,java.lang.String,int)>($r43, $r42, $r47, $i14);
+
+     label51:
+        goto label53;
+
+     label52:
+        $r282 := @caughtexception;
+
+        r7 = $r282;
+
+        $r283 = virtualinvoke r7.<java.lang.SecurityException: java.lang.String getMessage()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r283);
+
+        z1 = 1;
+
+     label53:
+        $r51 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $i16 = $r51.<android.content.pm.ActivityInfo: int flags>;
+
+        $i17 = $i16 & 1073741824;
+
+        if $i17 == 0 goto label54;
+
+        $r103 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r107 = $r103.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i34 = $r107.<android.content.pm.ApplicationInfo: int uid>;
+
+        $i33 = staticinvoke <android.app.ActivityManager: int checkUidPermission(java.lang.String,int)>("android.permission.INTERACT_ACROSS_USERS", $i34);
+
+        if $i33 == 0 goto label54;
+
+        $r106 = new java.lang.StringBuilder;
+
+        specialinvoke $r106.<java.lang.StringBuilder: void <init>()>();
+
+        $r123 = virtualinvoke $r106.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Permission Denial: Receiver ");
+
+        $r121 = virtualinvoke r5.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        $r122 = virtualinvoke $r123.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r121);
+
+        $r125 = virtualinvoke $r122.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" requests FLAG_SINGLE_USER, but app does not hold ");
+
+        $r126 = virtualinvoke $r125.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("android.permission.INTERACT_ACROSS_USERS");
+
+        $r124 = virtualinvoke $r126.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r124);
+
+        z1 = 1;
+
+     label54:
+        $r52 = r305.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        if $r52 == null goto label55;
+
+        $r94 = r305.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        $z12 = $r94.<com.android.server.am.ProcessRecord: boolean crashing>;
+
+        if $z12 == 0 goto label55;
+
+        $r95 = new java.lang.StringBuilder;
+
+        specialinvoke $r95.<java.lang.StringBuilder: void <init>()>();
+
+        $r111 = virtualinvoke $r95.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Skipping deliver ordered [");
+
+        $r110 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r109 = virtualinvoke $r111.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r110);
+
+        $r108 = virtualinvoke $r109.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("] ");
+
+        $r115 = virtualinvoke $r108.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r305);
+
+        $r114 = virtualinvoke $r115.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to ");
+
+        $r113 = r305.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+        $r112 = virtualinvoke $r114.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r113);
+
+        $r105 = virtualinvoke $r112.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": process crashing");
+
+        $r104 = virtualinvoke $r105.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r104);
+
+        z1 = 1;
+
+     label55:
+        if z1 != 0 goto label60;
+
+        z27 = 0;
+
+     label56:
+        $r99 = staticinvoke <android.app.AppGlobals: android.content.pm.IPackageManager getPackageManager()>();
+
+        $r100 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r93 = $r100.<android.content.pm.ActivityInfo: java.lang.String packageName>;
+
+        $r101 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r102 = $r101.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i30 = $r102.<android.content.pm.ApplicationInfo: int uid>;
+
+        $i31 = staticinvoke <android.os.UserHandle: int getUserId(int)>($i30);
+
+        z27 = interfaceinvoke $r99.<android.content.pm.IPackageManager: boolean isPackageAvailable(java.lang.String,int)>($r93, $i31);
+
+     label57:
+        goto label59;
+
+     label58:
+        $r261 := @caughtexception;
+
+        r8 = $r261;
+
+        $r262 = new java.lang.StringBuilder;
+
+        specialinvoke $r262.<java.lang.StringBuilder: void <init>()>();
+
+        $r297 = virtualinvoke $r262.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Exception getting recipient info for ");
+
+        $r299 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r298 = $r299.<android.content.pm.ActivityInfo: java.lang.String packageName>;
+
+        $r301 = virtualinvoke $r297.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r298);
+
+        $r300 = virtualinvoke $r301.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("BroadcastQueue", $r300, r8);
+
+     label59:
+        if z27 != 0 goto label60;
+
+        z1 = 1;
+
+     label60:
+        if z1 == 0 goto label62;
+
+        r305.<com.android.server.am.BroadcastRecord: android.os.IBinder receiver> = null;
+
+        r305.<com.android.server.am.BroadcastRecord: com.android.server.am.BroadcastFilter curFilter> = null;
+
+        r305.<com.android.server.am.BroadcastRecord: int state> = 0;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void scheduleBroadcastsLocked()>();
+
+        exitmonitor r1;
+
+     label61:
+        return;
+
+     label62:
+        r305.<com.android.server.am.BroadcastRecord: int state> = 1;
+
+        $r48 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        r310 = $r48.<android.content.pm.ActivityInfo: java.lang.String processName>;
+
+        r305.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent> = r5;
+
+        $r49 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r50 = $r49.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        i90 = $r50.<android.content.pm.ApplicationInfo: int uid>;
+
+        $i15 = r305.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        if $i15 == 1000 goto label63;
+
+        if z26 == 0 goto label63;
+
+        $r87 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $i29 = r305.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        $z9 = virtualinvoke $r87.<com.android.server.am.ActivityManagerService: boolean isValidSingletonCall(int,int)>($i29, i90);
+
+        if $z9 == 0 goto label63;
+
+        $r97 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r96 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r98 = virtualinvoke $r97.<com.android.server.am.ActivityManagerService: android.content.pm.ActivityInfo getActivityInfoForUser(android.content.pm.ActivityInfo,int)>($r96, 0);
+
+        r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo> = $r98;
+
+     label63:
+        $r55 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        r305.<com.android.server.am.BroadcastRecord: android.content.pm.ActivityInfo curReceiver> = $r55;
+
+     label64:
+        $r54 = staticinvoke <android.app.AppGlobals: android.content.pm.IPackageManager getPackageManager()>();
+
+        $r57 = r305.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent>;
+
+        $r56 = virtualinvoke $r57.<android.content.ComponentName: java.lang.String getPackageName()>();
+
+        $i18 = r305.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        $i19 = staticinvoke <android.os.UserHandle: int getUserId(int)>($i18);
+
+        interfaceinvoke $r54.<android.content.pm.IPackageManager: void setPackageStoppedState(java.lang.String,boolean,int)>($r56, 0, $i19);
+
+     label65:
+        goto label68;
+
+     label66:
+        $r302 := @caughtexception;
+
+        goto label68;
+
+     label67:
+        $r264 := @caughtexception;
+
+        r311 = $r264;
+
+        $r265 = new java.lang.StringBuilder;
+
+        specialinvoke $r265.<java.lang.StringBuilder: void <init>()>();
+
+        $r269 = virtualinvoke $r265.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed trying to unstop package ");
+
+        $r267 = r305.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent>;
+
+        $r268 = virtualinvoke $r267.<android.content.ComponentName: java.lang.String getPackageName()>();
+
+        $r259 = virtualinvoke $r269.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r268);
+
+        $r260 = virtualinvoke $r259.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        $r257 = virtualinvoke $r260.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r311);
+
+        $r258 = virtualinvoke $r257.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r258);
+
+     label68:
+        $r63 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r53 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r62 = $r53.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i20 = $r62.<android.content.pm.ApplicationInfo: int uid>;
+
+        r312 = virtualinvoke $r63.<com.android.server.am.ActivityManagerService: com.android.server.am.ProcessRecord getProcessRecordLocked(java.lang.String,int,boolean)>(r310, $i20, 0);
+
+        if r312 == null goto label75;
+
+        $r88 = r312.<com.android.server.am.ProcessRecord: android.app.IApplicationThread thread>;
+
+        if $r88 == null goto label75;
+
+     label69:
+        $r90 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r86 = $r90.<android.content.pm.ActivityInfo: java.lang.String packageName>;
+
+        $r89 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r92 = $r89.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i28 = $r92.<android.content.pm.ApplicationInfo: int versionCode>;
+
+        $r91 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r85 = $r91.<com.android.server.am.ActivityManagerService: com.android.server.am.ProcessStatsService mProcessStats>;
+
+        virtualinvoke r312.<com.android.server.am.ProcessRecord: boolean addPackage(java.lang.String,int,com.android.server.am.ProcessStatsService)>($r86, $i28, $r85);
+
+        specialinvoke r0.<com.android.server.am.BroadcastQueue: void processCurBroadcastLocked(com.android.server.am.BroadcastRecord,com.android.server.am.ProcessRecord)>(r305, r312);
+
+     label70:
+        exitmonitor r1;
+
+     label71:
+        return;
+
+     label72:
+        $r292 := @caughtexception;
+
+        r10 = $r292;
+
+        $r291 = new java.lang.StringBuilder;
+
+        specialinvoke $r291.<java.lang.StringBuilder: void <init>()>();
+
+        $r293 = virtualinvoke $r291.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Exception when sending broadcast to ");
+
+        $r295 = r305.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent>;
+
+        $r294 = virtualinvoke $r293.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r295);
+
+        $r296 = virtualinvoke $r294.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("BroadcastQueue", $r296, r10);
+
+        goto label75;
+
+     label73:
+        $r240 := @caughtexception;
+
+        r313 = $r240;
+
+        $r242 = new java.lang.StringBuilder;
+
+        specialinvoke $r242.<java.lang.StringBuilder: void <init>()>();
+
+        $r276 = virtualinvoke $r242.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed sending broadcast to ");
+
+        $r275 = r305.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent>;
+
+        $r274 = virtualinvoke $r276.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r275);
+
+        $r273 = virtualinvoke $r274.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" with ");
+
+        $r279 = r305.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r278 = virtualinvoke $r273.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r279);
+
+        $r277 = virtualinvoke $r278.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("BroadcastQueue", $r277, r313);
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void logBroadcastReceiverDiscardLocked(com.android.server.am.BroadcastRecord)>(r305);
+
+        $i78 = r305.<com.android.server.am.BroadcastRecord: int resultCode>;
+
+        $r270 = r305.<com.android.server.am.BroadcastRecord: java.lang.String resultData>;
+
+        $r271 = r305.<com.android.server.am.BroadcastRecord: android.os.Bundle resultExtras>;
+
+        $z21 = r305.<com.android.server.am.BroadcastRecord: boolean resultAbort>;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: boolean finishReceiverLocked(com.android.server.am.BroadcastRecord,int,java.lang.String,android.os.Bundle,boolean,boolean)>(r305, $i78, $r270, $r271, $z21, 0);
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void scheduleBroadcastsLocked()>();
+
+        r305.<com.android.server.am.BroadcastRecord: int state> = 0;
+
+        exitmonitor r1;
+
+     label74:
+        return;
+
+     label75:
+        $r61 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r59 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r60 = $r59.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r58 = r305.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $i24 = virtualinvoke $r58.<android.content.Intent: int getFlags()>();
+
+        $i23 = $i24 | 4;
+
+        $r65 = r305.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent>;
+
+        $r66 = r305.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $i21 = virtualinvoke $r66.<android.content.Intent: int getFlags()>();
+
+        $i22 = $i21 & 33554432;
+
+        if $i22 == 0 goto label76;
+
+        $z11 = 1;
+
+        goto label77;
+
+     label76:
+        $z11 = 0;
+
+     label77:
+        $r72 = virtualinvoke $r61.<com.android.server.am.ActivityManagerService: com.android.server.am.ProcessRecord startProcessLocked(java.lang.String,android.content.pm.ApplicationInfo,boolean,int,java.lang.String,android.content.ComponentName,boolean,boolean,boolean)>(r310, $r60, 1, $i23, "broadcast", $r65, $z11, 0, 0);
+
+        r305.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp> = $r72;
+
+        if $r72 != null goto label79;
+
+        $r71 = new java.lang.StringBuilder;
+
+        specialinvoke $r71.<java.lang.StringBuilder: void <init>()>();
+
+        $r69 = virtualinvoke $r71.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to launch app ");
+
+        $r70 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r67 = $r70.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r68 = $r67.<android.content.pm.ApplicationInfo: java.lang.String packageName>;
+
+        $r79 = virtualinvoke $r69.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r68);
+
+        $r78 = virtualinvoke $r79.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/");
+
+        $r77 = r309.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r76 = $r77.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i25 = $r76.<android.content.pm.ApplicationInfo: int uid>;
+
+        $r75 = virtualinvoke $r78.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i25);
+
+        $r74 = virtualinvoke $r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" for broadcast ");
+
+        $r73 = r305.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r84 = virtualinvoke $r74.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r73);
+
+        $r83 = virtualinvoke $r84.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": process is bad");
+
+        $r82 = virtualinvoke $r83.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r82);
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void logBroadcastReceiverDiscardLocked(com.android.server.am.BroadcastRecord)>(r305);
+
+        $i26 = r305.<com.android.server.am.BroadcastRecord: int resultCode>;
+
+        $r80 = r305.<com.android.server.am.BroadcastRecord: java.lang.String resultData>;
+
+        $r81 = r305.<com.android.server.am.BroadcastRecord: android.os.Bundle resultExtras>;
+
+        $z7 = r305.<com.android.server.am.BroadcastRecord: boolean resultAbort>;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: boolean finishReceiverLocked(com.android.server.am.BroadcastRecord,int,java.lang.String,android.os.Bundle,boolean,boolean)>(r305, $i26, $r80, $r81, $z7, 0);
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void scheduleBroadcastsLocked()>();
+
+        r305.<com.android.server.am.BroadcastRecord: int state> = 0;
+
+        exitmonitor r1;
+
+     label78:
+        return;
+
+     label79:
+        r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast> = r305;
+
+        r0.<com.android.server.am.BroadcastQueue: int mPendingBroadcastRecvIndex> = i86;
+
+        exitmonitor r1;
+
+     label80:
+        goto label83;
+
+     label81:
+        $r272 := @caughtexception;
+
+        r12 = $r272;
+
+        exitmonitor r1;
+
+     label82:
+        throw r12;
+
+     label83:
+        return;
+
+        catch java.lang.Throwable from label06 to label10 with label11;
+        catch java.lang.Throwable from label11 to label12 with label11;
+        catch android.os.RemoteException from label27 to label28 with label29;
+        catch android.os.RemoteException from label41 to label42 with label43;
+        catch java.lang.SecurityException from label50 to label51 with label52;
+        catch java.lang.Exception from label56 to label57 with label58;
+        catch android.os.RemoteException from label64 to label65 with label66;
+        catch java.lang.IllegalArgumentException from label64 to label65 with label67;
+        catch android.os.RemoteException from label69 to label70 with label72;
+        catch java.lang.RuntimeException from label69 to label70 with label73;
+        catch java.lang.Throwable from label01 to label14 with label81;
+        catch java.lang.Throwable from label15 to label19 with label81;
+        catch java.lang.Throwable from label20 to label24 with label81;
+        catch java.lang.Throwable from label25 to label36 with label81;
+        catch java.lang.Throwable from label37 to label61 with label81;
+        catch java.lang.Throwable from label62 to label71 with label81;
+        catch java.lang.Throwable from label72 to label74 with label81;
+        catch java.lang.Throwable from label75 to label78 with label81;
+        catch java.lang.Throwable from label79 to label80 with label81;
+        catch java.lang.Throwable from label81 to label82 with label81;
+    }
+
+    final void setBroadcastTimeoutLocked(long)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        long l0;
+        android.os.Message r1;
+        boolean $z0;
+        com.android.server.am.BroadcastQueue$BroadcastHandler $r2, $r3;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        l0 := @parameter0: long;
+
+        $z0 = r0.<com.android.server.am.BroadcastQueue: boolean mPendingBroadcastTimeoutMessage>;
+
+        if $z0 != 0 goto label1;
+
+        $r2 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastQueue$BroadcastHandler mHandler>;
+
+        r1 = virtualinvoke $r2.<com.android.server.am.BroadcastQueue$BroadcastHandler: android.os.Message obtainMessage(int,java.lang.Object)>(201, r0);
+
+        $r3 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastQueue$BroadcastHandler mHandler>;
+
+        virtualinvoke $r3.<com.android.server.am.BroadcastQueue$BroadcastHandler: boolean sendMessageAtTime(android.os.Message,long)>(r1, l0);
+
+        r0.<com.android.server.am.BroadcastQueue: boolean mPendingBroadcastTimeoutMessage> = 1;
+
+     label1:
+        return;
+    }
+
+    final void cancelBroadcastTimeoutLocked()
+    {
+        com.android.server.am.BroadcastQueue r0;
+        boolean $z0;
+        com.android.server.am.BroadcastQueue$BroadcastHandler $r1;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        $z0 = r0.<com.android.server.am.BroadcastQueue: boolean mPendingBroadcastTimeoutMessage>;
+
+        if $z0 == 0 goto label1;
+
+        $r1 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastQueue$BroadcastHandler mHandler>;
+
+        virtualinvoke $r1.<com.android.server.am.BroadcastQueue$BroadcastHandler: void removeMessages(int,java.lang.Object)>(201, r0);
+
+        r0.<com.android.server.am.BroadcastQueue: boolean mPendingBroadcastTimeoutMessage> = 0;
+
+     label1:
+        return;
+    }
+
+    final void broadcastTimeoutLocked(boolean)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        boolean z0, $z1, $z2, $z5, $z6;
+        long l0, l1, $l4, $l5, $l21, $l22, $l23, $l24, l25;
+        com.android.server.am.BroadcastRecord r1, $r30, r58;
+        com.android.server.am.ProcessRecord r2;
+        java.lang.String r3, $r22, $r27, $r28, $r38, $r49, $r54;
+        java.lang.Object r4, $r11, $r12, $r48;
+        com.android.server.am.BroadcastFilter r5;
+        android.util.SparseArray r6, $r40, $r47;
+        java.lang.Throwable r7, $r57;
+        java.util.ArrayList $r8, $r9, $r10;
+        int $i2, $i3, $i6, $i7, $i9, $i10, $i11, $i13, $i14, $i15, $i16, $i18;
+        java.lang.StringBuilder $r13, $r14, $r15, $r17, $r18, $r19, $r20, $r21, $r24, $r25, $r26, $r34, $r35, $r37, $r44, $r46, $r52;
+        android.os.IBinder $r16;
+        java.util.List $r23;
+        android.os.Bundle $r29;
+        com.android.server.am.BroadcastQueue$BroadcastHandler $r31;
+        com.android.server.am.BroadcastQueue$AppNotResponding $r32;
+        android.content.Intent $r33;
+        com.android.server.am.ReceiverList $r36, $r42, $r43;
+        com.android.server.am.ActivityManagerService $r39, $r41, $r51, $r55, $r56;
+        android.content.ComponentName $r50, $r53;
+        byte $b20;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        z0 := @parameter0: boolean;
+
+        if z0 == 0 goto label01;
+
+        r0.<com.android.server.am.BroadcastQueue: boolean mPendingBroadcastTimeoutMessage> = 0;
+
+     label01:
+        $r8 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $i2 = virtualinvoke $r8.<java.util.ArrayList: int size()>();
+
+        if $i2 != 0 goto label02;
+
+        return;
+
+     label02:
+        l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $r9 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $r11 = virtualinvoke $r9.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        r1 = (com.android.server.am.BroadcastRecord) $r11;
+
+        if z0 == 0 goto label05;
+
+        $r51 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $z5 = $r51.<com.android.server.am.ActivityManagerService: boolean mDidDexOpt>;
+
+        if $z5 == 0 goto label03;
+
+        $r55 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r55.<com.android.server.am.ActivityManagerService: boolean mDidDexOpt> = 0;
+
+        $l22 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $l21 = r0.<com.android.server.am.BroadcastQueue: long mTimeoutPeriod>;
+
+        l1 = $l22 + $l21;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void setBroadcastTimeoutLocked(long)>(l1);
+
+        return;
+
+     label03:
+        $r56 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $z6 = $r56.<com.android.server.am.ActivityManagerService: boolean mProcessesReady>;
+
+        if $z6 != 0 goto label04;
+
+        return;
+
+     label04:
+        $l23 = r1.<com.android.server.am.BroadcastRecord: long receiverTime>;
+
+        $l24 = r0.<com.android.server.am.BroadcastQueue: long mTimeoutPeriod>;
+
+        l25 = $l23 + $l24;
+
+        $b20 = l25 cmp l0;
+
+        if $b20 <= 0 goto label05;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void setBroadcastTimeoutLocked(long)>(l25);
+
+        return;
+
+     label05:
+        $r10 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $r12 = virtualinvoke $r10.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        r58 = (com.android.server.am.BroadcastRecord) $r12;
+
+        $i3 = r58.<com.android.server.am.BroadcastRecord: int state>;
+
+        if $i3 != 4 goto label08;
+
+        $r44 = new java.lang.StringBuilder;
+
+        specialinvoke $r44.<java.lang.StringBuilder: void <init>()>();
+
+        $r46 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Waited long enough for: ");
+
+        $r53 = r58.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent>;
+
+        if $r53 == null goto label06;
+
+        $r50 = r58.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent>;
+
+        $r49 = virtualinvoke $r50.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        goto label07;
+
+     label06:
+        $r49 = "(null)";
+
+     label07:
+        $r52 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r49);
+
+        $r54 = virtualinvoke $r52.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ActivityManager", $r54);
+
+        r58.<com.android.server.am.BroadcastRecord: android.content.ComponentName curComponent> = null;
+
+        r58.<com.android.server.am.BroadcastRecord: int state> = 0;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void processNextBroadcast(boolean)>(0);
+
+        return;
+
+     label08:
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Timeout of broadcast ");
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r17 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" - receiver=");
+
+        $r16 = r1.<com.android.server.am.BroadcastRecord: android.os.IBinder receiver>;
+
+        $r19 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r16);
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", started ");
+
+        $l5 = r1.<com.android.server.am.BroadcastRecord: long receiverTime>;
+
+        $l4 = l0 - $l5;
+
+        $r21 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l4);
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms ago");
+
+        $r22 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r22);
+
+        r1.<com.android.server.am.BroadcastRecord: long receiverTime> = l0;
+
+        $i6 = r1.<com.android.server.am.BroadcastRecord: int anrCount>;
+
+        $i7 = $i6 + 1;
+
+        r1.<com.android.server.am.BroadcastRecord: int anrCount> = $i7;
+
+        $i10 = r1.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        if $i10 > 0 goto label09;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", "Timeout on receiver with nextReceiver <= 0");
+
+        return;
+
+     label09:
+        r2 = null;
+
+        r3 = null;
+
+        $r23 = r1.<com.android.server.am.BroadcastRecord: java.util.List receivers>;
+
+        $i11 = r1.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        $i9 = $i11 - 1;
+
+        r4 = interfaceinvoke $r23.<java.util.List: java.lang.Object get(int)>($i9);
+
+        $r25 = new java.lang.StringBuilder;
+
+        specialinvoke $r25.<java.lang.StringBuilder: void <init>()>();
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Receiver during timeout: ");
+
+        $r26 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r4);
+
+        $r27 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r27);
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void logBroadcastReceiverDiscardLocked(com.android.server.am.BroadcastRecord)>(r1);
+
+        $z1 = r4 instanceof com.android.server.am.BroadcastFilter;
+
+        if $z1 == 0 goto label15;
+
+        r5 = (com.android.server.am.BroadcastFilter) r4;
+
+        $r36 = r5.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $i14 = $r36.<com.android.server.am.ReceiverList: int pid>;
+
+        if $i14 == 0 goto label14;
+
+        $r43 = r5.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $i16 = $r43.<com.android.server.am.ReceiverList: int pid>;
+
+        $i15 = <com.android.server.am.ActivityManagerService: int MY_PID>;
+
+        if $i16 == $i15 goto label14;
+
+        $r39 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r40 = $r39.<com.android.server.am.ActivityManagerService: android.util.SparseArray mPidsSelfLocked>;
+
+        r6 = $r40;
+
+        entermonitor $r40;
+
+     label10:
+        $r41 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.ActivityManagerService mService>;
+
+        $r47 = $r41.<com.android.server.am.ActivityManagerService: android.util.SparseArray mPidsSelfLocked>;
+
+        $r42 = r5.<com.android.server.am.BroadcastFilter: com.android.server.am.ReceiverList receiverList>;
+
+        $i18 = $r42.<com.android.server.am.ReceiverList: int pid>;
+
+        $r48 = virtualinvoke $r47.<android.util.SparseArray: java.lang.Object get(int)>($i18);
+
+        r2 = (com.android.server.am.ProcessRecord) $r48;
+
+        exitmonitor r6;
+
+     label11:
+        goto label14;
+
+     label12:
+        $r57 := @caughtexception;
+
+        r7 = $r57;
+
+        exitmonitor r6;
+
+     label13:
+        throw r7;
+
+     label14:
+        goto label16;
+
+     label15:
+        r2 = r1.<com.android.server.am.BroadcastRecord: com.android.server.am.ProcessRecord curApp>;
+
+     label16:
+        if r2 == null goto label17;
+
+        $r35 = new java.lang.StringBuilder;
+
+        specialinvoke $r35.<java.lang.StringBuilder: void <init>()>();
+
+        $r34 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Broadcast of ");
+
+        $r33 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r38 = virtualinvoke $r33.<android.content.Intent: java.lang.String toString()>();
+
+        $r37 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r38);
+
+        r3 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label17:
+        $r30 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        if $r30 != r1 goto label18;
+
+        r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast> = null;
+
+     label18:
+        $i13 = r1.<com.android.server.am.BroadcastRecord: int resultCode>;
+
+        $r28 = r1.<com.android.server.am.BroadcastRecord: java.lang.String resultData>;
+
+        $r29 = r1.<com.android.server.am.BroadcastRecord: android.os.Bundle resultExtras>;
+
+        $z2 = r1.<com.android.server.am.BroadcastRecord: boolean resultAbort>;
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: boolean finishReceiverLocked(com.android.server.am.BroadcastRecord,int,java.lang.String,android.os.Bundle,boolean,boolean)>(r1, $i13, $r28, $r29, $z2, 0);
+
+        virtualinvoke r0.<com.android.server.am.BroadcastQueue: void scheduleBroadcastsLocked()>();
+
+        if r3 == null goto label19;
+
+        $r31 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastQueue$BroadcastHandler mHandler>;
+
+        $r32 = new com.android.server.am.BroadcastQueue$AppNotResponding;
+
+        specialinvoke $r32.<com.android.server.am.BroadcastQueue$AppNotResponding: void <init>(com.android.server.am.BroadcastQueue,com.android.server.am.ProcessRecord,java.lang.String)>(r0, r2, r3);
+
+        virtualinvoke $r31.<com.android.server.am.BroadcastQueue$BroadcastHandler: boolean post(java.lang.Runnable)>($r32);
+
+     label19:
+        return;
+
+        catch java.lang.Throwable from label10 to label11 with label12;
+        catch java.lang.Throwable from label12 to label13 with label12;
+    }
+
+    private final void addBroadcastToHistoryLocked(com.android.server.am.BroadcastRecord)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        com.android.server.am.BroadcastRecord r1;
+        int $i0, $i1, $i2, $i4, $i5;
+        com.android.server.am.BroadcastRecord[] $r2, $r3, $r4;
+        long $l3;
+        android.content.Intent[] $r5, $r6, $r8;
+        android.content.Intent $r7;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.BroadcastRecord;
+
+        $i0 = r1.<com.android.server.am.BroadcastRecord: int callingUid>;
+
+        if $i0 >= 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord[] mBroadcastHistory>;
+
+        $r2 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord[] mBroadcastHistory>;
+
+        $i1 = <com.android.server.am.BroadcastQueue: int MAX_BROADCAST_HISTORY>;
+
+        $i2 = $i1 - 1;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r3, 0, $r2, 1, $i2);
+
+        $l3 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        r1.<com.android.server.am.BroadcastRecord: long finishTime> = $l3;
+
+        $r4 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord[] mBroadcastHistory>;
+
+        $r4[0] = r1;
+
+        $r6 = r0.<com.android.server.am.BroadcastQueue: android.content.Intent[] mBroadcastSummaryHistory>;
+
+        $r5 = r0.<com.android.server.am.BroadcastQueue: android.content.Intent[] mBroadcastSummaryHistory>;
+
+        $i4 = <com.android.server.am.BroadcastQueue: int MAX_BROADCAST_SUMMARY_HISTORY>;
+
+        $i5 = $i4 - 1;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r6, 0, $r5, 1, $i5);
+
+        $r8 = r0.<com.android.server.am.BroadcastQueue: android.content.Intent[] mBroadcastSummaryHistory>;
+
+        $r7 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r8[0] = $r7;
+
+        return;
+    }
+
+    final void logBroadcastReceiverDiscardLocked(com.android.server.am.BroadcastRecord)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        com.android.server.am.BroadcastRecord r1;
+        java.lang.Object r2;
+        com.android.server.am.BroadcastFilter r3;
+        int $i0, $i2, $i3, $i4, $i6, $i7, $i8, $i9, $i10, $i11, $i13, $i14, $i15, $i16, $i18;
+        java.lang.StringBuilder $r4, $r5, $r6;
+        java.lang.String $r7, $r12, $r19, $r24, $r28;
+        java.lang.Object[] $r8, $r16, $r23;
+        java.lang.Integer $r9, $r10, $r13, $r18, $r20, $r22, $r25, $r27, $r29, $r30;
+        android.content.Intent $r11, $r21, $r26;
+        java.util.List $r14;
+        boolean $z0;
+        android.content.pm.ActivityInfo $r15;
+        android.content.pm.ApplicationInfo $r17;
+        android.content.pm.ResolveInfo r31;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: com.android.server.am.BroadcastRecord;
+
+        $i0 = r1.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        if $i0 <= 0 goto label3;
+
+        $r14 = r1.<com.android.server.am.BroadcastRecord: java.util.List receivers>;
+
+        $i4 = r1.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        $i6 = $i4 - 1;
+
+        r2 = interfaceinvoke $r14.<java.util.List: java.lang.Object get(int)>($i6);
+
+        $z0 = r2 instanceof com.android.server.am.BroadcastFilter;
+
+        if $z0 == 0 goto label1;
+
+        r3 = (com.android.server.am.BroadcastFilter) r2;
+
+        $r23 = newarray (java.lang.Object)[5];
+
+        $i13 = r3.<com.android.server.am.BroadcastFilter: int owningUserId>;
+
+        $r25 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i13);
+
+        $r23[0] = $r25;
+
+        $i14 = staticinvoke <java.lang.System: int identityHashCode(java.lang.Object)>(r1);
+
+        $r27 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i14);
+
+        $r23[1] = $r27;
+
+        $r26 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r28 = virtualinvoke $r26.<android.content.Intent: java.lang.String getAction()>();
+
+        $r23[2] = $r28;
+
+        $i16 = r1.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        $i15 = $i16 - 1;
+
+        $r30 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i15);
+
+        $r23[3] = $r30;
+
+        $i18 = staticinvoke <java.lang.System: int identityHashCode(java.lang.Object)>(r3);
+
+        $r29 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i18);
+
+        $r23[4] = $r29;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(30024, $r23);
+
+        goto label2;
+
+     label1:
+        r31 = (android.content.pm.ResolveInfo) r2;
+
+        $r16 = newarray (java.lang.Object)[5];
+
+        $r15 = r31.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r17 = $r15.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i7 = $r17.<android.content.pm.ApplicationInfo: int uid>;
+
+        $i9 = staticinvoke <android.os.UserHandle: int getUserId(int)>($i7);
+
+        $r18 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i9);
+
+        $r16[0] = $r18;
+
+        $i8 = staticinvoke <java.lang.System: int identityHashCode(java.lang.Object)>(r1);
+
+        $r20 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i8);
+
+        $r16[1] = $r20;
+
+        $r21 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r19 = virtualinvoke $r21.<android.content.Intent: java.lang.String getAction()>();
+
+        $r16[2] = $r19;
+
+        $i10 = r1.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        $i11 = $i10 - 1;
+
+        $r22 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i11);
+
+        $r16[3] = $r22;
+
+        $r24 = virtualinvoke r31.<android.content.pm.ResolveInfo: java.lang.String toString()>();
+
+        $r16[4] = $r24;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(30025, $r16);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Discarding broadcast before first receiver is invoked: ");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BroadcastQueue", $r7);
+
+        $r8 = newarray (java.lang.Object)[5];
+
+        $r9 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(-1);
+
+        $r8[0] = $r9;
+
+        $i2 = staticinvoke <java.lang.System: int identityHashCode(java.lang.Object)>(r1);
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        $r8[1] = $r10;
+
+        $r11 = r1.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r12 = virtualinvoke $r11.<android.content.Intent: java.lang.String getAction()>();
+
+        $r8[2] = $r12;
+
+        $i3 = r1.<com.android.server.am.BroadcastRecord: int nextReceiver>;
+
+        $r13 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i3);
+
+        $r8[3] = $r13;
+
+        $r8[4] = "NONE";
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(30025, $r8);
+
+     label4:
+        return;
+    }
+
+    final boolean dumpLocked(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[], int, boolean, java.lang.String, boolean)
+    {
+        com.android.server.am.BroadcastQueue r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, i8, i9;
+        boolean z0, z1, z2, $z3, $z4, $z5, $z6, z7, z8;
+        java.lang.String r4, $r13, $r14, $r18, $r20, $r24, $r26, $r27, $r29, $r36, $r39, $r41, $r46, $r49, $r50, $r57, $r59, $r62, $r68, $r69, $r72, $r74, $r84, $r85, $r91, $r92;
+        com.android.server.am.BroadcastRecord r5, $r16, $r48, $r55, $r56, $r71, $r89, r93, r94;
+        android.os.Bundle r6, r96;
+        java.util.ArrayList $r7, $r8, $r9, $r51, $r60, $r78, $r90;
+        java.lang.StringBuilder $r10, $r11, $r12, $r15, $r19, $r21, $r22, $r23, $r37, $r38, $r40, $r42, $r43, $r44, $r45, $r47, $r53, $r54, $r58, $r63, $r64, $r65, $r66, $r67, $r70, $r73, $r75, $r76, $r77, $r79, $r81, $r82, $r83, $r86, $r87, $r88;
+        android.content.Intent[] $r17;
+        android.content.Intent $r25, $r31, $r34, r95;
+        com.android.server.am.BroadcastRecord[] $r28;
+        android.content.ComponentName $r30, $r32, $r33, $r35;
+        java.lang.Object $r52, $r61, $r80;
+
+        r0 := @this: com.android.server.am.BroadcastQueue;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        i0 := @parameter3: int;
+
+        z0 := @parameter4: boolean;
+
+        r4 := @parameter5: java.lang.String;
+
+        z1 := @parameter6: boolean;
+
+        $r7 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mParallelBroadcasts>;
+
+        $i2 = virtualinvoke $r7.<java.util.ArrayList: int size()>();
+
+        if $i2 > 0 goto label01;
+
+        $r90 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $i7 = virtualinvoke $r90.<java.util.ArrayList: int size()>();
+
+        if $i7 > 0 goto label01;
+
+        $r89 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        if $r89 == null goto label18;
+
+     label01:
+        z2 = 0;
+
+        $r8 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mParallelBroadcasts>;
+
+        $i3 = virtualinvoke $r8.<java.util.ArrayList: int size()>();
+
+        i1 = $i3 - 1;
+
+     label02:
+        if i1 < 0 goto label07;
+
+        $r78 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mParallelBroadcasts>;
+
+        $r80 = virtualinvoke $r78.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r5 = (com.android.server.am.BroadcastRecord) $r80;
+
+        if r4 == null goto label03;
+
+        $r92 = r5.<com.android.server.am.BroadcastRecord: java.lang.String callerPackage>;
+
+        $z6 = virtualinvoke r4.<java.lang.String: boolean equals(java.lang.Object)>($r92);
+
+        if $z6 != 0 goto label03;
+
+        goto label06;
+
+     label03:
+        if z2 != 0 goto label05;
+
+        if z1 == 0 goto label04;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+     label04:
+        z1 = 1;
+
+        z2 = 1;
+
+        $r86 = new java.lang.StringBuilder;
+
+        specialinvoke $r86.<java.lang.StringBuilder: void <init>()>();
+
+        $r83 = virtualinvoke $r86.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Active broadcasts [");
+
+        $r84 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r81 = virtualinvoke $r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r84);
+
+        $r82 = virtualinvoke $r81.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]:");
+
+        $r91 = virtualinvoke $r82.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r91);
+
+     label05:
+        $r79 = new java.lang.StringBuilder;
+
+        specialinvoke $r79.<java.lang.StringBuilder: void <init>()>();
+
+        $r75 = virtualinvoke $r79.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Active Broadcast ");
+
+        $r74 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r77 = virtualinvoke $r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r74);
+
+        $r76 = virtualinvoke $r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" #");
+
+        $r87 = virtualinvoke $r76.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r88 = virtualinvoke $r87.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        $r85 = virtualinvoke $r88.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r85);
+
+        virtualinvoke r5.<com.android.server.am.BroadcastRecord: void dump(java.io.PrintWriter,java.lang.String)>(r2, "    ");
+
+     label06:
+        i1 = i1 + -1;
+
+        goto label02;
+
+     label07:
+        z7 = 0;
+
+        z1 = 1;
+
+        $r9 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $i4 = virtualinvoke $r9.<java.util.ArrayList: int size()>();
+
+        i8 = $i4 - 1;
+
+     label08:
+        if i8 < 0 goto label13;
+
+        $r51 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $r52 = virtualinvoke $r51.<java.util.ArrayList: java.lang.Object get(int)>(i8);
+
+        r93 = (com.android.server.am.BroadcastRecord) $r52;
+
+        if r4 == null goto label09;
+
+        $r68 = r93.<com.android.server.am.BroadcastRecord: java.lang.String callerPackage>;
+
+        $z5 = virtualinvoke r4.<java.lang.String: boolean equals(java.lang.Object)>($r68);
+
+        if $z5 != 0 goto label09;
+
+        goto label12;
+
+     label09:
+        if z7 != 0 goto label11;
+
+        if z1 == 0 goto label10;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+     label10:
+        z1 = 1;
+
+        z7 = 1;
+
+        $r70 = new java.lang.StringBuilder;
+
+        specialinvoke $r70.<java.lang.StringBuilder: void <init>()>();
+
+        $r73 = virtualinvoke $r70.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Active ordered broadcasts [");
+
+        $r72 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r67 = virtualinvoke $r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r72);
+
+        $r66 = virtualinvoke $r67.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]:");
+
+        $r69 = virtualinvoke $r66.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r69);
+
+     label11:
+        $r53 = new java.lang.StringBuilder;
+
+        specialinvoke $r53.<java.lang.StringBuilder: void <init>()>();
+
+        $r54 = virtualinvoke $r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Active Ordered Broadcast ");
+
+        $r62 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r63 = virtualinvoke $r54.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r62);
+
+        $r64 = virtualinvoke $r63.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" #");
+
+        $r65 = virtualinvoke $r64.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i8);
+
+        $r58 = virtualinvoke $r65.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        $r59 = virtualinvoke $r58.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r59);
+
+        $r60 = r0.<com.android.server.am.BroadcastQueue: java.util.ArrayList mOrderedBroadcasts>;
+
+        $r61 = virtualinvoke $r60.<java.util.ArrayList: java.lang.Object get(int)>(i8);
+
+        $r71 = (com.android.server.am.BroadcastRecord) $r61;
+
+        virtualinvoke $r71.<com.android.server.am.BroadcastRecord: void dump(java.io.PrintWriter,java.lang.String)>(r2, "    ");
+
+     label12:
+        i8 = i8 + -1;
+
+        goto label08;
+
+     label13:
+        if r4 == null goto label14;
+
+        $r55 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        if $r55 == null goto label18;
+
+        $r56 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        $r57 = $r56.<com.android.server.am.BroadcastRecord: java.lang.String callerPackage>;
+
+        $z4 = virtualinvoke r4.<java.lang.String: boolean equals(java.lang.Object)>($r57);
+
+        if $z4 == 0 goto label18;
+
+     label14:
+        if z1 == 0 goto label15;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+     label15:
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Pending broadcast [");
+
+        $r13 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r13);
+
+        $r15 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]:");
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r14);
+
+        $r16 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        if $r16 == null goto label16;
+
+        $r48 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord mPendingBroadcast>;
+
+        virtualinvoke $r48.<com.android.server.am.BroadcastRecord: void dump(java.io.PrintWriter,java.lang.String)>(r2, "    ");
+
+        goto label17;
+
+     label16:
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("    (null)");
+
+     label17:
+        z1 = 1;
+
+     label18:
+        z8 = 0;
+
+        i9 = 0;
+
+     label19:
+        $i5 = <com.android.server.am.BroadcastQueue: int MAX_BROADCAST_HISTORY>;
+
+        if i9 >= $i5 goto label27;
+
+        $r28 = r0.<com.android.server.am.BroadcastQueue: com.android.server.am.BroadcastRecord[] mBroadcastHistory>;
+
+        r94 = $r28[i9];
+
+        if r94 != null goto label20;
+
+        goto label27;
+
+     label20:
+        if r4 == null goto label21;
+
+        $r49 = r94.<com.android.server.am.BroadcastRecord: java.lang.String callerPackage>;
+
+        $z3 = virtualinvoke r4.<java.lang.String: boolean equals(java.lang.Object)>($r49);
+
+        if $z3 != 0 goto label21;
+
+        goto label26;
+
+     label21:
+        if z8 != 0 goto label23;
+
+        if z1 == 0 goto label22;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+     label22:
+        z1 = 1;
+
+        $r40 = new java.lang.StringBuilder;
+
+        specialinvoke $r40.<java.lang.StringBuilder: void <init>()>();
+
+        $r47 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Historical broadcasts [");
+
+        $r46 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r45 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r46);
+
+        $r44 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]:");
+
+        $r50 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r50);
+
+        z8 = 1;
+
+     label23:
+        if z0 == 0 goto label24;
+
+        $r38 = new java.lang.StringBuilder;
+
+        specialinvoke $r38.<java.lang.StringBuilder: void <init>()>();
+
+        $r37 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Historical Broadcast ");
+
+        $r36 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r43 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r36);
+
+        $r42 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" #");
+
+        $r41 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>($r41);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(int)>(i9);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>(":");
+
+        virtualinvoke r94.<com.android.server.am.BroadcastRecord: void dump(java.io.PrintWriter,java.lang.String)>(r2, "    ");
+
+        goto label26;
+
+     label24:
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  #");
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(int)>(i9);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(": ");
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.Object)>(r94);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("    ");
+
+        $r25 = r94.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r26 = virtualinvoke $r25.<android.content.Intent: java.lang.String toShortString(boolean,boolean,boolean,boolean)>(0, 1, 1, 0);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r26);
+
+        $r30 = r94.<com.android.server.am.BroadcastRecord: android.content.ComponentName targetComp>;
+
+        if $r30 == null goto label25;
+
+        $r35 = r94.<com.android.server.am.BroadcastRecord: android.content.ComponentName targetComp>;
+
+        $r34 = r94.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        $r32 = virtualinvoke $r34.<android.content.Intent: android.content.ComponentName getComponent()>();
+
+        if $r35 == $r32 goto label25;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("    targetComp: ");
+
+        $r33 = r94.<com.android.server.am.BroadcastRecord: android.content.ComponentName targetComp>;
+
+        $r39 = virtualinvoke $r33.<android.content.ComponentName: java.lang.String toShortString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r39);
+
+     label25:
+        $r31 = r94.<com.android.server.am.BroadcastRecord: android.content.Intent intent>;
+
+        r6 = virtualinvoke $r31.<android.content.Intent: android.os.Bundle getExtras()>();
+
+        if r6 == null goto label26;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("    extras: ");
+
+        $r29 = virtualinvoke r6.<android.os.Bundle: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r29);
+
+     label26:
+        i9 = i9 + 1;
+
+        goto label19;
+
+     label27:
+        if r4 != null goto label34;
+
+        if z0 == 0 goto label28;
+
+        i9 = 0;
+
+        z8 = 0;
+
+     label28:
+        $i6 = <com.android.server.am.BroadcastQueue: int MAX_BROADCAST_SUMMARY_HISTORY>;
+
+        if i9 >= $i6 goto label34;
+
+        $r17 = r0.<com.android.server.am.BroadcastQueue: android.content.Intent[] mBroadcastSummaryHistory>;
+
+        r95 = $r17[i9];
+
+        if r95 != null goto label29;
+
+        goto label34;
+
+     label29:
+        if z8 != 0 goto label31;
+
+        if z1 == 0 goto label30;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+     label30:
+        z1 = 1;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r23 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Historical broadcasts summary [");
+
+        $r24 = r0.<com.android.server.am.BroadcastQueue: java.lang.String mQueueName>;
+
+        $r21 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r24);
+
+        $r22 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]:");
+
+        $r27 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r27);
+
+        z8 = 1;
+
+     label31:
+        if z0 != 0 goto label32;
+
+        if i9 < 50 goto label32;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("  ...");
+
+        goto label34;
+
+     label32:
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("  #");
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(int)>(i9);
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>(": ");
+
+        $r18 = virtualinvoke r95.<android.content.Intent: java.lang.String toShortString(boolean,boolean,boolean,boolean)>(0, 1, 1, 0);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r18);
+
+        r96 = virtualinvoke r95.<android.content.Intent: android.os.Bundle getExtras()>();
+
+        if r96 == null goto label33;
+
+        virtualinvoke r2.<java.io.PrintWriter: void print(java.lang.String)>("    extras: ");
+
+        $r20 = virtualinvoke r96.<android.os.Bundle: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r20);
+
+     label33:
+        i9 = i9 + 1;
+
+        goto label28;
+
+     label34:
+        return z1;
+    }
+
+    static void <clinit>()
+    {
+        boolean $z0, $z1;
+        short $s0;
+        byte $b1;
+
+        <com.android.server.am.BroadcastQueue: int BROADCAST_TIMEOUT_MSG> = 201;
+
+        <com.android.server.am.BroadcastQueue: int BROADCAST_INTENT_MSG> = 200;
+
+        <com.android.server.am.BroadcastQueue: boolean DEBUG_MU> = 0;
+
+        <com.android.server.am.BroadcastQueue: boolean DEBUG_BROADCAST_LIGHT> = 0;
+
+        <com.android.server.am.BroadcastQueue: boolean DEBUG_BROADCAST> = 0;
+
+        <com.android.server.am.BroadcastQueue: java.lang.String TAG_MU> = "ActivityManagerServiceMU";
+
+        <com.android.server.am.BroadcastQueue: java.lang.String TAG> = "BroadcastQueue";
+
+        $z0 = staticinvoke <android.app.ActivityManager: boolean isLowRamDeviceStatic()>();
+
+        if $z0 == 0 goto label1;
+
+        $b1 = 10;
+
+        goto label2;
+
+     label1:
+        $b1 = 50;
+
+     label2:
+        <com.android.server.am.BroadcastQueue: int MAX_BROADCAST_HISTORY> = $b1;
+
+        $z1 = staticinvoke <android.app.ActivityManager: boolean isLowRamDeviceStatic()>();
+
+        if $z1 == 0 goto label3;
+
+        $s0 = 25;
+
+        goto label4;
+
+     label3:
+        $s0 = 300;
+
+     label4:
+        <com.android.server.am.BroadcastQueue: int MAX_BROADCAST_SUMMARY_HISTORY> = $s0;
+
+        return;
+    }
+}

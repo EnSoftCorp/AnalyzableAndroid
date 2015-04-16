@@ -1,0 +1,1006 @@
+public class android.filterpacks.videosrc.CameraSource extends android.filterfw.core.Filter
+{
+    private int mCameraId;
+    private int mWidth;
+    private int mHeight;
+    private int mFps;
+    private boolean mWaitForNewFrame;
+    private android.hardware.Camera mCamera;
+    private android.filterfw.core.GLFrame mCameraFrame;
+    private android.graphics.SurfaceTexture mSurfaceTexture;
+    private android.filterfw.core.ShaderProgram mFrameExtractor;
+    private android.filterfw.core.MutableFrameFormat mOutputFormat;
+    private float[] mCameraTransform;
+    private float[] mMappedCoords;
+    private static final float[] mSourceCoords;
+    private static final int NEWFRAME_TIMEOUT;
+    private static final int NEWFRAME_TIMEOUT_REPEAT;
+    private boolean mNewFrameAvailable;
+    private android.hardware.Camera$Parameters mCameraParameters;
+    private static final java.lang.String mFrameShader;
+    private final boolean mLogVerbose;
+    private static final java.lang.String TAG;
+    private android.graphics.SurfaceTexture$OnFrameAvailableListener onCameraFrameAvailableListener;
+
+    public void <init>(java.lang.String)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        java.lang.String r1;
+        android.filterpacks.videosrc.CameraSource$1 $r2;
+        float[] $r3, $r4;
+        boolean $z0;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<android.filterfw.core.Filter: void <init>(java.lang.String)>(r1);
+
+        r0.<android.filterpacks.videosrc.CameraSource: int mCameraId> = 0;
+
+        r0.<android.filterpacks.videosrc.CameraSource: int mWidth> = 320;
+
+        r0.<android.filterpacks.videosrc.CameraSource: int mHeight> = 240;
+
+        r0.<android.filterpacks.videosrc.CameraSource: int mFps> = 30;
+
+        r0.<android.filterpacks.videosrc.CameraSource: boolean mWaitForNewFrame> = 1;
+
+        $r2 = new android.filterpacks.videosrc.CameraSource$1;
+
+        specialinvoke $r2.<android.filterpacks.videosrc.CameraSource$1: void <init>(android.filterpacks.videosrc.CameraSource)>(r0);
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.graphics.SurfaceTexture$OnFrameAvailableListener onCameraFrameAvailableListener> = $r2;
+
+        $r3 = newarray (float)[16];
+
+        r0.<android.filterpacks.videosrc.CameraSource: float[] mCameraTransform> = $r3;
+
+        $r4 = newarray (float)[16];
+
+        r0.<android.filterpacks.videosrc.CameraSource: float[] mMappedCoords> = $r4;
+
+        $z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("CameraSource", 2);
+
+        r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose> = $z0;
+
+        return;
+    }
+
+    public void setupPorts()
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        android.filterfw.core.MutableFrameFormat $r1;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        $r1 = staticinvoke <android.filterfw.format.ImageFormat: android.filterfw.core.MutableFrameFormat create(int,int)>(3, 3);
+
+        virtualinvoke r0.<android.filterpacks.videosrc.CameraSource: void addOutputPort(java.lang.String,android.filterfw.core.FrameFormat)>("video", $r1);
+
+        return;
+    }
+
+    private void createFormats()
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        int $i0, $i1;
+        android.filterfw.core.MutableFrameFormat $r1;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        $i1 = r0.<android.filterpacks.videosrc.CameraSource: int mWidth>;
+
+        $i0 = r0.<android.filterpacks.videosrc.CameraSource: int mHeight>;
+
+        $r1 = staticinvoke <android.filterfw.format.ImageFormat: android.filterfw.core.MutableFrameFormat create(int,int,int,int)>($i1, $i0, 3, 3);
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.filterfw.core.MutableFrameFormat mOutputFormat> = $r1;
+
+        return;
+    }
+
+    public void prepare(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        android.filterfw.core.FilterContext r1;
+        boolean $z0;
+        android.filterfw.core.ShaderProgram $r2;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        $z0 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("CameraSource", "Preparing");
+
+     label1:
+        $r2 = new android.filterfw.core.ShaderProgram;
+
+        specialinvoke $r2.<android.filterfw.core.ShaderProgram: void <init>(android.filterfw.core.FilterContext,java.lang.String)>(r1, "#extension GL_OES_EGL_image_external : require\nprecision mediump float;\nuniform samplerExternalOES tex_sampler_0;\nvarying vec2 v_texcoord;\nvoid main() {\n  gl_FragColor = texture2D(tex_sampler_0, v_texcoord);\n}\n");
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.filterfw.core.ShaderProgram mFrameExtractor> = $r2;
+
+        return;
+    }
+
+    public void open(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        android.filterfw.core.FilterContext r1;
+        java.io.IOException r2, $r19;
+        boolean $z0;
+        int $i0, $i1;
+        android.hardware.Camera $r3, $r6, $r13, $r17;
+        android.hardware.Camera$Parameters $r5;
+        android.filterfw.core.FrameManager $r7;
+        android.filterfw.core.MutableFrameFormat $r8;
+        android.filterfw.core.Frame $r9;
+        android.filterfw.core.GLFrame $r10, $r12;
+        android.graphics.SurfaceTexture $r11, $r14, $r15;
+        android.graphics.SurfaceTexture$OnFrameAvailableListener $r16;
+        java.lang.RuntimeException $r18;
+        java.lang.StringBuilder $r20, $r21, $r22, $r25;
+        java.lang.String $r23, $r24;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        $z0 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("CameraSource", "Opening");
+
+     label1:
+        $i0 = r0.<android.filterpacks.videosrc.CameraSource: int mCameraId>;
+
+        $r3 = staticinvoke <android.hardware.Camera: android.hardware.Camera open(int)>($i0);
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera> = $r3;
+
+        virtualinvoke r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters getCameraParameters()>();
+
+        $r6 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera>;
+
+        $r5 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters>;
+
+        virtualinvoke $r6.<android.hardware.Camera: void setParameters(android.hardware.Camera$Parameters)>($r5);
+
+        specialinvoke r0.<android.filterpacks.videosrc.CameraSource: void createFormats()>();
+
+        $r7 = virtualinvoke r1.<android.filterfw.core.FilterContext: android.filterfw.core.FrameManager getFrameManager()>();
+
+        $r8 = r0.<android.filterpacks.videosrc.CameraSource: android.filterfw.core.MutableFrameFormat mOutputFormat>;
+
+        $r9 = virtualinvoke $r7.<android.filterfw.core.FrameManager: android.filterfw.core.Frame newBoundFrame(android.filterfw.core.FrameFormat,int,long)>($r8, 104, 0L);
+
+        $r10 = (android.filterfw.core.GLFrame) $r9;
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.filterfw.core.GLFrame mCameraFrame> = $r10;
+
+        $r11 = new android.graphics.SurfaceTexture;
+
+        $r12 = r0.<android.filterpacks.videosrc.CameraSource: android.filterfw.core.GLFrame mCameraFrame>;
+
+        $i1 = virtualinvoke $r12.<android.filterfw.core.GLFrame: int getTextureId()>();
+
+        specialinvoke $r11.<android.graphics.SurfaceTexture: void <init>(int)>($i1);
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.graphics.SurfaceTexture mSurfaceTexture> = $r11;
+
+     label2:
+        $r13 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera>;
+
+        $r14 = r0.<android.filterpacks.videosrc.CameraSource: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        virtualinvoke $r13.<android.hardware.Camera: void setPreviewTexture(android.graphics.SurfaceTexture)>($r14);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r19 := @caughtexception;
+
+        r2 = $r19;
+
+        $r18 = new java.lang.RuntimeException;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not bind camera surface texture: ");
+
+        $r23 = virtualinvoke r2.<java.io.IOException: java.lang.String getMessage()>();
+
+        $r22 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r23);
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("!");
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r18.<java.lang.RuntimeException: void <init>(java.lang.String)>($r24);
+
+        throw $r18;
+
+     label5:
+        $r15 = r0.<android.filterpacks.videosrc.CameraSource: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        $r16 = r0.<android.filterpacks.videosrc.CameraSource: android.graphics.SurfaceTexture$OnFrameAvailableListener onCameraFrameAvailableListener>;
+
+        virtualinvoke $r15.<android.graphics.SurfaceTexture: void setOnFrameAvailableListener(android.graphics.SurfaceTexture$OnFrameAvailableListener)>($r16);
+
+        r0.<android.filterpacks.videosrc.CameraSource: boolean mNewFrameAvailable> = 0;
+
+        $r17 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera>;
+
+        virtualinvoke $r17.<android.hardware.Camera: void startPreview()>();
+
+        return;
+
+        catch java.io.IOException from label2 to label3 with label4;
+    }
+
+    public void process(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        android.filterfw.core.FilterContext r1;
+        byte b0;
+        boolean $z0, $z1, $z2, $z4, $z5, $z6, $z7, $z8;
+        android.graphics.SurfaceTexture $r3, $r5, $r22;
+        float[] $r4, $r6, $r7, $r8, $r9, $r10, $r11, $r12, $r13, $r14, $r15, $r16;
+        float $f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7;
+        android.filterfw.core.ShaderProgram $r17, $r21;
+        android.filterfw.core.GLFrame $r18;
+        android.filterfw.core.FrameManager $r19;
+        android.filterfw.core.MutableFrameFormat $r20;
+        java.lang.StringBuilder $r23, $r25, $r27, $r28, $r30, $r31, $r33;
+        double $d0, $d1;
+        java.lang.String $r26, $r32;
+        java.lang.Thread $r29;
+        java.lang.RuntimeException $r34;
+        java.lang.InterruptedException $r35;
+        android.filterfw.core.Frame r36;
+        long l7;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        $z0 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        if $z0 == 0 goto label01;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("CameraSource", "Processing new frame");
+
+     label01:
+        $z1 = r0.<android.filterpacks.videosrc.CameraSource: boolean mWaitForNewFrame>;
+
+        if $z1 == 0 goto label08;
+
+        b0 = 0;
+
+     label02:
+        $z6 = r0.<android.filterpacks.videosrc.CameraSource: boolean mNewFrameAvailable>;
+
+        if $z6 != 0 goto label07;
+
+        if b0 != 10 goto label03;
+
+        $r34 = new java.lang.RuntimeException;
+
+        specialinvoke $r34.<java.lang.RuntimeException: void <init>(java.lang.String)>("Timeout waiting for new frame");
+
+        throw $r34;
+
+     label03:
+        virtualinvoke r0.<java.lang.Object: void wait(long)>(100L);
+
+     label04:
+        goto label02;
+
+     label05:
+        $r35 := @caughtexception;
+
+        $z8 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        if $z8 == 0 goto label06;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("CameraSource", "Interrupted while waiting for new frame");
+
+     label06:
+        goto label02;
+
+     label07:
+        r0.<android.filterpacks.videosrc.CameraSource: boolean mNewFrameAvailable> = 0;
+
+        $z7 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        if $z7 == 0 goto label08;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("CameraSource", "Got new frame");
+
+     label08:
+        $r3 = r0.<android.filterpacks.videosrc.CameraSource: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        virtualinvoke $r3.<android.graphics.SurfaceTexture: void updateTexImage()>();
+
+        $z2 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        if $z2 == 0 goto label09;
+
+        $r31 = new java.lang.StringBuilder;
+
+        specialinvoke $r31.<java.lang.StringBuilder: void <init>()>();
+
+        $r30 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Using frame extractor in thread: ");
+
+        $r29 = staticinvoke <java.lang.Thread: java.lang.Thread currentThread()>();
+
+        $r33 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r29);
+
+        $r32 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("CameraSource", $r32);
+
+     label09:
+        $r5 = r0.<android.filterpacks.videosrc.CameraSource: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        $r4 = r0.<android.filterpacks.videosrc.CameraSource: float[] mCameraTransform>;
+
+        virtualinvoke $r5.<android.graphics.SurfaceTexture: void getTransformMatrix(float[])>($r4);
+
+        $r8 = r0.<android.filterpacks.videosrc.CameraSource: float[] mMappedCoords>;
+
+        $r7 = r0.<android.filterpacks.videosrc.CameraSource: float[] mCameraTransform>;
+
+        $r6 = <android.filterpacks.videosrc.CameraSource: float[] mSourceCoords>;
+
+        staticinvoke <android.opengl.Matrix: void multiplyMM(float[],int,float[],int,float[],int)>($r8, 0, $r7, 0, $r6, 0);
+
+        $r17 = r0.<android.filterpacks.videosrc.CameraSource: android.filterfw.core.ShaderProgram mFrameExtractor>;
+
+        $r9 = r0.<android.filterpacks.videosrc.CameraSource: float[] mMappedCoords>;
+
+        $f6 = $r9[0];
+
+        $r10 = r0.<android.filterpacks.videosrc.CameraSource: float[] mMappedCoords>;
+
+        $f7 = $r10[1];
+
+        $r12 = r0.<android.filterpacks.videosrc.CameraSource: float[] mMappedCoords>;
+
+        $f4 = $r12[4];
+
+        $r11 = r0.<android.filterpacks.videosrc.CameraSource: float[] mMappedCoords>;
+
+        $f5 = $r11[5];
+
+        $r14 = r0.<android.filterpacks.videosrc.CameraSource: float[] mMappedCoords>;
+
+        $f2 = $r14[8];
+
+        $r13 = r0.<android.filterpacks.videosrc.CameraSource: float[] mMappedCoords>;
+
+        $f3 = $r13[9];
+
+        $r16 = r0.<android.filterpacks.videosrc.CameraSource: float[] mMappedCoords>;
+
+        $f0 = $r16[12];
+
+        $r15 = r0.<android.filterpacks.videosrc.CameraSource: float[] mMappedCoords>;
+
+        $f1 = $r15[13];
+
+        virtualinvoke $r17.<android.filterfw.core.ShaderProgram: boolean setSourceRegion(float,float,float,float,float,float,float,float)>($f6, $f7, $f4, $f5, $f2, $f3, $f0, $f1);
+
+        $r19 = virtualinvoke r1.<android.filterfw.core.FilterContext: android.filterfw.core.FrameManager getFrameManager()>();
+
+        $r20 = r0.<android.filterpacks.videosrc.CameraSource: android.filterfw.core.MutableFrameFormat mOutputFormat>;
+
+        r36 = virtualinvoke $r19.<android.filterfw.core.FrameManager: android.filterfw.core.Frame newFrame(android.filterfw.core.FrameFormat)>($r20);
+
+        $r21 = r0.<android.filterpacks.videosrc.CameraSource: android.filterfw.core.ShaderProgram mFrameExtractor>;
+
+        $r18 = r0.<android.filterpacks.videosrc.CameraSource: android.filterfw.core.GLFrame mCameraFrame>;
+
+        virtualinvoke $r21.<android.filterfw.core.ShaderProgram: void process(android.filterfw.core.Frame,android.filterfw.core.Frame)>($r18, r36);
+
+        $r22 = r0.<android.filterpacks.videosrc.CameraSource: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        l7 = virtualinvoke $r22.<android.graphics.SurfaceTexture: long getTimestamp()>();
+
+        $z4 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        if $z4 == 0 goto label10;
+
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        $r25 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Timestamp: ");
+
+        $d0 = (double) l7;
+
+        $d1 = $d0 / 1.0E9;
+
+        $r28 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(double)>($d1);
+
+        $r27 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" s");
+
+        $r26 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("CameraSource", $r26);
+
+     label10:
+        virtualinvoke r36.<android.filterfw.core.Frame: void setTimestamp(long)>(l7);
+
+        virtualinvoke r0.<android.filterpacks.videosrc.CameraSource: void pushOutput(java.lang.String,android.filterfw.core.Frame)>("video", r36);
+
+        virtualinvoke r36.<android.filterfw.core.Frame: android.filterfw.core.Frame release()>();
+
+        $z5 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        if $z5 == 0 goto label11;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("CameraSource", "Done processing new frame");
+
+     label11:
+        return;
+
+        catch java.lang.InterruptedException from label03 to label04 with label05;
+    }
+
+    public void close(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        android.filterfw.core.FilterContext r1;
+        boolean $z0;
+        android.hardware.Camera $r2;
+        android.graphics.SurfaceTexture $r3;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        $z0 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("CameraSource", "Closing");
+
+     label1:
+        $r2 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera>;
+
+        virtualinvoke $r2.<android.hardware.Camera: void release()>();
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera> = null;
+
+        $r3 = r0.<android.filterpacks.videosrc.CameraSource: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        virtualinvoke $r3.<android.graphics.SurfaceTexture: void release()>();
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.graphics.SurfaceTexture mSurfaceTexture> = null;
+
+        return;
+    }
+
+    public void tearDown(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        android.filterfw.core.FilterContext r1;
+        android.filterfw.core.GLFrame $r2, $r3;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        $r2 = r0.<android.filterpacks.videosrc.CameraSource: android.filterfw.core.GLFrame mCameraFrame>;
+
+        if $r2 == null goto label1;
+
+        $r3 = r0.<android.filterpacks.videosrc.CameraSource: android.filterfw.core.GLFrame mCameraFrame>;
+
+        virtualinvoke $r3.<android.filterfw.core.GLFrame: android.filterfw.core.Frame release()>();
+
+     label1:
+        return;
+    }
+
+    public void fieldPortValueUpdated(java.lang.String, android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        java.lang.String r1;
+        android.filterfw.core.FilterContext r2;
+        int[] r3;
+        boolean $z0;
+        android.hardware.Camera$Parameters $r5, $r6, $r7;
+        int $i0, $i1, $i2;
+        android.hardware.Camera $r8;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: android.filterfw.core.FilterContext;
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>("framerate");
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters getCameraParameters()>();
+
+        $i0 = r0.<android.filterpacks.videosrc.CameraSource: int mFps>;
+
+        $r5 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters>;
+
+        r3 = specialinvoke r0.<android.filterpacks.videosrc.CameraSource: int[] findClosestFpsRange(int,android.hardware.Camera$Parameters)>($i0, $r5);
+
+        $r6 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters>;
+
+        $i2 = r3[0];
+
+        $i1 = r3[1];
+
+        virtualinvoke $r6.<android.hardware.Camera$Parameters: void setPreviewFpsRange(int,int)>($i2, $i1);
+
+        $r8 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera>;
+
+        $r7 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters>;
+
+        virtualinvoke $r8.<android.hardware.Camera: void setParameters(android.hardware.Camera$Parameters)>($r7);
+
+     label1:
+        return;
+    }
+
+    public synchronized android.hardware.Camera$Parameters getCameraParameters()
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        boolean z0;
+        int[] r1, r2;
+        android.hardware.Camera$Parameters $r3, $r4, $r5, $r6, $r7, $r9, $r10;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9;
+        android.hardware.Camera $r8, $r11, $r12, $r13;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        z0 = 0;
+
+        $r3 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters>;
+
+        if $r3 != null goto label2;
+
+        $r8 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera>;
+
+        if $r8 != null goto label1;
+
+        $i9 = r0.<android.filterpacks.videosrc.CameraSource: int mCameraId>;
+
+        $r13 = staticinvoke <android.hardware.Camera: android.hardware.Camera open(int)>($i9);
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera> = $r13;
+
+        z0 = 1;
+
+     label1:
+        $r11 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera>;
+
+        $r10 = virtualinvoke $r11.<android.hardware.Camera: android.hardware.Camera$Parameters getParameters()>();
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters> = $r10;
+
+        if z0 == 0 goto label2;
+
+        $r12 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera>;
+
+        virtualinvoke $r12.<android.hardware.Camera: void release()>();
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera> = null;
+
+     label2:
+        $i1 = r0.<android.filterpacks.videosrc.CameraSource: int mWidth>;
+
+        $i0 = r0.<android.filterpacks.videosrc.CameraSource: int mHeight>;
+
+        $r4 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters>;
+
+        r1 = specialinvoke r0.<android.filterpacks.videosrc.CameraSource: int[] findClosestSize(int,int,android.hardware.Camera$Parameters)>($i1, $i0, $r4);
+
+        $i2 = r1[0];
+
+        r0.<android.filterpacks.videosrc.CameraSource: int mWidth> = $i2;
+
+        $i3 = r1[1];
+
+        r0.<android.filterpacks.videosrc.CameraSource: int mHeight> = $i3;
+
+        $r5 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters>;
+
+        $i5 = r0.<android.filterpacks.videosrc.CameraSource: int mWidth>;
+
+        $i4 = r0.<android.filterpacks.videosrc.CameraSource: int mHeight>;
+
+        virtualinvoke $r5.<android.hardware.Camera$Parameters: void setPreviewSize(int,int)>($i5, $i4);
+
+        $i6 = r0.<android.filterpacks.videosrc.CameraSource: int mFps>;
+
+        $r6 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters>;
+
+        r2 = specialinvoke r0.<android.filterpacks.videosrc.CameraSource: int[] findClosestFpsRange(int,android.hardware.Camera$Parameters)>($i6, $r6);
+
+        $r7 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters>;
+
+        $i8 = r2[0];
+
+        $i7 = r2[1];
+
+        virtualinvoke $r7.<android.hardware.Camera$Parameters: void setPreviewFpsRange(int,int)>($i8, $i7);
+
+        $r9 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters>;
+
+        return $r9;
+    }
+
+    public synchronized void setCameraParameters(android.hardware.Camera$Parameters)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        android.hardware.Camera$Parameters r1, $r2;
+        int $i0, $i1;
+        boolean $z0;
+        android.hardware.Camera $r3;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        r1 := @parameter0: android.hardware.Camera$Parameters;
+
+        $i1 = r0.<android.filterpacks.videosrc.CameraSource: int mWidth>;
+
+        $i0 = r0.<android.filterpacks.videosrc.CameraSource: int mHeight>;
+
+        virtualinvoke r1.<android.hardware.Camera$Parameters: void setPreviewSize(int,int)>($i1, $i0);
+
+        r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters> = r1;
+
+        $z0 = virtualinvoke r0.<android.filterpacks.videosrc.CameraSource: boolean isOpen()>();
+
+        if $z0 == 0 goto label1;
+
+        $r3 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera mCamera>;
+
+        $r2 = r0.<android.filterpacks.videosrc.CameraSource: android.hardware.Camera$Parameters mCameraParameters>;
+
+        virtualinvoke $r3.<android.hardware.Camera: void setParameters(android.hardware.Camera$Parameters)>($r2);
+
+     label1:
+        return;
+    }
+
+    private int[] findClosestSize(int, int, android.hardware.Camera$Parameters)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        int i0, i1, i2, i3, i4, i5, $i6, $i7, $i9, $i10, $i11, $i12;
+        android.hardware.Camera$Parameters r1;
+        java.util.List r2;
+        java.util.Iterator r3;
+        android.hardware.Camera$Size r4, $r6, $r8;
+        java.lang.Object $r5, $r7, $r21;
+        boolean $z0, $z1;
+        int[] $r9, r22;
+        java.lang.StringBuilder $r10, $r11, $r12, $r13, $r14, $r15, $r16, $r17, $r18, $r20;
+        java.lang.String $r19;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 := @parameter2: android.hardware.Camera$Parameters;
+
+        r2 = virtualinvoke r1.<android.hardware.Camera$Parameters: java.util.List getSupportedPreviewSizes()>();
+
+        i2 = -1;
+
+        i3 = -1;
+
+        $r5 = interfaceinvoke r2.<java.util.List: java.lang.Object get(int)>(0);
+
+        $r6 = (android.hardware.Camera$Size) $r5;
+
+        i4 = $r6.<android.hardware.Camera$Size: int width>;
+
+        $r7 = interfaceinvoke r2.<java.util.List: java.lang.Object get(int)>(0);
+
+        $r8 = (android.hardware.Camera$Size) $r7;
+
+        i5 = $r8.<android.hardware.Camera$Size: int height>;
+
+        r3 = interfaceinvoke r2.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r21 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (android.hardware.Camera$Size) $r21;
+
+        $i6 = r4.<android.hardware.Camera$Size: int width>;
+
+        if $i6 > i0 goto label2;
+
+        $i12 = r4.<android.hardware.Camera$Size: int height>;
+
+        if $i12 > i1 goto label2;
+
+        $i9 = r4.<android.hardware.Camera$Size: int width>;
+
+        if $i9 < i2 goto label2;
+
+        $i10 = r4.<android.hardware.Camera$Size: int height>;
+
+        if $i10 < i3 goto label2;
+
+        i2 = r4.<android.hardware.Camera$Size: int width>;
+
+        i3 = r4.<android.hardware.Camera$Size: int height>;
+
+     label2:
+        $i7 = r4.<android.hardware.Camera$Size: int width>;
+
+        if $i7 >= i4 goto label3;
+
+        $i11 = r4.<android.hardware.Camera$Size: int height>;
+
+        if $i11 >= i5 goto label3;
+
+        i4 = r4.<android.hardware.Camera$Size: int width>;
+
+        i5 = r4.<android.hardware.Camera$Size: int height>;
+
+     label3:
+        goto label1;
+
+     label4:
+        if i2 != -1 goto label5;
+
+        i2 = i4;
+
+        i3 = i5;
+
+     label5:
+        $z1 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        if $z1 == 0 goto label6;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Requested resolution: (");
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("). Closest match: (");
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i3);
+
+        $r20 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(").");
+
+        $r19 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("CameraSource", $r19);
+
+     label6:
+        $r9 = newarray (int)[2];
+
+        $r9[0] = i2;
+
+        $r9[1] = i3;
+
+        r22 = $r9;
+
+        return r22;
+    }
+
+    private int[] findClosestFpsRange(int, android.hardware.Camera$Parameters)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        int i0, $i1, $i2, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11;
+        android.hardware.Camera$Parameters r1;
+        java.util.List r2;
+        int[] r3, r5;
+        java.util.Iterator r4;
+        java.lang.Object $r6, $r16;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r7, $r8, $r9, $r10, $r11, $r12, $r13, $r15;
+        double $d0, $d1, $d2, $d3;
+        java.lang.String $r14;
+
+        r0 := @this: android.filterpacks.videosrc.CameraSource;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.hardware.Camera$Parameters;
+
+        r2 = virtualinvoke r1.<android.hardware.Camera$Parameters: java.util.List getSupportedPreviewFpsRange()>();
+
+        $r6 = interfaceinvoke r2.<java.util.List: java.lang.Object get(int)>(0);
+
+        r3 = (int[]) $r6;
+
+        r4 = interfaceinvoke r2.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r16 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (int[]) $r16;
+
+        $i4 = r5[0];
+
+        $i5 = i0 * 1000;
+
+        if $i4 >= $i5 goto label2;
+
+        $i9 = r5[1];
+
+        $i8 = i0 * 1000;
+
+        if $i9 <= $i8 goto label2;
+
+        $i7 = r5[0];
+
+        $i6 = r3[0];
+
+        if $i7 <= $i6 goto label2;
+
+        $i11 = r5[1];
+
+        $i10 = r3[1];
+
+        if $i11 >= $i10 goto label2;
+
+        r3 = r5;
+
+     label2:
+        goto label1;
+
+     label3:
+        $z1 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        if $z1 == 0 goto label4;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Requested fps: ");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".Closest frame rate range: [");
+
+        $i1 = r3[0];
+
+        $d1 = (double) $i1;
+
+        $d0 = $d1 / 1000.0;
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(double)>($d0);
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(",");
+
+        $i2 = r3[1];
+
+        $d2 = (double) $i2;
+
+        $d3 = $d2 / 1000.0;
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(double)>($d3);
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("CameraSource", $r14);
+
+     label4:
+        return r3;
+    }
+
+    static boolean access$000(android.filterpacks.videosrc.CameraSource)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        boolean $z0;
+
+        r0 := @parameter0: android.filterpacks.videosrc.CameraSource;
+
+        $z0 = r0.<android.filterpacks.videosrc.CameraSource: boolean mLogVerbose>;
+
+        return $z0;
+    }
+
+    static boolean access$102(android.filterpacks.videosrc.CameraSource, boolean)
+    {
+        android.filterpacks.videosrc.CameraSource r0;
+        boolean z0;
+
+        r0 := @parameter0: android.filterpacks.videosrc.CameraSource;
+
+        z0 := @parameter1: boolean;
+
+        r0.<android.filterpacks.videosrc.CameraSource: boolean mNewFrameAvailable> = z0;
+
+        return z0;
+    }
+
+    static void <clinit>()
+    {
+        float[] $r0;
+
+        <android.filterpacks.videosrc.CameraSource: java.lang.String TAG> = "CameraSource";
+
+        <android.filterpacks.videosrc.CameraSource: java.lang.String mFrameShader> = "#extension GL_OES_EGL_image_external : require\nprecision mediump float;\nuniform samplerExternalOES tex_sampler_0;\nvarying vec2 v_texcoord;\nvoid main() {\n  gl_FragColor = texture2D(tex_sampler_0, v_texcoord);\n}\n";
+
+        <android.filterpacks.videosrc.CameraSource: int NEWFRAME_TIMEOUT_REPEAT> = 10;
+
+        <android.filterpacks.videosrc.CameraSource: int NEWFRAME_TIMEOUT> = 100;
+
+        $r0 = newarray (float)[16];
+
+        $r0[0] = 0.0F;
+
+        $r0[1] = 1.0F;
+
+        $r0[2] = 0.0F;
+
+        $r0[3] = 1.0F;
+
+        $r0[4] = 1.0F;
+
+        $r0[5] = 1.0F;
+
+        $r0[6] = 0.0F;
+
+        $r0[7] = 1.0F;
+
+        $r0[8] = 0.0F;
+
+        $r0[9] = 0.0F;
+
+        $r0[10] = 0.0F;
+
+        $r0[11] = 1.0F;
+
+        $r0[12] = 1.0F;
+
+        $r0[13] = 0.0F;
+
+        $r0[14] = 0.0F;
+
+        $r0[15] = 1.0F;
+
+        <android.filterpacks.videosrc.CameraSource: float[] mSourceCoords> = $r0;
+
+        return;
+    }
+}

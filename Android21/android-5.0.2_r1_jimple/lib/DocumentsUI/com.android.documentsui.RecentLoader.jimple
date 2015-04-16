@@ -1,0 +1,648 @@
+public class com.android.documentsui.RecentLoader extends android.content.AsyncTaskLoader
+{
+    private static final boolean LOGD;
+    private static final int MAX_OUTSTANDING_RECENTS;
+    private static final int MAX_OUTSTANDING_RECENTS_SVELTE;
+    private static final int MAX_FIRST_PASS_WAIT_MILLIS;
+    private static final int MAX_DOCS_FROM_ROOT;
+    private static final long REJECT_OLDER_THAN;
+    private static final java.lang.String[] RECENT_REJECT_MIMES;
+    private final java.util.concurrent.Semaphore mQueryPermits;
+    private final com.android.documentsui.RootsCache mRoots;
+    private final com.android.documentsui.DocumentsActivity$State mState;
+    private final java.util.HashMap mTasks;
+    private final int mSortOrder;
+    private java.util.concurrent.CountDownLatch mFirstPassLatch;
+    private volatile boolean mFirstPassDone;
+    private com.android.documentsui.DirectoryResult mResult;
+
+    public void <init>(android.content.Context, com.android.documentsui.RootsCache, com.android.documentsui.DocumentsActivity$State)
+    {
+        com.android.documentsui.RecentLoader r0;
+        android.content.Context r1, $r6;
+        com.android.documentsui.RootsCache r2;
+        com.android.documentsui.DocumentsActivity$State r3;
+        android.app.ActivityManager r4;
+        java.util.HashMap $r5;
+        java.lang.Object $r7;
+        java.util.concurrent.Semaphore $r8;
+        boolean $z0;
+        byte $b0;
+
+        r0 := @this: com.android.documentsui.RecentLoader;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.documentsui.RootsCache;
+
+        r3 := @parameter2: com.android.documentsui.DocumentsActivity$State;
+
+        specialinvoke r0.<android.content.AsyncTaskLoader: void <init>(android.content.Context)>(r1);
+
+        $r5 = staticinvoke <com.google.android.collect.Maps: java.util.HashMap newHashMap()>();
+
+        r0.<com.android.documentsui.RecentLoader: java.util.HashMap mTasks> = $r5;
+
+        r0.<com.android.documentsui.RecentLoader: int mSortOrder> = 2;
+
+        r0.<com.android.documentsui.RecentLoader: com.android.documentsui.RootsCache mRoots> = r2;
+
+        r0.<com.android.documentsui.RecentLoader: com.android.documentsui.DocumentsActivity$State mState> = r3;
+
+        $r6 = virtualinvoke r0.<com.android.documentsui.RecentLoader: android.content.Context getContext()>();
+
+        $r7 = virtualinvoke $r6.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("activity");
+
+        r4 = (android.app.ActivityManager) $r7;
+
+        $r8 = new java.util.concurrent.Semaphore;
+
+        $z0 = virtualinvoke r4.<android.app.ActivityManager: boolean isLowRamDevice()>();
+
+        if $z0 == 0 goto label1;
+
+        $b0 = 2;
+
+        goto label2;
+
+     label1:
+        $b0 = 4;
+
+     label2:
+        specialinvoke $r8.<java.util.concurrent.Semaphore: void <init>(int)>($b0);
+
+        r0.<com.android.documentsui.RecentLoader: java.util.concurrent.Semaphore mQueryPermits> = $r8;
+
+        return;
+    }
+
+    public com.android.documentsui.DirectoryResult loadInBackground()
+    {
+        com.android.documentsui.RecentLoader r0;
+        java.util.Collection r1, $r11, $r39;
+        java.util.Iterator r2, r5, r57;
+        com.android.documentsui.model.RootInfo r3;
+        com.android.documentsui.RecentLoader$RecentTask r4, r6, $r44, r58;
+        android.database.Cursor r7;
+        com.android.documentsui.RecentLoader$1 r8, $r30;
+        java.util.concurrent.CountDownLatch $r9, $r38, $r42;
+        long $l0, l10;
+        java.util.HashMap $r10, $r16, $r37, $r40, $r53;
+        boolean $z0, $z1, $z3, $z4, z6;
+        java.lang.StringBuilder $r12, $r13, $r14, $r15, $r17, $r18;
+        int $i1, $i2, $i4, $i5, $i6, $i7, $i8, $i9;
+        java.lang.String $r19, $r45, $r46, $r47;
+        android.os.Bundle $r20, r64;
+        com.android.documentsui.DirectoryResult $r21, r63;
+        android.database.MatrixCursor $r22;
+        android.database.MergeCursor $r23;
+        java.lang.String[] $r24, $r32, $r34;
+        com.android.documentsui.RecentLoader$2 $r25, r66;
+        java.lang.Object[] $r26;
+        android.database.Cursor[] $r27, $r28;
+        java.lang.Object $r29, $r31, $r41, $r49;
+        com.android.documentsui.DocumentsActivity$State $r33, $r36;
+        com.android.documentsui.RootsCache $r35;
+        java.util.concurrent.TimeUnit $r43;
+        com.android.documentsui.ProviderExecutor $r48;
+        java.util.concurrent.ExecutionException $r50;
+        java.lang.InterruptedException $r51, $r55, r59, r61;
+        java.lang.RuntimeException $r52, $r56;
+        java.util.ArrayList r60;
+        android.database.AbstractCursor r65;
+
+        r0 := @this: com.android.documentsui.RecentLoader;
+
+        $r9 = r0.<com.android.documentsui.RecentLoader: java.util.concurrent.CountDownLatch mFirstPassLatch>;
+
+        if $r9 != null goto label08;
+
+        $r35 = r0.<com.android.documentsui.RecentLoader: com.android.documentsui.RootsCache mRoots>;
+
+        $r36 = r0.<com.android.documentsui.RecentLoader: com.android.documentsui.DocumentsActivity$State mState>;
+
+        r1 = virtualinvoke $r35.<com.android.documentsui.RootsCache: java.util.Collection getMatchingRootsBlocking(com.android.documentsui.DocumentsActivity$State)>($r36);
+
+        r2 = interfaceinvoke r1.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label01:
+        $z3 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label03;
+
+        $r49 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.documentsui.model.RootInfo) $r49;
+
+        $i9 = r3.<com.android.documentsui.model.RootInfo: int flags>;
+
+        $i8 = $i9 & 4;
+
+        if $i8 == 0 goto label02;
+
+        $r44 = new com.android.documentsui.RecentLoader$RecentTask;
+
+        $r46 = r3.<com.android.documentsui.model.RootInfo: java.lang.String authority>;
+
+        $r45 = r3.<com.android.documentsui.model.RootInfo: java.lang.String rootId>;
+
+        specialinvoke $r44.<com.android.documentsui.RecentLoader$RecentTask: void <init>(com.android.documentsui.RecentLoader,java.lang.String,java.lang.String)>(r0, $r46, $r45);
+
+        r4 = $r44;
+
+        $r53 = r0.<com.android.documentsui.RecentLoader: java.util.HashMap mTasks>;
+
+        virtualinvoke $r53.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r3, r4);
+
+     label02:
+        goto label01;
+
+     label03:
+        $r38 = new java.util.concurrent.CountDownLatch;
+
+        $r37 = r0.<com.android.documentsui.RecentLoader: java.util.HashMap mTasks>;
+
+        $i7 = virtualinvoke $r37.<java.util.HashMap: int size()>();
+
+        specialinvoke $r38.<java.util.concurrent.CountDownLatch: void <init>(int)>($i7);
+
+        r0.<com.android.documentsui.RecentLoader: java.util.concurrent.CountDownLatch mFirstPassLatch> = $r38;
+
+        $r40 = r0.<com.android.documentsui.RecentLoader: java.util.HashMap mTasks>;
+
+        $r39 = virtualinvoke $r40.<java.util.HashMap: java.util.Collection values()>();
+
+        r57 = interfaceinvoke $r39.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label04:
+        $z4 = interfaceinvoke r57.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label05;
+
+        $r41 = interfaceinvoke r57.<java.util.Iterator: java.lang.Object next()>();
+
+        r58 = (com.android.documentsui.RecentLoader$RecentTask) $r41;
+
+        $r47 = r58.<com.android.documentsui.RecentLoader$RecentTask: java.lang.String authority>;
+
+        $r48 = staticinvoke <com.android.documentsui.ProviderExecutor: com.android.documentsui.ProviderExecutor forAuthority(java.lang.String)>($r47);
+
+        virtualinvoke $r48.<com.android.documentsui.ProviderExecutor: void execute(java.lang.Runnable)>(r58);
+
+        goto label04;
+
+     label05:
+        $r42 = r0.<com.android.documentsui.RecentLoader: java.util.concurrent.CountDownLatch mFirstPassLatch>;
+
+        $r43 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit MILLISECONDS>;
+
+        virtualinvoke $r42.<java.util.concurrent.CountDownLatch: boolean await(long,java.util.concurrent.TimeUnit)>(500L, $r43);
+
+        r0.<com.android.documentsui.RecentLoader: boolean mFirstPassDone> = 1;
+
+     label06:
+        goto label08;
+
+     label07:
+        $r51 := @caughtexception;
+
+        r59 = $r51;
+
+        $r52 = new java.lang.RuntimeException;
+
+        specialinvoke $r52.<java.lang.RuntimeException: void <init>(java.lang.Throwable)>(r59);
+
+        throw $r52;
+
+     label08:
+        $l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        l10 = $l0 - 3888000000L;
+
+        z6 = 1;
+
+        r60 = staticinvoke <com.google.common.collect.Lists: java.util.ArrayList newArrayList()>();
+
+        $r10 = r0.<com.android.documentsui.RecentLoader: java.util.HashMap mTasks>;
+
+        $r11 = virtualinvoke $r10.<java.util.HashMap: java.util.Collection values()>();
+
+        r5 = interfaceinvoke $r11.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label09:
+        $z0 = interfaceinvoke r5.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label18;
+
+        $r31 = interfaceinvoke r5.<java.util.Iterator: java.lang.Object next()>();
+
+        r6 = (com.android.documentsui.RecentLoader$RecentTask) $r31;
+
+        $z1 = virtualinvoke r6.<com.android.documentsui.RecentLoader$RecentTask: boolean isDone()>();
+
+        if $z1 == 0 goto label16;
+
+     label10:
+        $r29 = virtualinvoke r6.<com.android.documentsui.RecentLoader$RecentTask: java.lang.Object get()>();
+
+        r7 = (android.database.Cursor) $r29;
+
+        if r7 != null goto label12;
+
+     label11:
+        goto label09;
+
+     label12:
+        $r30 = new com.android.documentsui.RecentLoader$1;
+
+        $r33 = r0.<com.android.documentsui.RecentLoader: com.android.documentsui.DocumentsActivity$State mState>;
+
+        $r32 = $r33.<com.android.documentsui.DocumentsActivity$State: java.lang.String[] acceptMimes>;
+
+        $r34 = <com.android.documentsui.RecentLoader: java.lang.String[] RECENT_REJECT_MIMES>;
+
+        specialinvoke $r30.<com.android.documentsui.RecentLoader$1: void <init>(com.android.documentsui.RecentLoader,android.database.Cursor,java.lang.String[],java.lang.String[],long)>(r0, r7, $r32, $r34, l10);
+
+        r8 = $r30;
+
+        interfaceinvoke r60.<java.util.List: boolean add(java.lang.Object)>(r8);
+
+     label13:
+        goto label17;
+
+     label14:
+        $r55 := @caughtexception;
+
+        r61 = $r55;
+
+        $r56 = new java.lang.RuntimeException;
+
+        specialinvoke $r56.<java.lang.RuntimeException: void <init>(java.lang.Throwable)>(r61);
+
+        throw $r56;
+
+     label15:
+        $r50 := @caughtexception;
+
+        goto label17;
+
+     label16:
+        z6 = 0;
+
+     label17:
+        goto label09;
+
+     label18:
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Found ");
+
+        $i1 = interfaceinvoke r60.<java.util.List: int size()>();
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" of ");
+
+        $r16 = r0.<com.android.documentsui.RecentLoader: java.util.HashMap mTasks>;
+
+        $i2 = virtualinvoke $r16.<java.util.HashMap: int size()>();
+
+        $r18 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" recent queries done");
+
+        $r19 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("Documents", $r19);
+
+        $r21 = new com.android.documentsui.DirectoryResult;
+
+        specialinvoke $r21.<com.android.documentsui.DirectoryResult: void <init>()>();
+
+        r63 = $r21;
+
+        r63.<com.android.documentsui.DirectoryResult: int sortOrder> = 2;
+
+        $r20 = new android.os.Bundle;
+
+        specialinvoke $r20.<android.os.Bundle: void <init>()>();
+
+        r64 = $r20;
+
+        if z6 != 0 goto label19;
+
+        virtualinvoke r64.<android.os.Bundle: void putBoolean(java.lang.String,boolean)>("loading", 1);
+
+     label19:
+        $i4 = interfaceinvoke r60.<java.util.List: int size()>();
+
+        if $i4 <= 0 goto label20;
+
+        $r23 = new android.database.MergeCursor;
+
+        $i6 = interfaceinvoke r60.<java.util.List: int size()>();
+
+        $r28 = newarray (android.database.Cursor)[$i6];
+
+        $r26 = interfaceinvoke r60.<java.util.List: java.lang.Object[] toArray(java.lang.Object[])>($r28);
+
+        $r27 = (android.database.Cursor[]) $r26;
+
+        specialinvoke $r23.<android.database.MergeCursor: void <init>(android.database.Cursor[])>($r27);
+
+        r65 = $r23;
+
+        goto label21;
+
+     label20:
+        $r22 = new android.database.MatrixCursor;
+
+        $r24 = newarray (java.lang.String)[0];
+
+        specialinvoke $r22.<android.database.MatrixCursor: void <init>(java.lang.String[])>($r24);
+
+        r65 = $r22;
+
+     label21:
+        $r25 = new com.android.documentsui.RecentLoader$2;
+
+        $i5 = r63.<com.android.documentsui.DirectoryResult: int sortOrder>;
+
+        specialinvoke $r25.<com.android.documentsui.RecentLoader$2: void <init>(com.android.documentsui.RecentLoader,android.database.Cursor,int,android.os.Bundle)>(r0, r65, $i5, r64);
+
+        r66 = $r25;
+
+        r63.<com.android.documentsui.DirectoryResult: android.database.Cursor cursor> = r66;
+
+        return r63;
+
+        catch java.lang.InterruptedException from label05 to label06 with label07;
+        catch java.lang.InterruptedException from label10 to label11 with label14;
+        catch java.lang.InterruptedException from label12 to label13 with label14;
+        catch java.util.concurrent.ExecutionException from label10 to label11 with label15;
+        catch java.util.concurrent.ExecutionException from label12 to label13 with label15;
+    }
+
+    public void cancelLoadInBackground()
+    {
+        com.android.documentsui.RecentLoader r0;
+
+        r0 := @this: com.android.documentsui.RecentLoader;
+
+        specialinvoke r0.<android.content.AsyncTaskLoader: void cancelLoadInBackground()>();
+
+        return;
+    }
+
+    public void deliverResult(com.android.documentsui.DirectoryResult)
+    {
+        com.android.documentsui.RecentLoader r0;
+        com.android.documentsui.DirectoryResult r1, r2;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.documentsui.RecentLoader;
+
+        r1 := @parameter0: com.android.documentsui.DirectoryResult;
+
+        $z0 = virtualinvoke r0.<com.android.documentsui.RecentLoader: boolean isReset()>();
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r1);
+
+        return;
+
+     label1:
+        r2 = r0.<com.android.documentsui.RecentLoader: com.android.documentsui.DirectoryResult mResult>;
+
+        r0.<com.android.documentsui.RecentLoader: com.android.documentsui.DirectoryResult mResult> = r1;
+
+        $z1 = virtualinvoke r0.<com.android.documentsui.RecentLoader: boolean isStarted()>();
+
+        if $z1 == 0 goto label2;
+
+        specialinvoke r0.<android.content.AsyncTaskLoader: void deliverResult(java.lang.Object)>(r1);
+
+     label2:
+        if r2 == null goto label3;
+
+        if r2 == r1 goto label3;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r2);
+
+     label3:
+        return;
+    }
+
+    protected void onStartLoading()
+    {
+        com.android.documentsui.RecentLoader r0;
+        com.android.documentsui.DirectoryResult $r1, $r2, $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.documentsui.RecentLoader;
+
+        $r1 = r0.<com.android.documentsui.RecentLoader: com.android.documentsui.DirectoryResult mResult>;
+
+        if $r1 == null goto label1;
+
+        $r3 = r0.<com.android.documentsui.RecentLoader: com.android.documentsui.DirectoryResult mResult>;
+
+        virtualinvoke r0.<com.android.documentsui.RecentLoader: void deliverResult(com.android.documentsui.DirectoryResult)>($r3);
+
+     label1:
+        $z0 = virtualinvoke r0.<com.android.documentsui.RecentLoader: boolean takeContentChanged()>();
+
+        if $z0 != 0 goto label2;
+
+        $r2 = r0.<com.android.documentsui.RecentLoader: com.android.documentsui.DirectoryResult mResult>;
+
+        if $r2 != null goto label3;
+
+     label2:
+        virtualinvoke r0.<com.android.documentsui.RecentLoader: void forceLoad()>();
+
+     label3:
+        return;
+    }
+
+    protected void onStopLoading()
+    {
+        com.android.documentsui.RecentLoader r0;
+
+        r0 := @this: com.android.documentsui.RecentLoader;
+
+        virtualinvoke r0.<com.android.documentsui.RecentLoader: boolean cancelLoad()>();
+
+        return;
+    }
+
+    public void onCanceled(com.android.documentsui.DirectoryResult)
+    {
+        com.android.documentsui.RecentLoader r0;
+        com.android.documentsui.DirectoryResult r1;
+
+        r0 := @this: com.android.documentsui.RecentLoader;
+
+        r1 := @parameter0: com.android.documentsui.DirectoryResult;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r1);
+
+        return;
+    }
+
+    protected void onReset()
+    {
+        com.android.documentsui.RecentLoader r0;
+        java.util.Iterator r1;
+        com.android.documentsui.RecentLoader$RecentTask r2;
+        java.util.HashMap $r3;
+        java.util.Collection $r4;
+        boolean $z0;
+        com.android.documentsui.DirectoryResult $r5;
+        java.lang.Object $r6;
+
+        r0 := @this: com.android.documentsui.RecentLoader;
+
+        specialinvoke r0.<android.content.AsyncTaskLoader: void onReset()>();
+
+        virtualinvoke r0.<com.android.documentsui.RecentLoader: void onStopLoading()>();
+
+        $r3 = r0.<com.android.documentsui.RecentLoader: java.util.HashMap mTasks>;
+
+        $r4 = virtualinvoke $r3.<java.util.HashMap: java.util.Collection values()>();
+
+        r1 = interfaceinvoke $r4.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r6 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.documentsui.RecentLoader$RecentTask) $r6;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r2);
+
+        goto label1;
+
+     label2:
+        $r5 = r0.<com.android.documentsui.RecentLoader: com.android.documentsui.DirectoryResult mResult>;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>($r5);
+
+        r0.<com.android.documentsui.RecentLoader: com.android.documentsui.DirectoryResult mResult> = null;
+
+        return;
+    }
+
+    public volatile java.lang.Object loadInBackground()
+    {
+        com.android.documentsui.RecentLoader r0;
+        com.android.documentsui.DirectoryResult $r1;
+
+        r0 := @this: com.android.documentsui.RecentLoader;
+
+        $r1 = virtualinvoke r0.<com.android.documentsui.RecentLoader: com.android.documentsui.DirectoryResult loadInBackground()>();
+
+        return $r1;
+    }
+
+    public volatile void onCanceled(java.lang.Object)
+    {
+        com.android.documentsui.RecentLoader r0;
+        java.lang.Object r1;
+        com.android.documentsui.DirectoryResult $r2;
+
+        r0 := @this: com.android.documentsui.RecentLoader;
+
+        r1 := @parameter0: java.lang.Object;
+
+        $r2 = (com.android.documentsui.DirectoryResult) r1;
+
+        virtualinvoke r0.<com.android.documentsui.RecentLoader: void onCanceled(com.android.documentsui.DirectoryResult)>($r2);
+
+        return;
+    }
+
+    public volatile void deliverResult(java.lang.Object)
+    {
+        com.android.documentsui.RecentLoader r0;
+        java.lang.Object r1;
+        com.android.documentsui.DirectoryResult $r2;
+
+        r0 := @this: com.android.documentsui.RecentLoader;
+
+        r1 := @parameter0: java.lang.Object;
+
+        $r2 = (com.android.documentsui.DirectoryResult) r1;
+
+        virtualinvoke r0.<com.android.documentsui.RecentLoader: void deliverResult(com.android.documentsui.DirectoryResult)>($r2);
+
+        return;
+    }
+
+    static java.util.concurrent.Semaphore access$000(com.android.documentsui.RecentLoader)
+    {
+        com.android.documentsui.RecentLoader r0;
+        java.util.concurrent.Semaphore $r1;
+
+        r0 := @parameter0: com.android.documentsui.RecentLoader;
+
+        $r1 = r0.<com.android.documentsui.RecentLoader: java.util.concurrent.Semaphore mQueryPermits>;
+
+        return $r1;
+    }
+
+    static java.util.concurrent.CountDownLatch access$100(com.android.documentsui.RecentLoader)
+    {
+        com.android.documentsui.RecentLoader r0;
+        java.util.concurrent.CountDownLatch $r1;
+
+        r0 := @parameter0: com.android.documentsui.RecentLoader;
+
+        $r1 = r0.<com.android.documentsui.RecentLoader: java.util.concurrent.CountDownLatch mFirstPassLatch>;
+
+        return $r1;
+    }
+
+    static boolean access$200(com.android.documentsui.RecentLoader)
+    {
+        com.android.documentsui.RecentLoader r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.documentsui.RecentLoader;
+
+        $z0 = r0.<com.android.documentsui.RecentLoader: boolean mFirstPassDone>;
+
+        return $z0;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.String[] $r0;
+
+        <com.android.documentsui.RecentLoader: long REJECT_OLDER_THAN> = 3888000000L;
+
+        <com.android.documentsui.RecentLoader: int MAX_DOCS_FROM_ROOT> = 64;
+
+        <com.android.documentsui.RecentLoader: int MAX_FIRST_PASS_WAIT_MILLIS> = 500;
+
+        <com.android.documentsui.RecentLoader: int MAX_OUTSTANDING_RECENTS_SVELTE> = 2;
+
+        <com.android.documentsui.RecentLoader: int MAX_OUTSTANDING_RECENTS> = 4;
+
+        <com.android.documentsui.RecentLoader: boolean LOGD> = 1;
+
+        $r0 = newarray (java.lang.String)[1];
+
+        $r0[0] = "vnd.android.document/directory";
+
+        <com.android.documentsui.RecentLoader: java.lang.String[] RECENT_REJECT_MIMES> = $r0;
+
+        return;
+    }
+}

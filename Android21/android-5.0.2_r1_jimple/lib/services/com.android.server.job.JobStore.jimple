@@ -1,0 +1,570 @@
+public class com.android.server.job.JobStore extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private static final boolean DEBUG;
+    private static final int MAX_OPS_BEFORE_WRITE;
+    final android.util.ArraySet mJobSet;
+    final android.content.Context mContext;
+    private int mDirtyOperations;
+    private static final java.lang.Object sSingletonLock;
+    private final android.util.AtomicFile mJobsFile;
+    private final android.os.Handler mIoHandler;
+    private static com.android.server.job.JobStore sSingleton;
+    private static final int JOBS_FILE_VERSION;
+    private static final java.lang.String XML_TAG_PARAMS_CONSTRAINTS;
+    private static final java.lang.String XML_TAG_PERIODIC;
+    private static final java.lang.String XML_TAG_ONEOFF;
+    private static final java.lang.String XML_TAG_EXTRAS;
+
+    static com.android.server.job.JobStore initAndGet(com.android.server.job.JobSchedulerService)
+    {
+        com.android.server.job.JobSchedulerService r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r9;
+        com.android.server.job.JobStore $r4, $r5, $r6;
+        android.content.Context $r7;
+        java.io.File $r8;
+
+        r0 := @parameter0: com.android.server.job.JobSchedulerService;
+
+        $r3 = <com.android.server.job.JobStore: java.lang.Object sSingletonLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $r4 = <com.android.server.job.JobStore: com.android.server.job.JobStore sSingleton>;
+
+        if $r4 != null goto label2;
+
+        $r6 = new com.android.server.job.JobStore;
+
+        $r7 = virtualinvoke r0.<com.android.server.job.JobSchedulerService: android.content.Context getContext()>();
+
+        $r8 = staticinvoke <android.os.Environment: java.io.File getDataDirectory()>();
+
+        specialinvoke $r6.<com.android.server.job.JobStore: void <init>(android.content.Context,java.io.File)>($r7, $r8);
+
+        <com.android.server.job.JobStore: com.android.server.job.JobStore sSingleton> = $r6;
+
+     label2:
+        $r5 = <com.android.server.job.JobStore: com.android.server.job.JobStore sSingleton>;
+
+        exitmonitor r1;
+
+     label3:
+        return $r5;
+
+     label4:
+        $r9 := @caughtexception;
+
+        r2 = $r9;
+
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public static com.android.server.job.JobStore initAndGetForTesting(android.content.Context, java.io.File)
+    {
+        android.content.Context r0;
+        java.io.File r1;
+        com.android.server.job.JobStore r2, $r3;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.io.File;
+
+        $r3 = new com.android.server.job.JobStore;
+
+        specialinvoke $r3.<com.android.server.job.JobStore: void <init>(android.content.Context,java.io.File)>(r0, r1);
+
+        r2 = $r3;
+
+        virtualinvoke r2.<com.android.server.job.JobStore: void clear()>();
+
+        return r2;
+    }
+
+    private void <init>(android.content.Context, java.io.File)
+    {
+        com.android.server.job.JobStore r0;
+        android.content.Context r1;
+        java.io.File r2, r3, r4, $r6, $r7, $r9;
+        android.os.Handler $r5;
+        android.util.AtomicFile $r8;
+        android.util.ArraySet $r10, $r11;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: java.io.File;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r5 = staticinvoke <com.android.server.IoThread: android.os.Handler getHandler()>();
+
+        r0.<com.android.server.job.JobStore: android.os.Handler mIoHandler> = $r5;
+
+        r0.<com.android.server.job.JobStore: android.content.Context mContext> = r1;
+
+        r0.<com.android.server.job.JobStore: int mDirtyOperations> = 0;
+
+        $r6 = new java.io.File;
+
+        specialinvoke $r6.<java.io.File: void <init>(java.io.File,java.lang.String)>(r2, "system");
+
+        r3 = $r6;
+
+        $r7 = new java.io.File;
+
+        specialinvoke $r7.<java.io.File: void <init>(java.io.File,java.lang.String)>(r3, "job");
+
+        r4 = $r7;
+
+        virtualinvoke r4.<java.io.File: boolean mkdirs()>();
+
+        $r8 = new android.util.AtomicFile;
+
+        $r9 = new java.io.File;
+
+        specialinvoke $r9.<java.io.File: void <init>(java.io.File,java.lang.String)>(r4, "jobs.xml");
+
+        specialinvoke $r8.<android.util.AtomicFile: void <init>(java.io.File)>($r9);
+
+        r0.<com.android.server.job.JobStore: android.util.AtomicFile mJobsFile> = $r8;
+
+        $r10 = new android.util.ArraySet;
+
+        specialinvoke $r10.<android.util.ArraySet: void <init>()>();
+
+        r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet> = $r10;
+
+        $r11 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        virtualinvoke r0.<com.android.server.job.JobStore: void readJobMapFromDisk(android.util.ArraySet)>($r11);
+
+        return;
+    }
+
+    public boolean add(com.android.server.job.controllers.JobStatus)
+    {
+        com.android.server.job.JobStore r0;
+        com.android.server.job.controllers.JobStatus r1;
+        boolean z0, $z2;
+        android.util.ArraySet $r2, $r3;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        $r2 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        z0 = virtualinvoke $r2.<android.util.ArraySet: boolean remove(java.lang.Object)>(r1);
+
+        $r3 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        virtualinvoke $r3.<android.util.ArraySet: boolean add(java.lang.Object)>(r1);
+
+        $z2 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean isPersisted()>();
+
+        if $z2 == 0 goto label1;
+
+        specialinvoke r0.<com.android.server.job.JobStore: void maybeWriteStatusToDiskAsync()>();
+
+     label1:
+        return z0;
+    }
+
+    public boolean containsJobIdForUid(int, int)
+    {
+        com.android.server.job.JobStore r0;
+        int i0, i1, i2, $i3, $i4, $i5;
+        com.android.server.job.controllers.JobStatus r1;
+        android.util.ArraySet $r2, $r3;
+        java.lang.Object $r4;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $r2 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        $i3 = virtualinvoke $r2.<android.util.ArraySet: int size()>();
+
+        i2 = $i3 - 1;
+
+     label1:
+        if i2 < 0 goto label3;
+
+        $r3 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        $r4 = virtualinvoke $r3.<android.util.ArraySet: java.lang.Object valueAt(int)>(i2);
+
+        r1 = (com.android.server.job.controllers.JobStatus) $r4;
+
+        $i4 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: int getUid()>();
+
+        if $i4 != i1 goto label2;
+
+        $i5 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: int getJobId()>();
+
+        if $i5 != i0 goto label2;
+
+        return 1;
+
+     label2:
+        i2 = i2 + -1;
+
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    boolean containsJob(com.android.server.job.controllers.JobStatus)
+    {
+        com.android.server.job.JobStore r0;
+        com.android.server.job.controllers.JobStatus r1;
+        android.util.ArraySet $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        $r2 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        $z0 = virtualinvoke $r2.<android.util.ArraySet: boolean contains(java.lang.Object)>(r1);
+
+        return $z0;
+    }
+
+    public int size()
+    {
+        com.android.server.job.JobStore r0;
+        android.util.ArraySet $r1;
+        int $i0;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        $r1 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        $i0 = virtualinvoke $r1.<android.util.ArraySet: int size()>();
+
+        return $i0;
+    }
+
+    public boolean remove(com.android.server.job.controllers.JobStatus)
+    {
+        com.android.server.job.JobStore r0;
+        com.android.server.job.controllers.JobStatus r1;
+        boolean z0, $z1;
+        android.util.ArraySet $r2;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        $r2 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        z0 = virtualinvoke $r2.<android.util.ArraySet: boolean remove(java.lang.Object)>(r1);
+
+        if z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $z1 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean isPersisted()>();
+
+        if $z1 == 0 goto label2;
+
+        specialinvoke r0.<com.android.server.job.JobStore: void maybeWriteStatusToDiskAsync()>();
+
+     label2:
+        return z0;
+    }
+
+    public void clear()
+    {
+        com.android.server.job.JobStore r0;
+        android.util.ArraySet $r1;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        $r1 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        virtualinvoke $r1.<android.util.ArraySet: void clear()>();
+
+        specialinvoke r0.<com.android.server.job.JobStore: void maybeWriteStatusToDiskAsync()>();
+
+        return;
+    }
+
+    public java.util.List getJobsByUser(int)
+    {
+        com.android.server.job.JobStore r0;
+        int i0, $i1, $i2;
+        java.util.ArrayList r1, $r4;
+        java.util.Iterator r2;
+        com.android.server.job.controllers.JobStatus r3;
+        android.util.ArraySet $r5;
+        boolean $z0;
+        java.lang.Object $r6;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        i0 := @parameter0: int;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r4;
+
+        $r5 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        r2 = virtualinvoke $r5.<android.util.ArraySet: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r6 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.server.job.controllers.JobStatus) $r6;
+
+        $i1 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: int getUid()>();
+
+        $i2 = staticinvoke <android.os.UserHandle: int getUserId(int)>($i1);
+
+        if $i2 != i0 goto label2;
+
+        interfaceinvoke r1.<java.util.List: boolean add(java.lang.Object)>(r3);
+
+     label2:
+        goto label1;
+
+     label3:
+        return r1;
+    }
+
+    public java.util.List getJobsByUid(int)
+    {
+        com.android.server.job.JobStore r0;
+        int i0, $i1;
+        java.util.ArrayList r1, $r4;
+        java.util.Iterator r2;
+        com.android.server.job.controllers.JobStatus r3;
+        android.util.ArraySet $r5;
+        boolean $z0;
+        java.lang.Object $r6;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        i0 := @parameter0: int;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r4;
+
+        $r5 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        r2 = virtualinvoke $r5.<android.util.ArraySet: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r6 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.server.job.controllers.JobStatus) $r6;
+
+        $i1 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: int getUid()>();
+
+        if $i1 != i0 goto label2;
+
+        interfaceinvoke r1.<java.util.List: boolean add(java.lang.Object)>(r3);
+
+     label2:
+        goto label1;
+
+     label3:
+        return r1;
+    }
+
+    public com.android.server.job.controllers.JobStatus getJobByUidAndJobId(int, int)
+    {
+        com.android.server.job.JobStore r0;
+        int i0, i1, $i2, $i3;
+        java.util.Iterator r1;
+        com.android.server.job.controllers.JobStatus r2;
+        android.util.ArraySet $r3;
+        boolean $z0;
+        java.lang.Object $r4;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $r3 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        r1 = virtualinvoke $r3.<android.util.ArraySet: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.server.job.controllers.JobStatus) $r4;
+
+        $i2 = virtualinvoke r2.<com.android.server.job.controllers.JobStatus: int getUid()>();
+
+        if $i2 != i0 goto label2;
+
+        $i3 = virtualinvoke r2.<com.android.server.job.controllers.JobStatus: int getJobId()>();
+
+        if $i3 != i1 goto label2;
+
+        return r2;
+
+     label2:
+        goto label1;
+
+     label3:
+        return null;
+    }
+
+    public android.util.ArraySet getJobs()
+    {
+        com.android.server.job.JobStore r0;
+        android.util.ArraySet $r1;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        $r1 = r0.<com.android.server.job.JobStore: android.util.ArraySet mJobSet>;
+
+        return $r1;
+    }
+
+    private void maybeWriteStatusToDiskAsync()
+    {
+        com.android.server.job.JobStore r0;
+        int $i0, $i1, $i2;
+        com.android.server.job.JobStore$WriteJobsMapToDiskRunnable $r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        $i0 = r0.<com.android.server.job.JobStore: int mDirtyOperations>;
+
+        $i1 = $i0 + 1;
+
+        r0.<com.android.server.job.JobStore: int mDirtyOperations> = $i1;
+
+        $i2 = r0.<com.android.server.job.JobStore: int mDirtyOperations>;
+
+        if $i2 < 1 goto label1;
+
+        $r2 = r0.<com.android.server.job.JobStore: android.os.Handler mIoHandler>;
+
+        $r1 = new com.android.server.job.JobStore$WriteJobsMapToDiskRunnable;
+
+        specialinvoke $r1.<com.android.server.job.JobStore$WriteJobsMapToDiskRunnable: void <init>(com.android.server.job.JobStore,com.android.server.job.JobStore$1)>(r0, null);
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>($r1);
+
+     label1:
+        return;
+    }
+
+    public void readJobMapFromDisk(android.util.ArraySet)
+    {
+        com.android.server.job.JobStore r0;
+        android.util.ArraySet r1;
+        com.android.server.job.JobStore$ReadJobMapFromDiskRunnable $r2;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: android.util.ArraySet;
+
+        $r2 = new com.android.server.job.JobStore$ReadJobMapFromDiskRunnable;
+
+        specialinvoke $r2.<com.android.server.job.JobStore$ReadJobMapFromDiskRunnable: void <init>(com.android.server.job.JobStore,android.util.ArraySet)>(r0, r1);
+
+        virtualinvoke $r2.<com.android.server.job.JobStore$ReadJobMapFromDiskRunnable: void run()>();
+
+        return;
+    }
+
+    static android.util.AtomicFile access$100(com.android.server.job.JobStore)
+    {
+        com.android.server.job.JobStore r0;
+        android.util.AtomicFile $r1;
+
+        r0 := @parameter0: com.android.server.job.JobStore;
+
+        $r1 = r0.<com.android.server.job.JobStore: android.util.AtomicFile mJobsFile>;
+
+        return $r1;
+    }
+
+    static int access$202(com.android.server.job.JobStore, int)
+    {
+        com.android.server.job.JobStore r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.job.JobStore;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.job.JobStore: int mDirtyOperations> = i0;
+
+        return i0;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.Object $r0;
+
+        <com.android.server.job.JobStore: java.lang.String XML_TAG_EXTRAS> = "extras";
+
+        <com.android.server.job.JobStore: java.lang.String XML_TAG_ONEOFF> = "one-off";
+
+        <com.android.server.job.JobStore: java.lang.String XML_TAG_PERIODIC> = "periodic";
+
+        <com.android.server.job.JobStore: java.lang.String XML_TAG_PARAMS_CONSTRAINTS> = "constraints";
+
+        <com.android.server.job.JobStore: int JOBS_FILE_VERSION> = 0;
+
+        <com.android.server.job.JobStore: int MAX_OPS_BEFORE_WRITE> = 1;
+
+        <com.android.server.job.JobStore: boolean DEBUG> = 0;
+
+        <com.android.server.job.JobStore: java.lang.String TAG> = "JobStore";
+
+        $r0 = new java.lang.Object;
+
+        specialinvoke $r0.<java.lang.Object: void <init>()>();
+
+        <com.android.server.job.JobStore: java.lang.Object sSingletonLock> = $r0;
+
+        return;
+    }
+}

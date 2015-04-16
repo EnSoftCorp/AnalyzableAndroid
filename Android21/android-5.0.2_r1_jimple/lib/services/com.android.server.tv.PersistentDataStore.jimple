@@ -1,0 +1,836 @@
+final class com.android.server.tv.PersistentDataStore extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private final android.content.Context mContext;
+    private final android.os.Handler mHandler;
+    private final android.util.AtomicFile mAtomicFile;
+    private final java.util.List mBlockedRatings;
+    private boolean mBlockedRatingsChanged;
+    private boolean mParentalControlsEnabled;
+    private boolean mParentalControlsEnabledChanged;
+    private boolean mLoaded;
+    private final java.lang.Runnable mSaveRunnable;
+    private static final java.lang.String TAG_TV_INPUT_MANAGER_STATE;
+    private static final java.lang.String TAG_BLOCKED_RATINGS;
+    private static final java.lang.String TAG_RATING;
+    private static final java.lang.String TAG_PARENTAL_CONTROLS;
+    private static final java.lang.String ATTR_STRING;
+    private static final java.lang.String ATTR_ENABLED;
+
+    public void <init>(android.content.Context, int)
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        android.content.Context r1;
+        int i0;
+        java.io.File r2, $r8;
+        android.os.Handler $r3;
+        java.util.ArrayList $r4;
+        java.util.List $r5;
+        com.android.server.tv.PersistentDataStore$1 $r6;
+        boolean $z0, $z1;
+        android.util.AtomicFile $r7;
+        java.lang.IllegalStateException $r9;
+        java.lang.StringBuilder $r10, $r11, $r13;
+        java.lang.String $r12;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        r1 := @parameter0: android.content.Context;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r3 = new android.os.Handler;
+
+        specialinvoke $r3.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.server.tv.PersistentDataStore: android.os.Handler mHandler> = $r3;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        $r5 = staticinvoke <java.util.Collections: java.util.List synchronizedList(java.util.List)>($r4);
+
+        r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings> = $r5;
+
+        $r6 = new com.android.server.tv.PersistentDataStore$1;
+
+        specialinvoke $r6.<com.android.server.tv.PersistentDataStore$1: void <init>(com.android.server.tv.PersistentDataStore)>(r0);
+
+        r0.<com.android.server.tv.PersistentDataStore: java.lang.Runnable mSaveRunnable> = $r6;
+
+        r0.<com.android.server.tv.PersistentDataStore: android.content.Context mContext> = r1;
+
+        r2 = staticinvoke <android.os.Environment: java.io.File getUserSystemDirectory(int)>(i0);
+
+        $z0 = virtualinvoke r2.<java.io.File: boolean exists()>();
+
+        if $z0 != 0 goto label1;
+
+        $z1 = virtualinvoke r2.<java.io.File: boolean mkdirs()>();
+
+        if $z1 != 0 goto label1;
+
+        $r9 = new java.lang.IllegalStateException;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("User dir cannot be created: ");
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r9.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r12);
+
+        throw $r9;
+
+     label1:
+        $r7 = new android.util.AtomicFile;
+
+        $r8 = new java.io.File;
+
+        specialinvoke $r8.<java.io.File: void <init>(java.io.File,java.lang.String)>(r2, "tv-input-manager-state.xml");
+
+        specialinvoke $r7.<android.util.AtomicFile: void <init>(java.io.File)>($r8);
+
+        r0.<com.android.server.tv.PersistentDataStore: android.util.AtomicFile mAtomicFile> = $r7;
+
+        return;
+    }
+
+    public boolean isParentalControlsEnabled()
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void loadIfNeeded()>();
+
+        $z0 = r0.<com.android.server.tv.PersistentDataStore: boolean mParentalControlsEnabled>;
+
+        return $z0;
+    }
+
+    public void setParentalControlsEnabled(boolean)
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        boolean z0, $z1;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        z0 := @parameter0: boolean;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void loadIfNeeded()>();
+
+        $z1 = r0.<com.android.server.tv.PersistentDataStore: boolean mParentalControlsEnabled>;
+
+        if $z1 == z0 goto label1;
+
+        r0.<com.android.server.tv.PersistentDataStore: boolean mParentalControlsEnabled> = z0;
+
+        r0.<com.android.server.tv.PersistentDataStore: boolean mParentalControlsEnabledChanged> = 1;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void postSave()>();
+
+     label1:
+        return;
+    }
+
+    public boolean isRatingBlocked(android.media.tv.TvContentRating)
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        android.media.tv.TvContentRating r1, r4;
+        java.util.List r2, $r6, $r7;
+        java.util.Iterator r3;
+        java.lang.Throwable r5, $r9;
+        boolean $z0, $z1;
+        java.lang.Object $r8;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        r1 := @parameter0: android.media.tv.TvContentRating;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void loadIfNeeded()>();
+
+        $r6 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        r2 = $r6;
+
+        entermonitor $r6;
+
+     label1:
+        $r7 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        r3 = interfaceinvoke $r7.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label5;
+
+        $r8 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (android.media.tv.TvContentRating) $r8;
+
+        $z1 = virtualinvoke r1.<android.media.tv.TvContentRating: boolean contains(android.media.tv.TvContentRating)>(r4);
+
+        if $z1 == 0 goto label4;
+
+        exitmonitor r2;
+
+     label3:
+        return 1;
+
+     label4:
+        goto label2;
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r9 := @caughtexception;
+
+        r5 = $r9;
+
+        exitmonitor r2;
+
+     label8:
+        throw r5;
+
+     label9:
+        return 0;
+
+        catch java.lang.Throwable from label1 to label3 with label7;
+        catch java.lang.Throwable from label4 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    public android.media.tv.TvContentRating[] getBlockedRatings()
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        java.util.List $r1, $r2;
+        int $i0;
+        android.media.tv.TvContentRating[] $r3, $r5;
+        java.lang.Object[] $r4;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void loadIfNeeded()>();
+
+        $r2 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        $r1 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        $i0 = interfaceinvoke $r1.<java.util.List: int size()>();
+
+        $r3 = newarray (android.media.tv.TvContentRating)[$i0];
+
+        $r4 = interfaceinvoke $r2.<java.util.List: java.lang.Object[] toArray(java.lang.Object[])>($r3);
+
+        $r5 = (android.media.tv.TvContentRating[]) $r4;
+
+        return $r5;
+    }
+
+    public void addBlockedRating(android.media.tv.TvContentRating)
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        android.media.tv.TvContentRating r1;
+        java.util.List $r2, $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        r1 := @parameter0: android.media.tv.TvContentRating;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void loadIfNeeded()>();
+
+        if r1 == null goto label1;
+
+        $r2 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        $z0 = interfaceinvoke $r2.<java.util.List: boolean contains(java.lang.Object)>(r1);
+
+        if $z0 != 0 goto label1;
+
+        $r3 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        interfaceinvoke $r3.<java.util.List: boolean add(java.lang.Object)>(r1);
+
+        r0.<com.android.server.tv.PersistentDataStore: boolean mBlockedRatingsChanged> = 1;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void postSave()>();
+
+     label1:
+        return;
+    }
+
+    public void removeBlockedRating(android.media.tv.TvContentRating)
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        android.media.tv.TvContentRating r1;
+        java.util.List $r2, $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        r1 := @parameter0: android.media.tv.TvContentRating;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void loadIfNeeded()>();
+
+        if r1 == null goto label1;
+
+        $r2 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        $z0 = interfaceinvoke $r2.<java.util.List: boolean contains(java.lang.Object)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        $r3 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        interfaceinvoke $r3.<java.util.List: boolean remove(java.lang.Object)>(r1);
+
+        r0.<com.android.server.tv.PersistentDataStore: boolean mBlockedRatingsChanged> = 1;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void postSave()>();
+
+     label1:
+        return;
+    }
+
+    private void loadIfNeeded()
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        $z0 = r0.<com.android.server.tv.PersistentDataStore: boolean mLoaded>;
+
+        if $z0 != 0 goto label1;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void load()>();
+
+        r0.<com.android.server.tv.PersistentDataStore: boolean mLoaded> = 1;
+
+     label1:
+        return;
+    }
+
+    private void clearState()
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        java.util.List $r1;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        $r1 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        interfaceinvoke $r1.<java.util.List: void clear()>();
+
+        r0.<com.android.server.tv.PersistentDataStore: boolean mParentalControlsEnabled> = 0;
+
+        return;
+    }
+
+    private void load()
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        java.io.FileInputStream r1;
+        java.lang.Exception r3, $r9;
+        java.lang.Throwable r4, $r8;
+        android.util.AtomicFile $r5;
+        java.io.BufferedInputStream $r6;
+        java.io.FileNotFoundException $r7;
+        org.xmlpull.v1.XmlPullParser r10;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void clearState()>();
+
+     label01:
+        $r5 = r0.<com.android.server.tv.PersistentDataStore: android.util.AtomicFile mAtomicFile>;
+
+        r1 = virtualinvoke $r5.<android.util.AtomicFile: java.io.FileInputStream openRead()>();
+
+     label02:
+        goto label04;
+
+     label03:
+        $r7 := @caughtexception;
+
+        return;
+
+     label04:
+        r10 = staticinvoke <android.util.Xml: org.xmlpull.v1.XmlPullParser newPullParser()>();
+
+        $r6 = new java.io.BufferedInputStream;
+
+        specialinvoke $r6.<java.io.BufferedInputStream: void <init>(java.io.InputStream)>(r1);
+
+        interfaceinvoke r10.<org.xmlpull.v1.XmlPullParser: void setInput(java.io.InputStream,java.lang.String)>($r6, null);
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void loadFromXml(org.xmlpull.v1.XmlPullParser)>(r10);
+
+     label05:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r1);
+
+        goto label10;
+
+     label06:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("TvInputManagerService", "Failed to load tv input manager persistent store data.", r3);
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void clearState()>();
+
+     label07:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r1);
+
+        goto label10;
+
+     label08:
+        $r8 := @caughtexception;
+
+        r4 = $r8;
+
+     label09:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r1);
+
+        throw r4;
+
+     label10:
+        return;
+
+        catch java.io.FileNotFoundException from label01 to label02 with label03;
+        catch java.io.IOException from label04 to label05 with label06;
+        catch org.xmlpull.v1.XmlPullParserException from label04 to label05 with label06;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+    }
+
+    private void postSave()
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        java.lang.Runnable $r1, $r3;
+        android.os.Handler $r2, $r4;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        $r2 = r0.<com.android.server.tv.PersistentDataStore: android.os.Handler mHandler>;
+
+        $r1 = r0.<com.android.server.tv.PersistentDataStore: java.lang.Runnable mSaveRunnable>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r1);
+
+        $r4 = r0.<com.android.server.tv.PersistentDataStore: android.os.Handler mHandler>;
+
+        $r3 = r0.<com.android.server.tv.PersistentDataStore: java.lang.Runnable mSaveRunnable>;
+
+        virtualinvoke $r4.<android.os.Handler: boolean post(java.lang.Runnable)>($r3);
+
+        return;
+    }
+
+    private void save()
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        java.io.FileOutputStream r1;
+        boolean z0, z1;
+        com.android.internal.util.FastXmlSerializer r2, $r5;
+        java.lang.Throwable r3, $r10;
+        android.util.AtomicFile $r4, $r7, $r8, $r11, $r12;
+        java.io.BufferedOutputStream $r6;
+        java.io.IOException $r9, r13;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+     label01:
+        $r4 = r0.<com.android.server.tv.PersistentDataStore: android.util.AtomicFile mAtomicFile>;
+
+        r1 = virtualinvoke $r4.<android.util.AtomicFile: java.io.FileOutputStream startWrite()>();
+
+        z0 = 0;
+
+     label02:
+        $r5 = new com.android.internal.util.FastXmlSerializer;
+
+        specialinvoke $r5.<com.android.internal.util.FastXmlSerializer: void <init>()>();
+
+        r2 = $r5;
+
+        $r6 = new java.io.BufferedOutputStream;
+
+        specialinvoke $r6.<java.io.BufferedOutputStream: void <init>(java.io.OutputStream)>(r1);
+
+        interfaceinvoke r2.<org.xmlpull.v1.XmlSerializer: void setOutput(java.io.OutputStream,java.lang.String)>($r6, "utf-8");
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void saveToXml(org.xmlpull.v1.XmlSerializer)>(r2);
+
+        interfaceinvoke r2.<org.xmlpull.v1.XmlSerializer: void flush()>();
+
+        z1 = 1;
+
+     label03:
+        if z1 == 0 goto label04;
+
+        $r8 = r0.<com.android.server.tv.PersistentDataStore: android.util.AtomicFile mAtomicFile>;
+
+        virtualinvoke $r8.<android.util.AtomicFile: void finishWrite(java.io.FileOutputStream)>(r1);
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void broadcastChangesIfNeeded()>();
+
+        goto label09;
+
+     label04:
+        $r7 = r0.<com.android.server.tv.PersistentDataStore: android.util.AtomicFile mAtomicFile>;
+
+        virtualinvoke $r7.<android.util.AtomicFile: void failWrite(java.io.FileOutputStream)>(r1);
+
+        goto label09;
+
+     label05:
+        $r10 := @caughtexception;
+
+        r3 = $r10;
+
+     label06:
+        if z0 == 0 goto label07;
+
+        $r12 = r0.<com.android.server.tv.PersistentDataStore: android.util.AtomicFile mAtomicFile>;
+
+        virtualinvoke $r12.<android.util.AtomicFile: void finishWrite(java.io.FileOutputStream)>(r1);
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void broadcastChangesIfNeeded()>();
+
+        goto label08;
+
+     label07:
+        $r11 = r0.<com.android.server.tv.PersistentDataStore: android.util.AtomicFile mAtomicFile>;
+
+        virtualinvoke $r11.<android.util.AtomicFile: void failWrite(java.io.FileOutputStream)>(r1);
+
+     label08:
+        throw r3;
+
+     label09:
+        goto label11;
+
+     label10:
+        $r9 := @caughtexception;
+
+        r13 = $r9;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("TvInputManagerService", "Failed to save tv input manager persistent store data.", r13);
+
+     label11:
+        return;
+
+        catch java.lang.Throwable from label02 to label03 with label05;
+        catch java.lang.Throwable from label05 to label06 with label05;
+        catch java.io.IOException from label01 to label09 with label10;
+    }
+
+    private void broadcastChangesIfNeeded()
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        boolean $z0, $z1;
+        android.content.Intent $r1, $r4;
+        android.content.Context $r2, $r5;
+        android.os.UserHandle $r3, $r6;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        $z0 = r0.<com.android.server.tv.PersistentDataStore: boolean mParentalControlsEnabledChanged>;
+
+        if $z0 == 0 goto label1;
+
+        r0.<com.android.server.tv.PersistentDataStore: boolean mParentalControlsEnabledChanged> = 0;
+
+        $r5 = r0.<com.android.server.tv.PersistentDataStore: android.content.Context mContext>;
+
+        $r4 = new android.content.Intent;
+
+        specialinvoke $r4.<android.content.Intent: void <init>(java.lang.String)>("android.media.tv.action.PARENTAL_CONTROLS_ENABLED_CHANGED");
+
+        $r6 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r5.<android.content.Context: void sendBroadcastAsUser(android.content.Intent,android.os.UserHandle)>($r4, $r6);
+
+     label1:
+        $z1 = r0.<com.android.server.tv.PersistentDataStore: boolean mBlockedRatingsChanged>;
+
+        if $z1 == 0 goto label2;
+
+        r0.<com.android.server.tv.PersistentDataStore: boolean mBlockedRatingsChanged> = 0;
+
+        $r2 = r0.<com.android.server.tv.PersistentDataStore: android.content.Context mContext>;
+
+        $r1 = new android.content.Intent;
+
+        specialinvoke $r1.<android.content.Intent: void <init>(java.lang.String)>("android.media.tv.action.BLOCKED_RATINGS_CHANGED");
+
+        $r3 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r2.<android.content.Context: void sendBroadcastAsUser(android.content.Intent,android.os.UserHandle)>($r1, $r3);
+
+     label2:
+        return;
+    }
+
+    private void loadFromXml(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        org.xmlpull.v1.XmlPullParser r1;
+        int i0;
+        java.lang.String r2, $r3, $r4;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        java.lang.Boolean $r5;
+        org.xmlpull.v1.XmlPullParserException $r6;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        r1 := @parameter0: org.xmlpull.v1.XmlPullParser;
+
+        staticinvoke <com.android.internal.util.XmlUtils: void beginDocument(org.xmlpull.v1.XmlPullParser,java.lang.String)>(r1, "tv-input-manager-state");
+
+        i0 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: int getDepth()>();
+
+     label1:
+        $z0 = staticinvoke <com.android.internal.util.XmlUtils: boolean nextElementWithin(org.xmlpull.v1.XmlPullParser,int)>(r1, i0);
+
+        if $z0 == 0 goto label4;
+
+        $r3 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: java.lang.String getName()>();
+
+        $z1 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>("blocked-ratings");
+
+        if $z1 == 0 goto label2;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void loadBlockedRatingsFromXml(org.xmlpull.v1.XmlPullParser)>(r1);
+
+        goto label1;
+
+     label2:
+        $r4 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: java.lang.String getName()>();
+
+        $z2 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>("parental-controls");
+
+        if $z2 == 0 goto label1;
+
+        r2 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: java.lang.String getAttributeValue(java.lang.String,java.lang.String)>(null, "enabled");
+
+        $z3 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r2);
+
+        if $z3 == 0 goto label3;
+
+        $r6 = new org.xmlpull.v1.XmlPullParserException;
+
+        specialinvoke $r6.<org.xmlpull.v1.XmlPullParserException: void <init>(java.lang.String)>("Missing enabled attribute on parental-controls");
+
+        throw $r6;
+
+     label3:
+        $r5 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(java.lang.String)>(r2);
+
+        $z4 = virtualinvoke $r5.<java.lang.Boolean: boolean booleanValue()>();
+
+        r0.<com.android.server.tv.PersistentDataStore: boolean mParentalControlsEnabled> = $z4;
+
+        goto label1;
+
+     label4:
+        return;
+    }
+
+    private void loadBlockedRatingsFromXml(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        org.xmlpull.v1.XmlPullParser r1;
+        int i0;
+        java.lang.String r2, $r3;
+        boolean $z0, $z1, $z2;
+        java.util.List $r4;
+        android.media.tv.TvContentRating $r5;
+        org.xmlpull.v1.XmlPullParserException $r6;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        r1 := @parameter0: org.xmlpull.v1.XmlPullParser;
+
+        i0 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: int getDepth()>();
+
+     label1:
+        $z0 = staticinvoke <com.android.internal.util.XmlUtils: boolean nextElementWithin(org.xmlpull.v1.XmlPullParser,int)>(r1, i0);
+
+        if $z0 == 0 goto label3;
+
+        $r3 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: java.lang.String getName()>();
+
+        $z1 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>("rating");
+
+        if $z1 == 0 goto label1;
+
+        r2 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: java.lang.String getAttributeValue(java.lang.String,java.lang.String)>(null, "string");
+
+        $z2 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r2);
+
+        if $z2 == 0 goto label2;
+
+        $r6 = new org.xmlpull.v1.XmlPullParserException;
+
+        specialinvoke $r6.<org.xmlpull.v1.XmlPullParserException: void <init>(java.lang.String)>("Missing string attribute on rating");
+
+        throw $r6;
+
+     label2:
+        $r4 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        $r5 = staticinvoke <android.media.tv.TvContentRating: android.media.tv.TvContentRating unflattenFromString(java.lang.String)>(r2);
+
+        interfaceinvoke $r4.<java.util.List: boolean add(java.lang.Object)>($r5);
+
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    private void saveToXml(org.xmlpull.v1.XmlSerializer) throws java.io.IOException
+    {
+        com.android.server.tv.PersistentDataStore r0;
+        org.xmlpull.v1.XmlSerializer r1;
+        java.util.List r2, $r9, $r10;
+        java.util.Iterator r3;
+        android.media.tv.TvContentRating r4;
+        java.lang.Throwable r5, $r21;
+        java.lang.Boolean $r6;
+        boolean $z0, $z1;
+        java.lang.String $r14, $r20;
+        java.lang.Object $r18;
+
+        r0 := @this: com.android.server.tv.PersistentDataStore;
+
+        r1 := @parameter0: org.xmlpull.v1.XmlSerializer;
+
+        $r6 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(1);
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: void startDocument(java.lang.String,java.lang.Boolean)>(null, $r6);
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: void setFeature(java.lang.String,boolean)>("http://xmlpull.org/v1/doc/features.html#indent-output", 1);
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer startTag(java.lang.String,java.lang.String)>(null, "tv-input-manager-state");
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer startTag(java.lang.String,java.lang.String)>(null, "blocked-ratings");
+
+        $r9 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        r2 = $r9;
+
+        entermonitor $r9;
+
+     label1:
+        $r10 = r0.<com.android.server.tv.PersistentDataStore: java.util.List mBlockedRatings>;
+
+        r3 = interfaceinvoke $r10.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r18 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (android.media.tv.TvContentRating) $r18;
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer startTag(java.lang.String,java.lang.String)>(null, "rating");
+
+        $r20 = virtualinvoke r4.<android.media.tv.TvContentRating: java.lang.String flattenToString()>();
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer attribute(java.lang.String,java.lang.String,java.lang.String)>(null, "string", $r20);
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer endTag(java.lang.String,java.lang.String)>(null, "rating");
+
+        goto label2;
+
+     label3:
+        exitmonitor r2;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r21 := @caughtexception;
+
+        r5 = $r21;
+
+        exitmonitor r2;
+
+     label6:
+        throw r5;
+
+     label7:
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer endTag(java.lang.String,java.lang.String)>(null, "blocked-ratings");
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer startTag(java.lang.String,java.lang.String)>(null, "parental-controls");
+
+        $z1 = r0.<com.android.server.tv.PersistentDataStore: boolean mParentalControlsEnabled>;
+
+        $r14 = staticinvoke <java.lang.Boolean: java.lang.String toString(boolean)>($z1);
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer attribute(java.lang.String,java.lang.String,java.lang.String)>(null, "enabled", $r14);
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer endTag(java.lang.String,java.lang.String)>(null, "parental-controls");
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer endTag(java.lang.String,java.lang.String)>(null, "tv-input-manager-state");
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlSerializer: void endDocument()>();
+
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    static void access$000(com.android.server.tv.PersistentDataStore)
+    {
+        com.android.server.tv.PersistentDataStore r0;
+
+        r0 := @parameter0: com.android.server.tv.PersistentDataStore;
+
+        specialinvoke r0.<com.android.server.tv.PersistentDataStore: void save()>();
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.tv.PersistentDataStore: java.lang.String ATTR_ENABLED> = "enabled";
+
+        <com.android.server.tv.PersistentDataStore: java.lang.String ATTR_STRING> = "string";
+
+        <com.android.server.tv.PersistentDataStore: java.lang.String TAG_PARENTAL_CONTROLS> = "parental-controls";
+
+        <com.android.server.tv.PersistentDataStore: java.lang.String TAG_RATING> = "rating";
+
+        <com.android.server.tv.PersistentDataStore: java.lang.String TAG_BLOCKED_RATINGS> = "blocked-ratings";
+
+        <com.android.server.tv.PersistentDataStore: java.lang.String TAG_TV_INPUT_MANAGER_STATE> = "tv-input-manager-state";
+
+        <com.android.server.tv.PersistentDataStore: java.lang.String TAG> = "TvInputManagerService";
+
+        return;
+    }
+}

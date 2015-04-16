@@ -1,0 +1,4821 @@
+public final class com.android.mail.browse.ConversationCursor extends java.lang.Object implements android.database.Cursor, com.android.mail.browse.ConversationCursorOperationListener, com.android.mail.utils.DrawIdler$IdleListener
+{
+    public static final java.lang.String LOG_TAG;
+    private static final boolean DEBUG;
+    private static final java.lang.String DELETED_COLUMN;
+    private static final java.lang.String UPDATE_TIME_COLUMN;
+    private static final int DELETED_COLUMN_INDEX;
+    private static final long REQUERY_ALLOWANCE_TIME;
+    private static final int URI_COLUMN_INDEX;
+    private static final boolean DEBUG_DUPLICATE_KEYS;
+    private final android.content.ContentResolver mResolver;
+    private static int sSequence;
+    static com.android.mail.browse.ConversationCursor$ConversationProvider sProvider;
+    com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor;
+    private volatile com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mRequeryCursor;
+    private final java.util.HashMap mCacheMap;
+    private final java.lang.Object mCacheMapLock;
+    private final java.util.List mListeners;
+    private com.android.mail.browse.ConversationCursor$RefreshTask mRefreshTask;
+    private boolean mRefreshReady;
+    private boolean mRefreshRequired;
+    private boolean mUseInitialConversationLimit;
+    private final java.util.List mMostlyDead;
+    private final java.util.Set mNotificationTempDeleted;
+    private final java.lang.String mName;
+    private java.lang.String[] mColumnNames;
+    private java.util.Set mColumnNameSet;
+    private final com.android.mail.browse.ConversationCursor$CursorObserver mCursorObserver;
+    private boolean mCursorObserverRegistered;
+    private boolean mPaused;
+    private boolean mDeferSync;
+    private int mPosition;
+    private int mDeletedCount;
+    private android.net.Uri qUri;
+    private java.lang.String[] qProjection;
+    private final android.os.Handler mMainThreadHandler;
+    private final boolean mCachingEnabled;
+
+    private void setCursor(com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper r1, $r5;
+        com.google.common.collect.ImmutableSet$Builder r2;
+        java.lang.String[] r3, $r6;
+        int i0, i1;
+        java.lang.String r4;
+        com.google.common.collect.ImmutableSet $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper;
+
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r5 == null goto label1;
+
+        virtualinvoke r0.<com.android.mail.browse.ConversationCursor: void close()>();
+
+     label1:
+        $r6 = virtualinvoke r1.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: java.lang.String[] getColumnNames()>();
+
+        r0.<com.android.mail.browse.ConversationCursor: java.lang.String[] mColumnNames> = $r6;
+
+        r2 = staticinvoke <com.google.common.collect.ImmutableSet: com.google.common.collect.ImmutableSet$Builder builder()>();
+
+        r3 = r0.<com.android.mail.browse.ConversationCursor: java.lang.String[] mColumnNames>;
+
+        i0 = lengthof r3;
+
+        i1 = 0;
+
+     label2:
+        if i1 >= i0 goto label3;
+
+        r4 = r3[i1];
+
+        virtualinvoke r2.<com.google.common.collect.ImmutableSet$Builder: com.google.common.collect.ImmutableSet$Builder add(java.lang.Object)>(r4);
+
+        i1 = i1 + 1;
+
+        goto label2;
+
+     label3:
+        $r7 = virtualinvoke r2.<com.google.common.collect.ImmutableSet$Builder: com.google.common.collect.ImmutableSet build()>();
+
+        r0.<com.android.mail.browse.ConversationCursor: java.util.Set mColumnNameSet> = $r7;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshRequired> = 0;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshReady> = 0;
+
+        r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$RefreshTask mRefreshTask> = null;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void resetCursor(com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper)>(r1);
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void resetNotificationActions()>();
+
+        virtualinvoke r0.<com.android.mail.browse.ConversationCursor: void handleNotificationActions()>();
+
+        return;
+    }
+
+    public void <init>(android.app.Activity, android.net.Uri, boolean, java.lang.String)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        android.app.Activity r1;
+        android.net.Uri r2;
+        boolean z0, $z1, $z2;
+        java.lang.String r3;
+        java.util.HashMap $r4;
+        java.lang.Object $r5;
+        java.util.ArrayList $r6, $r7;
+        java.util.HashSet $r8;
+        android.os.Handler $r9, $r16;
+        android.os.Looper $r10, $r15;
+        android.content.Context $r11;
+        android.content.ContentResolver $r12;
+        java.lang.String[] $r13;
+        com.android.mail.browse.ConversationCursor$CursorObserver $r14;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: android.app.Activity;
+
+        r2 := @parameter1: android.net.Uri;
+
+        z0 := @parameter2: boolean;
+
+        r3 := @parameter3: java.lang.String;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r4 = new java.util.HashMap;
+
+        specialinvoke $r4.<java.util.HashMap: void <init>()>();
+
+        r0.<com.android.mail.browse.ConversationCursor: java.util.HashMap mCacheMap> = $r4;
+
+        $r5 = new java.lang.Object;
+
+        specialinvoke $r5.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.mail.browse.ConversationCursor: java.lang.Object mCacheMapLock> = $r5;
+
+        $r6 = staticinvoke <com.google.common.collect.Lists: java.util.ArrayList newArrayList()>();
+
+        r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners> = $r6;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshReady> = 0;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshRequired> = 0;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mUseInitialConversationLimit> = 0;
+
+        $r7 = staticinvoke <com.google.common.collect.Lists: java.util.ArrayList newArrayList()>();
+
+        r0.<com.android.mail.browse.ConversationCursor: java.util.List mMostlyDead> = $r7;
+
+        $r8 = staticinvoke <com.google.common.collect.Sets: java.util.HashSet newHashSet()>();
+
+        r0.<com.android.mail.browse.ConversationCursor: java.util.Set mNotificationTempDeleted> = $r8;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mCursorObserverRegistered> = 0;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mPaused> = 0;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mDeferSync> = 0;
+
+        r0.<com.android.mail.browse.ConversationCursor: int mPosition> = -1;
+
+        r0.<com.android.mail.browse.ConversationCursor: int mDeletedCount> = 0;
+
+        $r9 = new android.os.Handler;
+
+        $r10 = staticinvoke <android.os.Looper: android.os.Looper getMainLooper()>();
+
+        specialinvoke $r9.<android.os.Handler: void <init>(android.os.Looper)>($r10);
+
+        r0.<com.android.mail.browse.ConversationCursor: android.os.Handler mMainThreadHandler> = $r9;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mUseInitialConversationLimit> = z0;
+
+        $r11 = virtualinvoke r1.<android.app.Activity: android.content.Context getApplicationContext()>();
+
+        $r12 = virtualinvoke $r11.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r0.<com.android.mail.browse.ConversationCursor: android.content.ContentResolver mResolver> = $r12;
+
+        r0.<com.android.mail.browse.ConversationCursor: android.net.Uri qUri> = r2;
+
+        r0.<com.android.mail.browse.ConversationCursor: java.lang.String mName> = r3;
+
+        $r13 = <com.android.mail.providers.UIProvider: java.lang.String[] CONVERSATION_PROJECTION>;
+
+        r0.<com.android.mail.browse.ConversationCursor: java.lang.String[] qProjection> = $r13;
+
+        $r14 = new com.android.mail.browse.ConversationCursor$CursorObserver;
+
+        $r16 = new android.os.Handler;
+
+        $r15 = staticinvoke <android.os.Looper: android.os.Looper getMainLooper()>();
+
+        specialinvoke $r16.<android.os.Handler: void <init>(android.os.Looper)>($r15);
+
+        specialinvoke $r14.<com.android.mail.browse.ConversationCursor$CursorObserver: void <init>(com.android.mail.browse.ConversationCursor,android.os.Handler)>(r0, $r16);
+
+        r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$CursorObserver mCursorObserver> = $r14;
+
+        $z2 = staticinvoke <com.android.mail.utils.Utils: boolean isLowRamDevice(android.content.Context)>(r1);
+
+        if $z2 != 0 goto label1;
+
+        $z1 = 1;
+
+        goto label2;
+
+     label1:
+        $z1 = 0;
+
+     label2:
+        r0.<com.android.mail.browse.ConversationCursor: boolean mCachingEnabled> = $z1;
+
+        return;
+    }
+
+    public void load()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.Object r1, $r4;
+        java.lang.Throwable r2, r3, $r7, $r8;
+        java.lang.Object[] $r5;
+        boolean $z0, $z1, $z2;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r6;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r4 = r0.<com.android.mail.browse.ConversationCursor: java.lang.Object mCacheMapLock>;
+
+        r1 = $r4;
+
+        entermonitor $r4;
+
+     label01:
+        $r5 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", "Create: initial creation", $r5);
+
+        $z0 = r0.<com.android.mail.browse.ConversationCursor: boolean mUseInitialConversationLimit>;
+
+        $r6 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper doQuery(boolean)>($z0);
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void setCursor(com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper)>($r6);
+
+     label02:
+        $z1 = r0.<com.android.mail.browse.ConversationCursor: boolean mUseInitialConversationLimit>;
+
+        if $z1 == 0 goto label06;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mUseInitialConversationLimit> = 0;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void underlyingChanged()>();
+
+        goto label06;
+
+     label03:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+     label04:
+        $z2 = r0.<com.android.mail.browse.ConversationCursor: boolean mUseInitialConversationLimit>;
+
+        if $z2 == 0 goto label05;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mUseInitialConversationLimit> = 0;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void underlyingChanged()>();
+
+     label05:
+        throw r2;
+
+     label06:
+        exitmonitor r1;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r7 := @caughtexception;
+
+        r3 = $r7;
+
+        exitmonitor r1;
+
+     label09:
+        throw r3;
+
+     label10:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label03;
+        catch java.lang.Throwable from label03 to label04 with label03;
+        catch java.lang.Throwable from label01 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+    }
+
+    public void pause()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mPaused> = 1;
+
+        return;
+    }
+
+    public void resume()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mPaused> = 0;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void checkNotifyUI()>();
+
+        return;
+    }
+
+    private void checkNotifyUI()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.mail.browse.ConversationCursor$RefreshTask $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $z0 = r0.<com.android.mail.browse.ConversationCursor: boolean mPaused>;
+
+        if $z0 != 0 goto label2;
+
+        $z1 = r0.<com.android.mail.browse.ConversationCursor: boolean mDeferSync>;
+
+        if $z1 != 0 goto label2;
+
+        $z2 = r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshRequired>;
+
+        if $z2 == 0 goto label1;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$RefreshTask mRefreshTask>;
+
+        if $r1 != null goto label1;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void notifyRefreshRequired()>();
+
+        goto label2;
+
+     label1:
+        $z3 = r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshReady>;
+
+        if $z3 == 0 goto label2;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void notifyRefreshReady()>();
+
+     label2:
+        return;
+    }
+
+    public java.util.Set getConversationIds()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1, $r2;
+        java.util.Set $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r3 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: java.util.Set conversationIds()>();
+
+        goto label2;
+
+     label1:
+        $r3 = null;
+
+     label2:
+        return $r3;
+    }
+
+    private com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper doQuery(boolean)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        boolean z0, $z1;
+        android.net.Uri r1;
+        android.database.Cursor r2;
+        java.lang.String[] $r3;
+        android.content.ContentResolver $r4;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r5;
+        java.lang.StringBuilder $r6, $r7, $r8;
+        java.lang.Object[] $r9;
+        java.lang.String $r10;
+        android.net.Uri$Builder $r11, $r12;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0.<com.android.mail.browse.ConversationCursor: android.net.Uri qUri>;
+
+        if z0 == 0 goto label1;
+
+        $r11 = virtualinvoke r1.<android.net.Uri: android.net.Uri$Builder buildUpon()>();
+
+        $r12 = virtualinvoke $r11.<android.net.Uri$Builder: android.net.Uri$Builder appendQueryParameter(java.lang.String,java.lang.String)>("limit", "50");
+
+        r1 = virtualinvoke $r12.<android.net.Uri$Builder: android.net.Uri build()>();
+
+     label1:
+        staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        staticinvoke <com.android.mail.utils.Utils: void traceBeginSection(java.lang.String)>("query");
+
+        $r4 = r0.<com.android.mail.browse.ConversationCursor: android.content.ContentResolver mResolver>;
+
+        $r3 = r0.<com.android.mail.browse.ConversationCursor: java.lang.String[] qProjection>;
+
+        r2 = virtualinvoke $r4.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>(r1, $r3, null, null, null);
+
+        staticinvoke <com.android.mail.utils.Utils: void traceEndSection()>();
+
+        if r2 != null goto label2;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("doQuery returning null cursor, uri: ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r9 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", $r10, $r9);
+
+     label2:
+        staticinvoke <java.lang.System: void gc()>();
+
+        $r5 = new com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper;
+
+        $z1 = r0.<com.android.mail.browse.ConversationCursor: boolean mCachingEnabled>;
+
+        specialinvoke $r5.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: void <init>(android.database.Cursor,boolean)>(r2, $z1);
+
+        return $r5;
+    }
+
+    static boolean offUiThread()
+    {
+        android.os.Looper $r0;
+        java.lang.Thread $r1, $r2;
+        boolean $z0;
+
+        $r0 = staticinvoke <android.os.Looper: android.os.Looper getMainLooper()>();
+
+        $r1 = virtualinvoke $r0.<android.os.Looper: java.lang.Thread getThread()>();
+
+        $r2 = staticinvoke <java.lang.Thread: java.lang.Thread currentThread()>();
+
+        if $r1 == $r2 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    private void resetCursor(com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper r1, $r12, $r13, $r14, $r15, $r16;
+        java.lang.Object r2, $r9, $r18, $r19, $r20;
+        java.util.Iterator r3;
+        long l0, $l10, $l11;
+        java.util.Map$Entry r4;
+        android.content.ContentValues r5;
+        java.lang.String r6, $r27;
+        boolean z0, z1, $z2, $z3, $z5, $z6, $z7, z8;
+        java.lang.Long r7;
+        java.lang.Throwable r8, $r29;
+        java.util.HashMap $r10;
+        java.util.Set $r11;
+        int $i1, $i3, $i4, $i5;
+        com.android.mail.browse.ConversationCursor$CursorObserver $r17;
+        java.lang.Object[] $r21, $r24, $r26, $r28;
+        java.lang.Integer $r25;
+        byte $b9;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper;
+
+        $r9 = r0.<com.android.mail.browse.ConversationCursor: java.lang.Object mCacheMapLock>;
+
+        r2 = $r9;
+
+        entermonitor $r9;
+
+     label01:
+        $r10 = r0.<com.android.mail.browse.ConversationCursor: java.util.HashMap mCacheMap>;
+
+        $r11 = virtualinvoke $r10.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r3 = interfaceinvoke $r11.<java.util.Set: java.util.Iterator iterator()>();
+
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+     label02:
+        $z2 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label12;
+
+        $r19 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (java.util.Map$Entry) $r19;
+
+        $r18 = interfaceinvoke r4.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        r5 = (android.content.ContentValues) $r18;
+
+        $r20 = interfaceinvoke r4.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        r6 = (java.lang.String) $r20;
+
+        z0 = 0;
+
+        z1 = 0;
+
+        if r5 == null goto label08;
+
+        r7 = virtualinvoke r5.<android.content.ContentValues: java.lang.Long getAsLong(java.lang.String)>("__updatetime__");
+
+        if r7 == null goto label03;
+
+        $l11 = virtualinvoke r7.<java.lang.Long: long longValue()>();
+
+        $l10 = l0 - $l11;
+
+        $b9 = $l10 cmp 10000L;
+
+        if $b9 >= 0 goto label03;
+
+        $r28 = newarray (java.lang.Object)[1];
+
+        $r28[0] = r6;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", "IN resetCursor, keep recent changes to %s", $r28);
+
+        z0 = 1;
+
+        goto label04;
+
+     label03:
+        if r7 != null goto label04;
+
+        $r26 = newarray (java.lang.Object)[1];
+
+        $r26[0] = r6;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", "null updateTime from mCacheMap for key: %s", $r26);
+
+     label04:
+        $z5 = virtualinvoke r5.<android.content.ContentValues: boolean containsKey(java.lang.String)>("__deleted__");
+
+        if $z5 == 0 goto label07;
+
+        $z6 = virtualinvoke r1.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: boolean contains(java.lang.String)>(r6);
+
+        if $z6 != 0 goto label07;
+
+        $i3 = r0.<com.android.mail.browse.ConversationCursor: int mDeletedCount>;
+
+        $i4 = $i3 - 1;
+
+        r0.<com.android.mail.browse.ConversationCursor: int mDeletedCount> = $i4;
+
+        z1 = 1;
+
+        $r24 = newarray (java.lang.Object)[2];
+
+        $i5 = r0.<com.android.mail.browse.ConversationCursor: int mDeletedCount>;
+
+        $r25 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i5);
+
+        $r24[0] = $r25;
+
+        $z7 = staticinvoke <com.android.mail.utils.LogUtils: boolean isLoggable(java.lang.String,int)>("ConvCursor", 3);
+
+        if $z7 == 0 goto label05;
+
+        $r27 = r6;
+
+        goto label06;
+
+     label05:
+        $r27 = "[redacted]";
+
+     label06:
+        $r24[1] = $r27;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int i(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", "IN resetCursor, sDeletedCount decremented to: %d by %s", $r24);
+
+     label07:
+        goto label09;
+
+     label08:
+        $r21 = newarray (java.lang.Object)[1];
+
+        $r21[0] = r6;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", "null ContentValues from mCacheMap for key: %s", $r21);
+
+     label09:
+        if z0 == 0 goto label10;
+
+        if z1 == 0 goto label11;
+
+     label10:
+        interfaceinvoke r3.<java.util.Iterator: void remove()>();
+
+     label11:
+        goto label02;
+
+     label12:
+        $r12 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r12 == null goto label13;
+
+        virtualinvoke r0.<com.android.mail.browse.ConversationCursor: void close()>();
+
+     label13:
+        r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor> = r1;
+
+        r0.<com.android.mail.browse.ConversationCursor: int mPosition> = -1;
+
+        $r13 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $i1 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        virtualinvoke $r13.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: boolean moveToPosition(int)>($i1);
+
+        $z3 = r0.<com.android.mail.browse.ConversationCursor: boolean mCursorObserverRegistered>;
+
+        if $z3 != 0 goto label14;
+
+        $r16 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r17 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$CursorObserver mCursorObserver>;
+
+        virtualinvoke $r16.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: void registerContentObserver(android.database.ContentObserver)>($r17);
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mCursorObserverRegistered> = 1;
+
+     label14:
+        r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshRequired> = 0;
+
+        $r14 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        z8 = virtualinvoke $r14.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: boolean isDataUpdated()>();
+
+        $r15 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        virtualinvoke $r15.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: void disableUpdateNotifications()>();
+
+        if z8 == 0 goto label15;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void underlyingChanged()>();
+
+     label15:
+        exitmonitor r2;
+
+     label16:
+        goto label19;
+
+     label17:
+        $r29 := @caughtexception;
+
+        r8 = $r29;
+
+        exitmonitor r2;
+
+     label18:
+        throw r8;
+
+     label19:
+        return;
+
+        catch java.lang.Throwable from label01 to label16 with label17;
+        catch java.lang.Throwable from label17 to label18 with label17;
+    }
+
+    public java.util.Set getDeletedItems()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.Object r1, $r8, $r12, $r13, $r14;
+        java.util.HashSet r2;
+        java.util.Iterator r3;
+        java.lang.StringBuilder r4, $r11;
+        java.util.Map$Entry r5;
+        android.content.ContentValues r6;
+        java.lang.Throwable r7, $r17;
+        java.util.HashMap $r9;
+        java.util.Set $r10;
+        boolean $z0, $z1;
+        java.lang.String $r15, $r16;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r8 = r0.<com.android.mail.browse.ConversationCursor: java.lang.Object mCacheMapLock>;
+
+        r1 = $r8;
+
+        entermonitor $r8;
+
+     label1:
+        r2 = staticinvoke <com.google.common.collect.Sets: java.util.HashSet newHashSet()>();
+
+        $r9 = r0.<com.android.mail.browse.ConversationCursor: java.util.HashMap mCacheMap>;
+
+        $r10 = virtualinvoke $r9.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r3 = interfaceinvoke $r10.<java.util.Set: java.util.Iterator iterator()>();
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        r4 = $r11;
+
+     label2:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r13 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (java.util.Map$Entry) $r13;
+
+        $r12 = interfaceinvoke r5.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        r6 = (android.content.ContentValues) $r12;
+
+        $z1 = virtualinvoke r6.<android.content.ContentValues: boolean containsKey(java.lang.String)>("__deleted__");
+
+        if $z1 == 0 goto label3;
+
+        $r14 = interfaceinvoke r5.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r16 = (java.lang.String) $r14;
+
+        $r15 = staticinvoke <com.android.mail.browse.ConversationCursor: java.lang.String uriToCachingUriString(java.lang.String,java.lang.StringBuilder)>($r16, r4);
+
+        interfaceinvoke r2.<java.util.Set: boolean add(java.lang.Object)>($r15);
+
+     label3:
+        goto label2;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return r2;
+
+     label6:
+        $r17 := @caughtexception;
+
+        r7 = $r17;
+
+        exitmonitor r1;
+
+     label7:
+        throw r7;
+
+        catch java.lang.Throwable from label1 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    public int getUnderlyingPosition(long)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        long l0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1;
+        int $i1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        l0 := @parameter0: long;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $i1 = virtualinvoke $r1.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: int getPosition(long)>(l0);
+
+        return $i1;
+    }
+
+    public int getConversationPosition(long)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        long l0;
+        int i1, i2, i3;
+        java.lang.Object r1, $r8, $r11, $r12, $r13;
+        java.util.Iterator r2;
+        java.util.Map$Entry r3;
+        android.content.ContentValues r4;
+        java.lang.String r5;
+        java.lang.Throwable r6, $r15;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r7, $r14;
+        java.util.HashMap $r9;
+        java.util.Set $r10;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        l0 := @parameter0: long;
+
+        $r7 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        i1 = virtualinvoke $r7.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: int getPosition(long)>(l0);
+
+        if i1 >= 0 goto label01;
+
+        return i1;
+
+     label01:
+        $r8 = r0.<com.android.mail.browse.ConversationCursor: java.lang.Object mCacheMapLock>;
+
+        r1 = $r8;
+
+        entermonitor $r8;
+
+     label02:
+        i2 = i1;
+
+        $r9 = r0.<com.android.mail.browse.ConversationCursor: java.util.HashMap mCacheMap>;
+
+        $r10 = virtualinvoke $r9.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r2 = interfaceinvoke $r10.<java.util.Set: java.util.Iterator iterator()>();
+
+     label03:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label07;
+
+        $r12 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.util.Map$Entry) $r12;
+
+        $r11 = interfaceinvoke r3.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        r4 = (android.content.ContentValues) $r11;
+
+        $z1 = virtualinvoke r4.<android.content.ContentValues: boolean containsKey(java.lang.String)>("__deleted__");
+
+        if $z1 == 0 goto label06;
+
+        $r13 = interfaceinvoke r3.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        r5 = (java.lang.String) $r13;
+
+        $r14 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        i3 = virtualinvoke $r14.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: int getPosition(java.lang.String)>(r5);
+
+        if i3 != i1 goto label05;
+
+        exitmonitor r1;
+
+     label04:
+        return -1;
+
+     label05:
+        if i3 < 0 goto label06;
+
+        if i3 >= i1 goto label06;
+
+        i2 = i2 + -1;
+
+     label06:
+        goto label03;
+
+     label07:
+        exitmonitor r1;
+
+     label08:
+        return i2;
+
+     label09:
+        $r15 := @caughtexception;
+
+        r6 = $r15;
+
+        exitmonitor r1;
+
+     label10:
+        throw r6;
+
+        catch java.lang.Throwable from label02 to label04 with label09;
+        catch java.lang.Throwable from label05 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    public void addListener(com.android.mail.browse.ConversationCursor$ConversationListener)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$ConversationListener r1;
+        int i0;
+        java.util.List r2, $r4, $r5, $r6, $r8;
+        java.lang.Throwable r3, $r9;
+        boolean $z0, $z1;
+        java.lang.Object[] $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.browse.ConversationCursor$ConversationListener;
+
+        $r4 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        r2 = $r4;
+
+        entermonitor $r4;
+
+     label1:
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        i0 = interfaceinvoke $r5.<java.util.List: int size()>();
+
+        $r6 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        $z0 = interfaceinvoke $r6.<java.util.List: boolean contains(java.lang.Object)>(r1);
+
+        if $z0 != 0 goto label2;
+
+        $r8 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        interfaceinvoke $r8.<java.util.List: boolean add(java.lang.Object)>(r1);
+
+        goto label3;
+
+     label2:
+        $r7 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", "Ignoring duplicate add of listener", $r7);
+
+     label3:
+        exitmonitor r2;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+        exitmonitor r2;
+
+     label6:
+        throw r3;
+
+     label7:
+        if i0 != 0 goto label8;
+
+        $z1 = r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshRequired>;
+
+        if $z1 == 0 goto label8;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void notifyRefreshRequired()>();
+
+     label8:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public void removeListener(com.android.mail.browse.ConversationCursor$ConversationListener)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$ConversationListener r1;
+        java.util.List r2, $r4, $r5;
+        java.lang.Throwable r3, $r6;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.browse.ConversationCursor$ConversationListener;
+
+        $r4 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        r2 = $r4;
+
+        entermonitor $r4;
+
+     label1:
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        interfaceinvoke $r5.<java.util.List: boolean remove(java.lang.Object)>(r1);
+
+        exitmonitor r2;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+        exitmonitor r2;
+
+     label4:
+        throw r3;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public void onStateChanged(com.android.mail.utils.DrawIdler, int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.utils.DrawIdler r1;
+        int i0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2, $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.utils.DrawIdler;
+
+        i0 := @parameter1: int;
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r2 == null goto label1;
+
+        $r3 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        virtualinvoke $r3.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: void onStateChanged(com.android.mail.utils.DrawIdler,int)>(r1, i0);
+
+     label1:
+        return;
+    }
+
+    private static java.lang.String uriToCachingUriString(java.lang.String, java.lang.StringBuilder)
+    {
+        java.lang.String r0, r2, r3, $r4, $r6, $r9;
+        java.lang.StringBuilder r1, $r5, $r7, $r8;
+        int $i0, $i1, $i2;
+
+        r0 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.StringBuilder;
+
+        $i0 = virtualinvoke r0.<java.lang.String: int indexOf(java.lang.String)>("://");
+
+        $r4 = "://";
+
+        $i1 = virtualinvoke $r4.<java.lang.String: int length()>();
+
+        $i2 = $i0 + $i1;
+
+        r2 = virtualinvoke r0.<java.lang.String: java.lang.String substring(int)>($i2);
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        $r9 = <com.android.mail.browse.ConversationCursor$ConversationProvider: java.lang.String sUriPrefix>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        r3 = virtualinvoke r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        goto label2;
+
+     label1:
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = <com.android.mail.browse.ConversationCursor$ConversationProvider: java.lang.String sUriPrefix>;
+
+        $r7 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        r3 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label2:
+        return r3;
+    }
+
+    private static android.net.Uri uriFromCachingUri(android.net.Uri)
+    {
+        android.net.Uri r0, $r11;
+        java.lang.String r1, $r4, $r6, $r9, $r13;
+        java.util.List r2;
+        android.net.Uri$Builder r3, $r5, $r7;
+        int i0, $i1;
+        boolean $z0;
+        java.lang.Object $r8, $r10;
+
+        r0 := @parameter0: android.net.Uri;
+
+        r1 = virtualinvoke r0.<android.net.Uri: java.lang.String getAuthority()>();
+
+        $r4 = <com.android.mail.browse.ConversationCursor$ConversationProvider: java.lang.String AUTHORITY>;
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r4);
+
+        if $z0 != 0 goto label1;
+
+        return r0;
+
+     label1:
+        r2 = virtualinvoke r0.<android.net.Uri: java.util.List getPathSegments()>();
+
+        $r5 = new android.net.Uri$Builder;
+
+        specialinvoke $r5.<android.net.Uri$Builder: void <init>()>();
+
+        $r6 = virtualinvoke r0.<android.net.Uri: java.lang.String getScheme()>();
+
+        $r7 = virtualinvoke $r5.<android.net.Uri$Builder: android.net.Uri$Builder scheme(java.lang.String)>($r6);
+
+        $r8 = interfaceinvoke r2.<java.util.List: java.lang.Object get(int)>(0);
+
+        $r9 = (java.lang.String) $r8;
+
+        r3 = virtualinvoke $r7.<android.net.Uri$Builder: android.net.Uri$Builder authority(java.lang.String)>($r9);
+
+        i0 = 1;
+
+     label2:
+        $i1 = interfaceinvoke r2.<java.util.List: int size()>();
+
+        if i0 >= $i1 goto label3;
+
+        $r10 = interfaceinvoke r2.<java.util.List: java.lang.Object get(int)>(i0);
+
+        $r13 = (java.lang.String) $r10;
+
+        virtualinvoke r3.<android.net.Uri$Builder: android.net.Uri$Builder appendPath(java.lang.String)>($r13);
+
+        i0 = i0 + 1;
+
+        goto label2;
+
+     label3:
+        $r11 = virtualinvoke r3.<android.net.Uri$Builder: android.net.Uri build()>();
+
+        return $r11;
+    }
+
+    private static java.lang.String uriStringFromCachingUri(android.net.Uri)
+    {
+        android.net.Uri r0, r1;
+        java.lang.String $r2, $r3;
+
+        r0 := @parameter0: android.net.Uri;
+
+        r1 = staticinvoke <com.android.mail.browse.ConversationCursor: android.net.Uri uriFromCachingUri(android.net.Uri)>(r0);
+
+        $r2 = virtualinvoke r1.<android.net.Uri: java.lang.String toString()>();
+
+        $r3 = staticinvoke <android.net.Uri: java.lang.String decode(java.lang.String)>($r2);
+
+        return $r3;
+    }
+
+    public void setConversationColumn(android.net.Uri, java.lang.String, java.lang.Object)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        android.net.Uri r1;
+        java.lang.String r2, r4;
+        java.lang.Object r3, r5, $r7;
+        java.lang.Throwable r6, $r8;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: android.net.Uri;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: java.lang.Object;
+
+        r4 = staticinvoke <com.android.mail.browse.ConversationCursor: java.lang.String uriStringFromCachingUri(android.net.Uri)>(r1);
+
+        $r7 = r0.<com.android.mail.browse.ConversationCursor: java.lang.Object mCacheMapLock>;
+
+        r5 = $r7;
+
+        entermonitor $r7;
+
+     label1:
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void cacheValue(java.lang.String,java.lang.String,java.lang.Object)>(r4, r2, r3);
+
+        exitmonitor r5;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r8 := @caughtexception;
+
+        r6 = $r8;
+
+        exitmonitor r5;
+
+     label4:
+        throw r6;
+
+     label5:
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void notifyDataChanged()>();
+
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private void cacheValue(java.lang.String, java.lang.String, java.lang.Object)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.String r1, r2;
+        java.lang.Object r3, r4, $r7, $r9, $r12;
+        android.content.ContentValues r5, $r14;
+        boolean z0, z1, $z2, $z3, $z4;
+        java.lang.Throwable r6, $r17;
+        java.util.HashMap $r8, $r13;
+        long $l0;
+        java.lang.Long $r10;
+        java.lang.Boolean $r11;
+        int $i1, $i2, $i3, $i4;
+        java.lang.Error $r15;
+        java.lang.Object[] $r18;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: java.lang.Object;
+
+        $z2 = staticinvoke <com.android.mail.browse.ConversationCursor: boolean offUiThread()>();
+
+        if $z2 == 0 goto label01;
+
+        $r15 = new java.lang.Error;
+
+        specialinvoke $r15.<java.lang.Error: void <init>()>();
+
+        $r18 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.Throwable,java.lang.String,java.lang.Object[])>("ConvCursor", $r15, "cacheValue incorrectly being called from non-UI thread", $r18);
+
+     label01:
+        $r7 = r0.<com.android.mail.browse.ConversationCursor: java.lang.Object mCacheMapLock>;
+
+        r4 = $r7;
+
+        entermonitor $r7;
+
+     label02:
+        $r8 = r0.<com.android.mail.browse.ConversationCursor: java.util.HashMap mCacheMap>;
+
+        $r9 = virtualinvoke $r8.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r5 = (android.content.ContentValues) $r9;
+
+        if r5 != null goto label03;
+
+        $r14 = new android.content.ContentValues;
+
+        specialinvoke $r14.<android.content.ContentValues: void <init>()>();
+
+        r5 = $r14;
+
+        $r13 = r0.<com.android.mail.browse.ConversationCursor: java.util.HashMap mCacheMap>;
+
+        virtualinvoke $r13.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, r5);
+
+     label03:
+        $z3 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>("__deleted__");
+
+        if $z3 == 0 goto label10;
+
+        $r11 = (java.lang.Boolean) r3;
+
+        z0 = virtualinvoke $r11.<java.lang.Boolean: boolean booleanValue()>();
+
+        $r12 = virtualinvoke r5.<android.content.ContentValues: java.lang.Object get(java.lang.String)>(r2);
+
+        if $r12 == null goto label04;
+
+        $z4 = 1;
+
+        goto label05;
+
+     label04:
+        $z4 = 0;
+
+     label05:
+        z1 = $z4;
+
+        if z0 == 0 goto label06;
+
+        if z1 != 0 goto label06;
+
+        $i3 = r0.<com.android.mail.browse.ConversationCursor: int mDeletedCount>;
+
+        $i4 = $i3 + 1;
+
+        r0.<com.android.mail.browse.ConversationCursor: int mDeletedCount> = $i4;
+
+        goto label10;
+
+     label06:
+        if z0 != 0 goto label08;
+
+        if z1 == 0 goto label08;
+
+        $i2 = r0.<com.android.mail.browse.ConversationCursor: int mDeletedCount>;
+
+        $i1 = $i2 - 1;
+
+        r0.<com.android.mail.browse.ConversationCursor: int mDeletedCount> = $i1;
+
+        virtualinvoke r5.<android.content.ContentValues: void remove(java.lang.String)>(r2);
+
+        exitmonitor r4;
+
+     label07:
+        return;
+
+     label08:
+        if z0 != 0 goto label10;
+
+        exitmonitor r4;
+
+     label09:
+        return;
+
+     label10:
+        staticinvoke <com.android.mail.browse.ConversationCursor: void putInValues(android.content.ContentValues,java.lang.String,java.lang.Object)>(r5, r2, r3);
+
+        $l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r10 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l0);
+
+        virtualinvoke r5.<android.content.ContentValues: void put(java.lang.String,java.lang.Long)>("__updatetime__", $r10);
+
+        exitmonitor r4;
+
+     label11:
+        goto label14;
+
+     label12:
+        $r17 := @caughtexception;
+
+        r6 = $r17;
+
+        exitmonitor r4;
+
+     label13:
+        throw r6;
+
+     label14:
+        return;
+
+        catch java.lang.Throwable from label02 to label07 with label12;
+        catch java.lang.Throwable from label08 to label09 with label12;
+        catch java.lang.Throwable from label10 to label11 with label12;
+        catch java.lang.Throwable from label12 to label13 with label12;
+    }
+
+    private java.lang.Object getCachedValue(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        java.lang.String r1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2;
+        java.lang.Object $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        r1 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: java.lang.String getInnerUri()>();
+
+        $r3 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(java.lang.String,int)>(r1, i0);
+
+        return $r3;
+    }
+
+    private java.lang.Object getCachedValue(java.lang.String, int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.String r1, r3;
+        int i0;
+        android.content.ContentValues r2;
+        java.util.HashMap $r4;
+        java.lang.Object $r5, $r7;
+        java.lang.String[] $r6;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        $r4 = r0.<com.android.mail.browse.ConversationCursor: java.util.HashMap mCacheMap>;
+
+        $r5 = virtualinvoke $r4.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r2 = (android.content.ContentValues) $r5;
+
+        if r2 == null goto label3;
+
+        if i0 != -1 goto label1;
+
+        r3 = "__deleted__";
+
+        goto label2;
+
+     label1:
+        $r6 = r0.<com.android.mail.browse.ConversationCursor: java.lang.String[] mColumnNames>;
+
+        r3 = $r6[i0];
+
+     label2:
+        $r7 = virtualinvoke r2.<android.content.ContentValues: java.lang.Object get(java.lang.String)>(r3);
+
+        return $r7;
+
+     label3:
+        return null;
+    }
+
+    private void underlyingChanged()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.Object r1, $r4;
+        java.lang.Throwable r3, $r8;
+        boolean $z0, $z1;
+        com.android.mail.browse.ConversationCursor$CursorObserver $r5;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r6;
+        java.lang.IllegalStateException $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r4 = r0.<com.android.mail.browse.ConversationCursor: java.lang.Object mCacheMapLock>;
+
+        r1 = $r4;
+
+        entermonitor $r4;
+
+     label01:
+        $z0 = r0.<com.android.mail.browse.ConversationCursor: boolean mCursorObserverRegistered>;
+
+        if $z0 == 0 goto label06;
+
+     label02:
+        $r6 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$CursorObserver mCursorObserver>;
+
+        virtualinvoke $r6.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: void unregisterContentObserver(android.database.ContentObserver)>($r5);
+
+     label03:
+        goto label05;
+
+     label04:
+        $r7 := @caughtexception;
+
+     label05:
+        r0.<com.android.mail.browse.ConversationCursor: boolean mCursorObserverRegistered> = 0;
+
+     label06:
+        r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshRequired> = 1;
+
+        $z1 = r0.<com.android.mail.browse.ConversationCursor: boolean mPaused>;
+
+        if $z1 != 0 goto label07;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void notifyRefreshRequired()>();
+
+     label07:
+        exitmonitor r1;
+
+     label08:
+        goto label11;
+
+     label09:
+        $r8 := @caughtexception;
+
+        r3 = $r8;
+
+        exitmonitor r1;
+
+     label10:
+        throw r3;
+
+     label11:
+        return;
+
+        catch java.lang.IllegalStateException from label02 to label03 with label04;
+        catch java.lang.Throwable from label01 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    private void notifyRefreshRequired()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.List r1, $r5, $r6;
+        java.util.Iterator r2;
+        com.android.mail.browse.ConversationCursor$ConversationListener r3;
+        java.lang.Throwable r4, $r8;
+        boolean $z0, $z1;
+        java.lang.Object $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $z0 = r0.<com.android.mail.browse.ConversationCursor: boolean mDeferSync>;
+
+        if $z0 != 0 goto label7;
+
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        r1 = $r5;
+
+        entermonitor $r5;
+
+     label1:
+        $r6 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        r2 = interfaceinvoke $r6.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z1 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label3;
+
+        $r7 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.mail.browse.ConversationCursor$ConversationListener) $r7;
+
+        interfaceinvoke r3.<com.android.mail.browse.ConversationCursor$ConversationListener: void onRefreshRequired()>();
+
+        goto label2;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r4 = $r8;
+
+        exitmonitor r1;
+
+     label6:
+        throw r4;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private void notifyRefreshReady()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.List r1, $r5, $r6;
+        java.util.Iterator r2;
+        com.android.mail.browse.ConversationCursor$ConversationListener r3;
+        java.lang.Throwable r4, $r8;
+        boolean $z0;
+        java.lang.Object $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        r1 = $r5;
+
+        entermonitor $r5;
+
+     label1:
+        $r6 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        r2 = interfaceinvoke $r6.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r7 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.mail.browse.ConversationCursor$ConversationListener) $r7;
+
+        interfaceinvoke r3.<com.android.mail.browse.ConversationCursor$ConversationListener: void onRefreshReady()>();
+
+        goto label2;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r4 = $r8;
+
+        exitmonitor r1;
+
+     label6:
+        throw r4;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private void notifyDataChanged()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.List r1, $r5, $r6;
+        java.util.Iterator r2;
+        com.android.mail.browse.ConversationCursor$ConversationListener r3;
+        java.lang.Throwable r4, $r8;
+        boolean $z0;
+        java.lang.Object $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        r1 = $r5;
+
+        entermonitor $r5;
+
+     label1:
+        $r6 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        r2 = interfaceinvoke $r6.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r7 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.mail.browse.ConversationCursor$ConversationListener) $r7;
+
+        interfaceinvoke r3.<com.android.mail.browse.ConversationCursor$ConversationListener: void onDataSetChanged()>();
+
+        goto label2;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r4 = $r8;
+
+        exitmonitor r1;
+
+     label6:
+        throw r4;
+
+     label7:
+        virtualinvoke r0.<com.android.mail.browse.ConversationCursor: void handleNotificationActions()>();
+
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public void sync()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.Object r1, $r4;
+        java.lang.Throwable r2, $r6;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r3, $r5;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r3 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mRequeryCursor>;
+
+        if $r3 != null goto label1;
+
+        return;
+
+     label1:
+        $r4 = r0.<com.android.mail.browse.ConversationCursor: java.lang.Object mCacheMapLock>;
+
+        r1 = $r4;
+
+        entermonitor $r4;
+
+     label2:
+        r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$RefreshTask mRefreshTask> = null;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshReady> = 0;
+
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mRequeryCursor>;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void resetCursor(com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper)>($r5);
+
+        r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mRequeryCursor> = null;
+
+        exitmonitor r1;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+     label6:
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void notifyDataChanged()>();
+
+        return;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public boolean isRefreshRequired()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        boolean $z0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $z0 = r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshRequired>;
+
+        return $z0;
+    }
+
+    public boolean isRefreshReady()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        boolean $z0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $z0 = r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshReady>;
+
+        return $z0;
+    }
+
+    public boolean refresh()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r12;
+        com.android.mail.browse.ConversationCursor$RefreshTask $r4, $r6, $r9;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r5, $r11;
+        java.lang.Void[] $r7;
+        java.util.concurrent.Executor $r8;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r3 = r0.<com.android.mail.browse.ConversationCursor: java.lang.Object mCacheMapLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $r4 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$RefreshTask mRefreshTask>;
+
+        if $r4 == null goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return 0;
+
+     label3:
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r5 == null goto label4;
+
+        $r11 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        virtualinvoke $r11.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: void stopCaching()>();
+
+     label4:
+        $r6 = new com.android.mail.browse.ConversationCursor$RefreshTask;
+
+        specialinvoke $r6.<com.android.mail.browse.ConversationCursor$RefreshTask: void <init>(com.android.mail.browse.ConversationCursor,com.android.mail.browse.ConversationCursor$1)>(r0, null);
+
+        r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$RefreshTask mRefreshTask> = $r6;
+
+        $r9 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$RefreshTask mRefreshTask>;
+
+        $r8 = <android.os.AsyncTask: java.util.concurrent.Executor THREAD_POOL_EXECUTOR>;
+
+        $r7 = newarray (java.lang.Void)[0];
+
+        virtualinvoke $r9.<com.android.mail.browse.ConversationCursor$RefreshTask: android.os.AsyncTask executeOnExecutor(java.util.concurrent.Executor,java.lang.Object[])>($r8, $r7);
+
+        exitmonitor r1;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r12 := @caughtexception;
+
+        r2 = $r12;
+
+        exitmonitor r1;
+
+     label7:
+        throw r2;
+
+     label8:
+        return 1;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    public void disable()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.HashMap $r1;
+        java.util.List $r2;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        virtualinvoke r0.<com.android.mail.browse.ConversationCursor: void close()>();
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: java.util.HashMap mCacheMap>;
+
+        virtualinvoke $r1.<java.util.HashMap: void clear()>();
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mListeners>;
+
+        interfaceinvoke $r2.<java.util.List: void clear()>();
+
+        r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor> = null;
+
+        return;
+    }
+
+    public void close()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2, $r3, $r4, $r6;
+        boolean $z0, $z1;
+        com.android.mail.browse.ConversationCursor$CursorObserver $r5;
+        java.lang.IllegalStateException $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r2 == null goto label6;
+
+        $r3 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $z0 = virtualinvoke $r3.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: boolean isClosed()>();
+
+        if $z0 != 0 goto label6;
+
+        $z1 = r0.<com.android.mail.browse.ConversationCursor: boolean mCursorObserverRegistered>;
+
+        if $z1 == 0 goto label5;
+
+     label1:
+        $r6 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$CursorObserver mCursorObserver>;
+
+        virtualinvoke $r6.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: void unregisterContentObserver(android.database.ContentObserver)>($r5);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r7 := @caughtexception;
+
+     label4:
+        r0.<com.android.mail.browse.ConversationCursor: boolean mCursorObserverRegistered> = 0;
+
+     label5:
+        $r4 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        virtualinvoke $r4.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: void close()>();
+
+     label6:
+        return;
+
+        catch java.lang.IllegalStateException from label1 to label2 with label3;
+    }
+
+    public boolean moveToNext()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        boolean z0, $z1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1;
+        java.lang.Object $r2;
+        int $i0, $i1, $i2;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+     label1:
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        z0 = virtualinvoke $r1.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: boolean moveToNext()>();
+
+        if z0 != 0 goto label2;
+
+        $i2 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int getCount()>();
+
+        r0.<com.android.mail.browse.ConversationCursor: int mPosition> = $i2;
+
+        return 0;
+
+     label2:
+        $r2 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(int)>(-1);
+
+        $z1 = $r2 instanceof java.lang.Integer;
+
+        if $z1 == 0 goto label3;
+
+        goto label1;
+
+     label3:
+        $i0 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        $i1 = $i0 + 1;
+
+        r0.<com.android.mail.browse.ConversationCursor: int mPosition> = $i1;
+
+        return 1;
+    }
+
+    public boolean moveToPrevious()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        boolean z0, $z1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1;
+        java.lang.Object $r2;
+        int $i0, $i1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+     label1:
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        z0 = virtualinvoke $r1.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: boolean moveToPrevious()>();
+
+        if z0 != 0 goto label2;
+
+        r0.<com.android.mail.browse.ConversationCursor: int mPosition> = -1;
+
+        return 0;
+
+     label2:
+        $r2 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(int)>(-1);
+
+        $z1 = $r2 instanceof java.lang.Integer;
+
+        if $z1 == 0 goto label3;
+
+        goto label1;
+
+     label3:
+        $i0 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        $i1 = $i0 - 1;
+
+        r0.<com.android.mail.browse.ConversationCursor: int mPosition> = $i1;
+
+        return 1;
+    }
+
+    public int getPosition()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $i0 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        return $i0;
+    }
+
+    public int getCount()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1, $r2;
+        int $i0, $i1, $i2;
+        java.lang.IllegalStateException $r3;
+        java.lang.StringBuilder $r4, $r5, $r7, $r8, $r10, $r11;
+        java.lang.String $r6, $r12;
+        android.net.Uri $r9;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r1 != null goto label1;
+
+        $r3 = new java.lang.IllegalStateException;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("getCount() on disabled cursor: ");
+
+        $r6 = r0.<com.android.mail.browse.ConversationCursor: java.lang.String mName>;
+
+        $r7 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("(");
+
+        $r9 = r0.<com.android.mail.browse.ConversationCursor: android.net.Uri qUri>;
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r9);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r3.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r12);
+
+        throw $r3;
+
+     label1:
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $i0 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: int getCount()>();
+
+        $i1 = r0.<com.android.mail.browse.ConversationCursor: int mDeletedCount>;
+
+        $i2 = $i0 - $i1;
+
+        return $i2;
+    }
+
+    public boolean moveToFirst()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1, $r2;
+        boolean $z1;
+        java.lang.IllegalStateException $r3;
+        java.lang.StringBuilder $r4, $r5, $r7, $r8, $r10, $r11;
+        java.lang.String $r6, $r12;
+        android.net.Uri $r9;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r1 != null goto label1;
+
+        $r3 = new java.lang.IllegalStateException;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("moveToFirst() on disabled cursor: ");
+
+        $r6 = r0.<com.android.mail.browse.ConversationCursor: java.lang.String mName>;
+
+        $r7 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("(");
+
+        $r9 = r0.<com.android.mail.browse.ConversationCursor: android.net.Uri qUri>;
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r9);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r3.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r12);
+
+        throw $r3;
+
+     label1:
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: boolean moveToPosition(int)>(-1);
+
+        r0.<com.android.mail.browse.ConversationCursor: int mPosition> = -1;
+
+        $z1 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: boolean moveToNext()>();
+
+        return $z1;
+    }
+
+    public boolean moveToPosition(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1, $r2, $r3;
+        boolean $z0, $z2, $z3, $z4, $z6;
+        java.lang.Object[] $r4;
+        java.lang.Integer $r5, $r6;
+        java.lang.StringBuilder $r7, $r9, $r10, $r11, $r13, $r16;
+        java.lang.IllegalStateException $r8;
+        java.lang.String $r12, $r14;
+        android.net.Uri $r15;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r1 != null goto label01;
+
+        $r8 = new java.lang.IllegalStateException;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("moveToPosition() on disabled cursor: ");
+
+        $r12 = r0.<com.android.mail.browse.ConversationCursor: java.lang.String mName>;
+
+        $r9 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("(");
+
+        $r15 = r0.<com.android.mail.browse.ConversationCursor: android.net.Uri qUri>;
+
+        $r16 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r15);
+
+        $r13 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r14 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r8.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r14);
+
+        throw $r8;
+
+     label01:
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $i1 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: int getPosition()>();
+
+        if $i1 != -1 goto label02;
+
+        $r4 = newarray (java.lang.Object)[2];
+
+        $i10 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i10);
+
+        $r4[0] = $r5;
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r4[1] = $r6;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", "*** Underlying cursor position is -1 asking to move from %d to %d", $r4);
+
+     label02:
+        if i0 != 0 goto label03;
+
+        $z6 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: boolean moveToFirst()>();
+
+        return $z6;
+
+     label03:
+        if i0 >= 0 goto label04;
+
+        r0.<com.android.mail.browse.ConversationCursor: int mPosition> = -1;
+
+        $r3 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $i9 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        virtualinvoke $r3.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: boolean moveToPosition(int)>($i9);
+
+        return 0;
+
+     label04:
+        $i2 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        if i0 != $i2 goto label07;
+
+        $i8 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int getCount()>();
+
+        if i0 >= $i8 goto label05;
+
+        $z4 = 1;
+
+        goto label06;
+
+     label05:
+        $z4 = 0;
+
+     label06:
+        return $z4;
+
+     label07:
+        $i3 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        if i0 <= $i3 goto label10;
+
+     label08:
+        $i7 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        if i0 <= $i7 goto label09;
+
+        $z3 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: boolean moveToNext()>();
+
+        if $z3 != 0 goto label08;
+
+        return 0;
+
+     label09:
+        return 1;
+
+     label10:
+        if i0 < 0 goto label11;
+
+        $i5 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        $i6 = $i5 - i0;
+
+        if $i6 <= i0 goto label11;
+
+        virtualinvoke r0.<com.android.mail.browse.ConversationCursor: boolean moveToFirst()>();
+
+        $z2 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: boolean moveToPosition(int)>(i0);
+
+        return $z2;
+
+     label11:
+        $i4 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        if i0 >= $i4 goto label12;
+
+        $z0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: boolean moveToPrevious()>();
+
+        if $z0 != 0 goto label11;
+
+        return 0;
+
+     label12:
+        return 1;
+    }
+
+    private void recalibratePosition()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 = r0.<com.android.mail.browse.ConversationCursor: int mPosition>;
+
+        virtualinvoke r0.<com.android.mail.browse.ConversationCursor: boolean moveToFirst()>();
+
+        virtualinvoke r0.<com.android.mail.browse.ConversationCursor: boolean moveToPosition(int)>(i0);
+
+        return;
+    }
+
+    public boolean moveToLast()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.UnsupportedOperationException $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = new java.lang.UnsupportedOperationException;
+
+        specialinvoke $r1.<java.lang.UnsupportedOperationException: void <init>(java.lang.String)>("moveToLast unsupported!");
+
+        throw $r1;
+    }
+
+    public boolean move(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        java.lang.UnsupportedOperationException $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        $r1 = new java.lang.UnsupportedOperationException;
+
+        specialinvoke $r1.<java.lang.UnsupportedOperationException: void <init>(java.lang.String)>("move unsupported!");
+
+        throw $r1;
+    }
+
+    public double getDouble(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        java.lang.Object r1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2;
+        double $d0, $d1;
+        java.lang.Double $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        r1 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(int)>(i0);
+
+        if r1 == null goto label1;
+
+        $r3 = (java.lang.Double) r1;
+
+        $d1 = virtualinvoke $r3.<java.lang.Double: double doubleValue()>();
+
+        return $d1;
+
+     label1:
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $d0 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: double getDouble(int)>(i0);
+
+        return $d0;
+    }
+
+    public float getFloat(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        java.lang.Object r1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2;
+        float $f0, $f1;
+        java.lang.Float $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        r1 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(int)>(i0);
+
+        if r1 == null goto label1;
+
+        $r3 = (java.lang.Float) r1;
+
+        $f1 = virtualinvoke $r3.<java.lang.Float: float floatValue()>();
+
+        return $f1;
+
+     label1:
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $f0 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: float getFloat(int)>(i0);
+
+        return $f0;
+    }
+
+    public int getInt(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0, $i1, $i2;
+        java.lang.Object r1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2;
+        java.lang.Integer $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        r1 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(int)>(i0);
+
+        if r1 == null goto label1;
+
+        $r3 = (java.lang.Integer) r1;
+
+        $i2 = virtualinvoke $r3.<java.lang.Integer: int intValue()>();
+
+        return $i2;
+
+     label1:
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $i1 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: int getInt(int)>(i0);
+
+        return $i1;
+    }
+
+    public long getLong(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        java.lang.Object r1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2;
+        long $l1, $l2;
+        java.lang.Long $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        r1 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(int)>(i0);
+
+        if r1 == null goto label1;
+
+        $r3 = (java.lang.Long) r1;
+
+        $l2 = virtualinvoke $r3.<java.lang.Long: long longValue()>();
+
+        return $l2;
+
+     label1:
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $l1 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: long getLong(int)>(i0);
+
+        return $l1;
+    }
+
+    public short getShort(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        java.lang.Object r1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2;
+        short $s1, $s2;
+        java.lang.Short $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        r1 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(int)>(i0);
+
+        if r1 == null goto label1;
+
+        $r3 = (java.lang.Short) r1;
+
+        $s2 = virtualinvoke $r3.<java.lang.Short: short shortValue()>();
+
+        return $s2;
+
+     label1:
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $s1 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: short getShort(int)>(i0);
+
+        return $s1;
+    }
+
+    public java.lang.String getString(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        java.lang.Object r1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2, $r5;
+        java.lang.String $r3, $r4, $r6, $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        if i0 != 1 goto label1;
+
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r6 = virtualinvoke $r5.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: java.lang.String getInnerUri()>();
+
+        $r7 = staticinvoke <com.android.mail.browse.ConversationCursor: java.lang.String uriToCachingUriString(java.lang.String,java.lang.StringBuilder)>($r6, null);
+
+        return $r7;
+
+     label1:
+        r1 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(int)>(i0);
+
+        if r1 == null goto label2;
+
+        $r4 = (java.lang.String) r1;
+
+        return $r4;
+
+     label2:
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r3 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: java.lang.String getString(int)>(i0);
+
+        return $r3;
+    }
+
+    public byte[] getBlob(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        java.lang.Object r1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2;
+        byte[] $r3, $r4, $r5;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        r1 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(int)>(i0);
+
+        if r1 == null goto label1;
+
+        $r4 = (byte[]) r1;
+
+        $r5 = (byte[]) $r4;
+
+        return $r5;
+
+     label1:
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r3 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: byte[] getBlob(int)>(i0);
+
+        return $r3;
+    }
+
+    public byte[] getCachedBlob(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        java.lang.Object $r1;
+        byte[] $r2, $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        $r1 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(int)>(i0);
+
+        $r2 = (byte[]) $r1;
+
+        $r3 = (byte[]) $r2;
+
+        return $r3;
+    }
+
+    public com.android.mail.providers.Conversation getConversation()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.providers.Conversation r1, $r2;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: com.android.mail.providers.Conversation getCachedConversation()>();
+
+        if r1 != null goto label1;
+
+        $r2 = new com.android.mail.providers.Conversation;
+
+        specialinvoke $r2.<com.android.mail.providers.Conversation: void <init>(android.database.Cursor)>(r0);
+
+        r1 = $r2;
+
+        $r3 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        virtualinvoke $r3.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: void cacheConversation(com.android.mail.providers.Conversation)>(r1);
+
+     label1:
+        return r1;
+    }
+
+    public com.android.mail.providers.Conversation getCachedConversation()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.providers.Conversation r1, $r13;
+        android.content.ContentValues r2, r3, $r11;
+        java.util.Iterator r4;
+        java.lang.String r5, $r9;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r6, $r7;
+        java.util.HashMap $r8;
+        java.lang.Object $r10, $r15, $r16;
+        java.util.Set $r12, $r14;
+        boolean $z0, $z1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r6 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        r1 = virtualinvoke $r6.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: com.android.mail.providers.Conversation getConversation()>();
+
+        if r1 != null goto label1;
+
+        return null;
+
+     label1:
+        $r8 = r0.<com.android.mail.browse.ConversationCursor: java.util.HashMap mCacheMap>;
+
+        $r7 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r9 = virtualinvoke $r7.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: java.lang.String getInnerUri()>();
+
+        $r10 = virtualinvoke $r8.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r9);
+
+        r2 = (android.content.ContentValues) $r10;
+
+        if r2 == null goto label5;
+
+        $r11 = new android.content.ContentValues;
+
+        specialinvoke $r11.<android.content.ContentValues: void <init>()>();
+
+        r3 = $r11;
+
+        $r12 = virtualinvoke r2.<android.content.ContentValues: java.util.Set keySet()>();
+
+        r4 = interfaceinvoke $r12.<java.util.Set: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r15 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (java.lang.String) $r15;
+
+        $r14 = r0.<com.android.mail.browse.ConversationCursor: java.util.Set mColumnNameSet>;
+
+        $z1 = interfaceinvoke $r14.<java.util.Set: boolean contains(java.lang.Object)>(r5);
+
+        if $z1 != 0 goto label3;
+
+        goto label2;
+
+     label3:
+        $r16 = virtualinvoke r2.<android.content.ContentValues: java.lang.Object get(java.lang.String)>(r5);
+
+        staticinvoke <com.android.mail.browse.ConversationCursor: void putInValues(android.content.ContentValues,java.lang.String,java.lang.Object)>(r3, r5, $r16);
+
+        goto label2;
+
+     label4:
+        $i0 = virtualinvoke r3.<android.content.ContentValues: int size()>();
+
+        if $i0 <= 0 goto label5;
+
+        $r13 = new com.android.mail.providers.Conversation;
+
+        specialinvoke $r13.<com.android.mail.providers.Conversation: void <init>(com.android.mail.providers.Conversation)>(r1);
+
+        r1 = $r13;
+
+        virtualinvoke r1.<com.android.mail.providers.Conversation: void applyCachedValues(android.content.ContentValues)>(r3);
+
+     label5:
+        return r1;
+    }
+
+    public void notifyUIPositionChange()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        staticinvoke <com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: void access$1300(com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper)>($r1);
+
+        return;
+    }
+
+    private static void putInValues(android.content.ContentValues, java.lang.String, java.lang.Object)
+    {
+        android.content.ContentValues r0;
+        java.lang.String r1, r3, $r9, $r11;
+        java.lang.Object r2;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        java.lang.Class $r4;
+        java.lang.IllegalArgumentException $r5;
+        java.lang.StringBuilder $r6, $r7, $r8;
+        byte[] $r10, $r12;
+        java.lang.Boolean $r13;
+        java.lang.Integer $r14, $r15;
+        byte $b0;
+
+        r0 := @parameter0: android.content.ContentValues;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.Object;
+
+        $z0 = r2 instanceof java.lang.Boolean;
+
+        if $z0 == 0 goto label3;
+
+        $r13 = (java.lang.Boolean) r2;
+
+        $z4 = virtualinvoke $r13.<java.lang.Boolean: boolean booleanValue()>();
+
+        if $z4 == 0 goto label1;
+
+        $b0 = 1;
+
+        goto label2;
+
+     label1:
+        $b0 = 0;
+
+     label2:
+        $r15 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($b0);
+
+        virtualinvoke r0.<android.content.ContentValues: void put(java.lang.String,java.lang.Integer)>(r1, $r15);
+
+        goto label7;
+
+     label3:
+        $z1 = r2 instanceof java.lang.Integer;
+
+        if $z1 == 0 goto label4;
+
+        $r14 = (java.lang.Integer) r2;
+
+        virtualinvoke r0.<android.content.ContentValues: void put(java.lang.String,java.lang.Integer)>(r1, $r14);
+
+        goto label7;
+
+     label4:
+        $z2 = r2 instanceof java.lang.String;
+
+        if $z2 == 0 goto label5;
+
+        $r11 = (java.lang.String) r2;
+
+        virtualinvoke r0.<android.content.ContentValues: void put(java.lang.String,java.lang.String)>(r1, $r11);
+
+        goto label7;
+
+     label5:
+        $z3 = r2 instanceof byte[];
+
+        if $z3 == 0 goto label6;
+
+        $r10 = (byte[]) r2;
+
+        $r12 = (byte[]) $r10;
+
+        virtualinvoke r0.<android.content.ContentValues: void put(java.lang.String,byte[])>(r1, $r12);
+
+        goto label7;
+
+     label6:
+        $r4 = virtualinvoke r2.<java.lang.Object: java.lang.Class getClass()>();
+
+        r3 = virtualinvoke $r4.<java.lang.Class: java.lang.String getName()>();
+
+        $r5 = new java.lang.IllegalArgumentException;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Value class not compatible with cache: ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r5.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r9);
+
+        throw $r5;
+
+     label7:
+        return;
+    }
+
+    void setMostlyDead(java.lang.String, com.android.mail.providers.Conversation)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.String r1;
+        com.android.mail.providers.Conversation r2;
+        java.lang.Object[] $r3;
+        java.lang.Integer $r4;
+        int $i1, $i2;
+        java.util.List $r5;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: com.android.mail.providers.Conversation;
+
+        $r3 = newarray (java.lang.Object)[1];
+
+        $r3[0] = r1;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", "[Mostly dead, deferring: %s] ", $r3);
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(1);
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void cacheValue(java.lang.String,java.lang.String,java.lang.Object)>(r1, "conversationFlags", $r4);
+
+        $i1 = r2.<com.android.mail.providers.Conversation: int convFlags>;
+
+        $i2 = $i1 | 1;
+
+        r2.<com.android.mail.providers.Conversation: int convFlags> = $i2;
+
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mMostlyDead>;
+
+        interfaceinvoke $r5.<java.util.List: boolean add(java.lang.Object)>(r2);
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mDeferSync> = 1;
+
+        return;
+    }
+
+    void commitMostlyDead(com.android.mail.providers.Conversation)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.providers.Conversation r1;
+        int $i0, $i1;
+        java.util.List $r2, $r5;
+        java.lang.Object[] $r3;
+        android.net.Uri $r4;
+        boolean $z1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.providers.Conversation;
+
+        $i0 = r1.<com.android.mail.providers.Conversation: int convFlags>;
+
+        $i1 = $i0 & -2;
+
+        r1.<com.android.mail.providers.Conversation: int convFlags> = $i1;
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mMostlyDead>;
+
+        interfaceinvoke $r2.<java.util.List: boolean remove(java.lang.Object)>(r1);
+
+        $r3 = newarray (java.lang.Object)[1];
+
+        $r4 = r1.<com.android.mail.providers.Conversation: android.net.Uri uri>;
+
+        $r3[0] = $r4;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", "[All dead: %s]", $r3);
+
+        $r5 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mMostlyDead>;
+
+        $z1 = interfaceinvoke $r5.<java.util.List: boolean isEmpty()>();
+
+        if $z1 == 0 goto label1;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mDeferSync> = 0;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void checkNotifyUI()>();
+
+     label1:
+        return;
+    }
+
+    boolean clearMostlyDead(java.lang.String)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.String r1;
+        java.lang.Object r2;
+        int i0, $i2, $i3;
+        java.lang.Object[] $r3;
+        java.util.List $r4;
+        java.lang.Integer $r5, $r6;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r3 = newarray (java.lang.Object)[1];
+
+        $r3[0] = r1;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", "[Clearing mostly dead %s] ", $r3);
+
+        $r4 = r0.<com.android.mail.browse.ConversationCursor: java.util.List mMostlyDead>;
+
+        interfaceinvoke $r4.<java.util.List: void clear()>();
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mDeferSync> = 0;
+
+        r2 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.lang.Object getCachedValue(java.lang.String,int)>(r1, 16);
+
+        if r2 == null goto label1;
+
+        $r5 = (java.lang.Integer) r2;
+
+        i0 = virtualinvoke $r5.<java.lang.Integer: int intValue()>();
+
+        $i2 = i0 & 1;
+
+        if $i2 == 0 goto label1;
+
+        $i3 = i0 & -2;
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i3);
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void cacheValue(java.lang.String,java.lang.String,java.lang.Object)>(r1, "conversationFlags", $r6);
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    public boolean isFirst()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.UnsupportedOperationException $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = new java.lang.UnsupportedOperationException;
+
+        specialinvoke $r1.<java.lang.UnsupportedOperationException: void <init>()>();
+
+        throw $r1;
+    }
+
+    public boolean isLast()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.UnsupportedOperationException $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = new java.lang.UnsupportedOperationException;
+
+        specialinvoke $r1.<java.lang.UnsupportedOperationException: void <init>()>();
+
+        throw $r1;
+    }
+
+    public boolean isBeforeFirst()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.UnsupportedOperationException $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = new java.lang.UnsupportedOperationException;
+
+        specialinvoke $r1.<java.lang.UnsupportedOperationException: void <init>()>();
+
+        throw $r1;
+    }
+
+    public boolean isAfterLast()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.UnsupportedOperationException $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = new java.lang.UnsupportedOperationException;
+
+        specialinvoke $r1.<java.lang.UnsupportedOperationException: void <init>()>();
+
+        throw $r1;
+    }
+
+    public int getColumnIndex(java.lang.String)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.String r1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $i0 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: int getColumnIndex(java.lang.String)>(r1);
+
+        return $i0;
+    }
+
+    public int getColumnIndexOrThrow(java.lang.String) throws java.lang.IllegalArgumentException
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.String r1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $i0 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: int getColumnIndexOrThrow(java.lang.String)>(r1);
+
+        return $i0;
+    }
+
+    public java.lang.String getColumnName(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1;
+        java.lang.String $r2;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r2 = virtualinvoke $r1.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: java.lang.String getColumnName(int)>(i0);
+
+        return $r2;
+    }
+
+    public java.lang.String[] getColumnNames()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1;
+        java.lang.String[] $r2;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r2 = virtualinvoke $r1.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: java.lang.String[] getColumnNames()>();
+
+        return $r2;
+    }
+
+    public int getColumnCount()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $i0 = virtualinvoke $r1.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: int getColumnCount()>();
+
+        return $i0;
+    }
+
+    public void copyStringToBuffer(int, android.database.CharArrayBuffer)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        android.database.CharArrayBuffer r1;
+        java.lang.UnsupportedOperationException $r2;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.database.CharArrayBuffer;
+
+        $r2 = new java.lang.UnsupportedOperationException;
+
+        specialinvoke $r2.<java.lang.UnsupportedOperationException: void <init>()>();
+
+        throw $r2;
+    }
+
+    public int getType(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0, $i1;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $i1 = virtualinvoke $r1.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: int getType(int)>(i0);
+
+        return $i1;
+    }
+
+    public boolean isNull(int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int i0;
+        java.lang.UnsupportedOperationException $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        i0 := @parameter0: int;
+
+        $r1 = new java.lang.UnsupportedOperationException;
+
+        specialinvoke $r1.<java.lang.UnsupportedOperationException: void <init>()>();
+
+        throw $r1;
+    }
+
+    public void deactivate()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.UnsupportedOperationException $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = new java.lang.UnsupportedOperationException;
+
+        specialinvoke $r1.<java.lang.UnsupportedOperationException: void <init>()>();
+
+        throw $r1;
+    }
+
+    public boolean isClosed()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1, $r2;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $z0 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: boolean isClosed()>();
+
+        if $z0 == 0 goto label2;
+
+     label1:
+        $z1 = 1;
+
+        goto label3;
+
+     label2:
+        $z1 = 0;
+
+     label3:
+        return $z1;
+    }
+
+    public void registerContentObserver(android.database.ContentObserver)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        android.database.ContentObserver r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: android.database.ContentObserver;
+
+        return;
+    }
+
+    public void unregisterContentObserver(android.database.ContentObserver)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        android.database.ContentObserver r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: android.database.ContentObserver;
+
+        return;
+    }
+
+    public void registerDataSetObserver(android.database.DataSetObserver)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        android.database.DataSetObserver r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: android.database.DataSetObserver;
+
+        return;
+    }
+
+    public void unregisterDataSetObserver(android.database.DataSetObserver)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        android.database.DataSetObserver r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: android.database.DataSetObserver;
+
+        return;
+    }
+
+    public android.net.Uri getNotificationUri()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1, $r2;
+        android.net.Uri $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r1 != null goto label1;
+
+        return null;
+
+     label1:
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r3 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: android.net.Uri getNotificationUri()>();
+
+        return $r3;
+    }
+
+    public void setNotificationUri(android.content.ContentResolver, android.net.Uri)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        android.content.ContentResolver r1;
+        android.net.Uri r2;
+        java.lang.UnsupportedOperationException $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: android.content.ContentResolver;
+
+        r2 := @parameter1: android.net.Uri;
+
+        $r3 = new java.lang.UnsupportedOperationException;
+
+        specialinvoke $r3.<java.lang.UnsupportedOperationException: void <init>()>();
+
+        throw $r3;
+    }
+
+    public boolean getWantsAllOnMoveCalls()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.UnsupportedOperationException $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = new java.lang.UnsupportedOperationException;
+
+        specialinvoke $r1.<java.lang.UnsupportedOperationException: void <init>()>();
+
+        throw $r1;
+    }
+
+    public android.os.Bundle getExtras()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1, $r3;
+        android.os.Bundle $r2;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r1 == null goto label1;
+
+        $r3 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r2 = virtualinvoke $r3.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: android.os.Bundle getExtras()>();
+
+        goto label2;
+
+     label1:
+        $r2 = <android.os.Bundle: android.os.Bundle EMPTY>;
+
+     label2:
+        return $r2;
+    }
+
+    public android.os.Bundle respond(android.os.Bundle)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        android.os.Bundle r1, $r3, $r5;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r2, $r4;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: android.os.Bundle;
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        if $r2 == null goto label1;
+
+        $r4 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        $r5 = virtualinvoke $r4.<com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper: android.os.Bundle respond(android.os.Bundle)>(r1);
+
+        return $r5;
+
+     label1:
+        $r3 = <android.os.Bundle: android.os.Bundle EMPTY>;
+
+        return $r3;
+    }
+
+    public boolean requery()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        return 1;
+    }
+
+    public int updateBoolean(com.android.mail.providers.Conversation, java.lang.String, boolean)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.providers.Conversation r1;
+        java.lang.String r2;
+        boolean z0;
+        com.android.mail.providers.Conversation[] $r3;
+        java.util.List $r4;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.providers.Conversation;
+
+        r2 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        $r3 = newarray (com.android.mail.providers.Conversation)[1];
+
+        $r3[0] = r1;
+
+        $r4 = staticinvoke <java.util.Arrays: java.util.List asList(java.lang.Object[])>($r3);
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int updateBoolean(java.util.Collection,java.lang.String,boolean)>($r4, r2, z0);
+
+        return $i0;
+    }
+
+    public int updateInt(java.util.Collection, java.lang.String, int)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        java.lang.String r2;
+        int i0, $i1;
+        android.content.ContentValues r3, $r4;
+        boolean $z0;
+        java.lang.Integer $r5;
+        java.lang.Object[] $r6, $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        $z0 = staticinvoke <com.android.mail.utils.LogUtils: boolean isLoggable(java.lang.String,int)>("ConvCursor", 3);
+
+        if $z0 == 0 goto label1;
+
+        $r6 = newarray (java.lang.Object)[2];
+
+        $r7 = interfaceinvoke r1.<java.util.Collection: java.lang.Object[] toArray()>();
+
+        $r6[0] = $r7;
+
+        $r6[1] = r2;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>("ConvCursor", "ConversationCursor.updateInt(conversations=%s, columnName=%s)", $r6);
+
+     label1:
+        $r4 = new android.content.ContentValues;
+
+        specialinvoke $r4.<android.content.ContentValues: void <init>()>();
+
+        r3 = $r4;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        virtualinvoke r3.<android.content.ContentValues: void put(java.lang.String,java.lang.Integer)>(r2, $r5);
+
+        $i1 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int updateValues(java.util.Collection,android.content.ContentValues)>(r1, r3);
+
+        return $i1;
+    }
+
+    public int updateBoolean(java.util.Collection, java.lang.String, boolean)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        java.lang.String r2;
+        boolean z0;
+        android.content.ContentValues r3, $r4;
+        java.lang.Boolean $r5;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        $r4 = new android.content.ContentValues;
+
+        specialinvoke $r4.<android.content.ContentValues: void <init>()>();
+
+        r3 = $r4;
+
+        $r5 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(z0);
+
+        virtualinvoke r3.<android.content.ContentValues: void put(java.lang.String,java.lang.Boolean)>(r2, $r5);
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int updateValues(java.util.Collection,android.content.ContentValues)>(r1, r3);
+
+        return $i0;
+    }
+
+    public int updateString(java.util.Collection, java.lang.String, java.lang.String)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        java.lang.String r2, r3;
+        java.lang.String[] $r4, $r5;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: java.lang.String;
+
+        $r4 = newarray (java.lang.String)[1];
+
+        $r4[0] = r2;
+
+        $r5 = newarray (java.lang.String)[1];
+
+        $r5[0] = r3;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int updateStrings(java.util.Collection,java.lang.String[],java.lang.String[])>(r1, $r4, $r5);
+
+        return $i0;
+    }
+
+    public int updateStrings(java.util.Collection, java.lang.String[], java.lang.String[])
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        java.lang.String[] r2, r3;
+        android.content.ContentValues r4, $r5;
+        int i0, $i1, $i2;
+        java.lang.String $r6, $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: java.lang.String[];
+
+        r3 := @parameter2: java.lang.String[];
+
+        $r5 = new android.content.ContentValues;
+
+        specialinvoke $r5.<android.content.ContentValues: void <init>()>();
+
+        r4 = $r5;
+
+        i0 = 0;
+
+     label1:
+        $i1 = lengthof r2;
+
+        if i0 >= $i1 goto label2;
+
+        $r7 = r2[i0];
+
+        $r6 = r3[i0];
+
+        virtualinvoke r4.<android.content.ContentValues: void put(java.lang.String,java.lang.String)>($r7, $r6);
+
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label2:
+        $i2 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int updateValues(java.util.Collection,android.content.ContentValues)>(r1, r4);
+
+        return $i2;
+    }
+
+    public int updateValues(java.util.Collection, android.content.ContentValues)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        android.content.ContentValues r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: android.content.ContentValues;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int updateValues(java.util.Collection,android.content.ContentValues,com.android.mail.browse.UndoCallback)>(r1, r2, null);
+
+        return $i0;
+    }
+
+    public int updateValues(java.util.Collection, android.content.ContentValues, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        android.content.ContentValues r2;
+        com.android.mail.browse.UndoCallback r3;
+        java.util.ArrayList $r4;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: android.content.ContentValues;
+
+        r3 := @parameter2: com.android.mail.browse.UndoCallback;
+
+        $r4 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.util.ArrayList getOperationsForConversations(java.util.Collection,int,android.content.ContentValues,com.android.mail.browse.UndoCallback)>(r1, 2, r2, r3);
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int apply(java.util.Collection)>($r4);
+
+        return $i0;
+    }
+
+    public int updateBulkValues(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int apply(java.util.Collection)>(r1);
+
+        return $i0;
+    }
+
+    private java.util.ArrayList getOperationsForConversations(java.util.Collection, int, android.content.ContentValues, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int i0;
+        android.content.ContentValues r2;
+        com.android.mail.browse.UndoCallback r3;
+        java.util.ArrayList r4;
+        java.util.Iterator r5;
+        com.android.mail.providers.Conversation r6;
+        boolean $z0;
+        java.lang.Object $r7;
+        com.android.mail.browse.ConversationCursor$ConversationOperation $r8;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: android.content.ContentValues;
+
+        r3 := @parameter3: com.android.mail.browse.UndoCallback;
+
+        r4 = staticinvoke <com.google.common.collect.Lists: java.util.ArrayList newArrayList()>();
+
+        r5 = interfaceinvoke r1.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r5.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r7 = interfaceinvoke r5.<java.util.Iterator: java.lang.Object next()>();
+
+        r6 = (com.android.mail.providers.Conversation) $r7;
+
+        $r8 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$ConversationOperation getOperationForConversation(com.android.mail.providers.Conversation,int,android.content.ContentValues,com.android.mail.browse.UndoCallback)>(r6, i0, r2, r3);
+
+        virtualinvoke r4.<java.util.ArrayList: boolean add(java.lang.Object)>($r8);
+
+        goto label1;
+
+     label2:
+        return r4;
+    }
+
+    public com.android.mail.browse.ConversationCursor$ConversationOperation getOperationForConversation(com.android.mail.providers.Conversation, int, android.content.ContentValues)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.providers.Conversation r1;
+        int i0;
+        android.content.ContentValues r2;
+        com.android.mail.browse.ConversationCursor$ConversationOperation $r3;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.providers.Conversation;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: android.content.ContentValues;
+
+        $r3 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$ConversationOperation getOperationForConversation(com.android.mail.providers.Conversation,int,android.content.ContentValues,com.android.mail.browse.UndoCallback)>(r1, i0, r2, null);
+
+        return $r3;
+    }
+
+    public com.android.mail.browse.ConversationCursor$ConversationOperation getOperationForConversation(com.android.mail.providers.Conversation, int, android.content.ContentValues, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.providers.Conversation r1;
+        int i0;
+        android.content.ContentValues r2;
+        com.android.mail.browse.UndoCallback r3;
+        com.android.mail.browse.ConversationCursor$ConversationOperation $r4;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.providers.Conversation;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: android.content.ContentValues;
+
+        r3 := @parameter3: com.android.mail.browse.UndoCallback;
+
+        $r4 = new com.android.mail.browse.ConversationCursor$ConversationOperation;
+
+        specialinvoke $r4.<com.android.mail.browse.ConversationCursor$ConversationOperation: void <init>(com.android.mail.browse.ConversationCursor,int,com.android.mail.providers.Conversation,android.content.ContentValues,com.android.mail.browse.UndoCallback)>(r0, i0, r1, r2, r3);
+
+        return $r4;
+    }
+
+    public static void addFolderUpdates(java.util.ArrayList, java.util.ArrayList, android.content.ContentValues)
+    {
+        java.util.ArrayList r0, r1, r3, $r4;
+        android.content.ContentValues r2;
+        int i0, $i1;
+        java.lang.String $r5, $r14, $r15;
+        java.lang.Object $r6, $r10;
+        android.net.Uri $r7;
+        android.net.Uri$Builder $r8, $r13;
+        java.lang.StringBuilder $r9, $r11, $r12;
+
+        r0 := @parameter0: java.util.ArrayList;
+
+        r1 := @parameter1: java.util.ArrayList;
+
+        r2 := @parameter2: android.content.ContentValues;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r3 = $r4;
+
+        i0 = 0;
+
+     label1:
+        $i1 = virtualinvoke r0.<java.util.ArrayList: int size()>();
+
+        if i0 >= $i1 goto label2;
+
+        $r6 = virtualinvoke r0.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        $r7 = (android.net.Uri) $r6;
+
+        $r8 = virtualinvoke $r7.<android.net.Uri: android.net.Uri$Builder buildUpon()>();
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        $r10 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r10);
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("");
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r13 = virtualinvoke $r8.<android.net.Uri$Builder: android.net.Uri$Builder appendPath(java.lang.String)>($r14);
+
+        $r15 = virtualinvoke $r13.<android.net.Uri$Builder: java.lang.String toString()>();
+
+        virtualinvoke r3.<java.util.ArrayList: boolean add(java.lang.Object)>($r15);
+
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label2:
+        $r5 = staticinvoke <android.text.TextUtils: java.lang.String join(java.lang.CharSequence,java.lang.Iterable)>(",", r3);
+
+        virtualinvoke r2.<android.content.ContentValues: void put(java.lang.String,java.lang.String)>("folders_updated", $r5);
+
+        return;
+    }
+
+    public static void addTargetFolders(java.util.Collection, android.content.ContentValues)
+    {
+        java.util.Collection r0;
+        android.content.ContentValues r1;
+        com.android.mail.providers.FolderList $r2;
+        byte[] $r3;
+
+        r0 := @parameter0: java.util.Collection;
+
+        r1 := @parameter1: android.content.ContentValues;
+
+        $r2 = staticinvoke <com.android.mail.providers.FolderList: com.android.mail.providers.FolderList copyOf(java.util.Collection)>(r0);
+
+        $r3 = virtualinvoke $r2.<com.android.mail.providers.FolderList: byte[] toBlob()>();
+
+        virtualinvoke r1.<android.content.ContentValues: void put(java.lang.String,byte[])>("rawFolders", $r3);
+
+        return;
+    }
+
+    public com.android.mail.browse.ConversationCursor$ConversationOperation getConversationFolderOperation(com.android.mail.providers.Conversation, java.util.ArrayList, java.util.ArrayList, java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.providers.Conversation r1;
+        java.util.ArrayList r2, r3;
+        java.util.Collection r4;
+        com.android.mail.browse.ConversationCursor$ConversationOperation $r5;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.providers.Conversation;
+
+        r2 := @parameter1: java.util.ArrayList;
+
+        r3 := @parameter2: java.util.ArrayList;
+
+        r4 := @parameter3: java.util.Collection;
+
+        $r5 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$ConversationOperation getConversationFolderOperation(com.android.mail.providers.Conversation,java.util.ArrayList,java.util.ArrayList,java.util.Collection,android.content.ContentValues,com.android.mail.browse.UndoCallback)>(r1, r2, r3, r4, null, null);
+
+        return $r5;
+    }
+
+    public com.android.mail.browse.ConversationCursor$ConversationOperation getConversationFolderOperation(com.android.mail.providers.Conversation, java.util.ArrayList, java.util.ArrayList, java.util.Collection, android.content.ContentValues)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.providers.Conversation r1;
+        java.util.ArrayList r2, r3;
+        java.util.Collection r4;
+        android.content.ContentValues r5;
+        com.android.mail.browse.ConversationCursor$ConversationOperation $r6;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.providers.Conversation;
+
+        r2 := @parameter1: java.util.ArrayList;
+
+        r3 := @parameter2: java.util.ArrayList;
+
+        r4 := @parameter3: java.util.Collection;
+
+        r5 := @parameter4: android.content.ContentValues;
+
+        $r6 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$ConversationOperation getConversationFolderOperation(com.android.mail.providers.Conversation,java.util.ArrayList,java.util.ArrayList,java.util.Collection,android.content.ContentValues,com.android.mail.browse.UndoCallback)>(r1, r2, r3, r4, r5, null);
+
+        return $r6;
+    }
+
+    public com.android.mail.browse.ConversationCursor$ConversationOperation getConversationFolderOperation(com.android.mail.providers.Conversation, java.util.ArrayList, java.util.ArrayList, java.util.Collection, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.providers.Conversation r1;
+        java.util.ArrayList r2, r3;
+        java.util.Collection r4;
+        com.android.mail.browse.UndoCallback r5;
+        android.content.ContentValues $r6;
+        com.android.mail.browse.ConversationCursor$ConversationOperation $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.providers.Conversation;
+
+        r2 := @parameter1: java.util.ArrayList;
+
+        r3 := @parameter2: java.util.ArrayList;
+
+        r4 := @parameter3: java.util.Collection;
+
+        r5 := @parameter4: com.android.mail.browse.UndoCallback;
+
+        $r6 = new android.content.ContentValues;
+
+        specialinvoke $r6.<android.content.ContentValues: void <init>()>();
+
+        $r7 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$ConversationOperation getConversationFolderOperation(com.android.mail.providers.Conversation,java.util.ArrayList,java.util.ArrayList,java.util.Collection,android.content.ContentValues,com.android.mail.browse.UndoCallback)>(r1, r2, r3, r4, $r6, r5);
+
+        return $r7;
+    }
+
+    public com.android.mail.browse.ConversationCursor$ConversationOperation getConversationFolderOperation(com.android.mail.providers.Conversation, java.util.ArrayList, java.util.ArrayList, java.util.Collection, android.content.ContentValues, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.providers.Conversation r1;
+        java.util.ArrayList r2, r3;
+        java.util.Collection r4;
+        android.content.ContentValues r5;
+        com.android.mail.browse.UndoCallback r6;
+        com.android.mail.browse.ConversationCursor$ConversationOperation $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: com.android.mail.providers.Conversation;
+
+        r2 := @parameter1: java.util.ArrayList;
+
+        r3 := @parameter2: java.util.ArrayList;
+
+        r4 := @parameter3: java.util.Collection;
+
+        r5 := @parameter4: android.content.ContentValues;
+
+        r6 := @parameter5: com.android.mail.browse.UndoCallback;
+
+        staticinvoke <com.android.mail.browse.ConversationCursor: void addFolderUpdates(java.util.ArrayList,java.util.ArrayList,android.content.ContentValues)>(r2, r3, r5);
+
+        staticinvoke <com.android.mail.browse.ConversationCursor: void addTargetFolders(java.util.Collection,android.content.ContentValues)>(r4, r5);
+
+        $r7 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$ConversationOperation getOperationForConversation(com.android.mail.providers.Conversation,int,android.content.ContentValues,com.android.mail.browse.UndoCallback)>(r1, 2, r5, r6);
+
+        return $r7;
+    }
+
+    private int apply(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        com.android.mail.browse.ConversationCursor$ConversationProvider $r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $r2 = <com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$ConversationProvider sProvider>;
+
+        $i0 = virtualinvoke $r2.<com.android.mail.browse.ConversationCursor$ConversationProvider: int apply(java.util.Collection,com.android.mail.browse.ConversationCursor)>(r1, r0);
+
+        return $i0;
+    }
+
+    private void undoLocal()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$ConversationProvider $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = <com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$ConversationProvider sProvider>;
+
+        virtualinvoke $r1.<com.android.mail.browse.ConversationCursor$ConversationProvider: void undo(com.android.mail.browse.ConversationCursor)>(r0);
+
+        return;
+    }
+
+    public void undo(android.content.Context, android.net.Uri)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$1 $r1;
+        android.content.Context r2;
+        android.net.Uri r3;
+        java.lang.Thread $r4;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r2 := @parameter0: android.content.Context;
+
+        r3 := @parameter1: android.net.Uri;
+
+        $r4 = new java.lang.Thread;
+
+        $r1 = new com.android.mail.browse.ConversationCursor$1;
+
+        specialinvoke $r1.<com.android.mail.browse.ConversationCursor$1: void <init>(com.android.mail.browse.ConversationCursor,android.content.Context,android.net.Uri)>(r0, r2, r3);
+
+        specialinvoke $r4.<java.lang.Thread: void <init>(java.lang.Runnable)>($r1);
+
+        virtualinvoke $r4.<java.lang.Thread: void start()>();
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void undoLocal()>();
+
+        return;
+    }
+
+    public int delete(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int delete(java.util.Collection,com.android.mail.browse.UndoCallback)>(r1, null);
+
+        return $i0;
+    }
+
+    public int delete(java.util.Collection, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        com.android.mail.browse.UndoCallback r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: com.android.mail.browse.UndoCallback;
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int applyAction(java.util.Collection,int,com.android.mail.browse.UndoCallback)>(r1, 0, r2);
+
+        return $i0;
+    }
+
+    public int archive(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int archive(java.util.Collection,com.android.mail.browse.UndoCallback)>(r1, null);
+
+        return $i0;
+    }
+
+    public int archive(java.util.Collection, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        com.android.mail.browse.UndoCallback r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: com.android.mail.browse.UndoCallback;
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int applyAction(java.util.Collection,int,com.android.mail.browse.UndoCallback)>(r1, 3, r2);
+
+        return $i0;
+    }
+
+    public int mute(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int mute(java.util.Collection,com.android.mail.browse.UndoCallback)>(r1, null);
+
+        return $i0;
+    }
+
+    public int mute(java.util.Collection, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        com.android.mail.browse.UndoCallback r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: com.android.mail.browse.UndoCallback;
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int applyAction(java.util.Collection,int,com.android.mail.browse.UndoCallback)>(r1, 4, r2);
+
+        return $i0;
+    }
+
+    public int reportSpam(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int reportSpam(java.util.Collection,com.android.mail.browse.UndoCallback)>(r1, null);
+
+        return $i0;
+    }
+
+    public int reportSpam(java.util.Collection, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        com.android.mail.browse.UndoCallback r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: com.android.mail.browse.UndoCallback;
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int applyAction(java.util.Collection,int,com.android.mail.browse.UndoCallback)>(r1, 5, r2);
+
+        return $i0;
+    }
+
+    public int reportNotSpam(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int reportNotSpam(java.util.Collection,com.android.mail.browse.UndoCallback)>(r1, null);
+
+        return $i0;
+    }
+
+    public int reportNotSpam(java.util.Collection, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        com.android.mail.browse.UndoCallback r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: com.android.mail.browse.UndoCallback;
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int applyAction(java.util.Collection,int,com.android.mail.browse.UndoCallback)>(r1, 6, r2);
+
+        return $i0;
+    }
+
+    public int reportPhishing(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int reportPhishing(java.util.Collection,com.android.mail.browse.UndoCallback)>(r1, null);
+
+        return $i0;
+    }
+
+    public int reportPhishing(java.util.Collection, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        com.android.mail.browse.UndoCallback r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: com.android.mail.browse.UndoCallback;
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int applyAction(java.util.Collection,int,com.android.mail.browse.UndoCallback)>(r1, 7, r2);
+
+        return $i0;
+    }
+
+    public int discardDrafts(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int discardDrafts(java.util.Collection,com.android.mail.browse.UndoCallback)>(r1, null);
+
+        return $i0;
+    }
+
+    public int discardDrafts(java.util.Collection, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        com.android.mail.browse.UndoCallback r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: com.android.mail.browse.UndoCallback;
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int applyAction(java.util.Collection,int,com.android.mail.browse.UndoCallback)>(r1, 8, r2);
+
+        return $i0;
+    }
+
+    public int moveFailedIntoDrafts(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int applyAction(java.util.Collection,int,com.android.mail.browse.UndoCallback)>(r1, 9, null);
+
+        return $i0;
+    }
+
+    public int mostlyArchive(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int mostlyArchive(java.util.Collection,com.android.mail.browse.UndoCallback)>(r1, null);
+
+        return $i0;
+    }
+
+    public int mostlyArchive(java.util.Collection, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        com.android.mail.browse.UndoCallback r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: com.android.mail.browse.UndoCallback;
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int applyAction(java.util.Collection,int,com.android.mail.browse.UndoCallback)>(r1, 131, r2);
+
+        return $i0;
+    }
+
+    public int mostlyDelete(java.util.Collection)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int mostlyDelete(java.util.Collection,com.android.mail.browse.UndoCallback)>(r1, null);
+
+        return $i0;
+    }
+
+    public int mostlyDelete(java.util.Collection, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        com.android.mail.browse.UndoCallback r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: com.android.mail.browse.UndoCallback;
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int applyAction(java.util.Collection,int,com.android.mail.browse.UndoCallback)>(r1, 128, r2);
+
+        return $i0;
+    }
+
+    public int mostlyDestructiveUpdate(java.util.Collection, android.content.ContentValues)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        android.content.ContentValues r2;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: android.content.ContentValues;
+
+        $i0 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int mostlyDestructiveUpdate(java.util.Collection,android.content.ContentValues,com.android.mail.browse.UndoCallback)>(r1, r2, null);
+
+        return $i0;
+    }
+
+    public int mostlyDestructiveUpdate(java.util.Collection, android.content.ContentValues, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        android.content.ContentValues r2;
+        com.android.mail.browse.UndoCallback r3;
+        java.util.ArrayList $r4;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        r2 := @parameter1: android.content.ContentValues;
+
+        r3 := @parameter2: com.android.mail.browse.UndoCallback;
+
+        $r4 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: java.util.ArrayList getOperationsForConversations(java.util.Collection,int,android.content.ContentValues,com.android.mail.browse.UndoCallback)>(r1, 130, r2, r3);
+
+        $i0 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int apply(java.util.Collection)>($r4);
+
+        return $i0;
+    }
+
+    private int applyAction(java.util.Collection, int, com.android.mail.browse.UndoCallback)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Collection r1;
+        int i0, $i1;
+        com.android.mail.browse.UndoCallback r2;
+        java.util.ArrayList r3;
+        java.util.Iterator r4;
+        com.android.mail.providers.Conversation r5;
+        com.android.mail.browse.ConversationCursor$ConversationOperation r6, $r8;
+        boolean $z0;
+        java.lang.Object $r7;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter0: java.util.Collection;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: com.android.mail.browse.UndoCallback;
+
+        r3 = staticinvoke <com.google.common.collect.Lists: java.util.ArrayList newArrayList()>();
+
+        r4 = interfaceinvoke r1.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r7 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (com.android.mail.providers.Conversation) $r7;
+
+        $r8 = new com.android.mail.browse.ConversationCursor$ConversationOperation;
+
+        specialinvoke $r8.<com.android.mail.browse.ConversationCursor$ConversationOperation: void <init>(com.android.mail.browse.ConversationCursor,int,com.android.mail.providers.Conversation,com.android.mail.browse.UndoCallback)>(r0, i0, r5, r2);
+
+        r6 = $r8;
+
+        virtualinvoke r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r6);
+
+        goto label1;
+
+     label2:
+        $i1 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: int apply(java.util.Collection)>(r3);
+
+        return $i1;
+    }
+
+    public int hashCode()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        int $i0;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $i0 = specialinvoke r0.<java.lang.Object: int hashCode()>();
+
+        return $i0;
+    }
+
+    public java.lang.String toString()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.StringBuilder r1, $r2;
+        java.lang.String $r3, $r6, $r24;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        com.android.mail.browse.ConversationCursor$RefreshTask $r16;
+        int $i0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r21;
+        java.util.HashMap $r28;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>(java.lang.String)>("{");
+
+        r1 = $r2;
+
+        $r3 = specialinvoke r0.<java.lang.Object: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r3);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mName=");
+
+        $r6 = r0.<com.android.mail.browse.ConversationCursor: java.lang.String mName>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mDeferSync=");
+
+        $z0 = r0.<com.android.mail.browse.ConversationCursor: boolean mDeferSync>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mRefreshRequired=");
+
+        $z1 = r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshRequired>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mRefreshReady=");
+
+        $z2 = r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshReady>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z2);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mRefreshTask=");
+
+        $r16 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$RefreshTask mRefreshTask>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r16);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mPaused=");
+
+        $z3 = r0.<com.android.mail.browse.ConversationCursor: boolean mPaused>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z3);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mDeletedCount=");
+
+        $i0 = r0.<com.android.mail.browse.ConversationCursor: int mDeletedCount>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mUnderlying=");
+
+        $r21 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r21);
+
+        $z4 = staticinvoke <com.android.mail.utils.LogUtils: boolean isLoggable(java.lang.String,int)>("ConvCursor", 3);
+
+        if $z4 == 0 goto label1;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mCacheMap=");
+
+        $r28 = r0.<com.android.mail.browse.ConversationCursor: java.util.HashMap mCacheMap>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r28);
+
+     label1:
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("}");
+
+        $r24 = virtualinvoke r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r24;
+    }
+
+    private void resetNotificationActions()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$2 $r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: android.os.Handler mMainThreadHandler>;
+
+        $r1 = new com.android.mail.browse.ConversationCursor$2;
+
+        specialinvoke $r1.<com.android.mail.browse.ConversationCursor$2: void <init>(com.android.mail.browse.ConversationCursor)>(r0);
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    public void handleNotificationActions()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$3 $r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r2 = r0.<com.android.mail.browse.ConversationCursor: android.os.Handler mMainThreadHandler>;
+
+        $r1 = new com.android.mail.browse.ConversationCursor$3;
+
+        specialinvoke $r1.<com.android.mail.browse.ConversationCursor$3: void <init>(com.android.mail.browse.ConversationCursor)>(r0);
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    public void markContentsSeen()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        staticinvoke <com.android.mail.browse.ConversationCursorOperationListener$OperationHelper: void markContentsSeen(android.database.Cursor)>($r1);
+
+        return;
+    }
+
+    public void emptyFolder()
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1;
+
+        r0 := @this: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mUnderlyingCursor>;
+
+        staticinvoke <com.android.mail.browse.ConversationCursorOperationListener$OperationHelper: void emptyFolder(android.database.Cursor)>($r1);
+
+        return;
+    }
+
+    public static boolean isCursorReadyToShow(com.android.mail.browse.ConversationCursor)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        android.os.Bundle r1;
+        int i0, $i1, $i2;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        if r0 != null goto label1;
+
+        return 0;
+
+     label1:
+        r1 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: android.os.Bundle getExtras()>();
+
+        if r1 != null goto label2;
+
+        $i1 = 1;
+
+        goto label3;
+
+     label2:
+        $i1 = virtualinvoke r1.<android.os.Bundle: int getInt(java.lang.String)>("cursor_status");
+
+     label3:
+        i0 = $i1;
+
+        $i2 = virtualinvoke r0.<com.android.mail.browse.ConversationCursor: int getCount()>();
+
+        if $i2 > 0 goto label4;
+
+        if 4 == i0 goto label4;
+
+        if 8 != i0 goto label5;
+
+     label4:
+        $z0 = 1;
+
+        goto label6;
+
+     label5:
+        $z0 = 0;
+
+     label6:
+        return $z0;
+    }
+
+    static com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper access$500(com.android.mail.browse.ConversationCursor, boolean)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        boolean z0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper $r1;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        z0 := @parameter1: boolean;
+
+        $r1 = specialinvoke r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper doQuery(boolean)>(z0);
+
+        return $r1;
+    }
+
+    static java.lang.Object access$600(com.android.mail.browse.ConversationCursor)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: java.lang.Object mCacheMapLock>;
+
+        return $r1;
+    }
+
+    static boolean access$700(com.android.mail.browse.ConversationCursor)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        $z0 = r0.<com.android.mail.browse.ConversationCursor: boolean mPaused>;
+
+        return $z0;
+    }
+
+    static boolean access$800(com.android.mail.browse.ConversationCursor)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        $z0 = r0.<com.android.mail.browse.ConversationCursor: boolean mDeferSync>;
+
+        return $z0;
+    }
+
+    static com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper access$902(com.android.mail.browse.ConversationCursor, com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper r1;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter1: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper;
+
+        r0.<com.android.mail.browse.ConversationCursor: com.android.mail.browse.ConversationCursor$UnderlyingCursorWrapper mRequeryCursor> = r1;
+
+        return r1;
+    }
+
+    static boolean access$1002(com.android.mail.browse.ConversationCursor, boolean)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.mail.browse.ConversationCursor: boolean mRefreshReady> = z0;
+
+        return z0;
+    }
+
+    static void access$1100(com.android.mail.browse.ConversationCursor)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void notifyRefreshReady()>();
+
+        return;
+    }
+
+    static void access$1400(com.android.mail.browse.ConversationCursor)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void underlyingChanged()>();
+
+        return;
+    }
+
+    static android.net.Uri access$1500(android.net.Uri)
+    {
+        android.net.Uri r0, $r1;
+
+        r0 := @parameter0: android.net.Uri;
+
+        $r1 = staticinvoke <com.android.mail.browse.ConversationCursor: android.net.Uri uriFromCachingUri(android.net.Uri)>(r0);
+
+        return $r1;
+    }
+
+    static int access$1600()
+    {
+        int $i0;
+
+        $i0 = <com.android.mail.browse.ConversationCursor: int sSequence>;
+
+        return $i0;
+    }
+
+    static java.lang.String access$1700(android.net.Uri)
+    {
+        android.net.Uri r0;
+        java.lang.String $r1;
+
+        r0 := @parameter0: android.net.Uri;
+
+        $r1 = staticinvoke <com.android.mail.browse.ConversationCursor: java.lang.String uriStringFromCachingUri(android.net.Uri)>(r0);
+
+        return $r1;
+    }
+
+    static void access$1800(com.android.mail.browse.ConversationCursor, java.lang.String, java.lang.String, java.lang.Object)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.lang.String r1, r2;
+        java.lang.Object r3;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        r3 := @parameter3: java.lang.Object;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void cacheValue(java.lang.String,java.lang.String,java.lang.Object)>(r1, r2, r3);
+
+        return;
+    }
+
+    static void access$1900(com.android.mail.browse.ConversationCursor)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void recalibratePosition()>();
+
+        return;
+    }
+
+    static void access$2000(com.android.mail.browse.ConversationCursor)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        specialinvoke r0.<com.android.mail.browse.ConversationCursor: void notifyDataChanged()>();
+
+        return;
+    }
+
+    static int access$1608()
+    {
+        int $i0, $i1;
+
+        $i0 = <com.android.mail.browse.ConversationCursor: int sSequence>;
+
+        $i1 = $i0 + 1;
+
+        <com.android.mail.browse.ConversationCursor: int sSequence> = $i1;
+
+        return $i0;
+    }
+
+    static java.util.Set access$2600(com.android.mail.browse.ConversationCursor)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        java.util.Set $r1;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: java.util.Set mNotificationTempDeleted>;
+
+        return $r1;
+    }
+
+    static android.net.Uri access$2700(com.android.mail.browse.ConversationCursor)
+    {
+        com.android.mail.browse.ConversationCursor r0;
+        android.net.Uri $r1;
+
+        r0 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        $r1 = r0.<com.android.mail.browse.ConversationCursor: android.net.Uri qUri>;
+
+        return $r1;
+    }
+
+    static void <clinit>()
+    {
+        <com.android.mail.browse.ConversationCursor: boolean DEBUG_DUPLICATE_KEYS> = 1;
+
+        <com.android.mail.browse.ConversationCursor: int URI_COLUMN_INDEX> = 1;
+
+        <com.android.mail.browse.ConversationCursor: long REQUERY_ALLOWANCE_TIME> = 10000L;
+
+        <com.android.mail.browse.ConversationCursor: int DELETED_COLUMN_INDEX> = -1;
+
+        <com.android.mail.browse.ConversationCursor: java.lang.String UPDATE_TIME_COLUMN> = "__updatetime__";
+
+        <com.android.mail.browse.ConversationCursor: java.lang.String DELETED_COLUMN> = "__deleted__";
+
+        <com.android.mail.browse.ConversationCursor: boolean DEBUG> = 0;
+
+        <com.android.mail.browse.ConversationCursor: java.lang.String LOG_TAG> = "ConvCursor";
+
+        <com.android.mail.browse.ConversationCursor: int sSequence> = 0;
+
+        return;
+    }
+}

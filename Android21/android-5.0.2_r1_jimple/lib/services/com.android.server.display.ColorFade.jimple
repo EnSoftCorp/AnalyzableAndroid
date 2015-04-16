@@ -1,0 +1,2009 @@
+final class com.android.server.display.ColorFade extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private static final boolean DEBUG;
+    private static final int COLOR_FADE_LAYER;
+    private static final int DEJANK_FRAMES;
+    private final int mDisplayId;
+    private boolean mPrepared;
+    private int mMode;
+    private final android.hardware.display.DisplayManagerInternal mDisplayManagerInternal;
+    private int mDisplayLayerStack;
+    private int mDisplayWidth;
+    private int mDisplayHeight;
+    private android.view.SurfaceSession mSurfaceSession;
+    private android.view.SurfaceControl mSurfaceControl;
+    private android.view.Surface mSurface;
+    private com.android.server.display.ColorFade$NaturalSurfaceLayout mSurfaceLayout;
+    private android.opengl.EGLDisplay mEglDisplay;
+    private android.opengl.EGLConfig mEglConfig;
+    private android.opengl.EGLContext mEglContext;
+    private android.opengl.EGLSurface mEglSurface;
+    private boolean mSurfaceVisible;
+    private float mSurfaceAlpha;
+    private final int[] mTexNames;
+    private boolean mTexNamesGenerated;
+    private final float[] mTexMatrix;
+    private final float[] mProjMatrix;
+    private final int[] mGLBuffers;
+    private int mTexCoordLoc;
+    private int mVertexLoc;
+    private int mTexUnitLoc;
+    private int mProjMatrixLoc;
+    private int mTexMatrixLoc;
+    private int mOpacityLoc;
+    private int mScaleLoc;
+    private int mGammaLoc;
+    private int mSaturationLoc;
+    private int mProgram;
+    private final java.nio.FloatBuffer mVertexBuffer;
+    private final java.nio.FloatBuffer mTexCoordBuffer;
+    public static final int MODE_WARM_UP;
+    public static final int MODE_COOL_DOWN;
+    public static final int MODE_FADE;
+
+    public void <init>(int)
+    {
+        com.android.server.display.ColorFade r0;
+        int i0;
+        int[] $r1, $r4;
+        float[] $r2, $r3;
+        java.nio.FloatBuffer $r5, $r6;
+        java.lang.Object $r7;
+        android.hardware.display.DisplayManagerInternal $r8;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r1 = newarray (int)[1];
+
+        r0.<com.android.server.display.ColorFade: int[] mTexNames> = $r1;
+
+        $r2 = newarray (float)[16];
+
+        r0.<com.android.server.display.ColorFade: float[] mTexMatrix> = $r2;
+
+        $r3 = newarray (float)[16];
+
+        r0.<com.android.server.display.ColorFade: float[] mProjMatrix> = $r3;
+
+        $r4 = newarray (int)[2];
+
+        r0.<com.android.server.display.ColorFade: int[] mGLBuffers> = $r4;
+
+        $r5 = staticinvoke <com.android.server.display.ColorFade: java.nio.FloatBuffer createNativeFloatBuffer(int)>(8);
+
+        r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mVertexBuffer> = $r5;
+
+        $r6 = staticinvoke <com.android.server.display.ColorFade: java.nio.FloatBuffer createNativeFloatBuffer(int)>(8);
+
+        r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mTexCoordBuffer> = $r6;
+
+        r0.<com.android.server.display.ColorFade: int mDisplayId> = i0;
+
+        $r7 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "android/hardware/display/DisplayManagerInternal");
+
+        $r8 = (android.hardware.display.DisplayManagerInternal) $r7;
+
+        r0.<com.android.server.display.ColorFade: android.hardware.display.DisplayManagerInternal mDisplayManagerInternal> = $r8;
+
+        return;
+    }
+
+    public boolean prepare(android.content.Context, int)
+    {
+        com.android.server.display.ColorFade r0;
+        android.content.Context r1;
+        int i0, $i1, $i2, $i3, $i4, i5;
+        android.view.DisplayInfo r2;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8;
+        java.lang.Throwable r3, $r5;
+        android.hardware.display.DisplayManagerInternal $r4;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        r1 := @parameter0: android.content.Context;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.display.ColorFade: int mMode> = i0;
+
+        $r4 = r0.<com.android.server.display.ColorFade: android.hardware.display.DisplayManagerInternal mDisplayManagerInternal>;
+
+        $i1 = r0.<com.android.server.display.ColorFade: int mDisplayId>;
+
+        r2 = virtualinvoke $r4.<android.hardware.display.DisplayManagerInternal: android.view.DisplayInfo getDisplayInfo(int)>($i1);
+
+        $i2 = r2.<android.view.DisplayInfo: int layerStack>;
+
+        r0.<com.android.server.display.ColorFade: int mDisplayLayerStack> = $i2;
+
+        $i3 = virtualinvoke r2.<android.view.DisplayInfo: int getNaturalWidth()>();
+
+        r0.<com.android.server.display.ColorFade: int mDisplayWidth> = $i3;
+
+        $i4 = virtualinvoke r2.<android.view.DisplayInfo: int getNaturalHeight()>();
+
+        r0.<com.android.server.display.ColorFade: int mDisplayHeight> = $i4;
+
+        $z1 = specialinvoke r0.<com.android.server.display.ColorFade: boolean createSurface()>();
+
+        if $z1 == 0 goto label01;
+
+        $z2 = specialinvoke r0.<com.android.server.display.ColorFade: boolean createEglContext()>();
+
+        if $z2 == 0 goto label01;
+
+        $z3 = specialinvoke r0.<com.android.server.display.ColorFade: boolean createEglSurface()>();
+
+        if $z3 == 0 goto label01;
+
+        $z4 = specialinvoke r0.<com.android.server.display.ColorFade: boolean captureScreenshotTextureAndSetViewport()>();
+
+        if $z4 != 0 goto label02;
+
+     label01:
+        virtualinvoke r0.<com.android.server.display.ColorFade: void dismiss()>();
+
+        return 0;
+
+     label02:
+        $z6 = specialinvoke r0.<com.android.server.display.ColorFade: boolean attachEglContext()>();
+
+        if $z6 != 0 goto label03;
+
+        return 0;
+
+     label03:
+        $z5 = specialinvoke r0.<com.android.server.display.ColorFade: boolean initGLShaders(android.content.Context)>(r1);
+
+        if $z5 == 0 goto label04;
+
+        $z8 = specialinvoke r0.<com.android.server.display.ColorFade: boolean initGLBuffers()>();
+
+        if $z8 == 0 goto label04;
+
+        $z7 = staticinvoke <com.android.server.display.ColorFade: boolean checkGlErrors(java.lang.String)>("prepare");
+
+        if $z7 == 0 goto label06;
+
+     label04:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        virtualinvoke r0.<com.android.server.display.ColorFade: void dismiss()>();
+
+        z0 = 0;
+
+     label05:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        return z0;
+
+     label06:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        goto label09;
+
+     label07:
+        $r5 := @caughtexception;
+
+        r3 = $r5;
+
+     label08:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        throw r3;
+
+     label09:
+        r0.<com.android.server.display.ColorFade: boolean mPrepared> = 1;
+
+        if i0 != 1 goto label11;
+
+        i5 = 0;
+
+     label10:
+        if i5 >= 3 goto label11;
+
+        virtualinvoke r0.<com.android.server.display.ColorFade: boolean draw(float)>(1.0F);
+
+        i5 = i5 + 1;
+
+        goto label10;
+
+     label11:
+        return 1;
+
+        catch java.lang.Throwable from label03 to label05 with label07;
+        catch java.lang.Throwable from label07 to label08 with label07;
+    }
+
+    private java.lang.String readFile(android.content.Context, int)
+    {
+        com.android.server.display.ColorFade r0;
+        android.content.Context r1;
+        int i0;
+        java.io.InputStream r2;
+        android.content.res.Resources $r3;
+        java.lang.String $r4, $r6, $r10, $r12;
+        java.io.InputStreamReader $r5;
+        java.io.IOException $r7, r14;
+        java.lang.StringBuilder $r8, $r9, $r11;
+        java.lang.RuntimeException $r13;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        r1 := @parameter0: android.content.Context;
+
+        i0 := @parameter1: int;
+
+     label1:
+        $r3 = virtualinvoke r1.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r2 = virtualinvoke $r3.<android.content.res.Resources: java.io.InputStream openRawResource(int)>(i0);
+
+        $r4 = new java.lang.String;
+
+        $r5 = new java.io.InputStreamReader;
+
+        specialinvoke $r5.<java.io.InputStreamReader: void <init>(java.io.InputStream)>(r2);
+
+        $r6 = staticinvoke <libcore.io.Streams: java.lang.String readFully(java.io.Reader)>($r5);
+
+        specialinvoke $r4.<java.lang.String: void <init>(java.lang.String)>($r6);
+
+     label2:
+        return $r4;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r14 = $r7;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unrecognized shader ");
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>(i0);
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ColorFade", $r12);
+
+        $r13 = new java.lang.RuntimeException;
+
+        specialinvoke $r13.<java.lang.RuntimeException: void <init>(java.lang.Throwable)>(r14);
+
+        throw $r13;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    private int loadShader(android.content.Context, int, int)
+    {
+        com.android.server.display.ColorFade r0;
+        android.content.Context r1;
+        int i0, i1, i2, $i3;
+        java.lang.String r2, $r9, $r11, $r12;
+        int[] r3;
+        java.lang.StringBuilder $r4, $r5, $r6, $r7, $r8, $r10;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        r1 := @parameter0: android.content.Context;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r2 = specialinvoke r0.<com.android.server.display.ColorFade: java.lang.String readFile(android.content.Context,int)>(r1, i0);
+
+        i2 = staticinvoke <android.opengl.GLES20: int glCreateShader(int)>(i1);
+
+        staticinvoke <android.opengl.GLES20: void glShaderSource(int,java.lang.String)>(i2, r2);
+
+        staticinvoke <android.opengl.GLES20: void glCompileShader(int)>(i2);
+
+        r3 = newarray (int)[1];
+
+        staticinvoke <android.opengl.GLES20: void glGetShaderiv(int,int,int[],int)>(i2, 35713, r3, 0);
+
+        $i3 = r3[0];
+
+        if $i3 != 0 goto label1;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not compile shader ");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ColorFade", $r9);
+
+        $r11 = staticinvoke <android.opengl.GLES20: java.lang.String glGetShaderSource(int)>(i2);
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ColorFade", $r11);
+
+        $r12 = staticinvoke <android.opengl.GLES20: java.lang.String glGetShaderInfoLog(int)>(i2);
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ColorFade", $r12);
+
+        staticinvoke <android.opengl.GLES20: void glDeleteShader(int)>(i2);
+
+        i2 = 0;
+
+     label1:
+        return i2;
+    }
+
+    private boolean initGLShaders(android.content.Context)
+    {
+        com.android.server.display.ColorFade r0;
+        android.content.Context r1;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i25;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        r1 := @parameter0: android.content.Context;
+
+        i0 = specialinvoke r0.<com.android.server.display.ColorFade: int loadShader(android.content.Context,int,int)>(r1, 17825796, 35633);
+
+        i1 = specialinvoke r0.<com.android.server.display.ColorFade: int loadShader(android.content.Context,int,int)>(r1, 17825795, 35632);
+
+        staticinvoke <android.opengl.GLES20: void glReleaseShaderCompiler()>();
+
+        if i0 == 0 goto label1;
+
+        if i1 != 0 goto label2;
+
+     label1:
+        return 0;
+
+     label2:
+        $i2 = staticinvoke <android.opengl.GLES20: int glCreateProgram()>();
+
+        r0.<com.android.server.display.ColorFade: int mProgram> = $i2;
+
+        $i3 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        staticinvoke <android.opengl.GLES20: void glAttachShader(int,int)>($i3, i0);
+
+        $i4 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        staticinvoke <android.opengl.GLES20: void glAttachShader(int,int)>($i4, i1);
+
+        staticinvoke <android.opengl.GLES20: void glDeleteShader(int)>(i0);
+
+        staticinvoke <android.opengl.GLES20: void glDeleteShader(int)>(i1);
+
+        $i5 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        staticinvoke <android.opengl.GLES20: void glLinkProgram(int)>($i5);
+
+        $i6 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        $i7 = staticinvoke <android.opengl.GLES20: int glGetAttribLocation(int,java.lang.String)>($i6, "position");
+
+        r0.<com.android.server.display.ColorFade: int mVertexLoc> = $i7;
+
+        $i8 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        $i9 = staticinvoke <android.opengl.GLES20: int glGetAttribLocation(int,java.lang.String)>($i8, "uv");
+
+        r0.<com.android.server.display.ColorFade: int mTexCoordLoc> = $i9;
+
+        $i10 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        $i11 = staticinvoke <android.opengl.GLES20: int glGetUniformLocation(int,java.lang.String)>($i10, "proj_matrix");
+
+        r0.<com.android.server.display.ColorFade: int mProjMatrixLoc> = $i11;
+
+        $i13 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        $i12 = staticinvoke <android.opengl.GLES20: int glGetUniformLocation(int,java.lang.String)>($i13, "tex_matrix");
+
+        r0.<com.android.server.display.ColorFade: int mTexMatrixLoc> = $i12;
+
+        $i15 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        $i14 = staticinvoke <android.opengl.GLES20: int glGetUniformLocation(int,java.lang.String)>($i15, "opacity");
+
+        r0.<com.android.server.display.ColorFade: int mOpacityLoc> = $i14;
+
+        $i17 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        $i16 = staticinvoke <android.opengl.GLES20: int glGetUniformLocation(int,java.lang.String)>($i17, "gamma");
+
+        r0.<com.android.server.display.ColorFade: int mGammaLoc> = $i16;
+
+        $i19 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        $i18 = staticinvoke <android.opengl.GLES20: int glGetUniformLocation(int,java.lang.String)>($i19, "saturation");
+
+        r0.<com.android.server.display.ColorFade: int mSaturationLoc> = $i18;
+
+        $i21 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        $i20 = staticinvoke <android.opengl.GLES20: int glGetUniformLocation(int,java.lang.String)>($i21, "scale");
+
+        r0.<com.android.server.display.ColorFade: int mScaleLoc> = $i20;
+
+        $i23 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        $i22 = staticinvoke <android.opengl.GLES20: int glGetUniformLocation(int,java.lang.String)>($i23, "texUnit");
+
+        r0.<com.android.server.display.ColorFade: int mTexUnitLoc> = $i22;
+
+        $i25 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        staticinvoke <android.opengl.GLES20: void glUseProgram(int)>($i25);
+
+        $i24 = r0.<com.android.server.display.ColorFade: int mTexUnitLoc>;
+
+        staticinvoke <android.opengl.GLES20: void glUniform1i(int,int)>($i24, 0);
+
+        staticinvoke <android.opengl.GLES20: void glUseProgram(int)>(0);
+
+        return 1;
+    }
+
+    private void destroyGLShaders()
+    {
+        com.android.server.display.ColorFade r0;
+        int $i0;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $i0 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        staticinvoke <android.opengl.GLES20: void glDeleteProgram(int)>($i0);
+
+        staticinvoke <com.android.server.display.ColorFade: boolean checkGlErrors(java.lang.String)>("glDeleteProgram");
+
+        return;
+    }
+
+    private boolean initGLBuffers()
+    {
+        com.android.server.display.ColorFade r0;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        float $f0, $f1;
+        java.nio.FloatBuffer $r1, $r5, $r6, $r8, $r9;
+        int[] $r2, $r3, $r4, $r7;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $r1 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mVertexBuffer>;
+
+        $i0 = r0.<com.android.server.display.ColorFade: int mDisplayWidth>;
+
+        $f1 = (float) $i0;
+
+        $i1 = r0.<com.android.server.display.ColorFade: int mDisplayHeight>;
+
+        $f0 = (float) $i1;
+
+        staticinvoke <com.android.server.display.ColorFade: void setQuad(java.nio.FloatBuffer,float,float,float,float)>($r1, 0.0F, 0.0F, $f1, $f0);
+
+        $r2 = r0.<com.android.server.display.ColorFade: int[] mTexNames>;
+
+        $i2 = $r2[0];
+
+        staticinvoke <android.opengl.GLES20: void glBindTexture(int,int)>(36197, $i2);
+
+        staticinvoke <android.opengl.GLES20: void glTexParameteri(int,int,int)>(36197, 10240, 9728);
+
+        staticinvoke <android.opengl.GLES20: void glTexParameteri(int,int,int)>(36197, 10241, 9728);
+
+        staticinvoke <android.opengl.GLES20: void glTexParameteri(int,int,int)>(36197, 10242, 33071);
+
+        staticinvoke <android.opengl.GLES20: void glTexParameteri(int,int,int)>(36197, 10243, 33071);
+
+        staticinvoke <android.opengl.GLES20: void glBindTexture(int,int)>(36197, 0);
+
+        $r3 = r0.<com.android.server.display.ColorFade: int[] mGLBuffers>;
+
+        staticinvoke <android.opengl.GLES20: void glGenBuffers(int,int[],int)>(2, $r3, 0);
+
+        $r4 = r0.<com.android.server.display.ColorFade: int[] mGLBuffers>;
+
+        $i3 = $r4[0];
+
+        staticinvoke <android.opengl.GLES20: void glBindBuffer(int,int)>(34962, $i3);
+
+        $r5 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mVertexBuffer>;
+
+        $i4 = virtualinvoke $r5.<java.nio.FloatBuffer: int capacity()>();
+
+        $i5 = $i4 * 4;
+
+        $r6 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mVertexBuffer>;
+
+        staticinvoke <android.opengl.GLES20: void glBufferData(int,int,java.nio.Buffer,int)>(34962, $i5, $r6, 35044);
+
+        $r7 = r0.<com.android.server.display.ColorFade: int[] mGLBuffers>;
+
+        $i6 = $r7[1];
+
+        staticinvoke <android.opengl.GLES20: void glBindBuffer(int,int)>(34962, $i6);
+
+        $r8 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mTexCoordBuffer>;
+
+        $i7 = virtualinvoke $r8.<java.nio.FloatBuffer: int capacity()>();
+
+        $i8 = $i7 * 4;
+
+        $r9 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mTexCoordBuffer>;
+
+        staticinvoke <android.opengl.GLES20: void glBufferData(int,int,java.nio.Buffer,int)>(34962, $i8, $r9, 35044);
+
+        staticinvoke <android.opengl.GLES20: void glBindBuffer(int,int)>(34962, 0);
+
+        return 1;
+    }
+
+    private void destroyGLBuffers()
+    {
+        com.android.server.display.ColorFade r0;
+        int[] $r1;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $r1 = r0.<com.android.server.display.ColorFade: int[] mGLBuffers>;
+
+        staticinvoke <android.opengl.GLES20: void glDeleteBuffers(int,int[],int)>(2, $r1, 0);
+
+        staticinvoke <com.android.server.display.ColorFade: boolean checkGlErrors(java.lang.String)>("glDeleteBuffers");
+
+        return;
+    }
+
+    private static void setQuad(java.nio.FloatBuffer, float, float, float, float)
+    {
+        java.nio.FloatBuffer r0;
+        float f0, f1, f2, f3, $f4, $f5, $f6, $f7;
+
+        r0 := @parameter0: java.nio.FloatBuffer;
+
+        f0 := @parameter1: float;
+
+        f1 := @parameter2: float;
+
+        f2 := @parameter3: float;
+
+        f3 := @parameter4: float;
+
+        virtualinvoke r0.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(0, f0);
+
+        virtualinvoke r0.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(1, f1);
+
+        virtualinvoke r0.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(2, f0);
+
+        $f4 = f1 + f3;
+
+        virtualinvoke r0.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(3, $f4);
+
+        $f5 = f0 + f2;
+
+        virtualinvoke r0.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(4, $f5);
+
+        $f6 = f1 + f3;
+
+        virtualinvoke r0.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(5, $f6);
+
+        $f7 = f0 + f2;
+
+        virtualinvoke r0.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(6, $f7);
+
+        virtualinvoke r0.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(7, f1);
+
+        return;
+    }
+
+    public void dismiss()
+    {
+        com.android.server.display.ColorFade r0;
+        java.lang.Throwable r1, $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $z0 = r0.<com.android.server.display.ColorFade: boolean mPrepared>;
+
+        if $z0 == 0 goto label6;
+
+        specialinvoke r0.<com.android.server.display.ColorFade: boolean attachEglContext()>();
+
+     label1:
+        specialinvoke r0.<com.android.server.display.ColorFade: void destroyScreenshotTexture()>();
+
+        specialinvoke r0.<com.android.server.display.ColorFade: void destroyGLShaders()>();
+
+        specialinvoke r0.<com.android.server.display.ColorFade: void destroyGLBuffers()>();
+
+        specialinvoke r0.<com.android.server.display.ColorFade: void destroyEglSurface()>();
+
+     label2:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        goto label5;
+
+     label3:
+        $r2 := @caughtexception;
+
+        r1 = $r2;
+
+     label4:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        throw r1;
+
+     label5:
+        specialinvoke r0.<com.android.server.display.ColorFade: void destroySurface()>();
+
+        staticinvoke <android.opengl.GLES20: void glFlush()>();
+
+        r0.<com.android.server.display.ColorFade: boolean mPrepared> = 0;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public boolean draw(float)
+    {
+        com.android.server.display.ColorFade r0;
+        float f0, f1, f2, f3, f4, f5, f6, f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20, $f21, $f22;
+        boolean z0, $z1, $z2, $z3, $z4, $z6;
+        java.lang.Throwable r1, $r4;
+        int $i0;
+        byte $b1;
+        android.opengl.EGLSurface $r2;
+        android.opengl.EGLDisplay $r3;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        f0 := @parameter0: float;
+
+        $z1 = r0.<com.android.server.display.ColorFade: boolean mPrepared>;
+
+        if $z1 != 0 goto label01;
+
+        return 0;
+
+     label01:
+        $i0 = r0.<com.android.server.display.ColorFade: int mMode>;
+
+        if $i0 != 2 goto label02;
+
+        $f22 = 1.0F - f0;
+
+        $z6 = specialinvoke r0.<com.android.server.display.ColorFade: boolean showSurface(float)>($f22);
+
+        return $z6;
+
+     label02:
+        $z2 = specialinvoke r0.<com.android.server.display.ColorFade: boolean attachEglContext()>();
+
+        if $z2 != 0 goto label03;
+
+        return 0;
+
+     label03:
+        staticinvoke <android.opengl.GLES20: void glClearColor(float,float,float,float)>(0.0F, 0.0F, 0.0F, 1.0F);
+
+        staticinvoke <android.opengl.GLES20: void glClear(int)>(16384);
+
+        f1 = 1.0F - f0;
+
+        $f8 = 3.1415927F * f1;
+
+        f2 = staticinvoke <android.util.FloatMath: float cos(float)>($f8);
+
+        $b1 = f2 cmpg 0.0F;
+
+        if $b1 >= 0 goto label04;
+
+        $f21 = -1.0F;
+
+        goto label05;
+
+     label04:
+        $f21 = 1.0F;
+
+     label05:
+        f3 = $f21;
+
+        $f9 = staticinvoke <android.util.FloatMath: float pow(float,float)>(f1, 2.0F);
+
+        $f10 = neg $f9;
+
+        f4 = $f10 + 1.0F;
+
+        f5 = staticinvoke <android.util.FloatMath: float pow(float,float)>(f0, 4.0F);
+
+        $f12 = staticinvoke <android.util.FloatMath: float pow(float,float)>(f1, 2.0F);
+
+        $f11 = neg $f12;
+
+        $f14 = $f11 + 1.0F;
+
+        $f13 = $f14 * 0.1F;
+
+        f6 = $f13 + 0.9F;
+
+        $f16 = 0.5F * f3;
+
+        $f15 = staticinvoke <android.util.FloatMath: float pow(float,float)>(f2, 2.0F);
+
+        $f18 = $f16 * $f15;
+
+        $f17 = $f18 + 0.5F;
+
+        $f20 = $f17 * 0.9F;
+
+        f7 = $f20 + 0.1F;
+
+        $f19 = 1.0F / f7;
+
+        specialinvoke r0.<com.android.server.display.ColorFade: void drawFaded(float,float,float,float)>(f4, $f19, f5, f6);
+
+        $z3 = staticinvoke <com.android.server.display.ColorFade: boolean checkGlErrors(java.lang.String)>("drawFrame");
+
+        if $z3 == 0 goto label07;
+
+        z0 = 0;
+
+     label06:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        return z0;
+
+     label07:
+        $r3 = r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay>;
+
+        $r2 = r0.<com.android.server.display.ColorFade: android.opengl.EGLSurface mEglSurface>;
+
+        staticinvoke <android.opengl.EGL14: boolean eglSwapBuffers(android.opengl.EGLDisplay,android.opengl.EGLSurface)>($r3, $r2);
+
+     label08:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        goto label11;
+
+     label09:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+     label10:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        throw r1;
+
+     label11:
+        $z4 = specialinvoke r0.<com.android.server.display.ColorFade: boolean showSurface(float)>(1.0F);
+
+        return $z4;
+
+        catch java.lang.Throwable from label03 to label06 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    private void drawFaded(float, float, float, float)
+    {
+        com.android.server.display.ColorFade r0;
+        float f0, f1, f2, f3;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13;
+        float[] $r1, $r2;
+        int[] $r3, $r4, $r5;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        f0 := @parameter0: float;
+
+        f1 := @parameter1: float;
+
+        f2 := @parameter2: float;
+
+        f3 := @parameter3: float;
+
+        $i0 = r0.<com.android.server.display.ColorFade: int mProgram>;
+
+        staticinvoke <android.opengl.GLES20: void glUseProgram(int)>($i0);
+
+        $i1 = r0.<com.android.server.display.ColorFade: int mProjMatrixLoc>;
+
+        $r1 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        staticinvoke <android.opengl.GLES20: void glUniformMatrix4fv(int,int,boolean,float[],int)>($i1, 1, 0, $r1, 0);
+
+        $i2 = r0.<com.android.server.display.ColorFade: int mTexMatrixLoc>;
+
+        $r2 = r0.<com.android.server.display.ColorFade: float[] mTexMatrix>;
+
+        staticinvoke <android.opengl.GLES20: void glUniformMatrix4fv(int,int,boolean,float[],int)>($i2, 1, 0, $r2, 0);
+
+        $i3 = r0.<com.android.server.display.ColorFade: int mOpacityLoc>;
+
+        staticinvoke <android.opengl.GLES20: void glUniform1f(int,float)>($i3, f0);
+
+        $i4 = r0.<com.android.server.display.ColorFade: int mGammaLoc>;
+
+        staticinvoke <android.opengl.GLES20: void glUniform1f(int,float)>($i4, f1);
+
+        $i5 = r0.<com.android.server.display.ColorFade: int mSaturationLoc>;
+
+        staticinvoke <android.opengl.GLES20: void glUniform1f(int,float)>($i5, f2);
+
+        $i6 = r0.<com.android.server.display.ColorFade: int mScaleLoc>;
+
+        staticinvoke <android.opengl.GLES20: void glUniform1f(int,float)>($i6, f3);
+
+        staticinvoke <android.opengl.GLES20: void glActiveTexture(int)>(33984);
+
+        $r3 = r0.<com.android.server.display.ColorFade: int[] mTexNames>;
+
+        $i7 = $r3[0];
+
+        staticinvoke <android.opengl.GLES20: void glBindTexture(int,int)>(36197, $i7);
+
+        $r4 = r0.<com.android.server.display.ColorFade: int[] mGLBuffers>;
+
+        $i8 = $r4[0];
+
+        staticinvoke <android.opengl.GLES20: void glBindBuffer(int,int)>(34962, $i8);
+
+        $i10 = r0.<com.android.server.display.ColorFade: int mVertexLoc>;
+
+        staticinvoke <android.opengl.GLES20: void glEnableVertexAttribArray(int)>($i10);
+
+        $i9 = r0.<com.android.server.display.ColorFade: int mVertexLoc>;
+
+        staticinvoke <android.opengl.GLES20: void glVertexAttribPointer(int,int,int,boolean,int,int)>($i9, 2, 5126, 0, 0, 0);
+
+        $r5 = r0.<com.android.server.display.ColorFade: int[] mGLBuffers>;
+
+        $i11 = $r5[1];
+
+        staticinvoke <android.opengl.GLES20: void glBindBuffer(int,int)>(34962, $i11);
+
+        $i13 = r0.<com.android.server.display.ColorFade: int mTexCoordLoc>;
+
+        staticinvoke <android.opengl.GLES20: void glEnableVertexAttribArray(int)>($i13);
+
+        $i12 = r0.<com.android.server.display.ColorFade: int mTexCoordLoc>;
+
+        staticinvoke <android.opengl.GLES20: void glVertexAttribPointer(int,int,int,boolean,int,int)>($i12, 2, 5126, 0, 0, 0);
+
+        staticinvoke <android.opengl.GLES20: void glDrawArrays(int,int,int)>(6, 0, 4);
+
+        staticinvoke <android.opengl.GLES20: void glBindTexture(int,int)>(36197, 0);
+
+        staticinvoke <android.opengl.GLES20: void glBindBuffer(int,int)>(34962, 0);
+
+        return;
+    }
+
+    private void ortho(float, float, float, float, float, float)
+    {
+        com.android.server.display.ColorFade r0;
+        float f0, f1, f2, f3, f4, f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20, $f21, $f22, $f23;
+        float[] $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r11, $r12, $r13, $r14, $r15, $r16;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        f0 := @parameter0: float;
+
+        f1 := @parameter1: float;
+
+        f2 := @parameter2: float;
+
+        f3 := @parameter3: float;
+
+        f4 := @parameter4: float;
+
+        f5 := @parameter5: float;
+
+        $r1 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $f6 = f1 - f0;
+
+        $f7 = 2.0F / $f6;
+
+        $r1[0] = $f7;
+
+        $r2 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $r2[1] = 0.0F;
+
+        $r3 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $r3[2] = 0.0F;
+
+        $r4 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $r4[3] = 0.0F;
+
+        $r5 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $r5[4] = 0.0F;
+
+        $r7 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $f8 = f3 - f2;
+
+        $f9 = 2.0F / $f8;
+
+        $r7[5] = $f9;
+
+        $r6 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $r6[6] = 0.0F;
+
+        $r9 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $r9[7] = 0.0F;
+
+        $r8 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $r8[8] = 0.0F;
+
+        $r10 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $r10[9] = 0.0F;
+
+        $r11 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $f10 = f5 - f4;
+
+        $f11 = -2.0F / $f10;
+
+        $r11[10] = $f11;
+
+        $r12 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $r12[11] = 0.0F;
+
+        $r13 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $f12 = f1 + f0;
+
+        $f13 = neg $f12;
+
+        $f14 = f1 - f0;
+
+        $f15 = $f13 / $f14;
+
+        $r13[12] = $f15;
+
+        $r14 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $f17 = f3 + f2;
+
+        $f19 = neg $f17;
+
+        $f16 = f3 - f2;
+
+        $f20 = $f19 / $f16;
+
+        $r14[13] = $f20;
+
+        $r15 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $f18 = f5 + f4;
+
+        $f23 = neg $f18;
+
+        $f22 = f5 - f4;
+
+        $f21 = $f23 / $f22;
+
+        $r15[14] = $f21;
+
+        $r16 = r0.<com.android.server.display.ColorFade: float[] mProjMatrix>;
+
+        $r16[15] = 1.0F;
+
+        return;
+    }
+
+    private boolean captureScreenshotTextureAndSetViewport()
+    {
+        com.android.server.display.ColorFade r0;
+        boolean z0, $z1, $z2, $z3;
+        android.view.Surface r1, $r6;
+        java.lang.Throwable r2, r3, $r26, $r27;
+        android.graphics.SurfaceTexture $r4, r28;
+        int[] $r5, $r25;
+        int $i0, $i1, $i2, $i3, $i4;
+        android.os.IBinder $r7;
+        float[] $r8;
+        java.nio.FloatBuffer $r9, $r11, $r12, $r14, $r16, $r18, $r20, $r22;
+        float $f0, $f1;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $z1 = specialinvoke r0.<com.android.server.display.ColorFade: boolean attachEglContext()>();
+
+        if $z1 != 0 goto label01;
+
+        return 0;
+
+     label01:
+        $z2 = r0.<com.android.server.display.ColorFade: boolean mTexNamesGenerated>;
+
+        if $z2 != 0 goto label04;
+
+        $r25 = r0.<com.android.server.display.ColorFade: int[] mTexNames>;
+
+        staticinvoke <android.opengl.GLES20: void glGenTextures(int,int[],int)>(1, $r25, 0);
+
+        $z3 = staticinvoke <com.android.server.display.ColorFade: boolean checkGlErrors(java.lang.String)>("glGenTextures");
+
+        if $z3 == 0 goto label03;
+
+        z0 = 0;
+
+     label02:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        return z0;
+
+     label03:
+        r0.<com.android.server.display.ColorFade: boolean mTexNamesGenerated> = 1;
+
+     label04:
+        $r4 = new android.graphics.SurfaceTexture;
+
+        $r5 = r0.<com.android.server.display.ColorFade: int[] mTexNames>;
+
+        $i0 = $r5[0];
+
+        specialinvoke $r4.<android.graphics.SurfaceTexture: void <init>(int)>($i0);
+
+        r28 = $r4;
+
+        $r6 = new android.view.Surface;
+
+        specialinvoke $r6.<android.view.Surface: void <init>(android.graphics.SurfaceTexture)>(r28);
+
+        r1 = $r6;
+
+     label05:
+        $r7 = staticinvoke <android.view.SurfaceControl: android.os.IBinder getBuiltInDisplay(int)>(0);
+
+        staticinvoke <android.view.SurfaceControl: void screenshot(android.os.IBinder,android.view.Surface)>($r7, r1);
+
+     label06:
+        virtualinvoke r1.<android.view.Surface: void release()>();
+
+        goto label09;
+
+     label07:
+        $r27 := @caughtexception;
+
+        r2 = $r27;
+
+     label08:
+        virtualinvoke r1.<android.view.Surface: void release()>();
+
+        throw r2;
+
+     label09:
+        virtualinvoke r28.<android.graphics.SurfaceTexture: void updateTexImage()>();
+
+        $r8 = r0.<com.android.server.display.ColorFade: float[] mTexMatrix>;
+
+        virtualinvoke r28.<android.graphics.SurfaceTexture: void getTransformMatrix(float[])>($r8);
+
+        $r9 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mTexCoordBuffer>;
+
+        virtualinvoke $r9.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(0, 0.0F);
+
+        $r11 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mTexCoordBuffer>;
+
+        virtualinvoke $r11.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(1, 0.0F);
+
+        $r12 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mTexCoordBuffer>;
+
+        virtualinvoke $r12.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(2, 0.0F);
+
+        $r14 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mTexCoordBuffer>;
+
+        virtualinvoke $r14.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(3, 1.0F);
+
+        $r16 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mTexCoordBuffer>;
+
+        virtualinvoke $r16.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(4, 1.0F);
+
+        $r18 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mTexCoordBuffer>;
+
+        virtualinvoke $r18.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(5, 1.0F);
+
+        $r20 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mTexCoordBuffer>;
+
+        virtualinvoke $r20.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(6, 1.0F);
+
+        $r22 = r0.<com.android.server.display.ColorFade: java.nio.FloatBuffer mTexCoordBuffer>;
+
+        virtualinvoke $r22.<java.nio.FloatBuffer: java.nio.FloatBuffer put(int,float)>(7, 0.0F);
+
+        $i3 = r0.<com.android.server.display.ColorFade: int mDisplayWidth>;
+
+        $i1 = r0.<com.android.server.display.ColorFade: int mDisplayHeight>;
+
+        staticinvoke <android.opengl.GLES20: void glViewport(int,int,int,int)>(0, 0, $i3, $i1);
+
+        $i2 = r0.<com.android.server.display.ColorFade: int mDisplayWidth>;
+
+        $f0 = (float) $i2;
+
+        $i4 = r0.<com.android.server.display.ColorFade: int mDisplayHeight>;
+
+        $f1 = (float) $i4;
+
+        specialinvoke r0.<com.android.server.display.ColorFade: void ortho(float,float,float,float,float,float)>(0.0F, $f0, 0.0F, $f1, -1.0F, 1.0F);
+
+     label10:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        goto label13;
+
+     label11:
+        $r26 := @caughtexception;
+
+        r3 = $r26;
+
+     label12:
+        specialinvoke r0.<com.android.server.display.ColorFade: void detachEglContext()>();
+
+        throw r3;
+
+     label13:
+        return 1;
+
+        catch java.lang.Throwable from label05 to label06 with label07;
+        catch java.lang.Throwable from label07 to label08 with label07;
+        catch java.lang.Throwable from label01 to label02 with label11;
+        catch java.lang.Throwable from label03 to label10 with label11;
+        catch java.lang.Throwable from label11 to label12 with label11;
+    }
+
+    private void destroyScreenshotTexture()
+    {
+        com.android.server.display.ColorFade r0;
+        boolean $z0;
+        int[] $r1;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $z0 = r0.<com.android.server.display.ColorFade: boolean mTexNamesGenerated>;
+
+        if $z0 == 0 goto label1;
+
+        r0.<com.android.server.display.ColorFade: boolean mTexNamesGenerated> = 0;
+
+        $r1 = r0.<com.android.server.display.ColorFade: int[] mTexNames>;
+
+        staticinvoke <android.opengl.GLES20: void glDeleteTextures(int,int[],int)>(1, $r1, 0);
+
+        staticinvoke <com.android.server.display.ColorFade: boolean checkGlErrors(java.lang.String)>("glDeleteTextures");
+
+     label1:
+        return;
+    }
+
+    private boolean createEglContext()
+    {
+        com.android.server.display.ColorFade r0;
+        int[] r1, r2, $r7, $r13, r20, r21;
+        android.opengl.EGLConfig[] r3;
+        android.opengl.EGLDisplay $r4, $r10, $r14, $r16, $r17, $r18, $r19;
+        android.opengl.EGLConfig $r5, $r9, $r15;
+        android.opengl.EGLContext $r6, $r8, $r11, $r12;
+        int $i0;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $r4 = r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay>;
+
+        if $r4 != null goto label2;
+
+        $r17 = staticinvoke <android.opengl.EGL14: android.opengl.EGLDisplay eglGetDisplay(int)>(0);
+
+        r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay> = $r17;
+
+        $r19 = r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay>;
+
+        $r16 = <android.opengl.EGL14: android.opengl.EGLDisplay EGL_NO_DISPLAY>;
+
+        if $r19 != $r16 goto label1;
+
+        staticinvoke <com.android.server.display.ColorFade: void logEglError(java.lang.String)>("eglGetDisplay");
+
+        return 0;
+
+     label1:
+        r1 = newarray (int)[2];
+
+        $r18 = r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay>;
+
+        $z1 = staticinvoke <android.opengl.EGL14: boolean eglInitialize(android.opengl.EGLDisplay,int[],int,int[],int)>($r18, r1, 0, r1, 1);
+
+        if $z1 != 0 goto label2;
+
+        r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay> = null;
+
+        staticinvoke <com.android.server.display.ColorFade: void logEglError(java.lang.String)>("eglInitialize");
+
+        return 0;
+
+     label2:
+        $r5 = r0.<com.android.server.display.ColorFade: android.opengl.EGLConfig mEglConfig>;
+
+        if $r5 != null goto label4;
+
+        $r13 = newarray (int)[11];
+
+        $r13[0] = 12352;
+
+        $r13[1] = 4;
+
+        $r13[2] = 12324;
+
+        $r13[3] = 8;
+
+        $r13[4] = 12323;
+
+        $r13[5] = 8;
+
+        $r13[6] = 12322;
+
+        $r13[7] = 8;
+
+        $r13[8] = 12321;
+
+        $r13[9] = 8;
+
+        $r13[10] = 12344;
+
+        r20 = $r13;
+
+        r2 = newarray (int)[1];
+
+        r3 = newarray (android.opengl.EGLConfig)[1];
+
+        $r14 = r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay>;
+
+        $i0 = lengthof r3;
+
+        $z0 = staticinvoke <android.opengl.EGL14: boolean eglChooseConfig(android.opengl.EGLDisplay,int[],int,android.opengl.EGLConfig[],int,int,int[],int)>($r14, r20, 0, r3, 0, $i0, r2, 0);
+
+        if $z0 != 0 goto label3;
+
+        staticinvoke <com.android.server.display.ColorFade: void logEglError(java.lang.String)>("eglChooseConfig");
+
+        return 0;
+
+     label3:
+        $r15 = r3[0];
+
+        r0.<com.android.server.display.ColorFade: android.opengl.EGLConfig mEglConfig> = $r15;
+
+     label4:
+        $r6 = r0.<com.android.server.display.ColorFade: android.opengl.EGLContext mEglContext>;
+
+        if $r6 != null goto label5;
+
+        $r7 = newarray (int)[3];
+
+        $r7[0] = 12440;
+
+        $r7[1] = 2;
+
+        $r7[2] = 12344;
+
+        r21 = $r7;
+
+        $r10 = r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay>;
+
+        $r9 = r0.<com.android.server.display.ColorFade: android.opengl.EGLConfig mEglConfig>;
+
+        $r8 = <android.opengl.EGL14: android.opengl.EGLContext EGL_NO_CONTEXT>;
+
+        $r11 = staticinvoke <android.opengl.EGL14: android.opengl.EGLContext eglCreateContext(android.opengl.EGLDisplay,android.opengl.EGLConfig,android.opengl.EGLContext,int[],int)>($r10, $r9, $r8, r21, 0);
+
+        r0.<com.android.server.display.ColorFade: android.opengl.EGLContext mEglContext> = $r11;
+
+        $r12 = r0.<com.android.server.display.ColorFade: android.opengl.EGLContext mEglContext>;
+
+        if $r12 != null goto label5;
+
+        staticinvoke <com.android.server.display.ColorFade: void logEglError(java.lang.String)>("eglCreateContext");
+
+        return 0;
+
+     label5:
+        return 1;
+    }
+
+    private boolean createSurface()
+    {
+        com.android.server.display.ColorFade r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        boolean z0;
+        java.lang.Throwable r1, $r15;
+        android.view.SurfaceSession $r2, $r14, $r16;
+        android.view.SurfaceControl $r3, $r4, $r5, $r7, $r10, $r13;
+        android.view.Surface $r6, $r8;
+        com.android.server.display.ColorFade$NaturalSurfaceLayout $r9, $r12;
+        android.hardware.display.DisplayManagerInternal $r11;
+        android.view.Surface$OutOfResourcesException $r17, r18;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $r2 = r0.<com.android.server.display.ColorFade: android.view.SurfaceSession mSurfaceSession>;
+
+        if $r2 != null goto label01;
+
+        $r16 = new android.view.SurfaceSession;
+
+        specialinvoke $r16.<android.view.SurfaceSession: void <init>()>();
+
+        r0.<com.android.server.display.ColorFade: android.view.SurfaceSession mSurfaceSession> = $r16;
+
+     label01:
+        staticinvoke <android.view.SurfaceControl: void openTransaction()>();
+
+     label02:
+        $r3 = r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl>;
+
+        if $r3 != null goto label09;
+
+     label03:
+        $i5 = r0.<com.android.server.display.ColorFade: int mMode>;
+
+        if $i5 != 2 goto label04;
+
+        i0 = 131076;
+
+        goto label05;
+
+     label04:
+        i0 = 1028;
+
+     label05:
+        $r13 = new android.view.SurfaceControl;
+
+        $r14 = r0.<com.android.server.display.ColorFade: android.view.SurfaceSession mSurfaceSession>;
+
+        $i7 = r0.<com.android.server.display.ColorFade: int mDisplayWidth>;
+
+        $i6 = r0.<com.android.server.display.ColorFade: int mDisplayHeight>;
+
+        specialinvoke $r13.<android.view.SurfaceControl: void <init>(android.view.SurfaceSession,java.lang.String,int,int,int,int)>($r14, "ColorFade", $i7, $i6, -1, i0);
+
+        r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl> = $r13;
+
+     label06:
+        goto label09;
+
+     label07:
+        $r17 := @caughtexception;
+
+        r18 = $r17;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("ColorFade", "Unable to create surface.", r18);
+
+        z0 = 0;
+
+     label08:
+        staticinvoke <android.view.SurfaceControl: void closeTransaction()>();
+
+        return z0;
+
+     label09:
+        $r4 = r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl>;
+
+        $i1 = r0.<com.android.server.display.ColorFade: int mDisplayLayerStack>;
+
+        virtualinvoke $r4.<android.view.SurfaceControl: void setLayerStack(int)>($i1);
+
+        $r5 = r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl>;
+
+        $i3 = r0.<com.android.server.display.ColorFade: int mDisplayWidth>;
+
+        $i2 = r0.<com.android.server.display.ColorFade: int mDisplayHeight>;
+
+        virtualinvoke $r5.<android.view.SurfaceControl: void setSize(int,int)>($i3, $i2);
+
+        $r6 = new android.view.Surface;
+
+        specialinvoke $r6.<android.view.Surface: void <init>()>();
+
+        r0.<com.android.server.display.ColorFade: android.view.Surface mSurface> = $r6;
+
+        $r8 = r0.<com.android.server.display.ColorFade: android.view.Surface mSurface>;
+
+        $r7 = r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl>;
+
+        virtualinvoke $r8.<android.view.Surface: void copyFrom(android.view.SurfaceControl)>($r7);
+
+        $r9 = new com.android.server.display.ColorFade$NaturalSurfaceLayout;
+
+        $r11 = r0.<com.android.server.display.ColorFade: android.hardware.display.DisplayManagerInternal mDisplayManagerInternal>;
+
+        $i4 = r0.<com.android.server.display.ColorFade: int mDisplayId>;
+
+        $r10 = r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl>;
+
+        specialinvoke $r9.<com.android.server.display.ColorFade$NaturalSurfaceLayout: void <init>(android.hardware.display.DisplayManagerInternal,int,android.view.SurfaceControl)>($r11, $i4, $r10);
+
+        r0.<com.android.server.display.ColorFade: com.android.server.display.ColorFade$NaturalSurfaceLayout mSurfaceLayout> = $r9;
+
+        $r12 = r0.<com.android.server.display.ColorFade: com.android.server.display.ColorFade$NaturalSurfaceLayout mSurfaceLayout>;
+
+        virtualinvoke $r12.<com.android.server.display.ColorFade$NaturalSurfaceLayout: void onDisplayTransaction()>();
+
+     label10:
+        staticinvoke <android.view.SurfaceControl: void closeTransaction()>();
+
+        goto label13;
+
+     label11:
+        $r15 := @caughtexception;
+
+        r1 = $r15;
+
+     label12:
+        staticinvoke <android.view.SurfaceControl: void closeTransaction()>();
+
+        throw r1;
+
+     label13:
+        return 1;
+
+        catch android.view.Surface$OutOfResourcesException from label03 to label06 with label07;
+        catch java.lang.Throwable from label02 to label08 with label11;
+        catch java.lang.Throwable from label09 to label10 with label11;
+        catch java.lang.Throwable from label11 to label12 with label11;
+    }
+
+    private boolean createEglSurface()
+    {
+        com.android.server.display.ColorFade r0;
+        int[] r1, $r3;
+        android.opengl.EGLSurface $r2, $r7, $r8;
+        android.view.Surface $r4;
+        android.opengl.EGLConfig $r5;
+        android.opengl.EGLDisplay $r6;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $r2 = r0.<com.android.server.display.ColorFade: android.opengl.EGLSurface mEglSurface>;
+
+        if $r2 != null goto label1;
+
+        $r3 = newarray (int)[1];
+
+        $r3[0] = 12344;
+
+        r1 = $r3;
+
+        $r6 = r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay>;
+
+        $r5 = r0.<com.android.server.display.ColorFade: android.opengl.EGLConfig mEglConfig>;
+
+        $r4 = r0.<com.android.server.display.ColorFade: android.view.Surface mSurface>;
+
+        $r7 = staticinvoke <android.opengl.EGL14: android.opengl.EGLSurface eglCreateWindowSurface(android.opengl.EGLDisplay,android.opengl.EGLConfig,java.lang.Object,int[],int)>($r6, $r5, $r4, r1, 0);
+
+        r0.<com.android.server.display.ColorFade: android.opengl.EGLSurface mEglSurface> = $r7;
+
+        $r8 = r0.<com.android.server.display.ColorFade: android.opengl.EGLSurface mEglSurface>;
+
+        if $r8 != null goto label1;
+
+        staticinvoke <com.android.server.display.ColorFade: void logEglError(java.lang.String)>("eglCreateWindowSurface");
+
+        return 0;
+
+     label1:
+        return 1;
+    }
+
+    private void destroyEglSurface()
+    {
+        com.android.server.display.ColorFade r0;
+        android.opengl.EGLSurface $r1, $r2;
+        android.opengl.EGLDisplay $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $r1 = r0.<com.android.server.display.ColorFade: android.opengl.EGLSurface mEglSurface>;
+
+        if $r1 == null goto label2;
+
+        $r3 = r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay>;
+
+        $r2 = r0.<com.android.server.display.ColorFade: android.opengl.EGLSurface mEglSurface>;
+
+        $z0 = staticinvoke <android.opengl.EGL14: boolean eglDestroySurface(android.opengl.EGLDisplay,android.opengl.EGLSurface)>($r3, $r2);
+
+        if $z0 != 0 goto label1;
+
+        staticinvoke <com.android.server.display.ColorFade: void logEglError(java.lang.String)>("eglDestroySurface");
+
+     label1:
+        r0.<com.android.server.display.ColorFade: android.opengl.EGLSurface mEglSurface> = null;
+
+     label2:
+        return;
+    }
+
+    private void destroySurface()
+    {
+        com.android.server.display.ColorFade r0;
+        java.lang.Throwable r1, $r6;
+        android.view.SurfaceControl $r2, $r4;
+        com.android.server.display.ColorFade$NaturalSurfaceLayout $r3;
+        android.view.Surface $r5;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $r2 = r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl>;
+
+        if $r2 == null goto label6;
+
+        $r3 = r0.<com.android.server.display.ColorFade: com.android.server.display.ColorFade$NaturalSurfaceLayout mSurfaceLayout>;
+
+        virtualinvoke $r3.<com.android.server.display.ColorFade$NaturalSurfaceLayout: void dispose()>();
+
+        r0.<com.android.server.display.ColorFade: com.android.server.display.ColorFade$NaturalSurfaceLayout mSurfaceLayout> = null;
+
+        staticinvoke <android.view.SurfaceControl: void openTransaction()>();
+
+     label1:
+        $r4 = r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl>;
+
+        virtualinvoke $r4.<android.view.SurfaceControl: void destroy()>();
+
+        $r5 = r0.<com.android.server.display.ColorFade: android.view.Surface mSurface>;
+
+        virtualinvoke $r5.<android.view.Surface: void release()>();
+
+     label2:
+        staticinvoke <android.view.SurfaceControl: void closeTransaction()>();
+
+        goto label5;
+
+     label3:
+        $r6 := @caughtexception;
+
+        r1 = $r6;
+
+     label4:
+        staticinvoke <android.view.SurfaceControl: void closeTransaction()>();
+
+        throw r1;
+
+     label5:
+        r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl> = null;
+
+        r0.<com.android.server.display.ColorFade: boolean mSurfaceVisible> = 0;
+
+        r0.<com.android.server.display.ColorFade: float mSurfaceAlpha> = 0.0F;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private boolean showSurface(float)
+    {
+        com.android.server.display.ColorFade r0;
+        float f0, $f1;
+        java.lang.Throwable r1, $r5;
+        boolean $z0;
+        android.view.SurfaceControl $r2, $r3, $r4;
+        byte $b0;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        f0 := @parameter0: float;
+
+        $z0 = r0.<com.android.server.display.ColorFade: boolean mSurfaceVisible>;
+
+        if $z0 == 0 goto label1;
+
+        $f1 = r0.<com.android.server.display.ColorFade: float mSurfaceAlpha>;
+
+        $b0 = $f1 cmpl f0;
+
+        if $b0 == 0 goto label7;
+
+     label1:
+        staticinvoke <android.view.SurfaceControl: void openTransaction()>();
+
+     label2:
+        $r2 = r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl>;
+
+        virtualinvoke $r2.<android.view.SurfaceControl: void setLayer(int)>(1073741825);
+
+        $r3 = r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl>;
+
+        virtualinvoke $r3.<android.view.SurfaceControl: void setAlpha(float)>(f0);
+
+        $r4 = r0.<com.android.server.display.ColorFade: android.view.SurfaceControl mSurfaceControl>;
+
+        virtualinvoke $r4.<android.view.SurfaceControl: void show()>();
+
+     label3:
+        staticinvoke <android.view.SurfaceControl: void closeTransaction()>();
+
+        goto label6;
+
+     label4:
+        $r5 := @caughtexception;
+
+        r1 = $r5;
+
+     label5:
+        staticinvoke <android.view.SurfaceControl: void closeTransaction()>();
+
+        throw r1;
+
+     label6:
+        r0.<com.android.server.display.ColorFade: boolean mSurfaceVisible> = 1;
+
+        r0.<com.android.server.display.ColorFade: float mSurfaceAlpha> = f0;
+
+     label7:
+        return 1;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    private boolean attachEglContext()
+    {
+        com.android.server.display.ColorFade r0;
+        android.opengl.EGLSurface $r1, $r3, $r4;
+        android.opengl.EGLContext $r2;
+        android.opengl.EGLDisplay $r5;
+        boolean $z0;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $r1 = r0.<com.android.server.display.ColorFade: android.opengl.EGLSurface mEglSurface>;
+
+        if $r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        $r5 = r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay>;
+
+        $r4 = r0.<com.android.server.display.ColorFade: android.opengl.EGLSurface mEglSurface>;
+
+        $r3 = r0.<com.android.server.display.ColorFade: android.opengl.EGLSurface mEglSurface>;
+
+        $r2 = r0.<com.android.server.display.ColorFade: android.opengl.EGLContext mEglContext>;
+
+        $z0 = staticinvoke <android.opengl.EGL14: boolean eglMakeCurrent(android.opengl.EGLDisplay,android.opengl.EGLSurface,android.opengl.EGLSurface,android.opengl.EGLContext)>($r5, $r4, $r3, $r2);
+
+        if $z0 != 0 goto label2;
+
+        staticinvoke <com.android.server.display.ColorFade: void logEglError(java.lang.String)>("eglMakeCurrent");
+
+        return 0;
+
+     label2:
+        return 1;
+    }
+
+    private void detachEglContext()
+    {
+        com.android.server.display.ColorFade r0;
+        android.opengl.EGLDisplay $r1, $r5;
+        android.opengl.EGLContext $r2;
+        android.opengl.EGLSurface $r3, $r4;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        $r1 = r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay>;
+
+        if $r1 == null goto label1;
+
+        $r5 = r0.<com.android.server.display.ColorFade: android.opengl.EGLDisplay mEglDisplay>;
+
+        $r4 = <android.opengl.EGL14: android.opengl.EGLSurface EGL_NO_SURFACE>;
+
+        $r3 = <android.opengl.EGL14: android.opengl.EGLSurface EGL_NO_SURFACE>;
+
+        $r2 = <android.opengl.EGL14: android.opengl.EGLContext EGL_NO_CONTEXT>;
+
+        staticinvoke <android.opengl.EGL14: boolean eglMakeCurrent(android.opengl.EGLDisplay,android.opengl.EGLSurface,android.opengl.EGLSurface,android.opengl.EGLContext)>($r5, $r4, $r3, $r2);
+
+     label1:
+        return;
+    }
+
+    private static java.nio.FloatBuffer createNativeFloatBuffer(int)
+    {
+        int i0, $i1;
+        java.nio.ByteBuffer r0;
+        java.nio.ByteOrder $r1;
+        java.nio.FloatBuffer $r3;
+
+        i0 := @parameter0: int;
+
+        $i1 = i0 * 4;
+
+        r0 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer allocateDirect(int)>($i1);
+
+        $r1 = staticinvoke <java.nio.ByteOrder: java.nio.ByteOrder nativeOrder()>();
+
+        virtualinvoke r0.<java.nio.ByteBuffer: java.nio.ByteBuffer order(java.nio.ByteOrder)>($r1);
+
+        $r3 = virtualinvoke r0.<java.nio.ByteBuffer: java.nio.FloatBuffer asFloatBuffer()>();
+
+        return $r3;
+    }
+
+    private static void logEglError(java.lang.String)
+    {
+        java.lang.String r0, $r5;
+        java.lang.StringBuilder $r1, $r2, $r3, $r4;
+        int $i0;
+        java.lang.Throwable $r6;
+
+        r0 := @parameter0: java.lang.String;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" failed: error ");
+
+        $i0 = staticinvoke <android.opengl.EGL14: int eglGetError()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r6 = new java.lang.Throwable;
+
+        specialinvoke $r6.<java.lang.Throwable: void <init>()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("ColorFade", $r5, $r6);
+
+        return;
+    }
+
+    private static boolean checkGlErrors(java.lang.String)
+    {
+        java.lang.String r0;
+        boolean $z0;
+
+        r0 := @parameter0: java.lang.String;
+
+        $z0 = staticinvoke <com.android.server.display.ColorFade: boolean checkGlErrors(java.lang.String,boolean)>(r0, 1);
+
+        return $z0;
+    }
+
+    private static boolean checkGlErrors(java.lang.String, boolean)
+    {
+        java.lang.String r0, $r5;
+        boolean z0, z1;
+        int i0, $i1;
+        java.lang.StringBuilder $r1, $r2, $r3, $r4;
+        java.lang.Throwable $r6;
+
+        r0 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        z1 = 0;
+
+     label1:
+        $i1 = staticinvoke <android.opengl.GLES20: int glGetError()>();
+
+        i0 = $i1;
+
+        if $i1 == 0 goto label3;
+
+        if z0 == 0 goto label2;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" failed: error ");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r6 = new java.lang.Throwable;
+
+        specialinvoke $r6.<java.lang.Throwable: void <init>()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("ColorFade", $r5, $r6);
+
+     label2:
+        z1 = 1;
+
+        goto label1;
+
+     label3:
+        return z1;
+    }
+
+    public void dump(java.io.PrintWriter)
+    {
+        com.android.server.display.ColorFade r0;
+        java.io.PrintWriter r1;
+        java.lang.StringBuilder $r2, $r3, $r4, $r6, $r7, $r8, $r10, $r11, $r12, $r13, $r15, $r17, $r18, $r19, $r20, $r21, $r23, $r25, $r26, $r27, $r28;
+        boolean $z0, $z1;
+        java.lang.String $r5, $r9, $r14, $r16, $r22, $r24, $r29;
+        int $i0, $i1, $i2, $i3;
+        float $f0;
+
+        r0 := @this: com.android.server.display.ColorFade;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        virtualinvoke r1.<java.io.PrintWriter: void println()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("Color Fade State:");
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mPrepared=");
+
+        $z0 = r0.<com.android.server.display.ColorFade: boolean mPrepared>;
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r5);
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mMode=");
+
+        $i0 = r0.<com.android.server.display.ColorFade: int mMode>;
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r9);
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mDisplayLayerStack=");
+
+        $i1 = r0.<com.android.server.display.ColorFade: int mDisplayLayerStack>;
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r14);
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mDisplayWidth=");
+
+        $i2 = r0.<com.android.server.display.ColorFade: int mDisplayWidth>;
+
+        $r17 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r16 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r16);
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mDisplayHeight=");
+
+        $i3 = r0.<com.android.server.display.ColorFade: int mDisplayHeight>;
+
+        $r20 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        $r22 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r22);
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        $r23 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mSurfaceVisible=");
+
+        $z1 = r0.<com.android.server.display.ColorFade: boolean mSurfaceVisible>;
+
+        $r25 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r24);
+
+        $r27 = new java.lang.StringBuilder;
+
+        specialinvoke $r27.<java.lang.StringBuilder: void <init>()>();
+
+        $r28 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mSurfaceAlpha=");
+
+        $f0 = r0.<com.android.server.display.ColorFade: float mSurfaceAlpha>;
+
+        $r26 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f0);
+
+        $r29 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r29);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.display.ColorFade: int MODE_FADE> = 2;
+
+        <com.android.server.display.ColorFade: int MODE_COOL_DOWN> = 1;
+
+        <com.android.server.display.ColorFade: int MODE_WARM_UP> = 0;
+
+        <com.android.server.display.ColorFade: int DEJANK_FRAMES> = 3;
+
+        <com.android.server.display.ColorFade: int COLOR_FADE_LAYER> = 1073741825;
+
+        <com.android.server.display.ColorFade: boolean DEBUG> = 0;
+
+        <com.android.server.display.ColorFade: java.lang.String TAG> = "ColorFade";
+
+        return;
+    }
+}

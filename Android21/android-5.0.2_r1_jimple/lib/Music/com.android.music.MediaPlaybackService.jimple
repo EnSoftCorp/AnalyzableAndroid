@@ -1,0 +1,5552 @@
+public class com.android.music.MediaPlaybackService extends android.app.Service
+{
+    public static final int NOW;
+    public static final int NEXT;
+    public static final int LAST;
+    public static final int PLAYBACKSERVICE_STATUS;
+    public static final int SHUFFLE_NONE;
+    public static final int SHUFFLE_NORMAL;
+    public static final int SHUFFLE_AUTO;
+    public static final int REPEAT_NONE;
+    public static final int REPEAT_CURRENT;
+    public static final int REPEAT_ALL;
+    public static final java.lang.String PLAYSTATE_CHANGED;
+    public static final java.lang.String META_CHANGED;
+    public static final java.lang.String QUEUE_CHANGED;
+    public static final java.lang.String SERVICECMD;
+    public static final java.lang.String CMDNAME;
+    public static final java.lang.String CMDTOGGLEPAUSE;
+    public static final java.lang.String CMDSTOP;
+    public static final java.lang.String CMDPAUSE;
+    public static final java.lang.String CMDPLAY;
+    public static final java.lang.String CMDPREVIOUS;
+    public static final java.lang.String CMDNEXT;
+    public static final java.lang.String TOGGLEPAUSE_ACTION;
+    public static final java.lang.String PAUSE_ACTION;
+    public static final java.lang.String PREVIOUS_ACTION;
+    public static final java.lang.String NEXT_ACTION;
+    private static final int TRACK_ENDED;
+    private static final int RELEASE_WAKELOCK;
+    private static final int SERVER_DIED;
+    private static final int FOCUSCHANGE;
+    private static final int FADEDOWN;
+    private static final int FADEUP;
+    private static final int TRACK_WENT_TO_NEXT;
+    private static final int MAX_HISTORY_SIZE;
+    private com.android.music.MediaPlaybackService$MultiPlayer mPlayer;
+    private java.lang.String mFileToPlay;
+    private int mShuffleMode;
+    private int mRepeatMode;
+    private int mMediaMountedCount;
+    private long[] mAutoShuffleList;
+    private long[] mPlayList;
+    private int mPlayListLen;
+    private java.util.Vector mHistory;
+    private android.database.Cursor mCursor;
+    private int mPlayPos;
+    private int mNextPlayPos;
+    private static final java.lang.String LOGTAG;
+    private final com.android.music.MediaPlaybackService$Shuffler mRand;
+    private int mOpenFailedCounter;
+    java.lang.String[] mCursorCols;
+    private static final int IDCOLIDX;
+    private static final int PODCASTCOLIDX;
+    private static final int BOOKMARKCOLIDX;
+    private android.content.BroadcastReceiver mUnmountReceiver;
+    private android.os.PowerManager$WakeLock mWakeLock;
+    private int mServiceStartId;
+    private boolean mServiceInUse;
+    private boolean mIsSupposedToBePlaying;
+    private boolean mQuietMode;
+    private android.media.AudioManager mAudioManager;
+    private boolean mQueueIsSaveable;
+    private boolean mPausedByTransientLossOfFocus;
+    private android.content.SharedPreferences mPreferences;
+    private int mCardId;
+    private com.android.music.MediaAppWidgetProvider mAppWidgetProvider;
+    private static final int IDLE_DELAY;
+    private android.media.RemoteControlClient mRemoteControlClient;
+    private android.os.Handler mMediaplayerHandler;
+    private android.content.BroadcastReceiver mIntentReceiver;
+    private android.media.AudioManager$OnAudioFocusChangeListener mAudioFocusListener;
+    private final char[] hexdigits;
+    private android.os.Handler mDelayedStopHandler;
+    private final android.os.IBinder mBinder;
+
+    public void <init>()
+    {
+        com.android.music.MediaPlaybackService r0;
+        java.util.Vector $r1;
+        com.android.music.MediaPlaybackService$Shuffler $r2;
+        java.lang.String[] $r3;
+        com.android.music.MediaAppWidgetProvider $r4;
+        com.android.music.MediaPlaybackService$1 $r5;
+        com.android.music.MediaPlaybackService$2 $r6;
+        com.android.music.MediaPlaybackService$3 $r7;
+        char[] $r8;
+        com.android.music.MediaPlaybackService$4 $r9;
+        com.android.music.MediaPlaybackService$ServiceStub $r10;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        specialinvoke r0.<android.app.Service: void <init>()>();
+
+        r0.<com.android.music.MediaPlaybackService: int mShuffleMode> = 0;
+
+        r0.<com.android.music.MediaPlaybackService: int mRepeatMode> = 0;
+
+        r0.<com.android.music.MediaPlaybackService: int mMediaMountedCount> = 0;
+
+        r0.<com.android.music.MediaPlaybackService: long[] mAutoShuffleList> = null;
+
+        r0.<com.android.music.MediaPlaybackService: long[] mPlayList> = null;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayListLen> = 0;
+
+        $r1 = new java.util.Vector;
+
+        specialinvoke $r1.<java.util.Vector: void <init>(int)>(100);
+
+        r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory> = $r1;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = -1;
+
+        r0.<com.android.music.MediaPlaybackService: int mNextPlayPos> = -1;
+
+        $r2 = new com.android.music.MediaPlaybackService$Shuffler;
+
+        specialinvoke $r2.<com.android.music.MediaPlaybackService$Shuffler: void <init>(com.android.music.MediaPlaybackService$1)>(null);
+
+        r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$Shuffler mRand> = $r2;
+
+        r0.<com.android.music.MediaPlaybackService: int mOpenFailedCounter> = 0;
+
+        $r3 = newarray (java.lang.String)[10];
+
+        $r3[0] = "audio._id AS _id";
+
+        $r3[1] = "artist";
+
+        $r3[2] = "album";
+
+        $r3[3] = "title";
+
+        $r3[4] = "_data";
+
+        $r3[5] = "mime_type";
+
+        $r3[6] = "album_id";
+
+        $r3[7] = "artist_id";
+
+        $r3[8] = "is_podcast";
+
+        $r3[9] = "bookmark";
+
+        r0.<com.android.music.MediaPlaybackService: java.lang.String[] mCursorCols> = $r3;
+
+        r0.<com.android.music.MediaPlaybackService: android.content.BroadcastReceiver mUnmountReceiver> = null;
+
+        r0.<com.android.music.MediaPlaybackService: int mServiceStartId> = -1;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mServiceInUse> = 0;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying> = 0;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mQuietMode> = 0;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mQueueIsSaveable> = 1;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mPausedByTransientLossOfFocus> = 0;
+
+        $r4 = staticinvoke <com.android.music.MediaAppWidgetProvider: com.android.music.MediaAppWidgetProvider getInstance()>();
+
+        r0.<com.android.music.MediaPlaybackService: com.android.music.MediaAppWidgetProvider mAppWidgetProvider> = $r4;
+
+        $r5 = new com.android.music.MediaPlaybackService$1;
+
+        specialinvoke $r5.<com.android.music.MediaPlaybackService$1: void <init>(com.android.music.MediaPlaybackService)>(r0);
+
+        r0.<com.android.music.MediaPlaybackService: android.os.Handler mMediaplayerHandler> = $r5;
+
+        $r6 = new com.android.music.MediaPlaybackService$2;
+
+        specialinvoke $r6.<com.android.music.MediaPlaybackService$2: void <init>(com.android.music.MediaPlaybackService)>(r0);
+
+        r0.<com.android.music.MediaPlaybackService: android.content.BroadcastReceiver mIntentReceiver> = $r6;
+
+        $r7 = new com.android.music.MediaPlaybackService$3;
+
+        specialinvoke $r7.<com.android.music.MediaPlaybackService$3: void <init>(com.android.music.MediaPlaybackService)>(r0);
+
+        r0.<com.android.music.MediaPlaybackService: android.media.AudioManager$OnAudioFocusChangeListener mAudioFocusListener> = $r7;
+
+        $r8 = newarray (char)[16];
+
+        $r8[0] = 48;
+
+        $r8[1] = 49;
+
+        $r8[2] = 50;
+
+        $r8[3] = 51;
+
+        $r8[4] = 52;
+
+        $r8[5] = 53;
+
+        $r8[6] = 54;
+
+        $r8[7] = 55;
+
+        $r8[8] = 56;
+
+        $r8[9] = 57;
+
+        $r8[10] = 97;
+
+        $r8[11] = 98;
+
+        $r8[12] = 99;
+
+        $r8[13] = 100;
+
+        $r8[14] = 101;
+
+        $r8[15] = 102;
+
+        r0.<com.android.music.MediaPlaybackService: char[] hexdigits> = $r8;
+
+        $r9 = new com.android.music.MediaPlaybackService$4;
+
+        specialinvoke $r9.<com.android.music.MediaPlaybackService$4: void <init>(com.android.music.MediaPlaybackService)>(r0);
+
+        r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler> = $r9;
+
+        $r10 = new com.android.music.MediaPlaybackService$ServiceStub;
+
+        specialinvoke $r10.<com.android.music.MediaPlaybackService$ServiceStub: void <init>(com.android.music.MediaPlaybackService)>(r0);
+
+        r0.<com.android.music.MediaPlaybackService: android.os.IBinder mBinder> = $r10;
+
+        return;
+    }
+
+    public void onCreate()
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.content.ComponentName r1, $r9;
+        android.content.Intent r2, $r14;
+        android.app.PendingIntent r3;
+        short s0;
+        android.content.IntentFilter r4, $r23;
+        android.os.PowerManager r5;
+        android.os.Message r6;
+        java.lang.Object $r7, $r27;
+        android.media.AudioManager $r8, $r13, $r19;
+        java.lang.String $r10, $r12, $r31;
+        java.lang.Class $r11, $r30;
+        android.media.RemoteControlClient $r16, $r17, $r18;
+        int $i1;
+        android.content.SharedPreferences $r20;
+        android.os.Handler $r21, $r32, $r33;
+        com.android.music.MediaPlaybackService$MultiPlayer $r22, $r24;
+        android.content.BroadcastReceiver $r26;
+        android.os.PowerManager$WakeLock $r28, $r29;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        specialinvoke r0.<android.app.Service: void onCreate()>();
+
+        $r7 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.Object getSystemService(java.lang.String)>("audio");
+
+        $r8 = (android.media.AudioManager) $r7;
+
+        r0.<com.android.music.MediaPlaybackService: android.media.AudioManager mAudioManager> = $r8;
+
+        $r9 = new android.content.ComponentName;
+
+        $r10 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getPackageName()>();
+
+        $r11 = class "com/android/music/MediaButtonIntentReceiver";
+
+        $r12 = virtualinvoke $r11.<java.lang.Class: java.lang.String getName()>();
+
+        specialinvoke $r9.<android.content.ComponentName: void <init>(java.lang.String,java.lang.String)>($r10, $r12);
+
+        r1 = $r9;
+
+        $r13 = r0.<com.android.music.MediaPlaybackService: android.media.AudioManager mAudioManager>;
+
+        virtualinvoke $r13.<android.media.AudioManager: void registerMediaButtonEventReceiver(android.content.ComponentName)>(r1);
+
+        $r14 = new android.content.Intent;
+
+        specialinvoke $r14.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.MEDIA_BUTTON");
+
+        r2 = $r14;
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>(r1);
+
+        r3 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getBroadcast(android.content.Context,int,android.content.Intent,int)>(r0, 0, r2, 0);
+
+        $r17 = new android.media.RemoteControlClient;
+
+        specialinvoke $r17.<android.media.RemoteControlClient: void <init>(android.app.PendingIntent)>(r3);
+
+        r0.<com.android.music.MediaPlaybackService: android.media.RemoteControlClient mRemoteControlClient> = $r17;
+
+        $r19 = r0.<com.android.music.MediaPlaybackService: android.media.AudioManager mAudioManager>;
+
+        $r16 = r0.<com.android.music.MediaPlaybackService: android.media.RemoteControlClient mRemoteControlClient>;
+
+        virtualinvoke $r19.<android.media.AudioManager: void registerRemoteControlClient(android.media.RemoteControlClient)>($r16);
+
+        s0 = 189;
+
+        $r18 = r0.<com.android.music.MediaPlaybackService: android.media.RemoteControlClient mRemoteControlClient>;
+
+        virtualinvoke $r18.<android.media.RemoteControlClient: void setTransportControlFlags(int)>(s0);
+
+        $r20 = virtualinvoke r0.<com.android.music.MediaPlaybackService: android.content.SharedPreferences getSharedPreferences(java.lang.String,int)>("Music", 3);
+
+        r0.<com.android.music.MediaPlaybackService: android.content.SharedPreferences mPreferences> = $r20;
+
+        $i1 = staticinvoke <com.android.music.MusicUtils: int getCardId(android.content.Context)>(r0);
+
+        r0.<com.android.music.MediaPlaybackService: int mCardId> = $i1;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void registerExternalStorageListener()>();
+
+        $r22 = new com.android.music.MediaPlaybackService$MultiPlayer;
+
+        specialinvoke $r22.<com.android.music.MediaPlaybackService$MultiPlayer: void <init>(com.android.music.MediaPlaybackService)>(r0);
+
+        r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer> = $r22;
+
+        $r24 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $r21 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mMediaplayerHandler>;
+
+        virtualinvoke $r24.<com.android.music.MediaPlaybackService$MultiPlayer: void setHandler(android.os.Handler)>($r21);
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void reloadQueue()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.queuechanged");
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.metachanged");
+
+        $r23 = new android.content.IntentFilter;
+
+        specialinvoke $r23.<android.content.IntentFilter: void <init>()>();
+
+        r4 = $r23;
+
+        virtualinvoke r4.<android.content.IntentFilter: void addAction(java.lang.String)>("com.android.music.musicservicecommand");
+
+        virtualinvoke r4.<android.content.IntentFilter: void addAction(java.lang.String)>("com.android.music.musicservicecommand.togglepause");
+
+        virtualinvoke r4.<android.content.IntentFilter: void addAction(java.lang.String)>("com.android.music.musicservicecommand.pause");
+
+        virtualinvoke r4.<android.content.IntentFilter: void addAction(java.lang.String)>("com.android.music.musicservicecommand.next");
+
+        virtualinvoke r4.<android.content.IntentFilter: void addAction(java.lang.String)>("com.android.music.musicservicecommand.previous");
+
+        $r26 = r0.<com.android.music.MediaPlaybackService: android.content.BroadcastReceiver mIntentReceiver>;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r26, r4);
+
+        $r27 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        r5 = (android.os.PowerManager) $r27;
+
+        $r30 = virtualinvoke r0.<java.lang.Object: java.lang.Class getClass()>();
+
+        $r31 = virtualinvoke $r30.<java.lang.Class: java.lang.String getName()>();
+
+        $r28 = virtualinvoke r5.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, $r31);
+
+        r0.<com.android.music.MediaPlaybackService: android.os.PowerManager$WakeLock mWakeLock> = $r28;
+
+        $r29 = r0.<com.android.music.MediaPlaybackService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r29.<android.os.PowerManager$WakeLock: void setReferenceCounted(boolean)>(0);
+
+        $r33 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        r6 = virtualinvoke $r33.<android.os.Handler: android.os.Message obtainMessage()>();
+
+        $r32 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        virtualinvoke $r32.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>(r6, 60000L);
+
+        return;
+    }
+
+    public void onDestroy()
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.content.Intent r1, $r2;
+        boolean $z0;
+        int $i0;
+        java.lang.String $r4;
+        com.android.music.MediaPlaybackService$MultiPlayer $r6;
+        android.media.AudioManager$OnAudioFocusChangeListener $r7;
+        android.media.AudioManager $r8, $r10;
+        android.media.RemoteControlClient $r9;
+        android.os.Handler $r11, $r12;
+        android.content.BroadcastReceiver $r13, $r16, $r18;
+        android.database.Cursor $r14, $r17;
+        android.os.PowerManager$WakeLock $r15;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $z0 = virtualinvoke r0.<com.android.music.MediaPlaybackService: boolean isPlaying()>();
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("MediaPlaybackService", "Service being destroyed while still playing.");
+
+     label1:
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("android.media.action.CLOSE_AUDIO_EFFECT_CONTROL_SESSION");
+
+        r1 = $r2;
+
+        $i0 = virtualinvoke r0.<com.android.music.MediaPlaybackService: int getAudioSessionId()>();
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("android.media.extra.AUDIO_SESSION", $i0);
+
+        $r4 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getPackageName()>();
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("android.media.extra.PACKAGE_NAME", $r4);
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void sendBroadcast(android.content.Intent)>(r1);
+
+        $r6 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        virtualinvoke $r6.<com.android.music.MediaPlaybackService$MultiPlayer: void release()>();
+
+        r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer> = null;
+
+        $r8 = r0.<com.android.music.MediaPlaybackService: android.media.AudioManager mAudioManager>;
+
+        $r7 = r0.<com.android.music.MediaPlaybackService: android.media.AudioManager$OnAudioFocusChangeListener mAudioFocusListener>;
+
+        virtualinvoke $r8.<android.media.AudioManager: int abandonAudioFocus(android.media.AudioManager$OnAudioFocusChangeListener)>($r7);
+
+        $r10 = r0.<com.android.music.MediaPlaybackService: android.media.AudioManager mAudioManager>;
+
+        $r9 = r0.<com.android.music.MediaPlaybackService: android.media.RemoteControlClient mRemoteControlClient>;
+
+        virtualinvoke $r10.<android.media.AudioManager: void unregisterRemoteControlClient(android.media.RemoteControlClient)>($r9);
+
+        $r12 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        virtualinvoke $r12.<android.os.Handler: void removeCallbacksAndMessages(java.lang.Object)>(null);
+
+        $r11 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mMediaplayerHandler>;
+
+        virtualinvoke $r11.<android.os.Handler: void removeCallbacksAndMessages(java.lang.Object)>(null);
+
+        $r14 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r14 == null goto label2;
+
+        $r17 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        interfaceinvoke $r17.<android.database.Cursor: void close()>();
+
+        r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor> = null;
+
+     label2:
+        $r13 = r0.<com.android.music.MediaPlaybackService: android.content.BroadcastReceiver mIntentReceiver>;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void unregisterReceiver(android.content.BroadcastReceiver)>($r13);
+
+        $r16 = r0.<com.android.music.MediaPlaybackService: android.content.BroadcastReceiver mUnmountReceiver>;
+
+        if $r16 == null goto label3;
+
+        $r18 = r0.<com.android.music.MediaPlaybackService: android.content.BroadcastReceiver mUnmountReceiver>;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void unregisterReceiver(android.content.BroadcastReceiver)>($r18);
+
+        r0.<com.android.music.MediaPlaybackService: android.content.BroadcastReceiver mUnmountReceiver> = null;
+
+     label3:
+        $r15 = r0.<com.android.music.MediaPlaybackService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r15.<android.os.PowerManager$WakeLock: void release()>();
+
+        specialinvoke r0.<android.app.Service: void onDestroy()>();
+
+        return;
+    }
+
+    private void saveQueue(boolean)
+    {
+        com.android.music.MediaPlaybackService r0;
+        boolean z0, $z1, $z2;
+        android.content.SharedPreferences$Editor r1;
+        java.lang.StringBuilder r2, $r10;
+        int i0, i1, i3, i4, $i5, $i6, $i7, $i9, $i10, i17, i18, i19;
+        long l2, $l8, $l14;
+        android.content.SharedPreferences $r3;
+        com.android.music.MediaPlaybackService$MultiPlayer $r5, $r8;
+        java.lang.String $r12, $r15;
+        java.util.Vector $r14, $r18;
+        java.lang.Integer $r17;
+        java.lang.Object $r19;
+        char $c11, $c16;
+        char[] $r22, $r25;
+        byte $b12, $b13, $b15;
+        long[] $r24;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = r0.<com.android.music.MediaPlaybackService: boolean mQueueIsSaveable>;
+
+        if $z1 != 0 goto label01;
+
+        return;
+
+     label01:
+        $r3 = r0.<com.android.music.MediaPlaybackService: android.content.SharedPreferences mPreferences>;
+
+        r1 = interfaceinvoke $r3.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        if z0 == 0 goto label13;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        r2 = $r10;
+
+        i0 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        i1 = 0;
+
+     label02:
+        if i1 >= i0 goto label07;
+
+        $r24 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        l2 = $r24[i1];
+
+        $b12 = l2 cmp 0L;
+
+        if $b12 >= 0 goto label03;
+
+        goto label06;
+
+     label03:
+        $b13 = l2 cmp 0L;
+
+        if $b13 != 0 goto label04;
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("0;");
+
+        goto label06;
+
+     label04:
+        $b15 = l2 cmp 0L;
+
+        if $b15 == 0 goto label05;
+
+        $l14 = l2 & 15L;
+
+        i4 = (int) $l14;
+
+        l2 = l2 >>> 4;
+
+        $r25 = r0.<com.android.music.MediaPlaybackService: char[] hexdigits>;
+
+        $c16 = $r25[i4];
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>($c16);
+
+        goto label04;
+
+     label05:
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(";");
+
+     label06:
+        i1 = i1 + 1;
+
+        goto label02;
+
+     label07:
+        $r12 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putString(java.lang.String,java.lang.String)>("queue", $r12);
+
+        $i9 = r0.<com.android.music.MediaPlaybackService: int mCardId>;
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putInt(java.lang.String,int)>("cardid", $i9);
+
+        $i10 = r0.<com.android.music.MediaPlaybackService: int mShuffleMode>;
+
+        if $i10 == 0 goto label13;
+
+        $r14 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        i17 = virtualinvoke $r14.<java.util.Vector: int size()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        i18 = 0;
+
+     label08:
+        if i18 >= i17 goto label12;
+
+        $r18 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        $r19 = virtualinvoke $r18.<java.util.Vector: java.lang.Object get(int)>(i18);
+
+        $r17 = (java.lang.Integer) $r19;
+
+        i19 = virtualinvoke $r17.<java.lang.Integer: int intValue()>();
+
+        if i19 != 0 goto label09;
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("0;");
+
+        goto label11;
+
+     label09:
+        if i19 == 0 goto label10;
+
+        i3 = i19 & 15;
+
+        i19 = i19 >>> 4;
+
+        $r22 = r0.<com.android.music.MediaPlaybackService: char[] hexdigits>;
+
+        $c11 = $r22[i3];
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>($c11);
+
+        goto label09;
+
+     label10:
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(";");
+
+     label11:
+        i18 = i18 + 1;
+
+        goto label08;
+
+     label12:
+        $r15 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putString(java.lang.String,java.lang.String)>("history", $r15);
+
+     label13:
+        $i5 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putInt(java.lang.String,int)>("curpos", $i5);
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $z2 = virtualinvoke $r5.<com.android.music.MediaPlaybackService$MultiPlayer: boolean isInitialized()>();
+
+        if $z2 == 0 goto label14;
+
+        $r8 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $l8 = virtualinvoke $r8.<com.android.music.MediaPlaybackService$MultiPlayer: long position()>();
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putLong(java.lang.String,long)>("seekpos", $l8);
+
+     label14:
+        $i6 = r0.<com.android.music.MediaPlaybackService: int mRepeatMode>;
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putInt(java.lang.String,int)>("repeatmode", $i6);
+
+        $i7 = r0.<com.android.music.MediaPlaybackService: int mShuffleMode>;
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putInt(java.lang.String,int)>("shufflemode", $i7);
+
+        staticinvoke <com.android.music.SharedPreferencesCompat: void apply(android.content.SharedPreferences$Editor)>(r1);
+
+        return;
+    }
+
+    private void reloadQueue()
+    {
+        com.android.music.MediaPlaybackService r0;
+        java.lang.String r1, $r10, $r19, $r30, r42;
+        int i0, i1, i2, i3, i4, i5, i8, i9, i10, $i12, $i13, $i14, $i17, $i23, $i24, $i25, $i26, $i27, $i28, $i31, $i33, $i34, $i35, $i37, $i38, $i39, $i40, $i41, $i42, $i43, i44, i45, i46, i47;
+        char c6, c11;
+        long l7, $l15, $l16, $l20, $l21, $l29, $l32, $l36;
+        boolean $z1, $z2, $z3;
+        android.content.SharedPreferences $r2, $r3, $r20, $r29, $r33, $r34, $r39, $r40;
+        java.lang.StringBuilder $r4, $r6, $r9, $r14, $r16, $r18, $r21, $r22, $r23, $r24, $r25, $r26, $r27, $r28;
+        java.lang.String[] $r5, $r12;
+        android.net.Uri $r7, $r11;
+        long[] $r8, $r15, $r38;
+        android.content.ContentResolver $r13;
+        com.android.music.MediaPlaybackService$MultiPlayer $r17;
+        byte $b18, $b30;
+        java.util.Vector $r31, $r32, $r35, $r37;
+        java.lang.Integer $r36;
+        android.database.Cursor r41;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = null;
+
+        i0 = r0.<com.android.music.MediaPlaybackService: int mCardId>;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: android.content.SharedPreferences mPreferences>;
+
+        $z1 = interfaceinvoke $r2.<android.content.SharedPreferences: boolean contains(java.lang.String)>("cardid");
+
+        if $z1 == 0 goto label01;
+
+        $r39 = r0.<com.android.music.MediaPlaybackService: android.content.SharedPreferences mPreferences>;
+
+        $i42 = r0.<com.android.music.MediaPlaybackService: int mCardId>;
+
+        $i41 = $i42 ^ -1;
+
+        i0 = interfaceinvoke $r39.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("cardid", $i41);
+
+     label01:
+        $i12 = r0.<com.android.music.MediaPlaybackService: int mCardId>;
+
+        if i0 != $i12 goto label02;
+
+        $r40 = r0.<com.android.music.MediaPlaybackService: android.content.SharedPreferences mPreferences>;
+
+        r1 = interfaceinvoke $r40.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("queue", "");
+
+     label02:
+        if r1 == null goto label03;
+
+        $i43 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        goto label04;
+
+     label03:
+        $i43 = 0;
+
+     label04:
+        i1 = $i43;
+
+        if i1 <= 1 goto label33;
+
+        i2 = 0;
+
+        i3 = 0;
+
+        i4 = 0;
+
+        i5 = 0;
+
+     label05:
+        if i5 >= i1 goto label11;
+
+        c6 = virtualinvoke r1.<java.lang.String: char charAt(int)>(i5);
+
+        if c6 != 59 goto label06;
+
+        $i34 = i2 + 1;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void ensurePlayListCapacity(int)>($i34);
+
+        $r38 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $l36 = (long) i3;
+
+        $r38[i2] = $l36;
+
+        i2 = i2 + 1;
+
+        i3 = 0;
+
+        i4 = 0;
+
+        goto label10;
+
+     label06:
+        if c6 < 48 goto label07;
+
+        if c6 > 57 goto label07;
+
+        $i39 = c6 - 48;
+
+        $i35 = $i39 << i4;
+
+        i3 = i3 + $i35;
+
+        goto label09;
+
+     label07:
+        if c6 < 97 goto label08;
+
+        if c6 > 102 goto label08;
+
+        $i38 = 10 + c6;
+
+        $i37 = $i38 - 97;
+
+        $i40 = $i37 << i4;
+
+        i3 = i3 + $i40;
+
+        goto label09;
+
+     label08:
+        i2 = 0;
+
+        goto label11;
+
+     label09:
+        i4 = i4 + 4;
+
+     label10:
+        i5 = i5 + 1;
+
+        goto label05;
+
+     label11:
+        r0.<com.android.music.MediaPlaybackService: int mPlayListLen> = i2;
+
+        $r3 = r0.<com.android.music.MediaPlaybackService: android.content.SharedPreferences mPreferences>;
+
+        i44 = interfaceinvoke $r3.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("curpos", 0);
+
+        if i44 < 0 goto label12;
+
+        $i13 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if i44 < $i13 goto label13;
+
+     label12:
+        r0.<com.android.music.MediaPlaybackService: int mPlayListLen> = 0;
+
+        return;
+
+     label13:
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = i44;
+
+        $r7 = <android.provider.MediaStore$Audio$Media: android.net.Uri EXTERNAL_CONTENT_URI>;
+
+        $r5 = newarray (java.lang.String)[1];
+
+        $r5[0] = "_id";
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("_id=");
+
+        $r8 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i14 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $l15 = $r8[$i14];
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l15);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r41 = staticinvoke <com.android.music.MusicUtils: android.database.Cursor query(android.content.Context,android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>(r0, $r7, $r5, $r10, null, null);
+
+        if r41 == null goto label14;
+
+        $i31 = interfaceinvoke r41.<android.database.Cursor: int getCount()>();
+
+        if $i31 != 0 goto label15;
+
+     label14:
+        staticinvoke <android.os.SystemClock: void sleep(long)>(3000L);
+
+        $r13 = virtualinvoke r0.<com.android.music.MediaPlaybackService: android.content.ContentResolver getContentResolver()>();
+
+        $r11 = <android.provider.MediaStore$Audio$Media: android.net.Uri EXTERNAL_CONTENT_URI>;
+
+        $r12 = r0.<com.android.music.MediaPlaybackService: java.lang.String[] mCursorCols>;
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("_id=");
+
+        $r15 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i17 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $l16 = $r15[$i17];
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l16);
+
+        $r19 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r41 = virtualinvoke $r13.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r11, $r12, $r19, null, null);
+
+     label15:
+        if r41 == null goto label16;
+
+        interfaceinvoke r41.<android.database.Cursor: void close()>();
+
+     label16:
+        r0.<com.android.music.MediaPlaybackService: int mOpenFailedCounter> = 20;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mQuietMode> = 1;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void openCurrentAndNext()>();
+
+        r0.<com.android.music.MediaPlaybackService: boolean mQuietMode> = 0;
+
+        $r17 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $z2 = virtualinvoke $r17.<com.android.music.MediaPlaybackService$MultiPlayer: boolean isInitialized()>();
+
+        if $z2 != 0 goto label17;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayListLen> = 0;
+
+        return;
+
+     label17:
+        $r20 = r0.<com.android.music.MediaPlaybackService: android.content.SharedPreferences mPreferences>;
+
+        l7 = interfaceinvoke $r20.<android.content.SharedPreferences: long getLong(java.lang.String,long)>("seekpos", 0L);
+
+        $b18 = l7 cmp 0L;
+
+        if $b18 < 0 goto label18;
+
+        $l32 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long duration()>();
+
+        $b30 = l7 cmp $l32;
+
+        if $b30 >= 0 goto label18;
+
+        $l29 = l7;
+
+        goto label19;
+
+     label18:
+        $l29 = 0L;
+
+     label19:
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: long seek(long)>($l29);
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("restored queue, currently at position ");
+
+        $l21 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long position()>();
+
+        $r24 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l21);
+
+        $r23 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/");
+
+        $l20 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long duration()>();
+
+        $r28 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l20);
+
+        $r27 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (requested ");
+
+        $r26 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l7);
+
+        $r25 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r30 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("MediaPlaybackService", $r30);
+
+        $r29 = r0.<com.android.music.MediaPlaybackService: android.content.SharedPreferences mPreferences>;
+
+        i8 = interfaceinvoke $r29.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("repeatmode", 0);
+
+        if i8 == 2 goto label20;
+
+        if i8 == 1 goto label20;
+
+        i8 = 0;
+
+     label20:
+        r0.<com.android.music.MediaPlaybackService: int mRepeatMode> = i8;
+
+        $r33 = r0.<com.android.music.MediaPlaybackService: android.content.SharedPreferences mPreferences>;
+
+        i9 = interfaceinvoke $r33.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("shufflemode", 0);
+
+        if i9 == 2 goto label21;
+
+        if i9 == 1 goto label21;
+
+        i9 = 0;
+
+     label21:
+        if i9 == 0 goto label31;
+
+        $r34 = r0.<com.android.music.MediaPlaybackService: android.content.SharedPreferences mPreferences>;
+
+        r42 = interfaceinvoke $r34.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("history", "");
+
+        if r42 == null goto label22;
+
+        $i33 = virtualinvoke r42.<java.lang.String: int length()>();
+
+        goto label23;
+
+     label22:
+        $i33 = 0;
+
+     label23:
+        i45 = $i33;
+
+        if i45 <= 1 goto label31;
+
+        i46 = 0;
+
+        i47 = 0;
+
+        $r31 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        virtualinvoke $r31.<java.util.Vector: void clear()>();
+
+        i10 = 0;
+
+     label24:
+        if i10 >= i45 goto label31;
+
+        c11 = virtualinvoke r42.<java.lang.String: char charAt(int)>(i10);
+
+        if c11 != 59 goto label26;
+
+        $i24 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if i46 < $i24 goto label25;
+
+        $r37 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        virtualinvoke $r37.<java.util.Vector: void clear()>();
+
+        goto label31;
+
+     label25:
+        $r35 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        $r36 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i46);
+
+        virtualinvoke $r35.<java.util.Vector: boolean add(java.lang.Object)>($r36);
+
+        i46 = 0;
+
+        i47 = 0;
+
+        goto label30;
+
+     label26:
+        if c11 < 48 goto label27;
+
+        if c11 > 57 goto label27;
+
+        $i28 = c11 - 48;
+
+        $i23 = $i28 << i47;
+
+        i46 = i46 + $i23;
+
+        goto label29;
+
+     label27:
+        if c11 < 97 goto label28;
+
+        if c11 > 102 goto label28;
+
+        $i25 = 10 + c11;
+
+        $i26 = $i25 - 97;
+
+        $i27 = $i26 << i47;
+
+        i46 = i46 + $i27;
+
+        goto label29;
+
+     label28:
+        $r32 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        virtualinvoke $r32.<java.util.Vector: void clear()>();
+
+        goto label31;
+
+     label29:
+        i47 = i47 + 4;
+
+     label30:
+        i10 = i10 + 1;
+
+        goto label24;
+
+     label31:
+        if i9 != 2 goto label32;
+
+        $z3 = specialinvoke r0.<com.android.music.MediaPlaybackService: boolean makeAutoShuffleList()>();
+
+        if $z3 != 0 goto label32;
+
+        i9 = 0;
+
+     label32:
+        r0.<com.android.music.MediaPlaybackService: int mShuffleMode> = i9;
+
+     label33:
+        return;
+    }
+
+    public android.os.IBinder onBind(android.content.Intent)
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.content.Intent r1;
+        android.os.Handler $r2;
+        android.os.IBinder $r3;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter0: android.content.Intent;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeCallbacksAndMessages(java.lang.Object)>(null);
+
+        r0.<com.android.music.MediaPlaybackService: boolean mServiceInUse> = 1;
+
+        $r3 = r0.<com.android.music.MediaPlaybackService: android.os.IBinder mBinder>;
+
+        return $r3;
+    }
+
+    public void onRebind(android.content.Intent)
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.content.Intent r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter0: android.content.Intent;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeCallbacksAndMessages(java.lang.Object)>(null);
+
+        r0.<com.android.music.MediaPlaybackService: boolean mServiceInUse> = 1;
+
+        return;
+    }
+
+    public int onStartCommand(android.content.Intent, int, int)
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.content.Intent r1;
+        int i0, i1;
+        java.lang.String r2, r3, $r12, $r14, $r15, $r16, $r17, $r18, $r19, $r20, $r21, $r22, $r23;
+        android.os.Handler $r4, $r5, $r6, $r7;
+        java.lang.StringBuilder $r8, $r9, $r10, $r11, $r13;
+        boolean $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11;
+        byte $b2;
+        long $l3;
+        android.os.Message r24;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter0: android.content.Intent;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r0.<com.android.music.MediaPlaybackService: int mServiceStartId> = i1;
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        virtualinvoke $r4.<android.os.Handler: void removeCallbacksAndMessages(java.lang.Object)>(null);
+
+        if r1 == null goto label12;
+
+        r2 = virtualinvoke r1.<android.content.Intent: java.lang.String getAction()>();
+
+        r3 = virtualinvoke r1.<android.content.Intent: java.lang.String getStringExtra(java.lang.String)>("command");
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onStartCommand ");
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" / ");
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.music.MusicUtils: void debugLog(java.lang.Object)>($r12);
+
+        $r14 = "next";
+
+        $z1 = virtualinvoke $r14.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z1 != 0 goto label01;
+
+        $r15 = "com.android.music.musicservicecommand.next";
+
+        $z2 = virtualinvoke $r15.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z2 == 0 goto label02;
+
+     label01:
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void gotoNext(boolean)>(1);
+
+        goto label12;
+
+     label02:
+        $r16 = "previous";
+
+        $z3 = virtualinvoke $r16.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z3 != 0 goto label03;
+
+        $r17 = "com.android.music.musicservicecommand.previous";
+
+        $z4 = virtualinvoke $r17.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z4 == 0 goto label05;
+
+     label03:
+        $l3 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long position()>();
+
+        $b2 = $l3 cmp 2000L;
+
+        if $b2 >= 0 goto label04;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void prev()>();
+
+        goto label12;
+
+     label04:
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: long seek(long)>(0L);
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void play()>();
+
+        goto label12;
+
+     label05:
+        $r18 = "togglepause";
+
+        $z6 = virtualinvoke $r18.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z6 != 0 goto label06;
+
+        $r19 = "com.android.music.musicservicecommand.togglepause";
+
+        $z5 = virtualinvoke $r19.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z5 == 0 goto label08;
+
+     label06:
+        $z7 = virtualinvoke r0.<com.android.music.MediaPlaybackService: boolean isPlaying()>();
+
+        if $z7 == 0 goto label07;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void pause()>();
+
+        r0.<com.android.music.MediaPlaybackService: boolean mPausedByTransientLossOfFocus> = 0;
+
+        goto label12;
+
+     label07:
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void play()>();
+
+        goto label12;
+
+     label08:
+        $r21 = "pause";
+
+        $z9 = virtualinvoke $r21.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z9 != 0 goto label09;
+
+        $r20 = "com.android.music.musicservicecommand.pause";
+
+        $z8 = virtualinvoke $r20.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z8 == 0 goto label10;
+
+     label09:
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void pause()>();
+
+        r0.<com.android.music.MediaPlaybackService: boolean mPausedByTransientLossOfFocus> = 0;
+
+        goto label12;
+
+     label10:
+        $r23 = "play";
+
+        $z11 = virtualinvoke $r23.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z11 == 0 goto label11;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void play()>();
+
+        goto label12;
+
+     label11:
+        $r22 = "stop";
+
+        $z10 = virtualinvoke $r22.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z10 == 0 goto label12;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void pause()>();
+
+        r0.<com.android.music.MediaPlaybackService: boolean mPausedByTransientLossOfFocus> = 0;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: long seek(long)>(0L);
+
+     label12:
+        $r5 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        virtualinvoke $r5.<android.os.Handler: void removeCallbacksAndMessages(java.lang.Object)>(null);
+
+        $r6 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        r24 = virtualinvoke $r6.<android.os.Handler: android.os.Message obtainMessage()>();
+
+        $r7 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        virtualinvoke $r7.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>(r24, 60000L);
+
+        return 1;
+    }
+
+    public boolean onUnbind(android.content.Intent)
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.content.Intent r1;
+        android.os.Message r2;
+        boolean $z0, $z1, $z3;
+        int $i0, $i1;
+        android.os.Handler $r3, $r4, $r5;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter0: android.content.Intent;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mServiceInUse> = 0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void saveQueue(boolean)>(1);
+
+        $z0 = virtualinvoke r0.<com.android.music.MediaPlaybackService: boolean isPlaying()>();
+
+        if $z0 != 0 goto label1;
+
+        $z1 = r0.<com.android.music.MediaPlaybackService: boolean mPausedByTransientLossOfFocus>;
+
+        if $z1 == 0 goto label2;
+
+     label1:
+        return 1;
+
+     label2:
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if $i0 > 0 goto label3;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mMediaplayerHandler>;
+
+        $z3 = virtualinvoke $r5.<android.os.Handler: boolean hasMessages(int)>(1);
+
+        if $z3 == 0 goto label4;
+
+     label3:
+        $r3 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        r2 = virtualinvoke $r3.<android.os.Handler: android.os.Message obtainMessage()>();
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        virtualinvoke $r4.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>(r2, 60000L);
+
+        return 1;
+
+     label4:
+        $i1 = r0.<com.android.music.MediaPlaybackService: int mServiceStartId>;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void stopSelf(int)>($i1);
+
+        return 1;
+    }
+
+    public void closeExternalStorageFiles(java.lang.String)
+    {
+        com.android.music.MediaPlaybackService r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void stop(boolean)>(1);
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.queuechanged");
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.metachanged");
+
+        return;
+    }
+
+    public void registerExternalStorageListener()
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.content.IntentFilter r1, $r4;
+        android.content.BroadcastReceiver $r2, $r5;
+        com.android.music.MediaPlaybackService$5 $r3;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: android.content.BroadcastReceiver mUnmountReceiver>;
+
+        if $r2 != null goto label1;
+
+        $r3 = new com.android.music.MediaPlaybackService$5;
+
+        specialinvoke $r3.<com.android.music.MediaPlaybackService$5: void <init>(com.android.music.MediaPlaybackService)>(r0);
+
+        r0.<com.android.music.MediaPlaybackService: android.content.BroadcastReceiver mUnmountReceiver> = $r3;
+
+        $r4 = new android.content.IntentFilter;
+
+        specialinvoke $r4.<android.content.IntentFilter: void <init>()>();
+
+        r1 = $r4;
+
+        virtualinvoke r1.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.MEDIA_EJECT");
+
+        virtualinvoke r1.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.MEDIA_MOUNTED");
+
+        virtualinvoke r1.<android.content.IntentFilter: void addDataScheme(java.lang.String)>("file");
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: android.content.BroadcastReceiver mUnmountReceiver>;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r5, r1);
+
+     label1:
+        return;
+    }
+
+    private void notifyChange(java.lang.String)
+    {
+        com.android.music.MediaPlaybackService r0;
+        java.lang.String r1, $r8, $r10, $r12, $r17, $r19, $r20;
+        android.content.Intent r2, $r5;
+        android.media.RemoteControlClient$MetadataEditor r3;
+        android.graphics.Bitmap r4;
+        long $l0, $l1, $l2, $l3;
+        java.lang.Long $r6;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        com.android.music.MediaAppWidgetProvider $r15;
+        android.media.RemoteControlClient $r16, $r25;
+        byte $b4;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r5 = new android.content.Intent;
+
+        specialinvoke $r5.<android.content.Intent: void <init>(java.lang.String)>(r1);
+
+        r2 = $r5;
+
+        $l0 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long getAudioId()>();
+
+        $r6 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l0);
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.io.Serializable)>("id", $r6);
+
+        $r8 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getArtistName()>();
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("artist", $r8);
+
+        $r10 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getAlbumName()>();
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("album", $r10);
+
+        $r12 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getTrackName()>();
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("track", $r12);
+
+        $z0 = virtualinvoke r0.<com.android.music.MediaPlaybackService: boolean isPlaying()>();
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,boolean)>("playing", $z0);
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void sendStickyBroadcast(android.content.Intent)>(r2);
+
+        $z2 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>("com.android.music.playstatechanged");
+
+        if $z2 == 0 goto label3;
+
+        $r25 = r0.<com.android.music.MediaPlaybackService: android.media.RemoteControlClient mRemoteControlClient>;
+
+        $z4 = virtualinvoke r0.<com.android.music.MediaPlaybackService: boolean isPlaying()>();
+
+        if $z4 == 0 goto label1;
+
+        $b4 = 3;
+
+        goto label2;
+
+     label1:
+        $b4 = 2;
+
+     label2:
+        virtualinvoke $r25.<android.media.RemoteControlClient: void setPlaybackState(int)>($b4);
+
+        goto label5;
+
+     label3:
+        $z1 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>("com.android.music.metachanged");
+
+        if $z1 == 0 goto label5;
+
+        $r16 = r0.<com.android.music.MediaPlaybackService: android.media.RemoteControlClient mRemoteControlClient>;
+
+        r3 = virtualinvoke $r16.<android.media.RemoteControlClient: android.media.RemoteControlClient$MetadataEditor editMetadata(boolean)>(1);
+
+        $r17 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getTrackName()>();
+
+        virtualinvoke r3.<android.media.RemoteControlClient$MetadataEditor: android.media.RemoteControlClient$MetadataEditor putString(int,java.lang.String)>(7, $r17);
+
+        $r20 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getAlbumName()>();
+
+        virtualinvoke r3.<android.media.RemoteControlClient$MetadataEditor: android.media.RemoteControlClient$MetadataEditor putString(int,java.lang.String)>(1, $r20);
+
+        $r19 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getArtistName()>();
+
+        virtualinvoke r3.<android.media.RemoteControlClient$MetadataEditor: android.media.RemoteControlClient$MetadataEditor putString(int,java.lang.String)>(2, $r19);
+
+        $l1 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long duration()>();
+
+        virtualinvoke r3.<android.media.RemoteControlClient$MetadataEditor: android.media.RemoteControlClient$MetadataEditor putLong(int,long)>(9, $l1);
+
+        $l2 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long getAudioId()>();
+
+        $l3 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long getAlbumId()>();
+
+        r4 = staticinvoke <com.android.music.MusicUtils: android.graphics.Bitmap getArtwork(android.content.Context,long,long,boolean)>(r0, $l2, $l3, 0);
+
+        if r4 == null goto label4;
+
+        virtualinvoke r3.<android.media.RemoteControlClient$MetadataEditor: android.media.RemoteControlClient$MetadataEditor putBitmap(int,android.graphics.Bitmap)>(100, r4);
+
+     label4:
+        virtualinvoke r3.<android.media.RemoteControlClient$MetadataEditor: void apply()>();
+
+     label5:
+        $z3 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>("com.android.music.queuechanged");
+
+        if $z3 == 0 goto label6;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void saveQueue(boolean)>(1);
+
+        goto label7;
+
+     label6:
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void saveQueue(boolean)>(0);
+
+     label7:
+        $r15 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaAppWidgetProvider mAppWidgetProvider>;
+
+        virtualinvoke $r15.<com.android.music.MediaAppWidgetProvider: void notifyChange(com.android.music.MediaPlaybackService,java.lang.String)>(r0, r1);
+
+        return;
+    }
+
+    private void ensurePlayListCapacity(int)
+    {
+        com.android.music.MediaPlaybackService r0;
+        int i0, i1, i2, $i3, $i5, $i6;
+        long[] r1, $r2, $r3, $r4, $r5, $r6;
+        long $l4;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        if $r2 == null goto label1;
+
+        $r6 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i6 = lengthof $r6;
+
+        if i0 <= $i6 goto label6;
+
+     label1:
+        $i3 = i0 * 2;
+
+        r1 = newarray (long)[$i3];
+
+        $r3 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        if $r3 == null goto label2;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i5 = lengthof $r5;
+
+        goto label3;
+
+     label2:
+        $i5 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+     label3:
+        i1 = $i5;
+
+        i2 = 0;
+
+     label4:
+        if i2 >= i1 goto label5;
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $l4 = $r4[i2];
+
+        r1[i2] = $l4;
+
+        i2 = i2 + 1;
+
+        goto label4;
+
+     label5:
+        r0.<com.android.music.MediaPlaybackService: long[] mPlayList> = r1;
+
+     label6:
+        return;
+    }
+
+    private void addToPlayList(long[], int)
+    {
+        com.android.music.MediaPlaybackService r0;
+        long[] r1, $r3, $r4, $r5;
+        int i0, i1, i2, i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i12, $i13, $i14, $i15, i17;
+        android.database.Cursor $r2;
+        long $l11, $l16;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter0: long[];
+
+        i0 := @parameter1: int;
+
+        i1 = lengthof r1;
+
+        if i0 >= 0 goto label1;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayListLen> = 0;
+
+        i0 = 0;
+
+     label1:
+        $i4 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $i5 = $i4 + i1;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void ensurePlayListCapacity(int)>($i5);
+
+        $i6 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if i0 <= $i6 goto label2;
+
+        i0 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+     label2:
+        $i7 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        i2 = $i7 - i0;
+
+        i3 = i2;
+
+     label3:
+        if i3 <= 0 goto label4;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i15 = i0 + i3;
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i13 = i0 + i3;
+
+        $i14 = $i13 - i1;
+
+        $l16 = $r4[$i14];
+
+        $r5[$i15] = $l16;
+
+        i3 = i3 + -1;
+
+        goto label3;
+
+     label4:
+        i17 = 0;
+
+     label5:
+        if i17 >= i1 goto label6;
+
+        $r3 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i12 = i0 + i17;
+
+        $l11 = r1[i17];
+
+        $r3[$i12] = $l11;
+
+        i17 = i17 + 1;
+
+        goto label5;
+
+     label6:
+        $i8 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $i9 = $i8 + i1;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayListLen> = $i9;
+
+        $i10 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if $i10 != 0 goto label7;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        interfaceinvoke $r2.<android.database.Cursor: void close()>();
+
+        r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor> = null;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.metachanged");
+
+     label7:
+        return;
+    }
+
+    public void enqueue(long[], int)
+    {
+        com.android.music.MediaPlaybackService r0, r2;
+        long[] r1;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9;
+        java.lang.Throwable r3, $r5;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter0: long[];
+
+        i0 := @parameter1: int;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label1:
+        if i0 != 2 goto label2;
+
+        $i5 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $i7 = $i5 + 1;
+
+        $i6 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if $i7 >= $i6 goto label2;
+
+        $i8 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $i9 = $i8 + 1;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void addToPlayList(long[],int)>(r1, $i9);
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.queuechanged");
+
+        goto label4;
+
+     label2:
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void addToPlayList(long[],int)>(r1, 2147483647);
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.queuechanged");
+
+        if i0 != 1 goto label4;
+
+        $i3 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $i2 = lengthof r1;
+
+        $i4 = $i3 - $i2;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = $i4;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void openCurrentAndNext()>();
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void play()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.metachanged");
+
+        exitmonitor r2;
+
+     label3:
+        return;
+
+     label4:
+        $i1 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i1 >= 0 goto label5;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = 0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void openCurrentAndNext()>();
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void play()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.metachanged");
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r5 := @caughtexception;
+
+        r3 = $r5;
+
+        exitmonitor r2;
+
+     label8:
+        throw r3;
+
+     label9:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label7;
+        catch java.lang.Throwable from label4 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    public void open(long[], int)
+    {
+        com.android.music.MediaPlaybackService r0, r2;
+        long[] r1, $r7;
+        int i0, i2, i3, $i4, $i5, $i6, $i7;
+        long l1, $l9, $l10, $l11;
+        boolean z0;
+        java.lang.Throwable r3, $r8;
+        com.android.music.MediaPlaybackService$Shuffler $r5;
+        java.util.Vector $r6;
+        byte $b8, $b12;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter0: long[];
+
+        i0 := @parameter1: int;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label01:
+        $i4 = r0.<com.android.music.MediaPlaybackService: int mShuffleMode>;
+
+        if $i4 != 2 goto label02;
+
+        r0.<com.android.music.MediaPlaybackService: int mShuffleMode> = 1;
+
+     label02:
+        l1 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long getAudioId()>();
+
+        i2 = lengthof r1;
+
+        z0 = 1;
+
+        $i5 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if $i5 != i2 goto label05;
+
+        z0 = 0;
+
+        i3 = 0;
+
+     label03:
+        if i3 >= i2 goto label05;
+
+        $l10 = r1[i3];
+
+        $r7 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $l11 = $r7[i3];
+
+        $b12 = $l10 cmp $l11;
+
+        if $b12 == 0 goto label04;
+
+        z0 = 1;
+
+        goto label05;
+
+     label04:
+        i3 = i3 + 1;
+
+        goto label03;
+
+     label05:
+        if z0 == 0 goto label06;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void addToPlayList(long[],int)>(r1, -1);
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.queuechanged");
+
+     label06:
+        if i0 < 0 goto label07;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = i0;
+
+        goto label08;
+
+     label07:
+        $r5 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$Shuffler mRand>;
+
+        $i6 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $i7 = virtualinvoke $r5.<com.android.music.MediaPlaybackService$Shuffler: int nextInt(int)>($i6);
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = $i7;
+
+     label08:
+        $r6 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        virtualinvoke $r6.<java.util.Vector: void clear()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void saveBookmarkIfNeeded()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void openCurrentAndNext()>();
+
+        $l9 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long getAudioId()>();
+
+        $b8 = l1 cmp $l9;
+
+        if $b8 == 0 goto label09;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.metachanged");
+
+     label09:
+        exitmonitor r2;
+
+     label10:
+        goto label13;
+
+     label11:
+        $r8 := @caughtexception;
+
+        r3 = $r8;
+
+        exitmonitor r2;
+
+     label12:
+        throw r3;
+
+     label13:
+        return;
+
+        catch java.lang.Throwable from label01 to label10 with label11;
+        catch java.lang.Throwable from label11 to label12 with label11;
+    }
+
+    public void moveQueueItem(int, int)
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        int i0, i1, i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, i23;
+        long l2, $l12, $l21, l22;
+        java.lang.Throwable r2, $r12;
+        long[] $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r11;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label01:
+        $i4 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if i0 < $i4 goto label02;
+
+        $i20 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        i0 = $i20 - 1;
+
+     label02:
+        $i5 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if i1 < $i5 goto label03;
+
+        $i19 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        i1 = $i19 - 1;
+
+     label03:
+        if i0 >= i1 goto label08;
+
+        $r7 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        l2 = $r7[i0];
+
+        i3 = i0;
+
+     label04:
+        if i3 >= i1 goto label05;
+
+        $r11 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $r10 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i18 = i3 + 1;
+
+        $l21 = $r10[$i18];
+
+        $r11[i3] = $l21;
+
+        i3 = i3 + 1;
+
+        goto label04;
+
+     label05:
+        $r9 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $r9[i1] = l2;
+
+        $i13 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i13 != i0 goto label06;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = i1;
+
+        goto label07;
+
+     label06:
+        $i15 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i15 < i0 goto label07;
+
+        $i14 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i14 > i1 goto label07;
+
+        $i17 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $i16 = $i17 - 1;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = $i16;
+
+     label07:
+        goto label12;
+
+     label08:
+        if i1 >= i0 goto label12;
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        l22 = $r4[i0];
+
+        i23 = i0;
+
+     label09:
+        if i23 <= i1 goto label10;
+
+        $r8 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $r6 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i10 = i23 - 1;
+
+        $l12 = $r6[$i10];
+
+        $r8[i23] = $l12;
+
+        i23 = i23 + -1;
+
+        goto label09;
+
+     label10:
+        $r5 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $r5[i1] = l22;
+
+        $i6 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i6 != i0 goto label11;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = i1;
+
+        goto label12;
+
+     label11:
+        $i7 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i7 < i1 goto label12;
+
+        $i9 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i9 > i0 goto label12;
+
+        $i8 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $i11 = $i8 + 1;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = $i11;
+
+     label12:
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.queuechanged");
+
+        exitmonitor r1;
+
+     label13:
+        goto label16;
+
+     label14:
+        $r12 := @caughtexception;
+
+        r2 = $r12;
+
+        exitmonitor r1;
+
+     label15:
+        throw r2;
+
+     label16:
+        return;
+
+        catch java.lang.Throwable from label01 to label13 with label14;
+        catch java.lang.Throwable from label14 to label15 with label14;
+    }
+
+    public long[] getQueue()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        int i0, i1;
+        long[] r2, $r5;
+        java.lang.Throwable r3, $r6;
+        long $l2;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        i0 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        r2 = newarray (long)[i0];
+
+        i1 = 0;
+
+     label2:
+        if i1 >= i0 goto label3;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $l2 = $r5[i1];
+
+        r2[i1] = $l2;
+
+        i1 = i1 + 1;
+
+        goto label2;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        return r2;
+
+     label5:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+        exitmonitor r1;
+
+     label6:
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private android.database.Cursor getCursorForId(long)
+    {
+        com.android.music.MediaPlaybackService r0;
+        long l0;
+        java.lang.String r1, $r9;
+        android.database.Cursor r2;
+        android.content.ContentResolver $r3;
+        java.lang.StringBuilder $r4, $r7, $r8;
+        android.net.Uri $r5;
+        java.lang.String[] $r6;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        l0 := @parameter0: long;
+
+        r1 = staticinvoke <java.lang.String: java.lang.String valueOf(long)>(l0);
+
+        $r3 = virtualinvoke r0.<com.android.music.MediaPlaybackService: android.content.ContentResolver getContentResolver()>();
+
+        $r5 = <android.provider.MediaStore$Audio$Media: android.net.Uri EXTERNAL_CONTENT_URI>;
+
+        $r6 = r0.<com.android.music.MediaPlaybackService: java.lang.String[] mCursorCols>;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("_id=");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r2 = virtualinvoke $r3.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r5, $r6, $r9, null, null);
+
+        if r2 == null goto label1;
+
+        interfaceinvoke r2.<android.database.Cursor: boolean moveToFirst()>();
+
+     label1:
+        return r2;
+    }
+
+    private void openCurrentAndNext()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        int i0, $i1, $i2, $i4, $i5, $i7, $i8, $i10;
+        java.lang.Throwable r2, $r22;
+        android.database.Cursor $r4, $r6, $r7, $r8, $r11, $r12, $r13, $r20, $r21;
+        long[] $r5, $r10;
+        long $l3, $l9, $l11, $l12, l14;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        android.widget.Toast $r9;
+        java.lang.StringBuilder $r14, $r15, $r16, $r18;
+        android.net.Uri $r17;
+        java.lang.String $r19;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label01:
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r4 == null goto label02;
+
+        $r21 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        interfaceinvoke $r21.<android.database.Cursor: void close()>();
+
+        r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor> = null;
+
+     label02:
+        $i1 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if $i1 != 0 goto label04;
+
+        exitmonitor r1;
+
+     label03:
+        return;
+
+     label04:
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void stop(boolean)>(0);
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i2 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $l3 = $r5[$i2];
+
+        $r6 = specialinvoke r0.<com.android.music.MediaPlaybackService: android.database.Cursor getCursorForId(long)>($l3);
+
+        r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor> = $r6;
+
+     label05:
+        $r7 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r7 == null goto label06;
+
+        $r13 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $i10 = interfaceinvoke $r13.<android.database.Cursor: int getCount()>();
+
+        if $i10 == 0 goto label06;
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        $r17 = <android.provider.MediaStore$Audio$Media: android.net.Uri EXTERNAL_CONTENT_URI>;
+
+        $r14 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r17);
+
+        $r15 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/");
+
+        $r20 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $l11 = interfaceinvoke $r20.<android.database.Cursor: long getLong(int)>(0);
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l11);
+
+        $r19 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $z3 = virtualinvoke r0.<com.android.music.MediaPlaybackService: boolean open(java.lang.String)>($r19);
+
+        if $z3 == 0 goto label06;
+
+        goto label15;
+
+     label06:
+        $r8 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r8 == null goto label07;
+
+        $r12 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        interfaceinvoke $r12.<android.database.Cursor: void close()>();
+
+        r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor> = null;
+
+     label07:
+        $i4 = r0.<com.android.music.MediaPlaybackService: int mOpenFailedCounter>;
+
+        $i5 = $i4 + 1;
+
+        r0.<com.android.music.MediaPlaybackService: int mOpenFailedCounter> = $i5;
+
+        if $i4 >= 10 goto label11;
+
+        $i7 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if $i7 <= 1 goto label11;
+
+        i0 = specialinvoke r0.<com.android.music.MediaPlaybackService: int getNextPosition(boolean)>(0);
+
+        if i0 >= 0 goto label10;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void gotoIdleState()>();
+
+        $z2 = r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying>;
+
+        if $z2 == 0 goto label08;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying> = 0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.playstatechanged");
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return;
+
+     label10:
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = i0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void stop(boolean)>(0);
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = i0;
+
+        $r10 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i8 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $l9 = $r10[$i8];
+
+        $r11 = specialinvoke r0.<com.android.music.MediaPlaybackService: android.database.Cursor getCursorForId(long)>($l9);
+
+        r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor> = $r11;
+
+        goto label05;
+
+     label11:
+        r0.<com.android.music.MediaPlaybackService: int mOpenFailedCounter> = 0;
+
+        $z0 = r0.<com.android.music.MediaPlaybackService: boolean mQuietMode>;
+
+        if $z0 != 0 goto label12;
+
+        $r9 = staticinvoke <android.widget.Toast: android.widget.Toast makeText(android.content.Context,int,int)>(r0, 2131165269, 0);
+
+        virtualinvoke $r9.<android.widget.Toast: void show()>();
+
+     label12:
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("MediaPlaybackService", "Failed to open file for playback");
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void gotoIdleState()>();
+
+        $z1 = r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying>;
+
+        if $z1 == 0 goto label13;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying> = 0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.playstatechanged");
+
+     label13:
+        exitmonitor r1;
+
+     label14:
+        return;
+
+     label15:
+        $z4 = specialinvoke r0.<com.android.music.MediaPlaybackService: boolean isPodcast()>();
+
+        if $z4 == 0 goto label16;
+
+        l14 = specialinvoke r0.<com.android.music.MediaPlaybackService: long getBookmark()>();
+
+        $l12 = l14 - 5000L;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: long seek(long)>($l12);
+
+     label16:
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void setNextTrack()>();
+
+        exitmonitor r1;
+
+     label17:
+        goto label20;
+
+     label18:
+        $r22 := @caughtexception;
+
+        r2 = $r22;
+
+        exitmonitor r1;
+
+     label19:
+        throw r2;
+
+     label20:
+        return;
+
+        catch java.lang.Throwable from label01 to label03 with label18;
+        catch java.lang.Throwable from label04 to label09 with label18;
+        catch java.lang.Throwable from label10 to label14 with label18;
+        catch java.lang.Throwable from label15 to label17 with label18;
+        catch java.lang.Throwable from label18 to label19 with label18;
+    }
+
+    private void setNextTrack()
+    {
+        com.android.music.MediaPlaybackService r0;
+        long l0;
+        int $i1, $i2, $i3;
+        com.android.music.MediaPlaybackService$MultiPlayer $r1, $r4;
+        long[] $r2;
+        java.lang.StringBuilder $r3, $r6, $r7, $r8;
+        android.net.Uri $r5;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $i1 = specialinvoke r0.<com.android.music.MediaPlaybackService: int getNextPosition(boolean)>(0);
+
+        r0.<com.android.music.MediaPlaybackService: int mNextPlayPos> = $i1;
+
+        $i2 = r0.<com.android.music.MediaPlaybackService: int mNextPlayPos>;
+
+        if $i2 < 0 goto label1;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i3 = r0.<com.android.music.MediaPlaybackService: int mNextPlayPos>;
+
+        l0 = $r2[$i3];
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = <android.provider.MediaStore$Audio$Media: android.net.Uri EXTERNAL_CONTENT_URI>;
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r4.<com.android.music.MediaPlaybackService$MultiPlayer: void setNextDataSource(java.lang.String)>($r9);
+
+        goto label2;
+
+     label1:
+        $r1 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        virtualinvoke $r1.<com.android.music.MediaPlaybackService$MultiPlayer: void setNextDataSource(java.lang.String)>(null);
+
+     label2:
+        return;
+    }
+
+    public boolean open(java.lang.String)
+    {
+        com.android.music.MediaPlaybackService r0, r2;
+        java.lang.String r1, r5, $r11;
+        android.content.ContentResolver r3;
+        android.net.Uri r4;
+        java.lang.String[] r6, $r14, $r15;
+        java.lang.Throwable r8, $r22;
+        android.database.Cursor $r10, $r16, $r17, $r18, $r19, $r21, $r23;
+        com.android.music.MediaPlaybackService$MultiPlayer $r12, $r13;
+        boolean $z0, $z1;
+        int $i0;
+        long[] $r20;
+        long $l1;
+        java.lang.UnsupportedOperationException $r24;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label01:
+        if r1 != null goto label03;
+
+        exitmonitor r2;
+
+     label02:
+        return 0;
+
+     label03:
+        $r10 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r10 != null goto label09;
+
+        r3 = virtualinvoke r0.<com.android.music.MediaPlaybackService: android.content.ContentResolver getContentResolver()>();
+
+        $z1 = virtualinvoke r1.<java.lang.String: boolean startsWith(java.lang.String)>("content://media/");
+
+        if $z1 == 0 goto label04;
+
+        r4 = staticinvoke <android.net.Uri: android.net.Uri parse(java.lang.String)>(r1);
+
+        r5 = null;
+
+        r6 = null;
+
+        goto label05;
+
+     label04:
+        r4 = staticinvoke <android.provider.MediaStore$Audio$Media: android.net.Uri getContentUriForPath(java.lang.String)>(r1);
+
+        r5 = "_data=?";
+
+        $r15 = newarray (java.lang.String)[1];
+
+        $r15[0] = r1;
+
+        r6 = $r15;
+
+     label05:
+        $r14 = r0.<com.android.music.MediaPlaybackService: java.lang.String[] mCursorCols>;
+
+        $r17 = virtualinvoke r3.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>(r4, $r14, r5, r6, null);
+
+        r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor> = $r17;
+
+        $r16 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r16 == null goto label07;
+
+        $r18 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $i0 = interfaceinvoke $r18.<android.database.Cursor: int getCount()>();
+
+        if $i0 != 0 goto label06;
+
+        $r23 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        interfaceinvoke $r23.<android.database.Cursor: void close()>();
+
+        r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor> = null;
+
+        goto label07;
+
+     label06:
+        $r19 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        interfaceinvoke $r19.<android.database.Cursor: boolean moveToNext()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void ensurePlayListCapacity(int)>(1);
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayListLen> = 1;
+
+        $r20 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $r21 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $l1 = interfaceinvoke $r21.<android.database.Cursor: long getLong(int)>(0);
+
+        $r20[0] = $l1;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = 0;
+
+     label07:
+        goto label09;
+
+     label08:
+        $r24 := @caughtexception;
+
+     label09:
+        r0.<com.android.music.MediaPlaybackService: java.lang.String mFileToPlay> = r1;
+
+        $r12 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $r11 = r0.<com.android.music.MediaPlaybackService: java.lang.String mFileToPlay>;
+
+        virtualinvoke $r12.<com.android.music.MediaPlaybackService$MultiPlayer: void setDataSource(java.lang.String)>($r11);
+
+        $r13 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $z0 = virtualinvoke $r13.<com.android.music.MediaPlaybackService$MultiPlayer: boolean isInitialized()>();
+
+        if $z0 == 0 goto label11;
+
+        r0.<com.android.music.MediaPlaybackService: int mOpenFailedCounter> = 0;
+
+        exitmonitor r2;
+
+     label10:
+        return 1;
+
+     label11:
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void stop(boolean)>(1);
+
+        exitmonitor r2;
+
+     label12:
+        return 0;
+
+     label13:
+        $r22 := @caughtexception;
+
+        r8 = $r22;
+
+        exitmonitor r2;
+
+     label14:
+        throw r8;
+
+        catch java.lang.UnsupportedOperationException from label05 to label07 with label08;
+        catch java.lang.Throwable from label01 to label02 with label13;
+        catch java.lang.Throwable from label03 to label10 with label13;
+        catch java.lang.Throwable from label11 to label12 with label13;
+        catch java.lang.Throwable from label13 to label14 with label13;
+    }
+
+    public void play()
+    {
+        com.android.music.MediaPlaybackService r0;
+        long l0, $l5, $l6;
+        android.media.AudioManager$OnAudioFocusChangeListener $r1;
+        android.media.AudioManager $r2, $r4;
+        android.content.ComponentName $r3;
+        java.lang.String $r5, $r7;
+        java.lang.Class $r6;
+        com.android.music.MediaPlaybackService$MultiPlayer $r8, $r9, $r10, $r13;
+        boolean $z0, $z1;
+        int $i2, $i3;
+        android.os.Handler $r11, $r12;
+        byte $b4, $b7;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: android.media.AudioManager mAudioManager>;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: android.media.AudioManager$OnAudioFocusChangeListener mAudioFocusListener>;
+
+        virtualinvoke $r2.<android.media.AudioManager: int requestAudioFocus(android.media.AudioManager$OnAudioFocusChangeListener,int,int)>($r1, 3, 1);
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.media.AudioManager mAudioManager>;
+
+        $r3 = new android.content.ComponentName;
+
+        $r5 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getPackageName()>();
+
+        $r6 = class "com/android/music/MediaButtonIntentReceiver";
+
+        $r7 = virtualinvoke $r6.<java.lang.Class: java.lang.String getName()>();
+
+        specialinvoke $r3.<android.content.ComponentName: void <init>(java.lang.String,java.lang.String)>($r5, $r7);
+
+        virtualinvoke $r4.<android.media.AudioManager: void registerMediaButtonEventReceiver(android.content.ComponentName)>($r3);
+
+        $r8 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $z0 = virtualinvoke $r8.<com.android.music.MediaPlaybackService$MultiPlayer: boolean isInitialized()>();
+
+        if $z0 == 0 goto label3;
+
+        $r9 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        l0 = virtualinvoke $r9.<com.android.music.MediaPlaybackService$MultiPlayer: long duration()>();
+
+        $i3 = r0.<com.android.music.MediaPlaybackService: int mRepeatMode>;
+
+        if $i3 == 1 goto label1;
+
+        $b4 = l0 cmp 2000L;
+
+        if $b4 <= 0 goto label1;
+
+        $r13 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $l6 = virtualinvoke $r13.<com.android.music.MediaPlaybackService$MultiPlayer: long position()>();
+
+        $l5 = l0 - 2000L;
+
+        $b7 = $l6 cmp $l5;
+
+        if $b7 < 0 goto label1;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void gotoNext(boolean)>(1);
+
+     label1:
+        $r10 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        virtualinvoke $r10.<com.android.music.MediaPlaybackService$MultiPlayer: void start()>();
+
+        $r12 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mMediaplayerHandler>;
+
+        virtualinvoke $r12.<android.os.Handler: void removeMessages(int)>(5);
+
+        $r11 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mMediaplayerHandler>;
+
+        virtualinvoke $r11.<android.os.Handler: boolean sendEmptyMessage(int)>(6);
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void updateNotification()>();
+
+        $z1 = r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying>;
+
+        if $z1 != 0 goto label2;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying> = 1;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.playstatechanged");
+
+     label2:
+        goto label4;
+
+     label3:
+        $i2 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if $i2 > 0 goto label4;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void setShuffleMode(int)>(2);
+
+     label4:
+        return;
+    }
+
+    private void updateNotification()
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.widget.RemoteViews r1, $r4;
+        java.lang.String r2, r3, $r5, $r6, $r9, $r13;
+        long $l0;
+        byte $b1;
+        java.lang.Object[] $r7;
+        android.app.Notification $r8, r14;
+        int $i2, $i3;
+        android.content.Intent $r10, $r12;
+        android.app.PendingIntent $r11;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $r4 = new android.widget.RemoteViews;
+
+        $r5 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getPackageName()>();
+
+        specialinvoke $r4.<android.widget.RemoteViews: void <init>(java.lang.String,int)>($r5, 2130903057);
+
+        r1 = $r4;
+
+        virtualinvoke r1.<android.widget.RemoteViews: void setImageViewResource(int,int)>(2131361827, 2130837598);
+
+        $l0 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long getAudioId()>();
+
+        $b1 = $l0 cmp 0L;
+
+        if $b1 >= 0 goto label1;
+
+        $r13 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getPath()>();
+
+        virtualinvoke r1.<android.widget.RemoteViews: void setTextViewText(int,java.lang.CharSequence)>(2131361803, $r13);
+
+        virtualinvoke r1.<android.widget.RemoteViews: void setTextViewText(int,java.lang.CharSequence)>(2131361839, null);
+
+        goto label6;
+
+     label1:
+        r2 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getArtistName()>();
+
+        $r6 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getTrackName()>();
+
+        virtualinvoke r1.<android.widget.RemoteViews: void setTextViewText(int,java.lang.CharSequence)>(2131361803, $r6);
+
+        if r2 == null goto label2;
+
+        $z0 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>("<unknown>");
+
+        if $z0 == 0 goto label3;
+
+     label2:
+        r2 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getString(int)>(2131165239);
+
+     label3:
+        r3 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getAlbumName()>();
+
+        if r3 == null goto label4;
+
+        $z1 = virtualinvoke r3.<java.lang.String: boolean equals(java.lang.Object)>("<unknown>");
+
+        if $z1 == 0 goto label5;
+
+     label4:
+        r3 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getString(int)>(2131165240);
+
+     label5:
+        $r7 = newarray (java.lang.Object)[2];
+
+        $r7[0] = r2;
+
+        $r7[1] = r3;
+
+        $r9 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getString(int,java.lang.Object[])>(2131165292, $r7);
+
+        virtualinvoke r1.<android.widget.RemoteViews: void setTextViewText(int,java.lang.CharSequence)>(2131361839, $r9);
+
+     label6:
+        $r8 = new android.app.Notification;
+
+        specialinvoke $r8.<android.app.Notification: void <init>()>();
+
+        r14 = $r8;
+
+        r14.<android.app.Notification: android.widget.RemoteViews contentView> = r1;
+
+        $i3 = r14.<android.app.Notification: int flags>;
+
+        $i2 = $i3 | 2;
+
+        r14.<android.app.Notification: int flags> = $i2;
+
+        r14.<android.app.Notification: int icon> = 2130837598;
+
+        $r10 = new android.content.Intent;
+
+        specialinvoke $r10.<android.content.Intent: void <init>(java.lang.String)>("com.android.music.PLAYBACK_VIEWER");
+
+        $r12 = virtualinvoke $r10.<android.content.Intent: android.content.Intent addFlags(int)>(268435456);
+
+        $r11 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getActivity(android.content.Context,int,android.content.Intent,int)>(r0, 0, $r12, 0);
+
+        r14.<android.app.Notification: android.app.PendingIntent contentIntent> = $r11;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void startForeground(int,android.app.Notification)>(1, r14);
+
+        return;
+    }
+
+    private void stop(boolean)
+    {
+        com.android.music.MediaPlaybackService r0;
+        boolean z0, $z1;
+        com.android.music.MediaPlaybackService$MultiPlayer $r1, $r4, $r5;
+        android.database.Cursor $r2, $r3;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        if $r1 == null goto label1;
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $z1 = virtualinvoke $r4.<com.android.music.MediaPlaybackService$MultiPlayer: boolean isInitialized()>();
+
+        if $z1 == 0 goto label1;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        virtualinvoke $r5.<com.android.music.MediaPlaybackService$MultiPlayer: void stop()>();
+
+     label1:
+        r0.<com.android.music.MediaPlaybackService: java.lang.String mFileToPlay> = null;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r2 == null goto label2;
+
+        $r3 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        interfaceinvoke $r3.<android.database.Cursor: void close()>();
+
+        r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor> = null;
+
+     label2:
+        if z0 == 0 goto label3;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void gotoIdleState()>();
+
+        goto label4;
+
+     label3:
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void stopForeground(boolean)>(0);
+
+     label4:
+        if z0 == 0 goto label5;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying> = 0;
+
+     label5:
+        return;
+    }
+
+    public void stop()
+    {
+        com.android.music.MediaPlaybackService r0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void stop(boolean)>(1);
+
+        return;
+    }
+
+    public void pause()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        java.lang.Throwable r2, $r6;
+        android.os.Handler $r4;
+        boolean $z0;
+        com.android.music.MediaPlaybackService$MultiPlayer $r5;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mMediaplayerHandler>;
+
+        virtualinvoke $r4.<android.os.Handler: void removeMessages(int)>(6);
+
+        $z0 = virtualinvoke r0.<com.android.music.MediaPlaybackService: boolean isPlaying()>();
+
+        if $z0 == 0 goto label2;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        virtualinvoke $r5.<com.android.music.MediaPlaybackService$MultiPlayer: void pause()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void gotoIdleState()>();
+
+        r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying> = 0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.playstatechanged");
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void saveBookmarkIfNeeded()>();
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public boolean isPlaying()
+    {
+        com.android.music.MediaPlaybackService r0;
+        boolean $z0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $z0 = r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying>;
+
+        return $z0;
+    }
+
+    public void prev()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        java.lang.Integer r2;
+        java.lang.Throwable r3, $r8;
+        java.util.Vector $r5, $r7;
+        java.lang.Object $r6;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label01:
+        $i1 = r0.<com.android.music.MediaPlaybackService: int mShuffleMode>;
+
+        if $i1 != 1 goto label04;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        i0 = virtualinvoke $r5.<java.util.Vector: int size()>();
+
+        if i0 != 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        $r7 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        $i7 = i0 - 1;
+
+        $r6 = virtualinvoke $r7.<java.util.Vector: java.lang.Object remove(int)>($i7);
+
+        r2 = (java.lang.Integer) $r6;
+
+        $i8 = virtualinvoke r2.<java.lang.Integer: int intValue()>();
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = $i8;
+
+        goto label06;
+
+     label04:
+        $i2 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i2 <= 0 goto label05;
+
+        $i5 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $i6 = $i5 - 1;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = $i6;
+
+        goto label06;
+
+     label05:
+        $i3 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $i4 = $i3 - 1;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = $i4;
+
+     label06:
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void saveBookmarkIfNeeded()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void stop(boolean)>(0);
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void openCurrentAndNext()>();
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void play()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.metachanged");
+
+        exitmonitor r1;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r8 := @caughtexception;
+
+        r3 = $r8;
+
+        exitmonitor r1;
+
+     label09:
+        throw r3;
+
+     label10:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+    }
+
+    private int getNextPosition(boolean)
+    {
+        com.android.music.MediaPlaybackService r0;
+        boolean z0;
+        int i0, i1, i2, i3, i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, i25, i26, i27, i28;
+        int[] r1;
+        java.util.Vector $r2, $r3, $r5, $r8, $r9;
+        com.android.music.MediaPlaybackService$Shuffler $r4;
+        java.lang.Integer $r6, $r10;
+        java.lang.Object $r7;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        z0 := @parameter0: boolean;
+
+        $i5 = r0.<com.android.music.MediaPlaybackService: int mRepeatMode>;
+
+        if $i5 != 1 goto label02;
+
+        $i23 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i23 >= 0 goto label01;
+
+        return 0;
+
+     label01:
+        $i24 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        return $i24;
+
+     label02:
+        $i6 = r0.<com.android.music.MediaPlaybackService: int mShuffleMode>;
+
+        if $i6 != 1 goto label18;
+
+        $i17 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i17 < 0 goto label03;
+
+        $r9 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        $i21 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i21);
+
+        virtualinvoke $r9.<java.util.Vector: boolean add(java.lang.Object)>($r10);
+
+     label03:
+        $r2 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        $i18 = virtualinvoke $r2.<java.util.Vector: int size()>();
+
+        if $i18 <= 100 goto label04;
+
+        $r8 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        virtualinvoke $r8.<java.util.Vector: void removeElementAt(int)>(0);
+
+     label04:
+        i0 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        r1 = newarray (int)[i0];
+
+        i1 = 0;
+
+     label05:
+        if i1 >= i0 goto label06;
+
+        r1[i1] = i1;
+
+        i1 = i1 + 1;
+
+        goto label05;
+
+     label06:
+        $r3 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        i25 = virtualinvoke $r3.<java.util.Vector: int size()>();
+
+        i2 = i0;
+
+        i3 = 0;
+
+     label07:
+        if i3 >= i25 goto label09;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        $r7 = virtualinvoke $r5.<java.util.Vector: java.lang.Object get(int)>(i3);
+
+        $r6 = (java.lang.Integer) $r7;
+
+        i4 = virtualinvoke $r6.<java.lang.Integer: int intValue()>();
+
+        if i4 >= i0 goto label08;
+
+        $i22 = r1[i4];
+
+        if $i22 < 0 goto label08;
+
+        i2 = i2 + -1;
+
+        r1[i4] = -1;
+
+     label08:
+        i3 = i3 + 1;
+
+        goto label07;
+
+     label09:
+        if i2 > 0 goto label14;
+
+        $i20 = r0.<com.android.music.MediaPlaybackService: int mRepeatMode>;
+
+        if $i20 == 2 goto label10;
+
+        if z0 == 0 goto label13;
+
+     label10:
+        i2 = i0;
+
+        i26 = 0;
+
+     label11:
+        if i26 >= i0 goto label12;
+
+        r1[i26] = i26;
+
+        i26 = i26 + 1;
+
+        goto label11;
+
+     label12:
+        goto label14;
+
+     label13:
+        return -1;
+
+     label14:
+        $r4 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$Shuffler mRand>;
+
+        i27 = virtualinvoke $r4.<com.android.music.MediaPlaybackService$Shuffler: int nextInt(int)>(i2);
+
+        i28 = -1;
+
+     label15:
+        i28 = i28 + 1;
+
+        $i19 = r1[i28];
+
+        if $i19 >= 0 goto label16;
+
+        goto label15;
+
+     label16:
+        i27 = i27 + -1;
+
+        if i27 >= 0 goto label15;
+
+        goto label17;
+
+     label17:
+        return i28;
+
+     label18:
+        $i7 = r0.<com.android.music.MediaPlaybackService: int mShuffleMode>;
+
+        if $i7 != 2 goto label19;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void doAutoShuffleUpdate()>();
+
+        $i16 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $i15 = $i16 + 1;
+
+        return $i15;
+
+     label19:
+        $i10 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $i8 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $i9 = $i8 - 1;
+
+        if $i10 < $i9 goto label23;
+
+        $i14 = r0.<com.android.music.MediaPlaybackService: int mRepeatMode>;
+
+        if $i14 != 0 goto label20;
+
+        if z0 != 0 goto label20;
+
+        return -1;
+
+     label20:
+        $i13 = r0.<com.android.music.MediaPlaybackService: int mRepeatMode>;
+
+        if $i13 == 2 goto label21;
+
+        if z0 == 0 goto label22;
+
+     label21:
+        return 0;
+
+     label22:
+        return -1;
+
+     label23:
+        $i11 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $i12 = $i11 + 1;
+
+        return $i12;
+    }
+
+    public void gotoNext(boolean)
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        boolean z0, $z1;
+        int i0, $i1;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label01:
+        $i1 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if $i1 > 0 goto label03;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("MediaPlaybackService", "No play queue");
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        i0 = specialinvoke r0.<com.android.music.MediaPlaybackService: int getNextPosition(boolean)>(z0);
+
+        if i0 >= 0 goto label06;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void gotoIdleState()>();
+
+        $z1 = r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying>;
+
+        if $z1 == 0 goto label04;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying> = 0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.playstatechanged");
+
+     label04:
+        exitmonitor r1;
+
+     label05:
+        return;
+
+     label06:
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = i0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void saveBookmarkIfNeeded()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void stop(boolean)>(0);
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = i0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void openCurrentAndNext()>();
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void play()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.metachanged");
+
+        exitmonitor r1;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label09:
+        throw r2;
+
+     label10:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label05 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+    }
+
+    private void gotoIdleState()
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.os.Message r1;
+        android.os.Handler $r2, $r3, $r4;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeCallbacksAndMessages(java.lang.Object)>(null);
+
+        $r3 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        r1 = virtualinvoke $r3.<android.os.Handler: android.os.Message obtainMessage()>();
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mDelayedStopHandler>;
+
+        virtualinvoke $r4.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>(r1, 60000L);
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void stopForeground(boolean)>(1);
+
+        return;
+    }
+
+    private void saveBookmarkIfNeeded()
+    {
+        com.android.music.MediaPlaybackService r0;
+        long l0, l1, l2, $l6, $l7, $l9, $l11;
+        android.content.ContentValues r1, $r3;
+        android.net.Uri r2, $r6;
+        boolean $z0;
+        byte $b3, $b4, $b5, $b10, $b12, $b13;
+        android.database.Cursor $r4;
+        java.lang.Long $r5;
+        android.content.ContentResolver $r7;
+        android.database.sqlite.SQLiteException $r8;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.music.MediaPlaybackService: boolean isPodcast()>();
+
+        if $z0 == 0 goto label7;
+
+        l0 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long position()>();
+
+        l1 = specialinvoke r0.<com.android.music.MediaPlaybackService: long getBookmark()>();
+
+        l2 = virtualinvoke r0.<com.android.music.MediaPlaybackService: long duration()>();
+
+        $b3 = l0 cmp l1;
+
+        if $b3 >= 0 goto label2;
+
+        $l11 = l0 + 10000L;
+
+        $b13 = $l11 cmp l1;
+
+        if $b13 > 0 goto label3;
+
+     label2:
+        $b4 = l0 cmp l1;
+
+        if $b4 <= 0 goto label4;
+
+        $l9 = l0 - 10000L;
+
+        $b12 = $l9 cmp l1;
+
+        if $b12 >= 0 goto label4;
+
+     label3:
+        return;
+
+     label4:
+        $b5 = l0 cmp 15000L;
+
+        if $b5 < 0 goto label5;
+
+        $l7 = l0 + 10000L;
+
+        $b10 = $l7 cmp l2;
+
+        if $b10 <= 0 goto label6;
+
+     label5:
+        l0 = 0L;
+
+     label6:
+        $r3 = new android.content.ContentValues;
+
+        specialinvoke $r3.<android.content.ContentValues: void <init>()>();
+
+        r1 = $r3;
+
+        $r5 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        virtualinvoke r1.<android.content.ContentValues: void put(java.lang.String,java.lang.Long)>("bookmark", $r5);
+
+        $r6 = <android.provider.MediaStore$Audio$Media: android.net.Uri EXTERNAL_CONTENT_URI>;
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $l6 = interfaceinvoke $r4.<android.database.Cursor: long getLong(int)>(0);
+
+        r2 = staticinvoke <android.content.ContentUris: android.net.Uri withAppendedId(android.net.Uri,long)>($r6, $l6);
+
+        $r7 = virtualinvoke r0.<com.android.music.MediaPlaybackService: android.content.ContentResolver getContentResolver()>();
+
+        virtualinvoke $r7.<android.content.ContentResolver: int update(android.net.Uri,android.content.ContentValues,java.lang.String,java.lang.String[])>(r2, r1, null, null);
+
+     label7:
+        goto label9;
+
+     label8:
+        $r8 := @caughtexception;
+
+     label9:
+        return;
+
+        catch android.database.sqlite.SQLiteException from label1 to label3 with label8;
+        catch android.database.sqlite.SQLiteException from label4 to label7 with label8;
+    }
+
+    private void doAutoShuffleUpdate()
+    {
+        com.android.music.MediaPlaybackService r0;
+        boolean z0, $z1;
+        int i0, i1, i2, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i17, $i18, i19;
+        java.util.Vector $r1, $r5, $r6, $r10;
+        long[] $r2, $r7, $r8;
+        com.android.music.MediaPlaybackService$Shuffler $r3;
+        java.lang.Integer $r4;
+        long $l15;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        z0 = 0;
+
+        $i4 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i4 <= 10 goto label01;
+
+        $i17 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $i18 = $i17 - 9;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: int removeTracks(int,int)>(0, $i18);
+
+        z0 = 1;
+
+     label01:
+        $i7 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $i5 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i5 >= 0 goto label02;
+
+        $i6 = -1;
+
+        goto label03;
+
+     label02:
+        $i6 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+     label03:
+        $i8 = $i7 - $i6;
+
+        i0 = 7 - $i8;
+
+        i1 = 0;
+
+     label04:
+        if i1 >= i0 goto label09;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        i2 = virtualinvoke $r1.<java.util.Vector: int size()>();
+
+     label05:
+        $r3 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$Shuffler mRand>;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: long[] mAutoShuffleList>;
+
+        $i9 = lengthof $r2;
+
+        i19 = virtualinvoke $r3.<com.android.music.MediaPlaybackService$Shuffler: int nextInt(int)>($i9);
+
+        $z1 = specialinvoke r0.<com.android.music.MediaPlaybackService: boolean wasRecentlyUsed(int,int)>(i19, i2);
+
+        if $z1 != 0 goto label06;
+
+        goto label07;
+
+     label06:
+        i2 = i2 / 2;
+
+        goto label05;
+
+     label07:
+        $r5 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i19);
+
+        virtualinvoke $r5.<java.util.Vector: boolean add(java.lang.Object)>($r4);
+
+        $r6 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        $i11 = virtualinvoke $r6.<java.util.Vector: int size()>();
+
+        if $i11 <= 100 goto label08;
+
+        $r10 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        virtualinvoke $r10.<java.util.Vector: java.lang.Object remove(int)>(0);
+
+     label08:
+        $i10 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $i13 = $i10 + 1;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void ensurePlayListCapacity(int)>($i13);
+
+        $r7 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i12 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $i14 = $i12 + 1;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayListLen> = $i14;
+
+        $r8 = r0.<com.android.music.MediaPlaybackService: long[] mAutoShuffleList>;
+
+        $l15 = $r8[i19];
+
+        $r7[$i12] = $l15;
+
+        z0 = 1;
+
+        i1 = i1 + 1;
+
+        goto label04;
+
+     label09:
+        if z0 == 0 goto label10;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.queuechanged");
+
+     label10:
+        return;
+    }
+
+    private boolean wasRecentlyUsed(int, int)
+    {
+        com.android.music.MediaPlaybackService r0;
+        int i0, i1, i2, i3, i4, $i6, $i7;
+        long l5, $l8;
+        java.util.Vector $r1, $r2;
+        java.lang.Object $r3;
+        java.lang.Integer $r4;
+        byte $b10;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        if i1 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        i2 = virtualinvoke $r1.<java.util.Vector: int size()>();
+
+        if i2 >= i1 goto label2;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("MediaPlaybackService", "lookback too big");
+
+        i1 = i2;
+
+     label2:
+        i3 = i2 - 1;
+
+        i4 = 0;
+
+     label3:
+        if i4 >= i1 goto label5;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: java.util.Vector mHistory>;
+
+        $i6 = i3 - i4;
+
+        $r3 = virtualinvoke $r2.<java.util.Vector: java.lang.Object get(int)>($i6);
+
+        $r4 = (java.lang.Integer) $r3;
+
+        $i7 = virtualinvoke $r4.<java.lang.Integer: int intValue()>();
+
+        l5 = (long) $i7;
+
+        $l8 = (long) i0;
+
+        $b10 = l5 cmp $l8;
+
+        if $b10 != 0 goto label4;
+
+        return 1;
+
+     label4:
+        i4 = i4 + 1;
+
+        goto label3;
+
+     label5:
+        return 0;
+    }
+
+    private boolean makeAutoShuffleList()
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.content.ContentResolver r1;
+        android.database.Cursor r2;
+        boolean z0, z2;
+        long[] r3;
+        int i0, $i1, i3;
+        java.lang.Throwable r4, $r8;
+        java.lang.String[] $r5;
+        android.net.Uri $r6;
+        long $l2;
+        java.lang.RuntimeException $r7;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = virtualinvoke r0.<com.android.music.MediaPlaybackService: android.content.ContentResolver getContentResolver()>();
+
+        r2 = null;
+
+     label01:
+        $r6 = <android.provider.MediaStore$Audio$Media: android.net.Uri EXTERNAL_CONTENT_URI>;
+
+        $r5 = newarray (java.lang.String)[1];
+
+        $r5[0] = "_id";
+
+        r2 = virtualinvoke r1.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r6, $r5, "is_music=1", null, null);
+
+        if r2 == null goto label02;
+
+        $i1 = interfaceinvoke r2.<android.database.Cursor: int getCount()>();
+
+        if $i1 != 0 goto label05;
+
+     label02:
+        z0 = 0;
+
+     label03:
+        if r2 == null goto label04;
+
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+     label04:
+        return z0;
+
+     label05:
+        i3 = interfaceinvoke r2.<android.database.Cursor: int getCount()>();
+
+        r3 = newarray (long)[i3];
+
+        i0 = 0;
+
+     label06:
+        if i0 >= i3 goto label07;
+
+        interfaceinvoke r2.<android.database.Cursor: boolean moveToNext()>();
+
+        $l2 = interfaceinvoke r2.<android.database.Cursor: long getLong(int)>(0);
+
+        r3[i0] = $l2;
+
+        i0 = i0 + 1;
+
+        goto label06;
+
+     label07:
+        r0.<com.android.music.MediaPlaybackService: long[] mAutoShuffleList> = r3;
+
+        z2 = 1;
+
+     label08:
+        if r2 == null goto label09;
+
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+     label09:
+        return z2;
+
+     label10:
+        $r7 := @caughtexception;
+
+     label11:
+        if r2 == null goto label15;
+
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        goto label15;
+
+     label12:
+        $r8 := @caughtexception;
+
+        r4 = $r8;
+
+     label13:
+        if r2 == null goto label14;
+
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+     label14:
+        throw r4;
+
+     label15:
+        return 0;
+
+        catch java.lang.RuntimeException from label01 to label03 with label10;
+        catch java.lang.RuntimeException from label05 to label08 with label10;
+        catch java.lang.Throwable from label01 to label03 with label12;
+        catch java.lang.Throwable from label05 to label08 with label12;
+        catch java.lang.Throwable from label10 to label11 with label12;
+        catch java.lang.Throwable from label12 to label13 with label12;
+    }
+
+    public int removeTracks(int, int)
+    {
+        com.android.music.MediaPlaybackService r0;
+        int i0, i1, i2;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 = specialinvoke r0.<com.android.music.MediaPlaybackService: int removeTracksInternal(int,int)>(i0, i1);
+
+        if i2 <= 0 goto label1;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.queuechanged");
+
+     label1:
+        return i2;
+    }
+
+    private int removeTracksInternal(int, int)
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        int i0, i1, i2, i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i22, $i23, $i24, $i25, $i26, $i27;
+        boolean z0, z1;
+        java.lang.Throwable r2, $r8;
+        android.database.Cursor $r4, $r5;
+        long[] $r6, $r7;
+        long $l21;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label01:
+        if i1 >= i0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return 0;
+
+     label03:
+        if i0 >= 0 goto label04;
+
+        i0 = 0;
+
+     label04:
+        $i4 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if i1 < $i4 goto label05;
+
+        $i25 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        i1 = $i25 - 1;
+
+     label05:
+        z0 = 0;
+
+        $i5 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if i0 > $i5 goto label06;
+
+        $i27 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i27 > i1 goto label06;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = i0;
+
+        z0 = 1;
+
+        goto label07;
+
+     label06:
+        $i6 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i6 <= i1 goto label07;
+
+        $i23 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $i24 = i1 - i0;
+
+        $i22 = $i24 + 1;
+
+        $i26 = $i23 - $i22;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = $i26;
+
+     label07:
+        $i7 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $i8 = $i7 - i1;
+
+        i2 = $i8 - 1;
+
+        i3 = 0;
+
+     label08:
+        if i3 >= i2 goto label09;
+
+        $r7 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i20 = i0 + i3;
+
+        $r6 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i18 = i1 + 1;
+
+        $i19 = $i18 + i3;
+
+        $l21 = $r6[$i19];
+
+        $r7[$i20] = $l21;
+
+        i3 = i3 + 1;
+
+        goto label08;
+
+     label09:
+        $i12 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $i9 = i1 - i0;
+
+        $i10 = $i9 + 1;
+
+        $i11 = $i12 - $i10;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayListLen> = $i11;
+
+        if z0 == 0 goto label13;
+
+        $i14 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if $i14 != 0 goto label10;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void stop(boolean)>(1);
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = -1;
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r4 == null goto label12;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        interfaceinvoke $r5.<android.database.Cursor: void close()>();
+
+        r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor> = null;
+
+        goto label12;
+
+     label10:
+        $i16 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $i17 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if $i16 < $i17 goto label11;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = 0;
+
+     label11:
+        z1 = virtualinvoke r0.<com.android.music.MediaPlaybackService: boolean isPlaying()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void stop(boolean)>(0);
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void openCurrentAndNext()>();
+
+        if z1 == 0 goto label12;
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void play()>();
+
+     label12:
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.metachanged");
+
+     label13:
+        $i13 = i1 - i0;
+
+        $i15 = $i13 + 1;
+
+        exitmonitor r1;
+
+     label14:
+        return $i15;
+
+     label15:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+        exitmonitor r1;
+
+     label16:
+        throw r2;
+
+        catch java.lang.Throwable from label01 to label02 with label15;
+        catch java.lang.Throwable from label03 to label14 with label15;
+        catch java.lang.Throwable from label15 to label16 with label15;
+    }
+
+    public int removeTrack(long)
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        long l0, $l4;
+        int i1, i2, $i3, $i6;
+        java.lang.Throwable r2, $r5;
+        long[] $r4;
+        byte $b5;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        l0 := @parameter0: long;
+
+        i1 = 0;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        i2 = 0;
+
+     label2:
+        $i3 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if i2 >= $i3 goto label4;
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $l4 = $r4[i2];
+
+        $b5 = $l4 cmp l0;
+
+        if $b5 != 0 goto label3;
+
+        $i6 = specialinvoke r0.<com.android.music.MediaPlaybackService: int removeTracksInternal(int,int)>(i2, i2);
+
+        i1 = i1 + $i6;
+
+        i2 = i2 + -1;
+
+     label3:
+        i2 = i2 + 1;
+
+        goto label2;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label7:
+        throw r2;
+
+     label8:
+        if i1 <= 0 goto label9;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.queuechanged");
+
+     label9:
+        return i1;
+
+        catch java.lang.Throwable from label1 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    public void setShuffleMode(int)
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        int i0, $i1, $i2, $i3;
+        java.lang.Throwable r2, $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label01:
+        $i1 = r0.<com.android.music.MediaPlaybackService: int mShuffleMode>;
+
+        if $i1 != i0 goto label03;
+
+        $i3 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        if $i3 <= 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        r0.<com.android.music.MediaPlaybackService: int mShuffleMode> = i0;
+
+        $i2 = r0.<com.android.music.MediaPlaybackService: int mShuffleMode>;
+
+        if $i2 != 2 goto label06;
+
+        $z0 = specialinvoke r0.<com.android.music.MediaPlaybackService: boolean makeAutoShuffleList()>();
+
+        if $z0 == 0 goto label05;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayListLen> = 0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void doAutoShuffleUpdate()>();
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = 0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void openCurrentAndNext()>();
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void play()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.metachanged");
+
+        exitmonitor r1;
+
+     label04:
+        return;
+
+     label05:
+        r0.<com.android.music.MediaPlaybackService: int mShuffleMode> = 0;
+
+     label06:
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void saveQueue(boolean)>(0);
+
+        exitmonitor r1;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label09:
+        throw r2;
+
+     label10:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label05 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+    }
+
+    public int getShuffleMode()
+    {
+        com.android.music.MediaPlaybackService r0;
+        int $i0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mShuffleMode>;
+
+        return $i0;
+    }
+
+    public void setRepeatMode(int)
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        int i0;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        r0.<com.android.music.MediaPlaybackService: int mRepeatMode> = i0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void setNextTrack()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void saveQueue(boolean)>(0);
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public int getRepeatMode()
+    {
+        com.android.music.MediaPlaybackService r0;
+        int $i0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mRepeatMode>;
+
+        return $i0;
+    }
+
+    public int getMediaMountedCount()
+    {
+        com.android.music.MediaPlaybackService r0;
+        int $i0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mMediaMountedCount>;
+
+        return $i0;
+    }
+
+    public java.lang.String getPath()
+    {
+        com.android.music.MediaPlaybackService r0;
+        java.lang.String $r1;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: java.lang.String mFileToPlay>;
+
+        return $r1;
+    }
+
+    public long getAudioId()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        java.lang.Throwable r2, $r6;
+        int $i0, $i1;
+        com.android.music.MediaPlaybackService$MultiPlayer $r4;
+        boolean $z0;
+        long[] $r5;
+        long $l2;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        if $i0 < 0 goto label3;
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $z0 = virtualinvoke $r4.<com.android.music.MediaPlaybackService$MultiPlayer: boolean isInitialized()>();
+
+        if $z0 == 0 goto label3;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        $i1 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $l2 = $r5[$i1];
+
+        exitmonitor r1;
+
+     label2:
+        return $l2;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+     label7:
+        return -1L;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public int getQueuePosition()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        java.lang.Throwable r2, $r4;
+        int $i0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        exitmonitor r1;
+
+     label2:
+        return $i0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public void setQueuePosition(int)
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        int i0, $i1;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void stop(boolean)>(0);
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = i0;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void openCurrentAndNext()>();
+
+        virtualinvoke r0.<com.android.music.MediaPlaybackService: void play()>();
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>("com.android.music.metachanged");
+
+        $i1 = r0.<com.android.music.MediaPlaybackService: int mShuffleMode>;
+
+        if $i1 != 2 goto label2;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void doAutoShuffleUpdate()>();
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public java.lang.String getArtistName()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        java.lang.Throwable r2, $r8;
+        android.database.Cursor $r4, $r5, $r6;
+        int $i0;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r4 != null goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return null;
+
+     label3:
+        $r6 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $i0 = interfaceinvoke $r5.<android.database.Cursor: int getColumnIndexOrThrow(java.lang.String)>("artist");
+
+        $r7 = interfaceinvoke $r6.<android.database.Cursor: java.lang.String getString(int)>($i0);
+
+        exitmonitor r1;
+
+     label4:
+        return $r7;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public long getArtistId()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        java.lang.Throwable r2, $r7;
+        android.database.Cursor $r4, $r5, $r6;
+        int $i0;
+        long $l1;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r4 != null goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return -1L;
+
+     label3:
+        $r6 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $i0 = interfaceinvoke $r5.<android.database.Cursor: int getColumnIndexOrThrow(java.lang.String)>("artist_id");
+
+        $l1 = interfaceinvoke $r6.<android.database.Cursor: long getLong(int)>($i0);
+
+        exitmonitor r1;
+
+     label4:
+        return $l1;
+
+     label5:
+        $r7 := @caughtexception;
+
+        r2 = $r7;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public java.lang.String getAlbumName()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        java.lang.Throwable r2, $r8;
+        android.database.Cursor $r4, $r5, $r6;
+        int $i0;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r4 != null goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return null;
+
+     label3:
+        $r6 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $i0 = interfaceinvoke $r5.<android.database.Cursor: int getColumnIndexOrThrow(java.lang.String)>("album");
+
+        $r7 = interfaceinvoke $r6.<android.database.Cursor: java.lang.String getString(int)>($i0);
+
+        exitmonitor r1;
+
+     label4:
+        return $r7;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public long getAlbumId()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        java.lang.Throwable r2, $r7;
+        android.database.Cursor $r4, $r5, $r6;
+        int $i0;
+        long $l1;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r4 != null goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return -1L;
+
+     label3:
+        $r6 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $i0 = interfaceinvoke $r5.<android.database.Cursor: int getColumnIndexOrThrow(java.lang.String)>("album_id");
+
+        $l1 = interfaceinvoke $r6.<android.database.Cursor: long getLong(int)>($i0);
+
+        exitmonitor r1;
+
+     label4:
+        return $l1;
+
+     label5:
+        $r7 := @caughtexception;
+
+        r2 = $r7;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public java.lang.String getTrackName()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        java.lang.Throwable r2, $r8;
+        android.database.Cursor $r4, $r5, $r6;
+        int $i0;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r4 != null goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return null;
+
+     label3:
+        $r6 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $r5 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $i0 = interfaceinvoke $r5.<android.database.Cursor: int getColumnIndexOrThrow(java.lang.String)>("title");
+
+        $r7 = interfaceinvoke $r6.<android.database.Cursor: java.lang.String getString(int)>($i0);
+
+        exitmonitor r1;
+
+     label4:
+        return $r7;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private boolean isPodcast()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        java.lang.Throwable r2, $r6;
+        android.database.Cursor $r4, $r5;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r4 != null goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return 0;
+
+     label3:
+        $r5 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $i0 = interfaceinvoke $r5.<android.database.Cursor: int getInt(int)>(8);
+
+        if $i0 <= 0 goto label4;
+
+        $z0 = 1;
+
+        goto label5;
+
+     label4:
+        $z0 = 0;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return $z0;
+
+     label7:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+        exitmonitor r1;
+
+     label8:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    private long getBookmark()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        java.lang.Throwable r2, $r6;
+        android.database.Cursor $r4, $r5;
+        long $l0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        if $r4 != null goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return 0L;
+
+     label3:
+        $r5 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        $l0 = interfaceinvoke $r5.<android.database.Cursor: long getLong(int)>(9);
+
+        exitmonitor r1;
+
+     label4:
+        return $l0;
+
+     label5:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public long duration()
+    {
+        com.android.music.MediaPlaybackService r0;
+        com.android.music.MediaPlaybackService$MultiPlayer $r1, $r2;
+        boolean $z0;
+        long $l0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $z0 = virtualinvoke $r1.<com.android.music.MediaPlaybackService$MultiPlayer: boolean isInitialized()>();
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $l0 = virtualinvoke $r2.<com.android.music.MediaPlaybackService$MultiPlayer: long duration()>();
+
+        return $l0;
+
+     label1:
+        return -1L;
+    }
+
+    public long position()
+    {
+        com.android.music.MediaPlaybackService r0;
+        com.android.music.MediaPlaybackService$MultiPlayer $r1, $r2;
+        boolean $z0;
+        long $l0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $z0 = virtualinvoke $r1.<com.android.music.MediaPlaybackService$MultiPlayer: boolean isInitialized()>();
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $l0 = virtualinvoke $r2.<com.android.music.MediaPlaybackService$MultiPlayer: long position()>();
+
+        return $l0;
+
+     label1:
+        return -1L;
+    }
+
+    public long seek(long)
+    {
+        com.android.music.MediaPlaybackService r0;
+        long l0, $l2, $l4;
+        com.android.music.MediaPlaybackService$MultiPlayer $r1, $r2, $r3, $r4;
+        boolean $z0;
+        byte $b1, $b3;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        l0 := @parameter0: long;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $z0 = virtualinvoke $r1.<com.android.music.MediaPlaybackService$MultiPlayer: boolean isInitialized()>();
+
+        if $z0 == 0 goto label3;
+
+        $b1 = l0 cmp 0L;
+
+        if $b1 >= 0 goto label1;
+
+        l0 = 0L;
+
+     label1:
+        $r2 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $l2 = virtualinvoke $r2.<com.android.music.MediaPlaybackService$MultiPlayer: long duration()>();
+
+        $b3 = l0 cmp $l2;
+
+        if $b3 <= 0 goto label2;
+
+        $r4 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        l0 = virtualinvoke $r4.<com.android.music.MediaPlaybackService$MultiPlayer: long duration()>();
+
+     label2:
+        $r3 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $l4 = virtualinvoke $r3.<com.android.music.MediaPlaybackService$MultiPlayer: long seek(long)>(l0);
+
+        return $l4;
+
+     label3:
+        return -1L;
+    }
+
+    public void setAudioSessionId(int)
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        int i0;
+        java.lang.Throwable r2, $r5;
+        com.android.music.MediaPlaybackService$MultiPlayer $r4;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        virtualinvoke $r4.<com.android.music.MediaPlaybackService$MultiPlayer: void setAudioSessionId(int)>(i0);
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public int getAudioSessionId()
+    {
+        com.android.music.MediaPlaybackService r0, r1;
+        java.lang.Throwable r2, $r5;
+        com.android.music.MediaPlaybackService$MultiPlayer $r4;
+        int $i0;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $i0 = virtualinvoke $r4.<com.android.music.MediaPlaybackService$MultiPlayer: int getAudioSessionId()>();
+
+        exitmonitor r1;
+
+     label2:
+        return $i0;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    protected void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.music.MediaPlaybackService r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        java.lang.StringBuilder $r4, $r5, $r6, $r7, $r8, $r14, $r15, $r16, $r17, $r20, $r23, $r24, $r25, $r26;
+        int $i0, $i1, $i2;
+        java.lang.String $r9, $r10, $r11, $r12, $r13, $r18, $r22, $r27;
+        boolean $z0, $z1;
+        com.android.music.MediaPlaybackService$MultiPlayer $r19;
+        com.android.music.MediaPlaybackService$CompatMediaPlayer $r21;
+
+        r0 := @this: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("");
+
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mPlayListLen>;
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" items in queue, currently at index ");
+
+        $i1 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r9);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("Currently loaded:");
+
+        $r10 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getArtistName()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r10);
+
+        $r11 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getAlbumName()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r11);
+
+        $r12 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getTrackName()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r12);
+
+        $r13 = virtualinvoke r0.<com.android.music.MediaPlaybackService: java.lang.String getPath()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r13);
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("playing: ");
+
+        $z0 = r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying>;
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r18);
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        $r20 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("actual: ");
+
+        $r19 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        $r21 = staticinvoke <com.android.music.MediaPlaybackService$MultiPlayer: com.android.music.MediaPlaybackService$CompatMediaPlayer access$2400(com.android.music.MediaPlaybackService$MultiPlayer)>($r19);
+
+        $z1 = virtualinvoke $r21.<com.android.music.MediaPlaybackService$CompatMediaPlayer: boolean isPlaying()>();
+
+        $r23 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        $r22 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r22);
+
+        $r25 = new java.lang.StringBuilder;
+
+        specialinvoke $r25.<java.lang.StringBuilder: void <init>()>();
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("shuffle mode: ");
+
+        $i2 = r0.<com.android.music.MediaPlaybackService: int mShuffleMode>;
+
+        $r26 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r27 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r27);
+
+        staticinvoke <com.android.music.MusicUtils: void debugDump(java.io.PrintWriter)>(r2);
+
+        return;
+    }
+
+    static android.os.Handler access$100(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.os.Handler $r1;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: android.os.Handler mMediaplayerHandler>;
+
+        return $r1;
+    }
+
+    static com.android.music.MediaPlaybackService$MultiPlayer access$200(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        com.android.music.MediaPlaybackService$MultiPlayer $r1;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaPlaybackService$MultiPlayer mPlayer>;
+
+        return $r1;
+    }
+
+    static boolean access$300(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $z0 = r0.<com.android.music.MediaPlaybackService: boolean mIsSupposedToBePlaying>;
+
+        return $z0;
+    }
+
+    static void access$400(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void openCurrentAndNext()>();
+
+        return;
+    }
+
+    static int access$502(com.android.music.MediaPlaybackService, int)
+    {
+        com.android.music.MediaPlaybackService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.music.MediaPlaybackService: int mPlayPos> = i0;
+
+        return i0;
+    }
+
+    static int access$600(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mNextPlayPos>;
+
+        return $i0;
+    }
+
+    static android.database.Cursor access$700(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.database.Cursor $r1;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor>;
+
+        return $r1;
+    }
+
+    static android.database.Cursor access$702(com.android.music.MediaPlaybackService, android.database.Cursor)
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.database.Cursor r1;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter1: android.database.Cursor;
+
+        r0.<com.android.music.MediaPlaybackService: android.database.Cursor mCursor> = r1;
+
+        return r1;
+    }
+
+    static int access$500(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mPlayPos>;
+
+        return $i0;
+    }
+
+    static long[] access$800(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        long[] $r1;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: long[] mPlayList>;
+
+        return $r1;
+    }
+
+    static android.database.Cursor access$900(com.android.music.MediaPlaybackService, long)
+    {
+        com.android.music.MediaPlaybackService r0;
+        long l0;
+        android.database.Cursor $r1;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        l0 := @parameter1: long;
+
+        $r1 = specialinvoke r0.<com.android.music.MediaPlaybackService: android.database.Cursor getCursorForId(long)>(l0);
+
+        return $r1;
+    }
+
+    static void access$1000(com.android.music.MediaPlaybackService, java.lang.String)
+    {
+        com.android.music.MediaPlaybackService r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        r1 := @parameter1: java.lang.String;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void notifyChange(java.lang.String)>(r1);
+
+        return;
+    }
+
+    static void access$1100(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void updateNotification()>();
+
+        return;
+    }
+
+    static void access$1200(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void setNextTrack()>();
+
+        return;
+    }
+
+    static int access$1300(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mRepeatMode>;
+
+        return $i0;
+    }
+
+    static android.os.PowerManager$WakeLock access$1400(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        android.os.PowerManager$WakeLock $r1;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        return $r1;
+    }
+
+    static boolean access$1502(com.android.music.MediaPlaybackService, boolean)
+    {
+        com.android.music.MediaPlaybackService r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mPausedByTransientLossOfFocus> = z0;
+
+        return z0;
+    }
+
+    static boolean access$1500(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $z0 = r0.<com.android.music.MediaPlaybackService: boolean mPausedByTransientLossOfFocus>;
+
+        return $z0;
+    }
+
+    static com.android.music.MediaAppWidgetProvider access$1600(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        com.android.music.MediaAppWidgetProvider $r1;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $r1 = r0.<com.android.music.MediaPlaybackService: com.android.music.MediaAppWidgetProvider mAppWidgetProvider>;
+
+        return $r1;
+    }
+
+    static boolean access$1700(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $z0 = r0.<com.android.music.MediaPlaybackService: boolean mServiceInUse>;
+
+        return $z0;
+    }
+
+    static void access$1800(com.android.music.MediaPlaybackService, boolean)
+    {
+        com.android.music.MediaPlaybackService r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void saveQueue(boolean)>(z0);
+
+        return;
+    }
+
+    static int access$1900(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mServiceStartId>;
+
+        return $i0;
+    }
+
+    static boolean access$2002(com.android.music.MediaPlaybackService, boolean)
+    {
+        com.android.music.MediaPlaybackService r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.music.MediaPlaybackService: boolean mQueueIsSaveable> = z0;
+
+        return z0;
+    }
+
+    static int access$2108(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+        int $i0, $i1;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        $i0 = r0.<com.android.music.MediaPlaybackService: int mMediaMountedCount>;
+
+        $i1 = $i0 + 1;
+
+        r0.<com.android.music.MediaPlaybackService: int mMediaMountedCount> = $i1;
+
+        return $i0;
+    }
+
+    static int access$2202(com.android.music.MediaPlaybackService, int)
+    {
+        com.android.music.MediaPlaybackService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.music.MediaPlaybackService: int mCardId> = i0;
+
+        return i0;
+    }
+
+    static void access$2300(com.android.music.MediaPlaybackService)
+    {
+        com.android.music.MediaPlaybackService r0;
+
+        r0 := @parameter0: com.android.music.MediaPlaybackService;
+
+        specialinvoke r0.<com.android.music.MediaPlaybackService: void reloadQueue()>();
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.music.MediaPlaybackService: int IDLE_DELAY> = 60000;
+
+        <com.android.music.MediaPlaybackService: int BOOKMARKCOLIDX> = 9;
+
+        <com.android.music.MediaPlaybackService: int PODCASTCOLIDX> = 8;
+
+        <com.android.music.MediaPlaybackService: int IDCOLIDX> = 0;
+
+        <com.android.music.MediaPlaybackService: java.lang.String LOGTAG> = "MediaPlaybackService";
+
+        <com.android.music.MediaPlaybackService: int MAX_HISTORY_SIZE> = 100;
+
+        <com.android.music.MediaPlaybackService: int TRACK_WENT_TO_NEXT> = 7;
+
+        <com.android.music.MediaPlaybackService: int FADEUP> = 6;
+
+        <com.android.music.MediaPlaybackService: int FADEDOWN> = 5;
+
+        <com.android.music.MediaPlaybackService: int FOCUSCHANGE> = 4;
+
+        <com.android.music.MediaPlaybackService: int SERVER_DIED> = 3;
+
+        <com.android.music.MediaPlaybackService: int RELEASE_WAKELOCK> = 2;
+
+        <com.android.music.MediaPlaybackService: int TRACK_ENDED> = 1;
+
+        <com.android.music.MediaPlaybackService: java.lang.String NEXT_ACTION> = "com.android.music.musicservicecommand.next";
+
+        <com.android.music.MediaPlaybackService: java.lang.String PREVIOUS_ACTION> = "com.android.music.musicservicecommand.previous";
+
+        <com.android.music.MediaPlaybackService: java.lang.String PAUSE_ACTION> = "com.android.music.musicservicecommand.pause";
+
+        <com.android.music.MediaPlaybackService: java.lang.String TOGGLEPAUSE_ACTION> = "com.android.music.musicservicecommand.togglepause";
+
+        <com.android.music.MediaPlaybackService: java.lang.String CMDNEXT> = "next";
+
+        <com.android.music.MediaPlaybackService: java.lang.String CMDPREVIOUS> = "previous";
+
+        <com.android.music.MediaPlaybackService: java.lang.String CMDPLAY> = "play";
+
+        <com.android.music.MediaPlaybackService: java.lang.String CMDPAUSE> = "pause";
+
+        <com.android.music.MediaPlaybackService: java.lang.String CMDSTOP> = "stop";
+
+        <com.android.music.MediaPlaybackService: java.lang.String CMDTOGGLEPAUSE> = "togglepause";
+
+        <com.android.music.MediaPlaybackService: java.lang.String CMDNAME> = "command";
+
+        <com.android.music.MediaPlaybackService: java.lang.String SERVICECMD> = "com.android.music.musicservicecommand";
+
+        <com.android.music.MediaPlaybackService: java.lang.String QUEUE_CHANGED> = "com.android.music.queuechanged";
+
+        <com.android.music.MediaPlaybackService: java.lang.String META_CHANGED> = "com.android.music.metachanged";
+
+        <com.android.music.MediaPlaybackService: java.lang.String PLAYSTATE_CHANGED> = "com.android.music.playstatechanged";
+
+        <com.android.music.MediaPlaybackService: int REPEAT_ALL> = 2;
+
+        <com.android.music.MediaPlaybackService: int REPEAT_CURRENT> = 1;
+
+        <com.android.music.MediaPlaybackService: int REPEAT_NONE> = 0;
+
+        <com.android.music.MediaPlaybackService: int SHUFFLE_AUTO> = 2;
+
+        <com.android.music.MediaPlaybackService: int SHUFFLE_NORMAL> = 1;
+
+        <com.android.music.MediaPlaybackService: int SHUFFLE_NONE> = 0;
+
+        <com.android.music.MediaPlaybackService: int PLAYBACKSERVICE_STATUS> = 1;
+
+        <com.android.music.MediaPlaybackService: int LAST> = 3;
+
+        <com.android.music.MediaPlaybackService: int NEXT> = 2;
+
+        <com.android.music.MediaPlaybackService: int NOW> = 1;
+
+        return;
+    }
+}

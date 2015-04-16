@@ -1,0 +1,859 @@
+class com.android.server.backup.BackupManagerService$FullBackupEngine extends java.lang.Object
+{
+    java.io.OutputStream mOutput;
+    android.app.backup.IFullBackupRestoreObserver mObserver;
+    java.io.File mFilesDir;
+    java.io.File mManifestFile;
+    java.io.File mMetadataFile;
+    boolean mIncludeApks;
+    final com.android.server.backup.BackupManagerService this$0;
+
+    void <init>(com.android.server.backup.BackupManagerService, java.io.OutputStream, java.lang.String, boolean)
+    {
+        com.android.server.backup.BackupManagerService$FullBackupEngine r0;
+        com.android.server.backup.BackupManagerService r1;
+        java.io.OutputStream r2;
+        java.lang.String r3;
+        boolean z0;
+        java.io.File $r4, $r5, $r6, $r7, $r8;
+
+        r0 := @this: com.android.server.backup.BackupManagerService$FullBackupEngine;
+
+        r1 := @parameter0: com.android.server.backup.BackupManagerService;
+
+        r2 := @parameter1: java.io.OutputStream;
+
+        r3 := @parameter2: java.lang.String;
+
+        z0 := @parameter3: boolean;
+
+        r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: com.android.server.backup.BackupManagerService this$0> = r1;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: java.io.OutputStream mOutput> = r2;
+
+        r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: boolean mIncludeApks> = z0;
+
+        $r4 = new java.io.File;
+
+        specialinvoke $r4.<java.io.File: void <init>(java.lang.String)>("/data/system");
+
+        r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: java.io.File mFilesDir> = $r4;
+
+        $r5 = new java.io.File;
+
+        $r6 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: java.io.File mFilesDir>;
+
+        specialinvoke $r5.<java.io.File: void <init>(java.io.File,java.lang.String)>($r6, "_manifest");
+
+        r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: java.io.File mManifestFile> = $r5;
+
+        $r7 = new java.io.File;
+
+        $r8 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: java.io.File mFilesDir>;
+
+        specialinvoke $r7.<java.io.File: void <init>(java.io.File,java.lang.String)>($r8, "_meta");
+
+        r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: java.io.File mMetadataFile> = $r7;
+
+        return;
+    }
+
+    public int backupOnePackage(android.content.pm.PackageInfo) throws android.os.RemoteException
+    {
+        com.android.server.backup.BackupManagerService$FullBackupEngine r0;
+        android.content.pm.PackageInfo r1;
+        short s0;
+        android.app.IBackupAgent r2;
+        android.os.ParcelFileDescriptor[] r3;
+        android.content.pm.ApplicationInfo r4, $r17;
+        boolean z0, z1, $z2, $z3, $z4, $z5;
+        byte[] r5;
+        int i1, $i5, $i6, $i7, $i11, $i12, $i13;
+        com.android.server.backup.BackupManagerService$FullBackupEngine$FullBackupRunner r6, $r28;
+        java.lang.Thread r7, $r27;
+        java.io.IOException r8, $r49, $r50, $r55, $r65, $r67, r71;
+        java.lang.Throwable r9, $r57;
+        java.lang.StringBuilder $r11, $r12, $r13, $r18, $r19, $r20, $r34, $r35, $r37, $r43, $r44, $r47, $r51, $r54, $r56;
+        java.lang.String $r14, $r15, $r21, $r22, $r23, $r25, $r36, $r38, $r46, $r48, $r52, $r53;
+        com.android.server.backup.BackupManagerService $r16, $r24, $r30, $r31;
+        android.os.ParcelFileDescriptor $r26, $r29, $r33, $r39, $r40, $r41, $r45, $r58, $r59, $r61, $r63, $r64, $r66, $r68, $r69;
+        java.io.OutputStream $r32, $r42, $r60, $r62;
+
+        r0 := @this: com.android.server.backup.BackupManagerService$FullBackupEngine;
+
+        r1 := @parameter0: android.content.pm.PackageInfo;
+
+        s0 = 0;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Binding to full backup agent : ");
+
+        $r14 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r14);
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BackupManagerService", $r15);
+
+        $r16 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: com.android.server.backup.BackupManagerService this$0>;
+
+        $r17 = r1.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        r2 = virtualinvoke $r16.<com.android.server.backup.BackupManagerService: android.app.IBackupAgent bindToAgentSynchronous(android.content.pm.ApplicationInfo,int)>($r17, 1);
+
+        if r2 == null goto label28;
+
+        r3 = null;
+
+     label01:
+        r3 = staticinvoke <android.os.ParcelFileDescriptor: android.os.ParcelFileDescriptor[] createPipe()>();
+
+        r4 = r1.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r23 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        z0 = virtualinvoke $r23.<java.lang.String: boolean equals(java.lang.Object)>("com.android.sharedstoragebackup");
+
+        $z2 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: boolean mIncludeApks>;
+
+        if $z2 == 0 goto label03;
+
+        if z0 != 0 goto label03;
+
+        $i5 = r4.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i6 = $i5 & 536870912;
+
+        if $i6 != 0 goto label03;
+
+        $i7 = r4.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i11 = $i7 & 1;
+
+        if $i11 == 0 goto label02;
+
+        $i12 = r4.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i13 = $i12 & 128;
+
+        if $i13 == 0 goto label03;
+
+     label02:
+        $z5 = 1;
+
+        goto label04;
+
+     label03:
+        $z5 = 0;
+
+     label04:
+        z1 = $z5;
+
+        $r25 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        r5 = staticinvoke <com.android.server.AppWidgetBackupBridge: byte[] getWidgetState(java.lang.String,int)>($r25, 0);
+
+        $r24 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: com.android.server.backup.BackupManagerService this$0>;
+
+        i1 = virtualinvoke $r24.<com.android.server.backup.BackupManagerService: int generateToken()>();
+
+        $r28 = new com.android.server.backup.BackupManagerService$FullBackupEngine$FullBackupRunner;
+
+        $r29 = r3[1];
+
+        if z0 != 0 goto label05;
+
+        $z4 = 1;
+
+        goto label06;
+
+     label05:
+        $z4 = 0;
+
+     label06:
+        specialinvoke $r28.<com.android.server.backup.BackupManagerService$FullBackupEngine$FullBackupRunner: void <init>(com.android.server.backup.BackupManagerService$FullBackupEngine,android.content.pm.PackageInfo,android.app.IBackupAgent,android.os.ParcelFileDescriptor,int,boolean,boolean,byte[])>(r0, r1, r2, $r29, i1, z1, $z4, r5);
+
+        r6 = $r28;
+
+        $r26 = r3[1];
+
+        virtualinvoke $r26.<android.os.ParcelFileDescriptor: void close()>();
+
+        r3[1] = null;
+
+        $r27 = new java.lang.Thread;
+
+        specialinvoke $r27.<java.lang.Thread: void <init>(java.lang.Runnable,java.lang.String)>(r6, "app-data-runner");
+
+        r7 = $r27;
+
+        virtualinvoke r7.<java.lang.Thread: void start()>();
+
+     label07:
+        $r30 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: com.android.server.backup.BackupManagerService this$0>;
+
+        $r33 = r3[0];
+
+        $r32 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: java.io.OutputStream mOutput>;
+
+        staticinvoke <com.android.server.backup.BackupManagerService: void access$900(com.android.server.backup.BackupManagerService,android.os.ParcelFileDescriptor,java.io.OutputStream)>($r30, $r33, $r32);
+
+     label08:
+        goto label10;
+
+     label09:
+        $r65 := @caughtexception;
+
+        r8 = $r65;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String,java.lang.Throwable)>("BackupManagerService", "Caught exception reading from agent", r8);
+
+        s0 = -1003;
+
+     label10:
+        $r31 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: com.android.server.backup.BackupManagerService this$0>;
+
+        $z3 = virtualinvoke $r31.<com.android.server.backup.BackupManagerService: boolean waitUntilOperationComplete(int)>(i1);
+
+        if $z3 != 0 goto label11;
+
+        $r44 = new java.lang.StringBuilder;
+
+        specialinvoke $r44.<java.lang.StringBuilder: void <init>()>();
+
+        $r43 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Full backup failed on package ");
+
+        $r46 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r47 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r46);
+
+        $r48 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", $r48);
+
+        s0 = -1003;
+
+        goto label12;
+
+     label11:
+        $r35 = new java.lang.StringBuilder;
+
+        specialinvoke $r35.<java.lang.StringBuilder: void <init>()>();
+
+        $r34 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Full package backup success: ");
+
+        $r38 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r37 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r38);
+
+        $r36 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BackupManagerService", $r36);
+
+     label12:
+        $r42 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: java.io.OutputStream mOutput>;
+
+        virtualinvoke $r42.<java.io.OutputStream: void flush()>();
+
+        if r3 == null goto label14;
+
+        $r41 = r3[0];
+
+        if $r41 == null goto label13;
+
+        $r45 = r3[0];
+
+        virtualinvoke $r45.<android.os.ParcelFileDescriptor: void close()>();
+
+     label13:
+        $r40 = r3[1];
+
+        if $r40 == null goto label14;
+
+        $r39 = r3[1];
+
+        virtualinvoke $r39.<android.os.ParcelFileDescriptor: void close()>();
+
+     label14:
+        goto label27;
+
+     label15:
+        $r67 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", "Error bringing down backup stack");
+
+        s0 = -1000;
+
+        goto label27;
+
+     label16:
+        $r55 := @caughtexception;
+
+        r71 = $r55;
+
+        $r54 = new java.lang.StringBuilder;
+
+        specialinvoke $r54.<java.lang.StringBuilder: void <init>()>();
+
+        $r56 = virtualinvoke $r54.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error backing up ");
+
+        $r52 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r51 = virtualinvoke $r56.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r52);
+
+        $r53 = virtualinvoke $r51.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BackupManagerService", $r53, r71);
+
+        s0 = -1003;
+
+     label17:
+        $r62 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: java.io.OutputStream mOutput>;
+
+        virtualinvoke $r62.<java.io.OutputStream: void flush()>();
+
+        if r3 == null goto label19;
+
+        $r61 = r3[0];
+
+        if $r61 == null goto label18;
+
+        $r58 = r3[0];
+
+        virtualinvoke $r58.<android.os.ParcelFileDescriptor: void close()>();
+
+     label18:
+        $r64 = r3[1];
+
+        if $r64 == null goto label19;
+
+        $r63 = r3[1];
+
+        virtualinvoke $r63.<android.os.ParcelFileDescriptor: void close()>();
+
+     label19:
+        goto label27;
+
+     label20:
+        $r49 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", "Error bringing down backup stack");
+
+        s0 = -1000;
+
+        goto label27;
+
+     label21:
+        $r57 := @caughtexception;
+
+        r9 = $r57;
+
+     label22:
+        $r60 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: java.io.OutputStream mOutput>;
+
+        virtualinvoke $r60.<java.io.OutputStream: void flush()>();
+
+        if r3 == null goto label24;
+
+        $r59 = r3[0];
+
+        if $r59 == null goto label23;
+
+        $r66 = r3[0];
+
+        virtualinvoke $r66.<android.os.ParcelFileDescriptor: void close()>();
+
+     label23:
+        $r68 = r3[1];
+
+        if $r68 == null goto label24;
+
+        $r69 = r3[1];
+
+        virtualinvoke $r69.<android.os.ParcelFileDescriptor: void close()>();
+
+     label24:
+        goto label26;
+
+     label25:
+        $r50 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", "Error bringing down backup stack");
+
+     label26:
+        throw r9;
+
+     label27:
+        goto label29;
+
+     label28:
+        $r18 = new java.lang.StringBuilder;
+
+        specialinvoke $r18.<java.lang.StringBuilder: void <init>()>();
+
+        $r19 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to bind to full agent for ");
+
+        $r21 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r20 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r21);
+
+        $r22 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", $r22);
+
+        s0 = -1003;
+
+     label29:
+        specialinvoke r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: void tearDown(android.content.pm.PackageInfo)>(r1);
+
+        return s0;
+
+        catch java.io.IOException from label07 to label08 with label09;
+        catch java.io.IOException from label12 to label14 with label15;
+        catch java.io.IOException from label01 to label12 with label16;
+        catch java.io.IOException from label17 to label19 with label20;
+        catch java.lang.Throwable from label01 to label12 with label21;
+        catch java.lang.Throwable from label16 to label17 with label21;
+        catch java.io.IOException from label22 to label24 with label25;
+        catch java.lang.Throwable from label21 to label22 with label21;
+    }
+
+    private void writeApkToBackup(android.content.pm.PackageInfo, android.app.backup.BackupDataOutput)
+    {
+        com.android.server.backup.BackupManagerService$FullBackupEngine r0;
+        android.content.pm.PackageInfo r1;
+        android.app.backup.BackupDataOutput r2;
+        java.lang.String r3, r4, r8, $r13, $r16, $r17, $r18;
+        android.os.Environment$UserEnvironment r5, $r14;
+        java.io.File r6, r10, $r12;
+        java.io.File[] r7, r9, $r15;
+        int i0, i1;
+        android.content.pm.ApplicationInfo $r11;
+
+        r0 := @this: com.android.server.backup.BackupManagerService$FullBackupEngine;
+
+        r1 := @parameter0: android.content.pm.PackageInfo;
+
+        r2 := @parameter1: android.app.backup.BackupDataOutput;
+
+        $r11 = r1.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        r3 = virtualinvoke $r11.<android.content.pm.ApplicationInfo: java.lang.String getBaseCodePath()>();
+
+        $r12 = new java.io.File;
+
+        specialinvoke $r12.<java.io.File: void <init>(java.lang.String)>(r3);
+
+        r4 = virtualinvoke $r12.<java.io.File: java.lang.String getParent()>();
+
+        $r13 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        staticinvoke <android.app.backup.FullBackup: int backupToTar(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,android.app.backup.BackupDataOutput)>($r13, "a", null, r4, r3, r2);
+
+        $r14 = new android.os.Environment$UserEnvironment;
+
+        specialinvoke $r14.<android.os.Environment$UserEnvironment: void <init>(int)>(0);
+
+        r5 = $r14;
+
+        $r16 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r15 = virtualinvoke r5.<android.os.Environment$UserEnvironment: java.io.File[] buildExternalStorageAppObbDirs(java.lang.String)>($r16);
+
+        r6 = $r15[0];
+
+        if r6 == null goto label2;
+
+        r7 = virtualinvoke r6.<java.io.File: java.io.File[] listFiles()>();
+
+        if r7 == null goto label2;
+
+        r8 = virtualinvoke r6.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        r9 = r7;
+
+        i0 = lengthof r9;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        r10 = r9[i1];
+
+        $r17 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r18 = virtualinvoke r10.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        staticinvoke <android.app.backup.FullBackup: int backupToTar(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,android.app.backup.BackupDataOutput)>($r17, "obb", null, r8, $r18, r2);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void writeAppManifest(android.content.pm.PackageInfo, java.io.File, boolean, boolean) throws java.io.IOException
+    {
+        com.android.server.backup.BackupManagerService$FullBackupEngine r0;
+        android.content.pm.PackageInfo r1;
+        java.io.File r2;
+        boolean z0, z1;
+        java.lang.StringBuilder r3, $r8;
+        android.util.StringBuilderPrinter r4, $r9;
+        java.lang.String r5, $r10, $r11, $r12, $r13, $r16, $r19, $r20, $r23, $r24, $r25;
+        android.content.pm.Signature[] r6, $r17, $r18;
+        int i0, i1, $i2, $i3, $i4;
+        android.content.pm.Signature r7;
+        android.content.pm.PackageManager $r14;
+        com.android.server.backup.BackupManagerService $r15;
+        java.io.FileOutputStream $r21, r26;
+        byte[] $r22;
+
+        r0 := @this: com.android.server.backup.BackupManagerService$FullBackupEngine;
+
+        r1 := @parameter0: android.content.pm.PackageInfo;
+
+        r2 := @parameter1: java.io.File;
+
+        z0 := @parameter2: boolean;
+
+        z1 := @parameter3: boolean;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>(int)>(4096);
+
+        r3 = $r8;
+
+        $r9 = new android.util.StringBuilderPrinter;
+
+        specialinvoke $r9.<android.util.StringBuilderPrinter: void <init>(java.lang.StringBuilder)>(r3);
+
+        r4 = $r9;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>(1);
+
+        virtualinvoke r4.<android.util.StringBuilderPrinter: void println(java.lang.String)>($r10);
+
+        $r11 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        virtualinvoke r4.<android.util.StringBuilderPrinter: void println(java.lang.String)>($r11);
+
+        $i2 = r1.<android.content.pm.PackageInfo: int versionCode>;
+
+        $r12 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>($i2);
+
+        virtualinvoke r4.<android.util.StringBuilderPrinter: void println(java.lang.String)>($r12);
+
+        $i3 = <android.os.Build$VERSION: int SDK_INT>;
+
+        $r13 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>($i3);
+
+        virtualinvoke r4.<android.util.StringBuilderPrinter: void println(java.lang.String)>($r13);
+
+        $r15 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: com.android.server.backup.BackupManagerService this$0>;
+
+        $r14 = staticinvoke <com.android.server.backup.BackupManagerService: android.content.pm.PackageManager access$500(com.android.server.backup.BackupManagerService)>($r15);
+
+        $r16 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        r5 = virtualinvoke $r14.<android.content.pm.PackageManager: java.lang.String getInstallerPackageName(java.lang.String)>($r16);
+
+        if r5 == null goto label1;
+
+        $r23 = r5;
+
+        goto label2;
+
+     label1:
+        $r23 = "";
+
+     label2:
+        virtualinvoke r4.<android.util.StringBuilderPrinter: void println(java.lang.String)>($r23);
+
+        if z0 == 0 goto label3;
+
+        $r25 = "1";
+
+        goto label4;
+
+     label3:
+        $r25 = "0";
+
+     label4:
+        virtualinvoke r4.<android.util.StringBuilderPrinter: void println(java.lang.String)>($r25);
+
+        $r18 = r1.<android.content.pm.PackageInfo: android.content.pm.Signature[] signatures>;
+
+        if $r18 != null goto label5;
+
+        virtualinvoke r4.<android.util.StringBuilderPrinter: void println(java.lang.String)>("0");
+
+        goto label7;
+
+     label5:
+        $r17 = r1.<android.content.pm.PackageInfo: android.content.pm.Signature[] signatures>;
+
+        $i4 = lengthof $r17;
+
+        $r19 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>($i4);
+
+        virtualinvoke r4.<android.util.StringBuilderPrinter: void println(java.lang.String)>($r19);
+
+        r6 = r1.<android.content.pm.PackageInfo: android.content.pm.Signature[] signatures>;
+
+        i0 = lengthof r6;
+
+        i1 = 0;
+
+     label6:
+        if i1 >= i0 goto label7;
+
+        r7 = r6[i1];
+
+        $r24 = virtualinvoke r7.<android.content.pm.Signature: java.lang.String toCharsString()>();
+
+        virtualinvoke r4.<android.util.StringBuilderPrinter: void println(java.lang.String)>($r24);
+
+        i1 = i1 + 1;
+
+        goto label6;
+
+     label7:
+        $r21 = new java.io.FileOutputStream;
+
+        specialinvoke $r21.<java.io.FileOutputStream: void <init>(java.io.File)>(r2);
+
+        r26 = $r21;
+
+        $r20 = virtualinvoke r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r22 = virtualinvoke $r20.<java.lang.String: byte[] getBytes()>();
+
+        virtualinvoke r26.<java.io.FileOutputStream: void write(byte[])>($r22);
+
+        virtualinvoke r26.<java.io.FileOutputStream: void close()>();
+
+        virtualinvoke r2.<java.io.File: boolean setLastModified(long)>(0L);
+
+        return;
+    }
+
+    private void writeMetadata(android.content.pm.PackageInfo, java.io.File, byte[]) throws java.io.IOException
+    {
+        com.android.server.backup.BackupManagerService$FullBackupEngine r0;
+        android.content.pm.PackageInfo r1;
+        java.io.File r2;
+        byte[] r3, $r16;
+        java.lang.StringBuilder r4, $r9;
+        android.util.StringBuilderPrinter r5, $r10;
+        java.io.FileOutputStream r6, $r13;
+        java.io.BufferedOutputStream r7, $r14;
+        java.io.DataOutputStream r8, $r15;
+        java.lang.String $r11, $r12, $r17;
+        int $i0, $i1;
+
+        r0 := @this: com.android.server.backup.BackupManagerService$FullBackupEngine;
+
+        r1 := @parameter0: android.content.pm.PackageInfo;
+
+        r2 := @parameter1: java.io.File;
+
+        r3 := @parameter2: byte[];
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>(int)>(512);
+
+        r4 = $r9;
+
+        $r10 = new android.util.StringBuilderPrinter;
+
+        specialinvoke $r10.<android.util.StringBuilderPrinter: void <init>(java.lang.StringBuilder)>(r4);
+
+        r5 = $r10;
+
+        $r11 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>(1);
+
+        virtualinvoke r5.<android.util.StringBuilderPrinter: void println(java.lang.String)>($r11);
+
+        $r12 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        virtualinvoke r5.<android.util.StringBuilderPrinter: void println(java.lang.String)>($r12);
+
+        $r13 = new java.io.FileOutputStream;
+
+        specialinvoke $r13.<java.io.FileOutputStream: void <init>(java.io.File)>(r2);
+
+        r6 = $r13;
+
+        $r14 = new java.io.BufferedOutputStream;
+
+        specialinvoke $r14.<java.io.BufferedOutputStream: void <init>(java.io.OutputStream)>(r6);
+
+        r7 = $r14;
+
+        $r15 = new java.io.DataOutputStream;
+
+        specialinvoke $r15.<java.io.DataOutputStream: void <init>(java.io.OutputStream)>(r7);
+
+        r8 = $r15;
+
+        $r17 = virtualinvoke r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r16 = virtualinvoke $r17.<java.lang.String: byte[] getBytes()>();
+
+        virtualinvoke r7.<java.io.BufferedOutputStream: void write(byte[])>($r16);
+
+        if r3 == null goto label1;
+
+        $i0 = lengthof r3;
+
+        if $i0 <= 0 goto label1;
+
+        virtualinvoke r8.<java.io.DataOutputStream: void writeInt(int)>(33549569);
+
+        $i1 = lengthof r3;
+
+        virtualinvoke r8.<java.io.DataOutputStream: void writeInt(int)>($i1);
+
+        virtualinvoke r8.<java.io.DataOutputStream: void write(byte[])>(r3);
+
+     label1:
+        virtualinvoke r7.<java.io.BufferedOutputStream: void flush()>();
+
+        virtualinvoke r8.<java.io.DataOutputStream: void close()>();
+
+        virtualinvoke r2.<java.io.File: boolean setLastModified(long)>(0L);
+
+        return;
+    }
+
+    private void tearDown(android.content.pm.PackageInfo)
+    {
+        com.android.server.backup.BackupManagerService$FullBackupEngine r0;
+        android.content.pm.PackageInfo r1;
+        android.content.pm.ApplicationInfo r2;
+        com.android.server.backup.BackupManagerService $r4, $r6;
+        android.app.IActivityManager $r5, $r7;
+        int $i0, $i1, $i2;
+        java.lang.String $r8;
+        android.os.RemoteException $r9;
+
+        r0 := @this: com.android.server.backup.BackupManagerService$FullBackupEngine;
+
+        r1 := @parameter0: android.content.pm.PackageInfo;
+
+        if r1 == null goto label4;
+
+        r2 = r1.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        if r2 == null goto label4;
+
+     label1:
+        $r4 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: com.android.server.backup.BackupManagerService this$0>;
+
+        $r5 = staticinvoke <com.android.server.backup.BackupManagerService: android.app.IActivityManager access$800(com.android.server.backup.BackupManagerService)>($r4);
+
+        interfaceinvoke $r5.<android.app.IActivityManager: void unbindBackupAgent(android.content.pm.ApplicationInfo)>(r2);
+
+        $i0 = r2.<android.content.pm.ApplicationInfo: int uid>;
+
+        if $i0 == 1000 goto label2;
+
+        $i1 = r2.<android.content.pm.ApplicationInfo: int uid>;
+
+        if $i1 == 1001 goto label2;
+
+        $r6 = r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: com.android.server.backup.BackupManagerService this$0>;
+
+        $r7 = staticinvoke <com.android.server.backup.BackupManagerService: android.app.IActivityManager access$800(com.android.server.backup.BackupManagerService)>($r6);
+
+        $r8 = r2.<android.content.pm.ApplicationInfo: java.lang.String processName>;
+
+        $i2 = r2.<android.content.pm.ApplicationInfo: int uid>;
+
+        interfaceinvoke $r7.<android.app.IActivityManager: void killApplicationProcess(java.lang.String,int)>($r8, $i2);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r9 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BackupManagerService", "Lost app trying to shut down");
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    static void access$1000(com.android.server.backup.BackupManagerService$FullBackupEngine, android.content.pm.PackageInfo, java.io.File, boolean, boolean) throws java.io.IOException
+    {
+        com.android.server.backup.BackupManagerService$FullBackupEngine r0;
+        android.content.pm.PackageInfo r1;
+        java.io.File r2;
+        boolean z0, z1;
+
+        r0 := @parameter0: com.android.server.backup.BackupManagerService$FullBackupEngine;
+
+        r1 := @parameter1: android.content.pm.PackageInfo;
+
+        r2 := @parameter2: java.io.File;
+
+        z0 := @parameter3: boolean;
+
+        z1 := @parameter4: boolean;
+
+        specialinvoke r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: void writeAppManifest(android.content.pm.PackageInfo,java.io.File,boolean,boolean)>(r1, r2, z0, z1);
+
+        return;
+    }
+
+    static void access$1100(com.android.server.backup.BackupManagerService$FullBackupEngine, android.content.pm.PackageInfo, java.io.File, byte[]) throws java.io.IOException
+    {
+        com.android.server.backup.BackupManagerService$FullBackupEngine r0;
+        android.content.pm.PackageInfo r1;
+        java.io.File r2;
+        byte[] r3;
+
+        r0 := @parameter0: com.android.server.backup.BackupManagerService$FullBackupEngine;
+
+        r1 := @parameter1: android.content.pm.PackageInfo;
+
+        r2 := @parameter2: java.io.File;
+
+        r3 := @parameter3: byte[];
+
+        specialinvoke r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: void writeMetadata(android.content.pm.PackageInfo,java.io.File,byte[])>(r1, r2, r3);
+
+        return;
+    }
+
+    static void access$1200(com.android.server.backup.BackupManagerService$FullBackupEngine, android.content.pm.PackageInfo, android.app.backup.BackupDataOutput)
+    {
+        com.android.server.backup.BackupManagerService$FullBackupEngine r0;
+        android.content.pm.PackageInfo r1;
+        android.app.backup.BackupDataOutput r2;
+
+        r0 := @parameter0: com.android.server.backup.BackupManagerService$FullBackupEngine;
+
+        r1 := @parameter1: android.content.pm.PackageInfo;
+
+        r2 := @parameter2: android.app.backup.BackupDataOutput;
+
+        specialinvoke r0.<com.android.server.backup.BackupManagerService$FullBackupEngine: void writeApkToBackup(android.content.pm.PackageInfo,android.app.backup.BackupDataOutput)>(r1, r2);
+
+        return;
+    }
+}

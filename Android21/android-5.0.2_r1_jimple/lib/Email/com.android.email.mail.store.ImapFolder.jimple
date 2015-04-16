@@ -1,0 +1,4062 @@
+class com.android.email.mail.store.ImapFolder extends com.android.emailcommon.mail.Folder
+{
+    private static final com.android.emailcommon.mail.Flag[] PERMANENT_FLAGS;
+    private static final int COPY_BUFFER_SIZE;
+    private final com.android.email.mail.store.ImapStore mStore;
+    private final java.lang.String mName;
+    private int mMessageCount;
+    private com.android.email.mail.store.ImapConnection mConnection;
+    private com.android.emailcommon.mail.Folder$OpenMode mMode;
+    private boolean mExists;
+    com.android.emailcommon.provider.Mailbox mMailbox;
+    java.lang.Object[] mHash;
+
+    void <init>(com.android.email.mail.store.ImapStore, java.lang.String)
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        com.android.email.mail.store.ImapStore r1;
+        java.lang.String r2;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: com.android.email.mail.store.ImapStore;
+
+        r2 := @parameter1: java.lang.String;
+
+        specialinvoke r0.<com.android.emailcommon.mail.Folder: void <init>()>();
+
+        r0.<com.android.email.mail.store.ImapFolder: int mMessageCount> = -1;
+
+        r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore> = r1;
+
+        r0.<com.android.email.mail.store.ImapFolder: java.lang.String mName> = r2;
+
+        return;
+    }
+
+    private void destroyResponses()
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        com.android.email.mail.store.ImapConnection $r1, $r2;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        $r1 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        virtualinvoke $r2.<com.android.email.mail.store.ImapConnection: void destroyResponses()>();
+
+     label1:
+        return;
+    }
+
+    public void open(com.android.emailcommon.mail.Folder$OpenMode) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0, r23;
+        com.android.emailcommon.mail.Folder$OpenMode r1, $r9;
+        java.io.IOException r2, $r14, $r18, r24;
+        java.lang.Throwable r3, r4, r5, $r13, $r21, $r22;
+        boolean $z0;
+        com.android.email.mail.store.ImapStore $r7;
+        com.android.email.mail.store.ImapConnection $r8, $r10, $r16, $r17;
+        com.android.emailcommon.mail.AuthenticationFailedException $r12, r25;
+        com.android.emailcommon.mail.MessagingException $r15, $r19, r26;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: com.android.emailcommon.mail.Folder$OpenMode;
+
+     label01:
+        $z0 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: boolean isOpen()>();
+
+        if $z0 == 0 goto label11;
+
+        $r9 = r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Folder$OpenMode mMode>;
+
+        if $r9 != r1 goto label10;
+
+     label02:
+        $r10 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        virtualinvoke $r10.<com.android.email.mail.store.ImapConnection: java.util.List executeSimpleCommand(java.lang.String)>("NOOP");
+
+     label03:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+     label04:
+        return;
+
+     label05:
+        $r18 := @caughtexception;
+
+        r2 = $r18;
+
+        $r17 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>($r17, r2);
+
+     label06:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        goto label09;
+
+     label07:
+        $r22 := @caughtexception;
+
+        r3 = $r22;
+
+     label08:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        throw r3;
+
+     label09:
+        goto label11;
+
+     label10:
+        virtualinvoke r0.<com.android.email.mail.store.ImapFolder: void close(boolean)>(0);
+
+     label11:
+        r23 = r0;
+
+        entermonitor r0;
+
+     label12:
+        $r7 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        $r8 = virtualinvoke $r7.<com.android.email.mail.store.ImapStore: com.android.email.mail.store.ImapConnection getConnection()>();
+
+        r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection> = $r8;
+
+        exitmonitor r23;
+
+     label13:
+        goto label16;
+
+     label14:
+        $r13 := @caughtexception;
+
+        r4 = $r13;
+
+        exitmonitor r23;
+
+     label15:
+        throw r4;
+
+     label16:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void doSelect()>();
+
+     label17:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        goto label21;
+
+     label18:
+        $r14 := @caughtexception;
+
+        r24 = $r14;
+
+        $r16 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r15 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>($r16, r24);
+
+        throw $r15;
+
+     label19:
+        $r21 := @caughtexception;
+
+        r5 = $r21;
+
+     label20:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        throw r5;
+
+     label21:
+        goto label24;
+
+     label22:
+        $r12 := @caughtexception;
+
+        r25 = $r12;
+
+        r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection> = null;
+
+        virtualinvoke r0.<com.android.email.mail.store.ImapFolder: void close(boolean)>(0);
+
+        throw r25;
+
+     label23:
+        $r19 := @caughtexception;
+
+        r26 = $r19;
+
+        r0.<com.android.email.mail.store.ImapFolder: boolean mExists> = 0;
+
+        virtualinvoke r0.<com.android.email.mail.store.ImapFolder: void close(boolean)>(0);
+
+        throw r26;
+
+     label24:
+        return;
+
+        catch java.io.IOException from label02 to label03 with label05;
+        catch java.lang.Throwable from label02 to label03 with label07;
+        catch java.lang.Throwable from label05 to label06 with label07;
+        catch java.lang.Throwable from label07 to label08 with label07;
+        catch java.lang.Throwable from label12 to label13 with label14;
+        catch java.lang.Throwable from label14 to label15 with label14;
+        catch java.io.IOException from label16 to label17 with label18;
+        catch java.lang.Throwable from label16 to label17 with label19;
+        catch java.lang.Throwable from label18 to label20 with label19;
+        catch com.android.emailcommon.mail.AuthenticationFailedException from label01 to label04 with label22;
+        catch com.android.emailcommon.mail.AuthenticationFailedException from label05 to label21 with label22;
+        catch com.android.emailcommon.mail.MessagingException from label01 to label04 with label23;
+        catch com.android.emailcommon.mail.MessagingException from label05 to label21 with label23;
+    }
+
+    public boolean isOpen()
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        boolean $z0, $z1;
+        com.android.email.mail.store.ImapConnection $r1;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        $z0 = r0.<com.android.email.mail.store.ImapFolder: boolean mExists>;
+
+        if $z0 == 0 goto label1;
+
+        $r1 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if $r1 == null goto label1;
+
+        $z1 = 1;
+
+        goto label2;
+
+     label1:
+        $z1 = 0;
+
+     label2:
+        return $z1;
+    }
+
+    public com.android.emailcommon.mail.Folder$OpenMode getMode()
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        com.android.emailcommon.mail.Folder$OpenMode $r1;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        $r1 = r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Folder$OpenMode mMode>;
+
+        return $r1;
+    }
+
+    public void close(boolean)
+    {
+        com.android.email.mail.store.ImapFolder r0, r1;
+        boolean z0;
+        java.lang.Throwable r2, $r6;
+        com.android.email.mail.store.ImapConnection $r4;
+        com.android.email.mail.store.ImapStore $r5;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        z0 := @parameter0: boolean;
+
+        r0.<com.android.email.mail.store.ImapFolder: int mMessageCount> = -1;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r5 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        $r4 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        virtualinvoke $r5.<com.android.email.mail.store.ImapStore: void poolConnection(com.android.email.mail.store.ImapConnection)>($r4);
+
+        r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection> = null;
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public java.lang.String getName()
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.lang.String $r1;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        $r1 = r0.<com.android.email.mail.store.ImapFolder: java.lang.String mName>;
+
+        return $r1;
+    }
+
+    public boolean exists() throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0, r1;
+        java.lang.Throwable r2, r3, $r17, $r21;
+        boolean $z0;
+        com.android.email.mail.store.ImapConnection $r5, $r13, $r20, $r23, r25;
+        java.lang.Object[] $r6;
+        com.android.email.mail.store.ImapStore $r7, $r14, $r15, $r22, $r24;
+        java.lang.String $r8, $r9, $r11, $r12;
+        java.util.Locale $r10;
+        java.io.IOException $r16, r27;
+        com.android.emailcommon.mail.MessagingException $r18, $r19, r26;
+        int $i0;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        $z0 = r0.<com.android.email.mail.store.ImapFolder: boolean mExists>;
+
+        if $z0 == 0 goto label01;
+
+        return 1;
+
+     label01:
+        r1 = r0;
+
+        entermonitor r0;
+
+     label02:
+        $r5 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if $r5 != null goto label03;
+
+        $r14 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        r25 = virtualinvoke $r14.<com.android.email.mail.store.ImapStore: com.android.email.mail.store.ImapConnection getConnection()>();
+
+        goto label04;
+
+     label03:
+        r25 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+     label04:
+        exitmonitor r1;
+
+     label05:
+        goto label08;
+
+     label06:
+        $r17 := @caughtexception;
+
+        r2 = $r17;
+
+        exitmonitor r1;
+
+     label07:
+        throw r2;
+
+     label08:
+        $r10 = <java.util.Locale: java.util.Locale US>;
+
+        $r6 = newarray (java.lang.Object)[1];
+
+        $r9 = r0.<com.android.email.mail.store.ImapFolder: java.lang.String mName>;
+
+        $r7 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        $r8 = $r7.<com.android.email.mail.store.ImapStore: java.lang.String mPathPrefix>;
+
+        $r12 = staticinvoke <com.android.email.mail.store.ImapStore: java.lang.String encodeFolderName(java.lang.String,java.lang.String)>($r9, $r8);
+
+        $r6[0] = $r12;
+
+        $r11 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r10, "STATUS \"%s\" (UIDVALIDITY)", $r6);
+
+        virtualinvoke r25.<com.android.email.mail.store.ImapConnection: java.util.List executeSimpleCommand(java.lang.String)>($r11);
+
+        r0.<com.android.email.mail.store.ImapFolder: boolean mExists> = 1;
+
+     label09:
+        virtualinvoke r25.<com.android.email.mail.store.ImapConnection: void destroyResponses()>();
+
+        $r13 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if $r13 != null goto label10;
+
+        $r15 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        virtualinvoke $r15.<com.android.email.mail.store.ImapStore: void poolConnection(com.android.email.mail.store.ImapConnection)>(r25);
+
+     label10:
+        return 1;
+
+     label11:
+        $r19 := @caughtexception;
+
+        r26 = $r19;
+
+        $i0 = virtualinvoke r26.<com.android.emailcommon.mail.MessagingException: int getExceptionType()>();
+
+        if $i0 != 1 goto label12;
+
+        throw r26;
+
+     label12:
+        virtualinvoke r25.<com.android.email.mail.store.ImapConnection: void destroyResponses()>();
+
+        $r20 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if $r20 != null goto label13;
+
+        $r22 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        virtualinvoke $r22.<com.android.email.mail.store.ImapStore: void poolConnection(com.android.email.mail.store.ImapConnection)>(r25);
+
+     label13:
+        return 0;
+
+     label14:
+        $r16 := @caughtexception;
+
+        r27 = $r16;
+
+        $r18 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>(r25, r27);
+
+        throw $r18;
+
+     label15:
+        $r21 := @caughtexception;
+
+        r3 = $r21;
+
+     label16:
+        virtualinvoke r25.<com.android.email.mail.store.ImapConnection: void destroyResponses()>();
+
+        $r23 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if $r23 != null goto label17;
+
+        $r24 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        virtualinvoke $r24.<com.android.email.mail.store.ImapStore: void poolConnection(com.android.email.mail.store.ImapConnection)>(r25);
+
+     label17:
+        throw r3;
+
+        catch java.lang.Throwable from label02 to label05 with label06;
+        catch java.lang.Throwable from label06 to label07 with label06;
+        catch com.android.emailcommon.mail.MessagingException from label08 to label09 with label11;
+        catch java.io.IOException from label08 to label09 with label14;
+        catch java.lang.Throwable from label08 to label09 with label15;
+        catch java.lang.Throwable from label11 to label12 with label15;
+        catch java.lang.Throwable from label14 to label16 with label15;
+    }
+
+    public boolean canCreate(com.android.emailcommon.mail.Folder$FolderType)
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        com.android.emailcommon.mail.Folder$FolderType r1;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: com.android.emailcommon.mail.Folder$FolderType;
+
+        return 1;
+    }
+
+    public boolean create(com.android.emailcommon.mail.Folder$FolderType) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0, r2;
+        com.android.emailcommon.mail.Folder$FolderType r1;
+        java.lang.Throwable r3, r4, $r18, $r22;
+        com.android.email.mail.store.ImapConnection $r6, $r14, $r21, $r23, r26;
+        java.lang.Object[] $r7;
+        com.android.email.mail.store.ImapStore $r8, $r15, $r16, $r20, $r25;
+        java.lang.String $r9, $r10, $r12, $r13;
+        java.util.Locale $r11;
+        java.io.IOException $r17, r27;
+        com.android.emailcommon.mail.MessagingException $r19, $r24;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: com.android.emailcommon.mail.Folder$FolderType;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label01:
+        $r6 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if $r6 != null goto label02;
+
+        $r15 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        r26 = virtualinvoke $r15.<com.android.email.mail.store.ImapStore: com.android.email.mail.store.ImapConnection getConnection()>();
+
+        goto label03;
+
+     label02:
+        r26 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+     label03:
+        exitmonitor r2;
+
+     label04:
+        goto label07;
+
+     label05:
+        $r22 := @caughtexception;
+
+        r3 = $r22;
+
+        exitmonitor r2;
+
+     label06:
+        throw r3;
+
+     label07:
+        $r11 = <java.util.Locale: java.util.Locale US>;
+
+        $r7 = newarray (java.lang.Object)[1];
+
+        $r10 = r0.<com.android.email.mail.store.ImapFolder: java.lang.String mName>;
+
+        $r8 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        $r9 = $r8.<com.android.email.mail.store.ImapStore: java.lang.String mPathPrefix>;
+
+        $r13 = staticinvoke <com.android.email.mail.store.ImapStore: java.lang.String encodeFolderName(java.lang.String,java.lang.String)>($r10, $r9);
+
+        $r7[0] = $r13;
+
+        $r12 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r11, "CREATE \"%s\"", $r7);
+
+        virtualinvoke r26.<com.android.email.mail.store.ImapConnection: java.util.List executeSimpleCommand(java.lang.String)>($r12);
+
+     label08:
+        virtualinvoke r26.<com.android.email.mail.store.ImapConnection: void destroyResponses()>();
+
+        $r14 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if $r14 != null goto label09;
+
+        $r16 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        virtualinvoke $r16.<com.android.email.mail.store.ImapStore: void poolConnection(com.android.email.mail.store.ImapConnection)>(r26);
+
+     label09:
+        return 1;
+
+     label10:
+        $r24 := @caughtexception;
+
+     label11:
+        virtualinvoke r26.<com.android.email.mail.store.ImapConnection: void destroyResponses()>();
+
+        $r23 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if $r23 != null goto label12;
+
+        $r25 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        virtualinvoke $r25.<com.android.email.mail.store.ImapStore: void poolConnection(com.android.email.mail.store.ImapConnection)>(r26);
+
+     label12:
+        return 0;
+
+     label13:
+        $r17 := @caughtexception;
+
+        r27 = $r17;
+
+        $r19 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>(r26, r27);
+
+        throw $r19;
+
+     label14:
+        $r18 := @caughtexception;
+
+        r4 = $r18;
+
+     label15:
+        virtualinvoke r26.<com.android.email.mail.store.ImapConnection: void destroyResponses()>();
+
+        $r21 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if $r21 != null goto label16;
+
+        $r20 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        virtualinvoke $r20.<com.android.email.mail.store.ImapStore: void poolConnection(com.android.email.mail.store.ImapConnection)>(r26);
+
+     label16:
+        throw r4;
+
+        catch java.lang.Throwable from label01 to label04 with label05;
+        catch java.lang.Throwable from label05 to label06 with label05;
+        catch com.android.emailcommon.mail.MessagingException from label07 to label08 with label10;
+        catch java.io.IOException from label07 to label08 with label13;
+        catch java.lang.Throwable from label07 to label08 with label14;
+        catch java.lang.Throwable from label10 to label11 with label14;
+        catch java.lang.Throwable from label13 to label15 with label14;
+    }
+
+    public void copyMessages(com.android.emailcommon.mail.Message[], com.android.emailcommon.mail.Folder, com.android.emailcommon.mail.Folder$MessageUpdateCallbacks) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0, r65;
+        com.android.emailcommon.mail.Message[] r1, r6, r66;
+        com.android.emailcommon.mail.Folder r2;
+        com.android.emailcommon.mail.Folder$MessageUpdateCallbacks r3;
+        java.util.List r4;
+        java.util.HashMap r5, $r25;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, i8, i9;
+        com.android.emailcommon.mail.Message r7, r12, r67;
+        java.lang.String r8, r9, r13, $r19, $r20, $r21, $r23, $r24, $r27, $r33, $r38, $r40, $r45, $r46, $r58, r62, r64, r68;
+        java.lang.String[] r10, r11, r69;
+        java.lang.Throwable r14, r15, $r53, $r59;
+        com.android.email.mail.store.ImapConnection $r16, $r55;
+        java.lang.Object[] $r17, $r56;
+        java.util.Locale $r18;
+        com.android.email.mail.store.ImapStore $r22;
+        java.lang.StringBuilder $r26, $r29, $r30, $r31, $r42, $r43, $r48, $r49, $r50, $r51;
+        com.android.emailcommon.mail.Folder$OpenMode $r28;
+        java.lang.Object $r32, $r44;
+        com.android.emailcommon.mail.MessagingException $r34, $r41, $r54, $r57, r70;
+        com.android.email.mail.store.imap.ImapString $r35, $r36, $r37, $r39;
+        java.io.IOException $r52, r71;
+        java.util.Iterator r60;
+        com.android.email.mail.store.imap.ImapResponse r61;
+        com.android.email.mail.store.imap.ImapList r63;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: com.android.emailcommon.mail.Message[];
+
+        r2 := @parameter1: com.android.emailcommon.mail.Folder;
+
+        r3 := @parameter2: com.android.emailcommon.mail.Folder$MessageUpdateCallbacks;
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void checkOpen()>();
+
+     label01:
+        $r16 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r18 = <java.util.Locale: java.util.Locale US>;
+
+        $r17 = newarray (java.lang.Object)[2];
+
+        $r19 = staticinvoke <com.android.email.mail.store.ImapStore: java.lang.String joinMessageUids(com.android.emailcommon.mail.Message[])>(r1);
+
+        $r17[0] = $r19;
+
+        $r20 = virtualinvoke r2.<com.android.emailcommon.mail.Folder: java.lang.String getName()>();
+
+        $r22 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        $r21 = $r22.<com.android.email.mail.store.ImapStore: java.lang.String mPathPrefix>;
+
+        $r24 = staticinvoke <com.android.email.mail.store.ImapStore: java.lang.String encodeFolderName(java.lang.String,java.lang.String)>($r20, $r21);
+
+        $r17[1] = $r24;
+
+        $r23 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r18, "UID COPY %s \"%s\"", $r17);
+
+        r4 = virtualinvoke $r16.<com.android.email.mail.store.ImapConnection: java.util.List executeSimpleCommand(java.lang.String)>($r23);
+
+        $r25 = new java.util.HashMap;
+
+        specialinvoke $r25.<java.util.HashMap: void <init>()>();
+
+        r5 = $r25;
+
+        z0 = 0;
+
+        r6 = r1;
+
+        i0 = lengthof r6;
+
+        i1 = 0;
+
+     label02:
+        if i1 >= i0 goto label03;
+
+        r7 = r6[i1];
+
+        $r46 = virtualinvoke r7.<com.android.emailcommon.mail.Message: java.lang.String getUid()>();
+
+        virtualinvoke r5.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r46, r7);
+
+        i1 = i1 + 1;
+
+        goto label02;
+
+     label03:
+        r60 = interfaceinvoke r4.<java.util.List: java.util.Iterator iterator()>();
+
+     label04:
+        $z1 = interfaceinvoke r60.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label13;
+
+        $r32 = interfaceinvoke r60.<java.util.Iterator: java.lang.Object next()>();
+
+        r61 = (com.android.email.mail.store.imap.ImapResponse) $r32;
+
+        $z2 = virtualinvoke r61.<com.android.email.mail.store.imap.ImapResponse: boolean isBad()>();
+
+        if $z2 != 0 goto label05;
+
+        $z3 = virtualinvoke r61.<com.android.email.mail.store.imap.ImapResponse: boolean isNo()>();
+
+        if $z3 == 0 goto label06;
+
+        $z6 = virtualinvoke r61.<com.android.email.mail.store.imap.ImapResponse: boolean isTagged()>();
+
+        if $z6 == 0 goto label06;
+
+     label05:
+        $r35 = virtualinvoke r61.<com.android.email.mail.store.imap.ImapResponse: com.android.email.mail.store.imap.ImapString getStatusResponseTextOrEmpty()>();
+
+        r62 = virtualinvoke $r35.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $r34 = new com.android.emailcommon.mail.MessagingException;
+
+        specialinvoke $r34.<com.android.emailcommon.mail.MessagingException: void <init>(java.lang.String)>(r62);
+
+        throw $r34;
+
+     label06:
+        $z4 = virtualinvoke r61.<com.android.email.mail.store.imap.ImapResponse: boolean isTagged()>();
+
+        if $z4 != 0 goto label07;
+
+        goto label04;
+
+     label07:
+        if r3 != null goto label08;
+
+        goto label04;
+
+     label08:
+        r63 = virtualinvoke r61.<com.android.email.mail.store.imap.ImapResponse: com.android.email.mail.store.imap.ImapList getListOrEmpty(int)>(1);
+
+        $r36 = virtualinvoke r63.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(0);
+
+        r64 = virtualinvoke $r36.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $r38 = "COPYUID";
+
+        $z5 = virtualinvoke $r38.<java.lang.String: boolean equals(java.lang.Object)>(r64);
+
+        if $z5 == 0 goto label12;
+
+        z0 = 1;
+
+        $r37 = virtualinvoke r63.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(2);
+
+        r8 = virtualinvoke $r37.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $r39 = virtualinvoke r63.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(3);
+
+        r9 = virtualinvoke $r39.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        r10 = staticinvoke <com.android.email.mail.store.imap.ImapUtility: java.lang.String[] getImapSequenceValues(java.lang.String)>(r8);
+
+        r11 = staticinvoke <com.android.email.mail.store.imap.ImapUtility: java.lang.String[] getImapSequenceValues(java.lang.String)>(r9);
+
+        $i5 = lengthof r10;
+
+        $i4 = lengthof r11;
+
+        if $i5 == $i4 goto label09;
+
+        $r41 = new com.android.emailcommon.mail.MessagingException;
+
+        $r42 = new java.lang.StringBuilder;
+
+        specialinvoke $r42.<java.lang.StringBuilder: void <init>()>();
+
+        $r43 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Set length mis-match; orig IDs \"");
+
+        $r48 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r8);
+
+        $r49 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\"  new IDs \"");
+
+        $r50 = virtualinvoke $r49.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r9);
+
+        $r51 = virtualinvoke $r50.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\"");
+
+        $r45 = virtualinvoke $r51.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r41.<com.android.emailcommon.mail.MessagingException: void <init>(java.lang.String)>($r45);
+
+        throw $r41;
+
+     label09:
+        i2 = 0;
+
+     label10:
+        $i6 = lengthof r10;
+
+        if i2 >= $i6 goto label12;
+
+        r13 = r10[i2];
+
+        $r44 = virtualinvoke r5.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r13);
+
+        r12 = (com.android.emailcommon.mail.Message) $r44;
+
+        if r12 == null goto label11;
+
+        $r40 = r11[i2];
+
+        interfaceinvoke r3.<com.android.emailcommon.mail.Folder$MessageUpdateCallbacks: void onMessageUidChange(com.android.emailcommon.mail.Message,java.lang.String)>(r12, $r40);
+
+     label11:
+        i2 = i2 + 1;
+
+        goto label10;
+
+     label12:
+        goto label04;
+
+     label13:
+        if r3 == null goto label23;
+
+        if z0 != 0 goto label23;
+
+        r65 = (com.android.email.mail.store.ImapFolder) r2;
+
+     label14:
+        $r28 = <com.android.emailcommon.mail.Folder$OpenMode: com.android.emailcommon.mail.Folder$OpenMode READ_WRITE>;
+
+        virtualinvoke r65.<com.android.email.mail.store.ImapFolder: void open(com.android.emailcommon.mail.Folder$OpenMode)>($r28);
+
+        r66 = r1;
+
+        i8 = lengthof r66;
+
+        i9 = 0;
+
+     label15:
+        if i9 >= i8 goto label17;
+
+        r67 = r66[i9];
+
+        $r29 = new java.lang.StringBuilder;
+
+        specialinvoke $r29.<java.lang.StringBuilder: void <init>()>();
+
+        $r26 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("HEADER Message-Id \"");
+
+        $r27 = virtualinvoke r67.<com.android.emailcommon.mail.Message: java.lang.String getMessageId()>();
+
+        $r30 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r27);
+
+        $r31 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\"");
+
+        r68 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r69 = virtualinvoke r65.<com.android.email.mail.store.ImapFolder: java.lang.String[] searchForUids(java.lang.String)>(r68);
+
+        $i3 = lengthof r69;
+
+        if $i3 != 1 goto label16;
+
+        $r33 = r69[0];
+
+        interfaceinvoke r3.<com.android.emailcommon.mail.Folder$MessageUpdateCallbacks: void onMessageUidChange(com.android.emailcommon.mail.Message,java.lang.String)>(r67, $r33);
+
+     label16:
+        i9 = i9 + 1;
+
+        goto label15;
+
+     label17:
+        virtualinvoke r65.<com.android.email.mail.store.ImapFolder: void close(boolean)>(0);
+
+        goto label22;
+
+     label18:
+        $r57 := @caughtexception;
+
+        r70 = $r57;
+
+        $r58 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r56 = newarray (java.lang.Object)[1];
+
+        $r56[0] = r70;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>($r58, "Failed to find message", $r56);
+
+     label19:
+        virtualinvoke r65.<com.android.email.mail.store.ImapFolder: void close(boolean)>(0);
+
+        goto label22;
+
+     label20:
+        $r53 := @caughtexception;
+
+        r15 = $r53;
+
+     label21:
+        virtualinvoke r65.<com.android.email.mail.store.ImapFolder: void close(boolean)>(0);
+
+        throw r15;
+
+     label22:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void doSelect()>();
+
+     label23:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        goto label27;
+
+     label24:
+        $r52 := @caughtexception;
+
+        r71 = $r52;
+
+        $r55 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r54 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>($r55, r71);
+
+        throw $r54;
+
+     label25:
+        $r59 := @caughtexception;
+
+        r14 = $r59;
+
+     label26:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        throw r14;
+
+     label27:
+        return;
+
+        catch com.android.emailcommon.mail.MessagingException from label14 to label17 with label18;
+        catch java.lang.Throwable from label14 to label17 with label20;
+        catch java.lang.Throwable from label18 to label19 with label20;
+        catch java.lang.Throwable from label20 to label21 with label20;
+        catch java.io.IOException from label01 to label23 with label24;
+        catch java.lang.Throwable from label01 to label23 with label25;
+        catch java.lang.Throwable from label24 to label26 with label25;
+    }
+
+    public int getMessageCount()
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        int $i0;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        $i0 = r0.<com.android.email.mail.store.ImapFolder: int mMessageCount>;
+
+        return $i0;
+    }
+
+    public int getUnreadMessageCount() throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        int i0, i1;
+        java.util.List r1;
+        java.util.Iterator r2;
+        com.android.email.mail.store.imap.ImapResponse r3;
+        java.lang.Throwable r4, $r18;
+        java.lang.Object[] $r5;
+        com.android.email.mail.store.ImapStore $r6;
+        java.lang.String $r7, $r8, $r11, $r12;
+        com.android.email.mail.store.ImapConnection $r9, $r16;
+        java.util.Locale $r10;
+        java.lang.Object $r13;
+        boolean $z0, $z1;
+        com.android.email.mail.store.imap.ImapList $r14;
+        com.android.email.mail.store.imap.ImapString $r15;
+        java.io.IOException $r17, r20;
+        com.android.emailcommon.mail.MessagingException $r19;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void checkOpen()>();
+
+     label1:
+        i0 = 0;
+
+        $r9 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r10 = <java.util.Locale: java.util.Locale US>;
+
+        $r5 = newarray (java.lang.Object)[1];
+
+        $r8 = r0.<com.android.email.mail.store.ImapFolder: java.lang.String mName>;
+
+        $r6 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        $r7 = $r6.<com.android.email.mail.store.ImapStore: java.lang.String mPathPrefix>;
+
+        $r11 = staticinvoke <com.android.email.mail.store.ImapStore: java.lang.String encodeFolderName(java.lang.String,java.lang.String)>($r8, $r7);
+
+        $r5[0] = $r11;
+
+        $r12 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r10, "STATUS \"%s\" (UNSEEN)", $r5);
+
+        r1 = virtualinvoke $r9.<com.android.email.mail.store.ImapConnection: java.util.List executeSimpleCommand(java.lang.String)>($r12);
+
+        r2 = interfaceinvoke r1.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r13 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.email.mail.store.imap.ImapResponse) $r13;
+
+        $z1 = virtualinvoke r3.<com.android.email.mail.store.imap.ImapResponse: boolean isDataResponse(int,java.lang.String)>(0, "STATUS");
+
+        if $z1 == 0 goto label3;
+
+        $r14 = virtualinvoke r3.<com.android.email.mail.store.imap.ImapResponse: com.android.email.mail.store.imap.ImapList getListOrEmpty(int)>(2);
+
+        $r15 = virtualinvoke $r14.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getKeyedStringOrEmpty(java.lang.String)>("UNSEEN");
+
+        i0 = virtualinvoke $r15.<com.android.email.mail.store.imap.ImapString: int getNumberOrZero()>();
+
+     label3:
+        goto label2;
+
+     label4:
+        i1 = i0;
+
+     label5:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        return i1;
+
+     label6:
+        $r17 := @caughtexception;
+
+        r20 = $r17;
+
+        $r16 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r19 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>($r16, r20);
+
+        throw $r19;
+
+     label7:
+        $r18 := @caughtexception;
+
+        r4 = $r18;
+
+     label8:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        throw r4;
+
+        catch java.io.IOException from label1 to label5 with label6;
+        catch java.lang.Throwable from label1 to label5 with label7;
+        catch java.lang.Throwable from label6 to label8 with label7;
+    }
+
+    public void delete(boolean)
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        boolean z0;
+        java.lang.Error $r1;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = new java.lang.Error;
+
+        specialinvoke $r1.<java.lang.Error: void <init>(java.lang.String)>("ImapStore.delete() not yet implemented");
+
+        throw $r1;
+    }
+
+    java.lang.String[] getSearchUids(java.util.List)
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.util.List r1;
+        java.util.ArrayList r2, $r6;
+        java.util.Iterator r3;
+        com.android.email.mail.store.imap.ImapResponse r4;
+        int i0, $i1;
+        com.android.email.mail.store.imap.ImapString r5;
+        boolean $z0, $z1, $z2;
+        java.lang.String[] $r7, $r9;
+        java.lang.Object[] $r8;
+        java.lang.Object $r10;
+        java.lang.String $r11;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: java.util.List;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>()>();
+
+        r2 = $r6;
+
+        r3 = interfaceinvoke r1.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label6;
+
+        $r10 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.email.mail.store.imap.ImapResponse) $r10;
+
+        $z1 = virtualinvoke r4.<com.android.email.mail.store.imap.ImapResponse: boolean isDataResponse(int,java.lang.String)>(0, "SEARCH");
+
+        if $z1 != 0 goto label2;
+
+        goto label1;
+
+     label2:
+        i0 = 1;
+
+     label3:
+        $i1 = virtualinvoke r4.<com.android.email.mail.store.imap.ImapResponse: int size()>();
+
+        if i0 >= $i1 goto label5;
+
+        r5 = virtualinvoke r4.<com.android.email.mail.store.imap.ImapResponse: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(i0);
+
+        $z2 = virtualinvoke r5.<com.android.email.mail.store.imap.ImapString: boolean isString()>();
+
+        if $z2 == 0 goto label4;
+
+        $r11 = virtualinvoke r5.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        virtualinvoke r2.<java.util.ArrayList: boolean add(java.lang.Object)>($r11);
+
+     label4:
+        i0 = i0 + 1;
+
+        goto label3;
+
+     label5:
+        goto label1;
+
+     label6:
+        $r7 = <com.android.emailcommon.utility.Utility: java.lang.String[] EMPTY_STRINGS>;
+
+        $r8 = virtualinvoke r2.<java.util.ArrayList: java.lang.Object[] toArray(java.lang.Object[])>($r7);
+
+        $r9 = (java.lang.String[]) $r8;
+
+        return $r9;
+    }
+
+    java.lang.String[] searchForUids(java.lang.String) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.lang.String r1;
+        java.lang.String[] $r2;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String[] searchForUids(java.lang.String,boolean)>(r1, 1);
+
+        return $r2;
+    }
+
+    java.lang.String[] searchForUids(java.lang.String, boolean) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.lang.String r1, r2, $r12, $r16, $r22, $r23, $r26, $r32;
+        boolean z0;
+        java.lang.String[] r3, r4, r37;
+        java.lang.Throwable r5, $r33;
+        java.lang.StringBuilder $r6, $r7, $r8, $r11, $r13, $r14, $r15, $r17, $r19, $r21, $r24, $r27, $r29, $r31;
+        com.android.email.mail.store.ImapConnection $r9, $r34;
+        java.util.List $r10;
+        int $i0;
+        java.lang.Object[] $r18, $r25, $r30;
+        com.android.email.mail.store.ImapStore$ImapException $r20, r36;
+        java.io.IOException $r28, r38;
+        com.android.emailcommon.mail.MessagingException $r35;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void checkOpen()>();
+
+     label1:
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("UID SEARCH ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        r2 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r9 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r10 = virtualinvoke $r9.<com.android.email.mail.store.ImapConnection: java.util.List executeSimpleCommand(java.lang.String)>(r2);
+
+        r3 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String[] getSearchUids(java.util.List)>($r10);
+
+        $r12 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("searchForUids \'");
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\' results: ");
+
+        $i0 = lengthof r3;
+
+        $r17 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r16 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r18 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>($r12, $r16, $r18);
+
+        r4 = r3;
+
+     label2:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        return r4;
+
+     label3:
+        $r20 := @caughtexception;
+
+        r36 = $r20;
+
+        $r22 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ImapException in search: ");
+
+        $r24 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r23 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r25 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.Throwable,java.lang.String,java.lang.Object[])>($r22, r36, $r23, $r25);
+
+        if z0 == 0 goto label5;
+
+        r37 = <com.android.emailcommon.utility.Utility: java.lang.String[] EMPTY_STRINGS>;
+
+     label4:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        return r37;
+
+     label5:
+        throw r36;
+
+     label6:
+        $r28 := @caughtexception;
+
+        r38 = $r28;
+
+        $r26 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r29 = new java.lang.StringBuilder;
+
+        specialinvoke $r29.<java.lang.StringBuilder: void <init>()>();
+
+        $r27 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("IOException in search: ");
+
+        $r31 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r32 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r30 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.Throwable,java.lang.String,java.lang.Object[])>($r26, r38, $r32, $r30);
+
+        $r34 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r35 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>($r34, r38);
+
+        throw $r35;
+
+     label7:
+        $r33 := @caughtexception;
+
+        r5 = $r33;
+
+     label8:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        throw r5;
+
+        catch com.android.email.mail.store.ImapStore$ImapException from label1 to label2 with label3;
+        catch java.io.IOException from label1 to label2 with label6;
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label8 with label7;
+    }
+
+    public com.android.emailcommon.mail.Message getMessage(java.lang.String) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.lang.String r1, $r6, $r7;
+        java.lang.String[] r2;
+        int i0, $i1;
+        java.lang.StringBuilder $r3, $r4, $r5;
+        boolean $z0;
+        com.android.email.mail.store.ImapStore$ImapMessage $r8;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void checkOpen()>();
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("UID ");
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r2 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String[] searchForUids(java.lang.String)>($r6);
+
+        i0 = 0;
+
+     label1:
+        $i1 = lengthof r2;
+
+        if i0 >= $i1 goto label3;
+
+        $r7 = r2[i0];
+
+        $z0 = virtualinvoke $r7.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z0 == 0 goto label2;
+
+        $r8 = new com.android.email.mail.store.ImapStore$ImapMessage;
+
+        specialinvoke $r8.<com.android.email.mail.store.ImapStore$ImapMessage: void <init>(java.lang.String,com.android.email.mail.store.ImapFolder)>(r1, r0);
+
+        return $r8;
+
+     label2:
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label3:
+        return null;
+    }
+
+    protected static boolean isAsciiString(java.lang.String)
+    {
+        java.lang.String r0;
+        int i0, i1;
+        char c2;
+
+        r0 := @parameter0: java.lang.String;
+
+        i0 = virtualinvoke r0.<java.lang.String: int length()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label3;
+
+        c2 = virtualinvoke r0.<java.lang.String: char charAt(int)>(i1);
+
+        if c2 < 128 goto label2;
+
+        return 0;
+
+     label2:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label3:
+        return 1;
+    }
+
+    public com.android.emailcommon.mail.Message[] getMessages(com.android.emailcommon.service.SearchParams, com.android.emailcommon.mail.Folder$MessageRetrievalListener) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        com.android.emailcommon.service.SearchParams r1;
+        com.android.emailcommon.mail.Folder$MessageRetrievalListener r2;
+        java.util.ArrayList r3, $r7;
+        java.lang.String r4, r5, r6, $r17, $r22, $r29, $r31, $r39, $r40;
+        boolean $z0;
+        java.lang.StringBuilder $r8, $r9, $r11, $r12, $r13, $r14, $r15, $r16, $r18, $r19, $r20, $r21, $r23, $r24, $r25, $r26, $r27, $r28, $r30, $r32, $r33, $r34, $r35, $r36, $r37, $r38, $r41, $r42;
+        byte[] $r10;
+        int $i0;
+        com.android.emailcommon.mail.Message[] $r43;
+        java.lang.String[] $r44;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: com.android.emailcommon.service.SearchParams;
+
+        r2 := @parameter1: com.android.emailcommon.mail.Folder$MessageRetrievalListener;
+
+        $r7 = new java.util.ArrayList;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>()>();
+
+        r3 = $r7;
+
+        r4 = r1.<com.android.emailcommon.service.SearchParams: java.lang.String mFilter>;
+
+        r5 = "US-ASCII";
+
+        $z0 = staticinvoke <com.android.email.mail.store.ImapFolder: boolean isAsciiString(java.lang.String)>(r4);
+
+        if $z0 != 0 goto label1;
+
+        r5 = "UTF-8";
+
+     label1:
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("{");
+
+        $r10 = virtualinvoke r4.<java.lang.String: byte[] getBytes()>();
+
+        $i0 = lengthof $r10;
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("}");
+
+        r6 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("UID SEARCH CHARSET ");
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r5);
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" OR FROM ");
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r6);
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r3.<java.util.List: boolean add(java.lang.Object)>($r17);
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (OR TO ");
+
+        $r23 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r6);
+
+        $r22 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r3.<java.util.List: boolean add(java.lang.Object)>($r22);
+
+        $r24 = new java.lang.StringBuilder;
+
+        specialinvoke $r24.<java.lang.StringBuilder: void <init>()>();
+
+        $r26 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        $r25 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (OR CC ");
+
+        $r28 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r6);
+
+        $r29 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r3.<java.util.List: boolean add(java.lang.Object)>($r29);
+
+        $r27 = new java.lang.StringBuilder;
+
+        specialinvoke $r27.<java.lang.StringBuilder: void <init>()>();
+
+        $r32 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        $r33 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (OR SUBJECT ");
+
+        $r30 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r6);
+
+        $r31 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r3.<java.util.List: boolean add(java.lang.Object)>($r31);
+
+        $r36 = new java.lang.StringBuilder;
+
+        specialinvoke $r36.<java.lang.StringBuilder: void <init>()>();
+
+        $r34 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        $r35 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" BODY ");
+
+        $r38 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r6);
+
+        $r39 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r3.<java.util.List: boolean add(java.lang.Object)>($r39);
+
+        $r37 = new java.lang.StringBuilder;
+
+        specialinvoke $r37.<java.lang.StringBuilder: void <init>()>();
+
+        $r42 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        $r41 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")))");
+
+        $r40 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r3.<java.util.List: boolean add(java.lang.Object)>($r40);
+
+        $r44 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String[] complexSearchForUids(java.util.List)>(r3);
+
+        $r43 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Message[] getMessagesInternal(java.lang.String[],com.android.emailcommon.mail.Folder$MessageRetrievalListener)>($r44, r2);
+
+        return $r43;
+    }
+
+    java.lang.String[] complexSearchForUids(java.util.List) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.util.List r1, $r6;
+        java.lang.String[] r2, r3;
+        java.lang.Throwable r4, $r11;
+        com.android.email.mail.store.ImapConnection $r5, $r8;
+        java.io.IOException $r7, r13;
+        com.android.emailcommon.mail.MessagingException $r9;
+        com.android.email.mail.store.ImapStore$ImapException $r10;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: java.util.List;
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void checkOpen()>();
+
+     label1:
+        $r5 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r6 = virtualinvoke $r5.<com.android.email.mail.store.ImapConnection: java.util.List executeComplexCommand(java.util.List,boolean)>(r1, 0);
+
+        r2 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String[] getSearchUids(java.util.List)>($r6);
+
+     label2:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        return r2;
+
+     label3:
+        $r10 := @caughtexception;
+
+        r3 = <com.android.emailcommon.utility.Utility: java.lang.String[] EMPTY_STRINGS>;
+
+     label4:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        return r3;
+
+     label5:
+        $r7 := @caughtexception;
+
+        r13 = $r7;
+
+        $r8 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r9 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>($r8, r13);
+
+        throw $r9;
+
+     label6:
+        $r11 := @caughtexception;
+
+        r4 = $r11;
+
+     label7:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        throw r4;
+
+        catch com.android.email.mail.store.ImapStore$ImapException from label1 to label2 with label3;
+        catch java.io.IOException from label1 to label2 with label5;
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label5 to label7 with label6;
+    }
+
+    public com.android.emailcommon.mail.Message[] getMessages(int, int, com.android.emailcommon.mail.Folder$MessageRetrievalListener) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        int i0, i1;
+        com.android.emailcommon.mail.Folder$MessageRetrievalListener r1;
+        com.android.emailcommon.mail.MessagingException $r2;
+        java.lang.Object[] $r3, $r13, $r15;
+        java.lang.Integer $r4, $r5, $r17, $r18;
+        java.lang.String $r6, $r8, $r14, $r20;
+        java.lang.StringBuilder $r7, $r9, $r10, $r11, $r12;
+        java.util.Locale $r16;
+        java.lang.String[] $r19;
+        com.android.emailcommon.mail.Message[] $r21;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 := @parameter2: com.android.emailcommon.mail.Folder$MessageRetrievalListener;
+
+        if i0 < 1 goto label1;
+
+        if i1 < 1 goto label1;
+
+        if i1 >= i0 goto label2;
+
+     label1:
+        $r2 = new com.android.emailcommon.mail.MessagingException;
+
+        $r3 = newarray (java.lang.Object)[2];
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r3[0] = $r4;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        $r3[1] = $r5;
+
+        $r6 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("Invalid range: %d %d", $r3);
+
+        specialinvoke $r2.<com.android.emailcommon.mail.MessagingException: void <init>(java.lang.String)>($r6);
+
+        throw $r2;
+
+     label2:
+        $r8 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("getMessages number ");
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" - ");
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r13 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>($r8, $r14, $r13);
+
+        $r16 = <java.util.Locale: java.util.Locale US>;
+
+        $r15 = newarray (java.lang.Object)[2];
+
+        $r17 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r15[0] = $r17;
+
+        $r18 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        $r15[1] = $r18;
+
+        $r20 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r16, "%d:%d NOT DELETED", $r15);
+
+        $r19 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String[] searchForUids(java.lang.String)>($r20);
+
+        $r21 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Message[] getMessagesInternal(java.lang.String[],com.android.emailcommon.mail.Folder$MessageRetrievalListener)>($r19, r1);
+
+        return $r21;
+    }
+
+    private java.lang.String generateDateRangeCommand(long, long, boolean) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        long l0, l1;
+        boolean z0;
+        java.text.SimpleDateFormat r1, $r5;
+        java.lang.String r2, r4, $r14, $r24;
+        java.lang.StringBuilder r3, $r9;
+        java.util.Locale $r6;
+        java.util.TimeZone $r7;
+        java.lang.Long $r8, $r15;
+        byte $b2, $b3;
+        com.android.emailcommon.mail.MessagingException $r21;
+        java.lang.Object[] $r23;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        l0 := @parameter0: long;
+
+        l1 := @parameter1: long;
+
+        z0 := @parameter2: boolean;
+
+        $r5 = new java.text.SimpleDateFormat;
+
+        $r6 = <java.util.Locale: java.util.Locale US>;
+
+        specialinvoke $r5.<java.text.SimpleDateFormat: void <init>(java.lang.String,java.util.Locale)>("dd-LLL-yyyy", $r6);
+
+        r1 = $r5;
+
+        $r7 = staticinvoke <java.util.TimeZone: java.util.TimeZone getTimeZone(java.lang.String)>("UTC");
+
+        virtualinvoke r1.<java.text.SimpleDateFormat: void setTimeZone(java.util.TimeZone)>($r7);
+
+        $r8 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l1);
+
+        r2 = virtualinvoke r1.<java.text.SimpleDateFormat: java.lang.String format(java.lang.Object)>($r8);
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        r3 = $r9;
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("1:* ");
+
+        $b2 = l0 cmp 0L;
+
+        if $b2 == 0 goto label4;
+
+        $r15 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        r4 = virtualinvoke r1.<java.text.SimpleDateFormat: java.lang.String format(java.lang.Object)>($r15);
+
+        $b3 = l0 cmp l1;
+
+        if $b3 >= 0 goto label1;
+
+        $r21 = new com.android.emailcommon.mail.MessagingException;
+
+        $r23 = newarray (java.lang.Object)[2];
+
+        $r23[0] = r2;
+
+        $r23[1] = r4;
+
+        $r24 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("Invalid date range: %s - %s", $r23);
+
+        specialinvoke $r21.<com.android.emailcommon.mail.MessagingException: void <init>(java.lang.String)>($r24);
+
+        throw $r21;
+
+     label1:
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("BEFORE ");
+
+        if z0 == 0 goto label2;
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(34);
+
+     label2:
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        if z0 == 0 goto label3;
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(34);
+
+     label3:
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+     label4:
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("SINCE ");
+
+        if z0 == 0 goto label5;
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(34);
+
+     label5:
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        if z0 == 0 goto label6;
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(34);
+
+     label6:
+        $r14 = virtualinvoke r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r14;
+    }
+
+    public com.android.emailcommon.mail.Message[] getMessages(long, long, com.android.emailcommon.mail.Folder$MessageRetrievalListener) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        long l0, l1;
+        com.android.emailcommon.mail.Folder$MessageRetrievalListener r1;
+        java.lang.String r2, $r6, $r8, $r11, $r12, $r16, $r17, $r20, r22;
+        com.android.email.mail.store.ImapStore$ImapException r3, r4, $r15, $r18;
+        java.lang.StringBuilder $r5, $r7, $r9;
+        java.lang.Object[] $r10, $r14, $r19;
+        com.android.emailcommon.mail.Message[] $r13;
+        java.lang.String[] r21;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        l0 := @parameter0: long;
+
+        l1 := @parameter1: long;
+
+        r1 := @parameter2: com.android.emailcommon.mail.Folder$MessageRetrievalListener;
+
+        r2 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String generateDateRangeCommand(long,long,boolean)>(l0, l1, 0);
+
+        $r6 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("getMessages dateRange ");
+
+        $r8 = virtualinvoke r2.<java.lang.String: java.lang.String toString()>();
+
+        $r9 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r10 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>($r6, $r11, $r10);
+
+     label1:
+        $r12 = virtualinvoke r2.<java.lang.String: java.lang.String toString()>();
+
+        r21 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String[] searchForUids(java.lang.String,boolean)>($r12, 0);
+
+     label2:
+        goto label7;
+
+     label3:
+        $r15 := @caughtexception;
+
+        r3 = $r15;
+
+        $r16 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r14 = newarray (java.lang.Object)[1];
+
+        $r17 = virtualinvoke r2.<java.lang.String: java.lang.String toString()>();
+
+        $r14[0] = $r17;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.Throwable,java.lang.String,java.lang.Object[])>($r16, r3, "query failed %s, trying alternate", $r14);
+
+        r22 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String generateDateRangeCommand(long,long,boolean)>(l0, l1, 1);
+
+     label4:
+        r21 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String[] searchForUids(java.lang.String,boolean)>(r22, 1);
+
+     label5:
+        goto label7;
+
+     label6:
+        $r18 := @caughtexception;
+
+        r4 = $r18;
+
+        $r20 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r19 = newarray (java.lang.Object)[1];
+
+        $r19[0] = r22;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.Throwable,java.lang.String,java.lang.Object[])>($r20, r4, "query failed %s, fatal", $r19);
+
+        r21 = null;
+
+     label7:
+        $r13 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Message[] getMessagesInternal(java.lang.String[],com.android.emailcommon.mail.Folder$MessageRetrievalListener)>(r21, r1);
+
+        return $r13;
+
+        catch com.android.email.mail.store.ImapStore$ImapException from label1 to label2 with label3;
+        catch com.android.email.mail.store.ImapStore$ImapException from label4 to label5 with label6;
+    }
+
+    public com.android.emailcommon.mail.Message[] getMessages(java.lang.String[], com.android.emailcommon.mail.Folder$MessageRetrievalListener) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.lang.String[] r1;
+        com.android.emailcommon.mail.Folder$MessageRetrievalListener r2;
+        com.android.emailcommon.mail.Message[] $r3;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: java.lang.String[];
+
+        r2 := @parameter1: com.android.emailcommon.mail.Folder$MessageRetrievalListener;
+
+        if r1 != null goto label1;
+
+        r1 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String[] searchForUids(java.lang.String)>("1:* NOT DELETED");
+
+     label1:
+        $r3 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Message[] getMessagesInternal(java.lang.String[],com.android.emailcommon.mail.Folder$MessageRetrievalListener)>(r1, r2);
+
+        return $r3;
+    }
+
+    public com.android.emailcommon.mail.Message[] getMessagesInternal(java.lang.String[], com.android.emailcommon.mail.Folder$MessageRetrievalListener)
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.lang.String[] r1;
+        com.android.emailcommon.mail.Folder$MessageRetrievalListener r2;
+        java.util.ArrayList r3, $r6;
+        int i0, $i1, $i2;
+        java.lang.String r4;
+        com.android.email.mail.store.ImapStore$ImapMessage r5, $r10;
+        com.android.emailcommon.mail.Message[] $r7, $r9;
+        java.lang.Object[] $r8;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: java.lang.String[];
+
+        r2 := @parameter1: com.android.emailcommon.mail.Folder$MessageRetrievalListener;
+
+        $r6 = new java.util.ArrayList;
+
+        $i1 = lengthof r1;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>(int)>($i1);
+
+        r3 = $r6;
+
+        i0 = 0;
+
+     label1:
+        $i2 = lengthof r1;
+
+        if i0 >= $i2 goto label3;
+
+        r4 = r1[i0];
+
+        $r10 = new com.android.email.mail.store.ImapStore$ImapMessage;
+
+        specialinvoke $r10.<com.android.email.mail.store.ImapStore$ImapMessage: void <init>(java.lang.String,com.android.email.mail.store.ImapFolder)>(r4, r0);
+
+        r5 = $r10;
+
+        virtualinvoke r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r5);
+
+        if r2 == null goto label2;
+
+        interfaceinvoke r2.<com.android.emailcommon.mail.Folder$MessageRetrievalListener: void messageRetrieved(com.android.emailcommon.mail.Message)>(r5);
+
+     label2:
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label3:
+        $r7 = <com.android.emailcommon.mail.Message: com.android.emailcommon.mail.Message[] EMPTY_ARRAY>;
+
+        $r8 = virtualinvoke r3.<java.util.ArrayList: java.lang.Object[] toArray(java.lang.Object[])>($r7);
+
+        $r9 = (com.android.emailcommon.mail.Message[]) $r8;
+
+        return $r9;
+    }
+
+    public void fetch(com.android.emailcommon.mail.Message[], com.android.emailcommon.mail.FetchProfile, com.android.emailcommon.mail.Folder$MessageRetrievalListener) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        com.android.emailcommon.mail.Message[] r1;
+        com.android.emailcommon.mail.FetchProfile r2;
+        com.android.emailcommon.mail.Folder$MessageRetrievalListener r3;
+        java.lang.RuntimeException r4, $r5;
+        java.lang.StringBuilder $r6, $r8, $r10;
+        java.lang.String $r7, $r9, $r11;
+        java.lang.Object[] $r12;
+        com.android.email.mail.store.ImapConnection $r13, $r14;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: com.android.emailcommon.mail.Message[];
+
+        r2 := @parameter1: com.android.emailcommon.mail.FetchProfile;
+
+        r3 := @parameter2: com.android.emailcommon.mail.Folder$MessageRetrievalListener;
+
+     label1:
+        virtualinvoke r0.<com.android.email.mail.store.ImapFolder: void fetchInternal(com.android.emailcommon.mail.Message[],com.android.emailcommon.mail.FetchProfile,com.android.emailcommon.mail.Folder$MessageRetrievalListener)>(r1, r2, r3);
+
+     label2:
+        goto label5;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r4 = $r5;
+
+        $r7 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Exception detected: ");
+
+        $r9 = virtualinvoke r4.<java.lang.RuntimeException: java.lang.String getMessage()>();
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r12 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>($r7, $r11, $r12);
+
+        $r13 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if $r13 == null goto label4;
+
+        $r14 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        virtualinvoke $r14.<com.android.email.mail.store.ImapConnection: void logLastDiscourse()>();
+
+     label4:
+        throw r4;
+
+     label5:
+        return;
+
+        catch java.lang.RuntimeException from label1 to label2 with label3;
+    }
+
+    public void fetchInternal(com.android.emailcommon.mail.Message[], com.android.emailcommon.mail.FetchProfile, com.android.emailcommon.mail.Folder$MessageRetrievalListener) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        com.android.emailcommon.mail.Message[] r1, r5;
+        com.android.emailcommon.mail.FetchProfile r2;
+        com.android.emailcommon.mail.Folder$MessageRetrievalListener r3;
+        java.util.HashMap r4, $r12;
+        int i0, i1, i2, i3, $i4, $i5, $i6, $i7, i8;
+        com.android.emailcommon.mail.Message r6;
+        java.lang.String r7, $r23, $r24, $r26, $r45, $r49, $r51, $r55, $r58, $r62, r69, r76;
+        com.android.email.mail.store.ImapStore$ImapMessage r8;
+        com.android.email.mail.store.imap.ImapList r9, r67, r70;
+        com.android.email.mail.store.imap.ImapString r10, $r29, $r34, $r37, $r39, $r40, r72;
+        java.lang.Throwable r11, $r54;
+        java.util.LinkedHashSet $r13, r63;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z13, $z14, $z15, $z16, $z17, $z18;
+        com.android.emailcommon.mail.FetchProfile$Item $r14, $r15, $r16, $r17, $r18, $r30, $r31, $r32, $r33, $r35;
+        java.lang.Object[] $r19, $r25, $r56, $r59;
+        com.android.email.mail.store.ImapConnection $r20, $r27, $r53;
+        java.util.Locale $r21;
+        java.lang.String[] $r22, r65, r75;
+        java.lang.Object $r28;
+        com.android.emailcommon.mail.Body $r36;
+        java.io.ByteArrayInputStream $r38;
+        com.android.emailcommon.mail.Flag $r41, $r46, $r47, $r48;
+        java.lang.StringBuilder $r42, $r43, $r44, $r50;
+        java.io.IOException $r52, r78;
+        com.android.emailcommon.mail.MessagingException $r57, $r61, r71;
+        java.lang.Exception $r60, r77;
+        com.android.emailcommon.mail.Part r64;
+        com.android.email.mail.store.imap.ImapResponse r66;
+        java.util.Date r68;
+        java.io.InputStream r73, r74;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: com.android.emailcommon.mail.Message[];
+
+        r2 := @parameter1: com.android.emailcommon.mail.FetchProfile;
+
+        r3 := @parameter2: com.android.emailcommon.mail.Folder$MessageRetrievalListener;
+
+        $i4 = lengthof r1;
+
+        if $i4 != 0 goto label01;
+
+        return;
+
+     label01:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void checkOpen()>();
+
+        $r12 = new java.util.HashMap;
+
+        specialinvoke $r12.<java.util.HashMap: void <init>()>();
+
+        r4 = $r12;
+
+        r5 = r1;
+
+        i0 = lengthof r5;
+
+        i1 = 0;
+
+     label02:
+        if i1 >= i0 goto label03;
+
+        r6 = r5[i1];
+
+        $r55 = virtualinvoke r6.<com.android.emailcommon.mail.Message: java.lang.String getUid()>();
+
+        virtualinvoke r4.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r55, r6);
+
+        i1 = i1 + 1;
+
+        goto label02;
+
+     label03:
+        $r13 = new java.util.LinkedHashSet;
+
+        specialinvoke $r13.<java.util.LinkedHashSet: void <init>()>();
+
+        r63 = $r13;
+
+        virtualinvoke r63.<java.util.LinkedHashSet: boolean add(java.lang.Object)>("UID");
+
+        $r14 = <com.android.emailcommon.mail.FetchProfile$Item: com.android.emailcommon.mail.FetchProfile$Item FLAGS>;
+
+        $z0 = virtualinvoke r2.<com.android.emailcommon.mail.FetchProfile: boolean contains(java.lang.Object)>($r14);
+
+        if $z0 == 0 goto label04;
+
+        virtualinvoke r63.<java.util.LinkedHashSet: boolean add(java.lang.Object)>("FLAGS");
+
+     label04:
+        $r15 = <com.android.emailcommon.mail.FetchProfile$Item: com.android.emailcommon.mail.FetchProfile$Item ENVELOPE>;
+
+        $z1 = virtualinvoke r2.<com.android.emailcommon.mail.FetchProfile: boolean contains(java.lang.Object)>($r15);
+
+        if $z1 == 0 goto label05;
+
+        virtualinvoke r63.<java.util.LinkedHashSet: boolean add(java.lang.Object)>("INTERNALDATE");
+
+        virtualinvoke r63.<java.util.LinkedHashSet: boolean add(java.lang.Object)>("RFC822.SIZE");
+
+        virtualinvoke r63.<java.util.LinkedHashSet: boolean add(java.lang.Object)>("BODY.PEEK[HEADER.FIELDS (date subject from content-type to cc message-id)]");
+
+     label05:
+        $r16 = <com.android.emailcommon.mail.FetchProfile$Item: com.android.emailcommon.mail.FetchProfile$Item STRUCTURE>;
+
+        $z2 = virtualinvoke r2.<com.android.emailcommon.mail.FetchProfile: boolean contains(java.lang.Object)>($r16);
+
+        if $z2 == 0 goto label06;
+
+        virtualinvoke r63.<java.util.LinkedHashSet: boolean add(java.lang.Object)>("BODYSTRUCTURE");
+
+     label06:
+        $r17 = <com.android.emailcommon.mail.FetchProfile$Item: com.android.emailcommon.mail.FetchProfile$Item BODY_SANE>;
+
+        $z3 = virtualinvoke r2.<com.android.emailcommon.mail.FetchProfile: boolean contains(java.lang.Object)>($r17);
+
+        if $z3 == 0 goto label07;
+
+        $r49 = <com.android.email.mail.store.imap.ImapConstants: java.lang.String FETCH_FIELD_BODY_PEEK_SANE>;
+
+        virtualinvoke r63.<java.util.LinkedHashSet: boolean add(java.lang.Object)>($r49);
+
+     label07:
+        $r18 = <com.android.emailcommon.mail.FetchProfile$Item: com.android.emailcommon.mail.FetchProfile$Item BODY>;
+
+        $z4 = virtualinvoke r2.<com.android.emailcommon.mail.FetchProfile: boolean contains(java.lang.Object)>($r18);
+
+        if $z4 == 0 goto label08;
+
+        virtualinvoke r63.<java.util.LinkedHashSet: boolean add(java.lang.Object)>("BODY.PEEK[]");
+
+     label08:
+        r64 = virtualinvoke r2.<com.android.emailcommon.mail.FetchProfile: com.android.emailcommon.mail.Part getFirstPart()>();
+
+        if r64 == null goto label09;
+
+        r65 = interfaceinvoke r64.<com.android.emailcommon.mail.Part: java.lang.String[] getHeader(java.lang.String)>("X-Android-Attachment-StoreData");
+
+        if r65 == null goto label09;
+
+        $r43 = new java.lang.StringBuilder;
+
+        specialinvoke $r43.<java.lang.StringBuilder: void <init>()>();
+
+        $r42 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("BODY.PEEK[");
+
+        $r45 = r65[0];
+
+        $r44 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r45);
+
+        $r50 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r51 = virtualinvoke $r50.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r63.<java.util.LinkedHashSet: boolean add(java.lang.Object)>($r51);
+
+     label09:
+        $r20 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r21 = <java.util.Locale: java.util.Locale US>;
+
+        $r19 = newarray (java.lang.Object)[2];
+
+        $r23 = staticinvoke <com.android.email.mail.store.ImapStore: java.lang.String joinMessageUids(com.android.emailcommon.mail.Message[])>(r1);
+
+        $r19[0] = $r23;
+
+        $i5 = virtualinvoke r63.<java.util.LinkedHashSet: int size()>();
+
+        $r22 = newarray (java.lang.String)[$i5];
+
+        $r25 = virtualinvoke r63.<java.util.LinkedHashSet: java.lang.Object[] toArray(java.lang.Object[])>($r22);
+
+        $r26 = staticinvoke <com.android.emailcommon.utility.Utility: java.lang.String combine(java.lang.Object[],char)>($r25, 32);
+
+        $r19[1] = $r26;
+
+        $r24 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r21, "UID FETCH %s (%s)", $r19);
+
+        virtualinvoke $r20.<com.android.email.mail.store.ImapConnection: java.lang.String sendCommand(java.lang.String,boolean)>($r24, 0);
+
+     label10:
+        $r27 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        r66 = virtualinvoke $r27.<com.android.email.mail.store.ImapConnection: com.android.email.mail.store.imap.ImapResponse readResponse()>();
+
+        $z5 = virtualinvoke r66.<com.android.email.mail.store.imap.ImapResponse: boolean isDataResponse(int,java.lang.String)>(1, "FETCH");
+
+        if $z5 != 0 goto label12;
+
+     label11:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        goto label39;
+
+     label12:
+        r67 = virtualinvoke r66.<com.android.email.mail.store.imap.ImapResponse: com.android.email.mail.store.imap.ImapList getListOrEmpty(int)>(2);
+
+        $r29 = virtualinvoke r67.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getKeyedStringOrEmpty(java.lang.String)>("UID");
+
+        r7 = virtualinvoke $r29.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $z6 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r7);
+
+        if $z6 == 0 goto label14;
+
+     label13:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        goto label39;
+
+     label14:
+        $r28 = virtualinvoke r4.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r7);
+
+        r8 = (com.android.email.mail.store.ImapStore$ImapMessage) $r28;
+
+        if r8 != null goto label16;
+
+     label15:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        goto label39;
+
+     label16:
+        $r31 = <com.android.emailcommon.mail.FetchProfile$Item: com.android.emailcommon.mail.FetchProfile$Item FLAGS>;
+
+        $z8 = virtualinvoke r2.<com.android.emailcommon.mail.FetchProfile: boolean contains(java.lang.Object)>($r31);
+
+        if $z8 == 0 goto label22;
+
+        r9 = virtualinvoke r67.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapList getKeyedListOrEmpty(java.lang.String)>("FLAGS");
+
+        i2 = 0;
+
+        i3 = virtualinvoke r9.<com.android.email.mail.store.imap.ImapList: int size()>();
+
+     label17:
+        if i2 >= i3 goto label22;
+
+        r10 = virtualinvoke r9.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(i2);
+
+        $z17 = virtualinvoke r10.<com.android.email.mail.store.imap.ImapString: boolean is(java.lang.String)>("\\DELETED");
+
+        if $z17 == 0 goto label18;
+
+        $r48 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag DELETED>;
+
+        virtualinvoke r8.<com.android.email.mail.store.ImapStore$ImapMessage: void setFlagInternal(com.android.emailcommon.mail.Flag,boolean)>($r48, 1);
+
+        goto label21;
+
+     label18:
+        $z15 = virtualinvoke r10.<com.android.email.mail.store.imap.ImapString: boolean is(java.lang.String)>("\\ANSWERED");
+
+        if $z15 == 0 goto label19;
+
+        $r46 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag ANSWERED>;
+
+        virtualinvoke r8.<com.android.email.mail.store.ImapStore$ImapMessage: void setFlagInternal(com.android.emailcommon.mail.Flag,boolean)>($r46, 1);
+
+        goto label21;
+
+     label19:
+        $z14 = virtualinvoke r10.<com.android.email.mail.store.imap.ImapString: boolean is(java.lang.String)>("\\SEEN");
+
+        if $z14 == 0 goto label20;
+
+        $r47 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag SEEN>;
+
+        virtualinvoke r8.<com.android.email.mail.store.ImapStore$ImapMessage: void setFlagInternal(com.android.emailcommon.mail.Flag,boolean)>($r47, 1);
+
+        goto label21;
+
+     label20:
+        $z16 = virtualinvoke r10.<com.android.email.mail.store.imap.ImapString: boolean is(java.lang.String)>("\\FLAGGED");
+
+        if $z16 == 0 goto label21;
+
+        $r41 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag FLAGGED>;
+
+        virtualinvoke r8.<com.android.email.mail.store.ImapStore$ImapMessage: void setFlagInternal(com.android.emailcommon.mail.Flag,boolean)>($r41, 1);
+
+     label21:
+        i2 = i2 + 1;
+
+        goto label17;
+
+     label22:
+        $r30 = <com.android.emailcommon.mail.FetchProfile$Item: com.android.emailcommon.mail.FetchProfile$Item ENVELOPE>;
+
+        $z7 = virtualinvoke r2.<com.android.emailcommon.mail.FetchProfile: boolean contains(java.lang.Object)>($r30);
+
+        if $z7 == 0 goto label23;
+
+        $r39 = virtualinvoke r67.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getKeyedStringOrEmpty(java.lang.String)>("INTERNALDATE");
+
+        r68 = virtualinvoke $r39.<com.android.email.mail.store.imap.ImapString: java.util.Date getDateOrNull()>();
+
+        $r40 = virtualinvoke r67.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getKeyedStringOrEmpty(java.lang.String)>("RFC822.SIZE");
+
+        i8 = virtualinvoke $r40.<com.android.email.mail.store.imap.ImapString: int getNumberOrZero()>();
+
+        $r37 = virtualinvoke r67.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getKeyedStringOrEmpty(java.lang.String,boolean)>("BODY[HEADER", 1);
+
+        r69 = virtualinvoke $r37.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        virtualinvoke r8.<com.android.email.mail.store.ImapStore$ImapMessage: void setInternalDate(java.util.Date)>(r68);
+
+        virtualinvoke r8.<com.android.email.mail.store.ImapStore$ImapMessage: void setSize(int)>(i8);
+
+        $r38 = staticinvoke <com.android.emailcommon.utility.Utility: java.io.ByteArrayInputStream streamFromAsciiString(java.lang.String)>(r69);
+
+        virtualinvoke r8.<com.android.email.mail.store.ImapStore$ImapMessage: void parse(java.io.InputStream)>($r38);
+
+     label23:
+        $r33 = <com.android.emailcommon.mail.FetchProfile$Item: com.android.emailcommon.mail.FetchProfile$Item STRUCTURE>;
+
+        $z10 = virtualinvoke r2.<com.android.emailcommon.mail.FetchProfile: boolean contains(java.lang.Object)>($r33);
+
+        if $z10 == 0 goto label28;
+
+        r70 = virtualinvoke r67.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapList getKeyedListOrEmpty(java.lang.String)>("BODYSTRUCTURE");
+
+        $z13 = virtualinvoke r70.<com.android.email.mail.store.imap.ImapList: boolean isEmpty()>();
+
+        if $z13 != 0 goto label28;
+
+     label24:
+        staticinvoke <com.android.email.mail.store.ImapFolder: void parseBodyStructure(com.android.email.mail.store.imap.ImapList,com.android.emailcommon.mail.Part,java.lang.String)>(r70, r8, "TEXT");
+
+     label25:
+        goto label28;
+
+     label26:
+        $r57 := @caughtexception;
+
+        r71 = $r57;
+
+        $z18 = <com.android.emailcommon.Logging: boolean LOGD>;
+
+        if $z18 == 0 goto label27;
+
+        $r62 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r56 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int v(java.lang.String,java.lang.Throwable,java.lang.String,java.lang.Object[])>($r62, r71, "Error handling message", $r56);
+
+     label27:
+        virtualinvoke r8.<com.android.email.mail.store.ImapStore$ImapMessage: void setBody(com.android.emailcommon.mail.Body)>(null);
+
+     label28:
+        $r32 = <com.android.emailcommon.mail.FetchProfile$Item: com.android.emailcommon.mail.FetchProfile$Item BODY>;
+
+        $z9 = virtualinvoke r2.<com.android.emailcommon.mail.FetchProfile: boolean contains(java.lang.Object)>($r32);
+
+        if $z9 != 0 goto label29;
+
+        $r35 = <com.android.emailcommon.mail.FetchProfile$Item: com.android.emailcommon.mail.FetchProfile$Item BODY_SANE>;
+
+        $z12 = virtualinvoke r2.<com.android.emailcommon.mail.FetchProfile: boolean contains(java.lang.Object)>($r35);
+
+        if $z12 == 0 goto label30;
+
+     label29:
+        r72 = virtualinvoke r67.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getKeyedStringOrEmpty(java.lang.String,boolean)>("BODY[]", 1);
+
+        r73 = virtualinvoke r72.<com.android.email.mail.store.imap.ImapString: java.io.InputStream getAsStream()>();
+
+        virtualinvoke r8.<com.android.email.mail.store.ImapStore$ImapMessage: void parse(java.io.InputStream)>(r73);
+
+     label30:
+        if r64 == null goto label35;
+
+        $r34 = virtualinvoke r67.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getKeyedStringOrEmpty(java.lang.String,boolean)>("BODY[", 1);
+
+        r74 = virtualinvoke $r34.<com.android.email.mail.store.imap.ImapString: java.io.InputStream getAsStream()>();
+
+        r75 = interfaceinvoke r64.<com.android.emailcommon.mail.Part: java.lang.String[] getHeader(java.lang.String)>("Content-Transfer-Encoding");
+
+        if r75 == null goto label31;
+
+        $i6 = lengthof r75;
+
+        if $i6 <= 0 goto label31;
+
+        r76 = r75[0];
+
+        goto label32;
+
+     label31:
+        r76 = "7bit";
+
+     label32:
+        $i7 = interfaceinvoke r64.<com.android.emailcommon.mail.Part: int getSize()>();
+
+        $r36 = staticinvoke <com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Body decodeBody(java.io.InputStream,java.lang.String,int,com.android.emailcommon.mail.Folder$MessageRetrievalListener)>(r74, r76, $i7, r3);
+
+        interfaceinvoke r64.<com.android.emailcommon.mail.Part: void setBody(com.android.emailcommon.mail.Body)>($r36);
+
+     label33:
+        goto label35;
+
+     label34:
+        $r60 := @caughtexception;
+
+        r77 = $r60;
+
+        $r58 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r59 = newarray (java.lang.Object)[1];
+
+        $r59[0] = r77;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>($r58, "Error fetching body %s", $r59);
+
+     label35:
+        if r3 == null goto label36;
+
+        interfaceinvoke r3.<com.android.emailcommon.mail.Folder$MessageRetrievalListener: void messageRetrieved(com.android.emailcommon.mail.Message)>(r8);
+
+     label36:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        goto label39;
+
+     label37:
+        $r54 := @caughtexception;
+
+        r11 = $r54;
+
+     label38:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        throw r11;
+
+     label39:
+        $z11 = virtualinvoke r66.<com.android.email.mail.store.imap.ImapResponse: boolean isTagged()>();
+
+        if $z11 == 0 goto label10;
+
+     label40:
+        goto label42;
+
+     label41:
+        $r52 := @caughtexception;
+
+        r78 = $r52;
+
+        $r53 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r61 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>($r53, r78);
+
+        throw $r61;
+
+     label42:
+        return;
+
+        catch com.android.emailcommon.mail.MessagingException from label24 to label25 with label26;
+        catch java.lang.Exception from label32 to label33 with label34;
+        catch java.lang.Throwable from label10 to label11 with label37;
+        catch java.lang.Throwable from label12 to label13 with label37;
+        catch java.lang.Throwable from label14 to label15 with label37;
+        catch java.lang.Throwable from label16 to label36 with label37;
+        catch java.lang.Throwable from label37 to label38 with label37;
+        catch java.io.IOException from label09 to label40 with label41;
+    }
+
+    private static com.android.emailcommon.mail.Body decodeBody(java.io.InputStream, java.lang.String, int, com.android.emailcommon.mail.Folder$MessageRetrievalListener) throws java.io.IOException
+    {
+        java.io.InputStream r0, r15;
+        java.lang.String r1, $r12, r17;
+        int i0, i1, $i2, $i3, $i4, $i5, i6;
+        com.android.emailcommon.mail.Folder$MessageRetrievalListener r2;
+        com.android.emailcommon.internet.BinaryTempFileBody r3, $r7;
+        java.io.OutputStream r4;
+        byte[] r5, $r13;
+        java.lang.Throwable r6, $r14;
+        double $d0, $d1, $d2, $d3, $d4;
+        android.util.Base64DataException $r8;
+        java.lang.StringBuilder $r9, $r10, $r11;
+
+        r0 := @parameter0: java.io.InputStream;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        r2 := @parameter3: com.android.emailcommon.mail.Folder$MessageRetrievalListener;
+
+        r15 = staticinvoke <com.android.emailcommon.internet.MimeUtility: java.io.InputStream getInputStreamForContentTransferEncoding(java.io.InputStream,java.lang.String)>(r0, r1);
+
+        $r7 = new com.android.emailcommon.internet.BinaryTempFileBody;
+
+        specialinvoke $r7.<com.android.emailcommon.internet.BinaryTempFileBody: void <init>()>();
+
+        r3 = $r7;
+
+        r4 = virtualinvoke r3.<com.android.emailcommon.internet.BinaryTempFileBody: java.io.OutputStream getOutputStream()>();
+
+     label1:
+        r5 = newarray (byte)[16384];
+
+        i1 = 0;
+
+     label2:
+        $i2 = virtualinvoke r15.<java.io.InputStream: int read(byte[])>(r5);
+
+        i6 = $i2;
+
+        if -1 == $i2 goto label4;
+
+        virtualinvoke r4.<java.io.OutputStream: void write(byte[],int,int)>(r5, 0, i6);
+
+        i1 = i1 + i6;
+
+        if r2 == null goto label2;
+
+        if i0 != 0 goto label3;
+
+        $d0 = (double) i1;
+
+        $d2 = 1.0 / $d0;
+
+        $d1 = 1.0 - $d2;
+
+        $d4 = 100.0 * $d1;
+
+        $d3 = staticinvoke <java.lang.Math: double ceil(double)>($d4);
+
+        $i5 = (int) $d3;
+
+        interfaceinvoke r2.<com.android.emailcommon.mail.Folder$MessageRetrievalListener: void loadAttachmentProgress(int)>($i5);
+
+        goto label2;
+
+     label3:
+        $i3 = i1 * 100;
+
+        $i4 = $i3 / i0;
+
+        interfaceinvoke r2.<com.android.emailcommon.mail.Folder$MessageRetrievalListener: void loadAttachmentProgress(int)>($i4);
+
+        goto label2;
+
+     label4:
+        virtualinvoke r4.<java.io.OutputStream: void close()>();
+
+        goto label9;
+
+     label5:
+        $r8 := @caughtexception;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\n\n");
+
+        $r12 = staticinvoke <com.android.email.service.ImapService: java.lang.String getMessageDecodeErrorString()>();
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        r17 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r13 = virtualinvoke r17.<java.lang.String: byte[] getBytes()>();
+
+        virtualinvoke r4.<java.io.OutputStream: void write(byte[])>($r13);
+
+     label6:
+        virtualinvoke r4.<java.io.OutputStream: void close()>();
+
+        goto label9;
+
+     label7:
+        $r14 := @caughtexception;
+
+        r6 = $r14;
+
+     label8:
+        virtualinvoke r4.<java.io.OutputStream: void close()>();
+
+        throw r6;
+
+     label9:
+        return r3;
+
+        catch android.util.Base64DataException from label1 to label4 with label5;
+        catch java.lang.Throwable from label1 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    public com.android.emailcommon.mail.Flag[] getPermanentFlags()
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        com.android.emailcommon.mail.Flag[] $r1;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        $r1 = <com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Flag[] PERMANENT_FLAGS>;
+
+        return $r1;
+    }
+
+    private void handleUntaggedResponses(java.util.List)
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.util.List r1;
+        java.util.Iterator r2;
+        com.android.email.mail.store.imap.ImapResponse r3;
+        boolean $z0;
+        java.lang.Object $r4;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: java.util.List;
+
+        r2 = interfaceinvoke r1.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r4 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.email.mail.store.imap.ImapResponse) $r4;
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void handleUntaggedResponse(com.android.email.mail.store.imap.ImapResponse)>(r3);
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void handleUntaggedResponse(com.android.email.mail.store.imap.ImapResponse)
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        com.android.email.mail.store.imap.ImapResponse r1;
+        boolean $z0;
+        com.android.email.mail.store.imap.ImapString $r2;
+        int $i0;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: com.android.email.mail.store.imap.ImapResponse;
+
+        $z0 = virtualinvoke r1.<com.android.email.mail.store.imap.ImapResponse: boolean isDataResponse(int,java.lang.String)>(1, "EXISTS");
+
+        if $z0 == 0 goto label1;
+
+        $r2 = virtualinvoke r1.<com.android.email.mail.store.imap.ImapResponse: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(0);
+
+        $i0 = virtualinvoke $r2.<com.android.email.mail.store.imap.ImapString: int getNumberOrZero()>();
+
+        r0.<com.android.email.mail.store.ImapFolder: int mMessageCount> = $i0;
+
+     label1:
+        return;
+    }
+
+    private static void parseBodyStructure(com.android.email.mail.store.imap.ImapList, com.android.emailcommon.mail.Part, java.lang.String) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.imap.ImapList r0, r9, $r75, $r76, r81, r83;
+        com.android.emailcommon.mail.Part r1;
+        java.lang.String r2, r8, $r13, $r14, $r16, $r20, $r27, $r29, $r30, $r32, $r33, $r34, $r36, $r38, $r42, $r46, $r50, $r53, $r54, $r57, $r62, $r63, $r66, $r68, $r70, $r77, r80;
+        com.android.emailcommon.internet.MimeMultipart r3, $r59;
+        int i0, i1, i2, i3, i4, i5, i6, $i7, $i8, $i9, $i10, $i11, $i12;
+        com.android.email.mail.store.imap.ImapElement r4, $r10, $r51;
+        com.android.emailcommon.internet.MimeBodyPart r5, $r26, $r65;
+        com.android.email.mail.store.imap.ImapString r6, $r19, $r41, $r44, $r55, $r56, $r64, $r69, r78, r79, r82;
+        java.lang.StringBuilder r7, $r11, $r12, $r15, $r17, $r21, $r22, $r23, $r24, $r28, $r71, $r72, $r73, $r74, r84;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12;
+        java.util.Locale $r18, $r40, $r43, $r45, $r48, $r67;
+        com.android.emailcommon.mail.MessagingException $r25, $r61;
+        com.android.email.mail.store.ImapStore$ImapMessage $r31;
+        java.lang.Integer $r35;
+        java.lang.Object[] $r39, $r47, $r58;
+
+        r0 := @parameter0: com.android.email.mail.store.imap.ImapList;
+
+        r1 := @parameter1: com.android.emailcommon.mail.Part;
+
+        r2 := @parameter2: java.lang.String;
+
+        $r10 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapElement getElementOrNone(int)>(0);
+
+        $z0 = virtualinvoke $r10.<com.android.email.mail.store.imap.ImapElement: boolean isList()>();
+
+        if $z0 == 0 goto label07;
+
+        $r59 = new com.android.emailcommon.internet.MimeMultipart;
+
+        specialinvoke $r59.<com.android.emailcommon.internet.MimeMultipart: void <init>()>();
+
+        r3 = $r59;
+
+        i0 = 0;
+
+        i1 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: int size()>();
+
+     label01:
+        if i0 >= i1 goto label06;
+
+        r4 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapElement getElementOrNone(int)>(i0);
+
+        $z11 = virtualinvoke r4.<com.android.email.mail.store.imap.ImapElement: boolean isList()>();
+
+        if $z11 == 0 goto label04;
+
+        $r65 = new com.android.emailcommon.internet.MimeBodyPart;
+
+        specialinvoke $r65.<com.android.emailcommon.internet.MimeBodyPart: void <init>()>();
+
+        r5 = $r65;
+
+        $z12 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>("TEXT");
+
+        if $z12 == 0 goto label02;
+
+        $r76 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapList getListOrEmpty(int)>(i0);
+
+        $i12 = i0 + 1;
+
+        $r77 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>($i12);
+
+        staticinvoke <com.android.email.mail.store.ImapFolder: void parseBodyStructure(com.android.email.mail.store.imap.ImapList,com.android.emailcommon.mail.Part,java.lang.String)>($r76, r5, $r77);
+
+        goto label03;
+
+     label02:
+        $r75 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapList getListOrEmpty(int)>(i0);
+
+        $r74 = new java.lang.StringBuilder;
+
+        specialinvoke $r74.<java.lang.StringBuilder: void <init>()>();
+
+        $r73 = virtualinvoke $r74.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r72 = virtualinvoke $r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".");
+
+        $i11 = i0 + 1;
+
+        $r71 = virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i11);
+
+        $r70 = virtualinvoke $r71.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.email.mail.store.ImapFolder: void parseBodyStructure(com.android.email.mail.store.imap.ImapList,com.android.emailcommon.mail.Part,java.lang.String)>($r75, r5, $r70);
+
+     label03:
+        virtualinvoke r3.<com.android.emailcommon.internet.MimeMultipart: void addBodyPart(com.android.emailcommon.mail.BodyPart)>(r5);
+
+        goto label05;
+
+     label04:
+        $z10 = virtualinvoke r4.<com.android.email.mail.store.imap.ImapElement: boolean isString()>();
+
+        if $z10 == 0 goto label06;
+
+        $r69 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(i0);
+
+        $r68 = virtualinvoke $r69.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $r67 = <java.util.Locale: java.util.Locale US>;
+
+        $r66 = virtualinvoke $r68.<java.lang.String: java.lang.String toLowerCase(java.util.Locale)>($r67);
+
+        virtualinvoke r3.<com.android.emailcommon.internet.MimeMultipart: void setSubType(java.lang.String)>($r66);
+
+        goto label06;
+
+     label05:
+        i0 = i0 + 1;
+
+        goto label01;
+
+     label06:
+        interfaceinvoke r1.<com.android.emailcommon.mail.Part: void setBody(com.android.emailcommon.mail.Body)>(r3);
+
+        goto label23;
+
+     label07:
+        r78 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(0);
+
+        r79 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(1);
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke r78.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r13);
+
+        $r15 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/");
+
+        $r14 = virtualinvoke r79.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $r17 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r14);
+
+        $r16 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r18 = <java.util.Locale: java.util.Locale US>;
+
+        r80 = virtualinvoke $r16.<java.lang.String: java.lang.String toLowerCase(java.util.Locale)>($r18);
+
+        r81 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapList getListOrEmpty(int)>(2);
+
+        r82 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(3);
+
+        r6 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(5);
+
+        $r19 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(6);
+
+        i2 = virtualinvoke $r19.<com.android.email.mail.store.imap.ImapString: int getNumberOrZero()>();
+
+        $z1 = staticinvoke <com.android.emailcommon.internet.MimeUtility: boolean mimeTypeMatches(java.lang.String,java.lang.String)>(r80, "message/rfc822");
+
+        if $z1 == 0 goto label08;
+
+        $r61 = new com.android.emailcommon.mail.MessagingException;
+
+        specialinvoke $r61.<com.android.emailcommon.mail.MessagingException: void <init>(java.lang.String)>("BODYSTRUCTURE message/rfc822 not yet supported.");
+
+        throw $r61;
+
+     label08:
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>(java.lang.String)>(r80);
+
+        r7 = $r21;
+
+        i3 = 1;
+
+        i4 = virtualinvoke r81.<com.android.email.mail.store.imap.ImapList: int size()>();
+
+     label09:
+        if i3 >= i4 goto label10;
+
+        $r58 = newarray (java.lang.Object)[2];
+
+        $i10 = i3 - 1;
+
+        $r56 = virtualinvoke r81.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>($i10);
+
+        $r57 = virtualinvoke $r56.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $r58[0] = $r57;
+
+        $r64 = virtualinvoke r81.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(i3);
+
+        $r62 = virtualinvoke $r64.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $r58[1] = $r62;
+
+        $r63 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>(";\n %s=\"%s\"", $r58);
+
+        virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r63);
+
+        i3 = i3 + 2;
+
+        goto label09;
+
+     label10:
+        $r20 = virtualinvoke r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r1.<com.android.emailcommon.mail.Part: void setHeader(java.lang.String,java.lang.String)>("Content-Type", $r20);
+
+        $z2 = virtualinvoke r78.<com.android.email.mail.store.imap.ImapString: boolean is(java.lang.String)>("TEXT");
+
+        if $z2 == 0 goto label11;
+
+        $r51 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapElement getElementOrNone(int)>(9);
+
+        $z9 = virtualinvoke $r51.<com.android.email.mail.store.imap.ImapElement: boolean isList()>();
+
+        if $z9 == 0 goto label11;
+
+        r83 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapList getListOrEmpty(int)>(9);
+
+        goto label12;
+
+     label11:
+        r83 = virtualinvoke r0.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapList getListOrEmpty(int)>(8);
+
+     label12:
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        r84 = $r22;
+
+        $i7 = virtualinvoke r83.<com.android.email.mail.store.imap.ImapList: int size()>();
+
+        if $i7 <= 0 goto label15;
+
+        $r41 = virtualinvoke r83.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(0);
+
+        $r42 = virtualinvoke $r41.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $r43 = <java.util.Locale: java.util.Locale US>;
+
+        r8 = virtualinvoke $r42.<java.lang.String: java.lang.String toLowerCase(java.util.Locale)>($r43);
+
+        $z7 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r8);
+
+        if $z7 != 0 goto label13;
+
+        virtualinvoke r84.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r8);
+
+     label13:
+        r9 = virtualinvoke r83.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapList getListOrEmpty(int)>(1);
+
+        $z8 = virtualinvoke r9.<com.android.email.mail.store.imap.ImapList: boolean isEmpty()>();
+
+        if $z8 != 0 goto label15;
+
+        i5 = 1;
+
+        i6 = virtualinvoke r9.<com.android.email.mail.store.imap.ImapList: int size()>();
+
+     label14:
+        if i5 >= i6 goto label15;
+
+        $r48 = <java.util.Locale: java.util.Locale US>;
+
+        $r47 = newarray (java.lang.Object)[2];
+
+        $i9 = i5 - 1;
+
+        $r44 = virtualinvoke r9.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>($i9);
+
+        $r46 = virtualinvoke $r44.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $r45 = <java.util.Locale: java.util.Locale US>;
+
+        $r53 = virtualinvoke $r46.<java.lang.String: java.lang.String toLowerCase(java.util.Locale)>($r45);
+
+        $r47[0] = $r53;
+
+        $r55 = virtualinvoke r9.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(i5);
+
+        $r54 = virtualinvoke $r55.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $r47[1] = $r54;
+
+        $r50 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r48, ";\n %s=\"%s\"", $r47);
+
+        virtualinvoke r84.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r50);
+
+        i5 = i5 + 2;
+
+        goto label14;
+
+     label15:
+        if i2 <= 0 goto label16;
+
+        $r32 = virtualinvoke r84.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r38 = staticinvoke <com.android.emailcommon.internet.MimeUtility: java.lang.String getHeaderParameter(java.lang.String,java.lang.String)>($r32, "size");
+
+        if $r38 != null goto label16;
+
+        $r40 = <java.util.Locale: java.util.Locale US>;
+
+        $r39 = newarray (java.lang.Object)[1];
+
+        $r35 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i2);
+
+        $r39[0] = $r35;
+
+        $r36 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r40, ";\n size=%d", $r39);
+
+        virtualinvoke r84.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r36);
+
+     label16:
+        $i8 = virtualinvoke r84.<java.lang.StringBuilder: int length()>();
+
+        if $i8 <= 0 goto label17;
+
+        $r33 = virtualinvoke r84.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r1.<com.android.emailcommon.mail.Part: void setHeader(java.lang.String,java.lang.String)>("Content-Disposition", $r33);
+
+     label17:
+        $z5 = virtualinvoke r6.<com.android.email.mail.store.imap.ImapString: boolean isEmpty()>();
+
+        if $z5 != 0 goto label18;
+
+        $r34 = virtualinvoke r6.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        interfaceinvoke r1.<com.android.emailcommon.mail.Part: void setHeader(java.lang.String,java.lang.String)>("Content-Transfer-Encoding", $r34);
+
+     label18:
+        $z3 = virtualinvoke r82.<com.android.email.mail.store.imap.ImapString: boolean isEmpty()>();
+
+        if $z3 != 0 goto label19;
+
+        $r30 = virtualinvoke r82.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        interfaceinvoke r1.<com.android.emailcommon.mail.Part: void setHeader(java.lang.String,java.lang.String)>("Content-ID", $r30);
+
+     label19:
+        if i2 <= 0 goto label22;
+
+        $z4 = r1 instanceof com.android.email.mail.store.ImapStore$ImapMessage;
+
+        if $z4 == 0 goto label20;
+
+        $r31 = (com.android.email.mail.store.ImapStore$ImapMessage) r1;
+
+        virtualinvoke $r31.<com.android.email.mail.store.ImapStore$ImapMessage: void setSize(int)>(i2);
+
+        goto label22;
+
+     label20:
+        $z6 = r1 instanceof com.android.emailcommon.internet.MimeBodyPart;
+
+        if $z6 == 0 goto label21;
+
+        $r26 = (com.android.emailcommon.internet.MimeBodyPart) r1;
+
+        virtualinvoke $r26.<com.android.emailcommon.internet.MimeBodyPart: void setSize(int)>(i2);
+
+        goto label22;
+
+     label21:
+        $r25 = new com.android.emailcommon.mail.MessagingException;
+
+        $r24 = new java.lang.StringBuilder;
+
+        specialinvoke $r24.<java.lang.StringBuilder: void <init>()>();
+
+        $r23 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown part type ");
+
+        $r29 = virtualinvoke r1.<java.lang.Object: java.lang.String toString()>();
+
+        $r28 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r29);
+
+        $r27 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r25.<com.android.emailcommon.mail.MessagingException: void <init>(java.lang.String)>($r27);
+
+        throw $r25;
+
+     label22:
+        interfaceinvoke r1.<com.android.emailcommon.mail.Part: void setHeader(java.lang.String,java.lang.String)>("X-Android-Attachment-StoreData", r2);
+
+     label23:
+        return;
+    }
+
+    public void appendMessage(android.content.Context, com.android.emailcommon.mail.Message, boolean) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        android.content.Context r1;
+        com.android.emailcommon.mail.Message r2;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6;
+        java.io.File r3, r4;
+        java.io.FileOutputStream r5, $r16;
+        com.android.emailcommon.utility.CountingOutputStream r6, $r15;
+        com.android.emailcommon.utility.EOLConvertingOutputStream r7, $r17;
+        java.lang.String r8, $r19, $r22, $r23, $r26, $r34, $r36, $r41, $r42, $r50, $r58, r65, r66;
+        com.android.emailcommon.mail.Flag[] r9, r11;
+        java.lang.StringBuilder r10, $r45;
+        int i0, i1, $i2, $i4, $i5, $i6, $i7, $i8, i11;
+        java.lang.Throwable r12, r14, $r56, $r57;
+        com.android.emailcommon.mail.Flag r13, $r51, $r53;
+        java.lang.Object[] $r18, $r33, $r38, $r48;
+        com.android.email.mail.store.ImapStore $r20;
+        com.android.email.mail.store.ImapConnection $r21, $r29, $r30, $r32, $r40, $r43, $r55, $r60;
+        java.util.Locale $r24, $r35, $r37;
+        java.lang.Long $r25;
+        long $l3;
+        com.android.email.mail.transport.MailTransport $r27, $r31, $r44, $r46, $r61;
+        com.android.email.mail.store.imap.ImapString $r39;
+        java.io.FileInputStream $r47;
+        com.android.emailcommon.mail.MessagingException $r54;
+        java.io.IOException $r59, r69;
+        com.android.email.mail.store.imap.ImapResponse r62;
+        java.io.OutputStream r63;
+        com.android.email.mail.store.imap.ImapList r64;
+        java.lang.String[] r67, r68;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.emailcommon.mail.Message;
+
+        z0 := @parameter2: boolean;
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void checkOpen()>();
+
+     label01:
+        r3 = virtualinvoke r1.<android.content.Context: java.io.File getExternalCacheDir()>();
+
+        r4 = staticinvoke <java.io.File: java.io.File createTempFile(java.lang.String,java.lang.String,java.io.File)>("IMAPupsync", ".eml", r3);
+
+        z1 = virtualinvoke r4.<java.io.File: boolean delete()>();
+
+        if z1 != 0 goto label02;
+
+        $r50 = <com.android.mail.utils.LogUtils: java.lang.String TAG>;
+
+        $r48 = newarray (java.lang.Object)[1];
+
+        $r58 = virtualinvoke r4.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        $r48[0] = $r58;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>($r50, "Could not delete temp file %s", $r48);
+
+     label02:
+        $r16 = new java.io.FileOutputStream;
+
+        specialinvoke $r16.<java.io.FileOutputStream: void <init>(java.io.File)>(r4);
+
+        r5 = $r16;
+
+        $r15 = new com.android.emailcommon.utility.CountingOutputStream;
+
+        specialinvoke $r15.<com.android.emailcommon.utility.CountingOutputStream: void <init>(java.io.OutputStream)>(r5);
+
+        r6 = $r15;
+
+        $r17 = new com.android.emailcommon.utility.EOLConvertingOutputStream;
+
+        specialinvoke $r17.<com.android.emailcommon.utility.EOLConvertingOutputStream: void <init>(java.io.OutputStream)>(r6);
+
+        r7 = $r17;
+
+        virtualinvoke r2.<com.android.emailcommon.mail.Message: void writeTo(java.io.OutputStream)>(r7);
+
+        virtualinvoke r7.<com.android.emailcommon.utility.EOLConvertingOutputStream: void flush()>();
+
+        r8 = "";
+
+        r9 = virtualinvoke r2.<com.android.emailcommon.mail.Message: com.android.emailcommon.mail.Flag[] getFlags()>();
+
+        $i2 = lengthof r9;
+
+        if $i2 <= 0 goto label07;
+
+        $r45 = new java.lang.StringBuilder;
+
+        specialinvoke $r45.<java.lang.StringBuilder: void <init>()>();
+
+        r10 = $r45;
+
+        r11 = r9;
+
+        i0 = lengthof r11;
+
+        i1 = 0;
+
+     label03:
+        if i1 >= i0 goto label06;
+
+        r13 = r11[i1];
+
+        $r51 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag SEEN>;
+
+        if r13 != $r51 goto label04;
+
+        virtualinvoke r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" \\SEEN");
+
+        goto label05;
+
+     label04:
+        $r53 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag FLAGGED>;
+
+        if r13 != $r53 goto label05;
+
+        virtualinvoke r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" \\FLAGGED");
+
+     label05:
+        i1 = i1 + 1;
+
+        goto label03;
+
+     label06:
+        $i8 = virtualinvoke r10.<java.lang.StringBuilder: int length()>();
+
+        if $i8 <= 0 goto label07;
+
+        r8 = virtualinvoke r10.<java.lang.StringBuilder: java.lang.String substring(int)>(1);
+
+     label07:
+        $r21 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r24 = <java.util.Locale: java.util.Locale US>;
+
+        $r18 = newarray (java.lang.Object)[3];
+
+        $r22 = r0.<com.android.email.mail.store.ImapFolder: java.lang.String mName>;
+
+        $r20 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        $r19 = $r20.<com.android.email.mail.store.ImapStore: java.lang.String mPathPrefix>;
+
+        $r23 = staticinvoke <com.android.email.mail.store.ImapStore: java.lang.String encodeFolderName(java.lang.String,java.lang.String)>($r22, $r19);
+
+        $r18[0] = $r23;
+
+        $r18[1] = r8;
+
+        $l3 = virtualinvoke r6.<com.android.emailcommon.utility.CountingOutputStream: long getCount()>();
+
+        $r25 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l3);
+
+        $r18[2] = $r25;
+
+        $r26 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r24, "APPEND \"%s\" (%s) {%d}", $r18);
+
+        virtualinvoke $r21.<com.android.email.mail.store.ImapConnection: java.lang.String sendCommand(java.lang.String,boolean)>($r26, 0);
+
+     label08:
+        $r29 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r27 = $r29.<com.android.email.mail.store.ImapConnection: com.android.email.mail.transport.MailTransport mTransport>;
+
+        i11 = virtualinvoke $r27.<com.android.email.mail.transport.MailTransport: int getSoTimeout()>();
+
+     label09:
+        if z0 == 0 goto label10;
+
+        $r43 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r44 = $r43.<com.android.email.mail.store.ImapConnection: com.android.email.mail.transport.MailTransport mTransport>;
+
+        virtualinvoke $r44.<com.android.email.mail.transport.MailTransport: void setSoTimeout(int)>(0);
+
+     label10:
+        $r30 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        r62 = virtualinvoke $r30.<com.android.email.mail.store.ImapConnection: com.android.email.mail.store.imap.ImapResponse readResponse()>();
+
+        $z2 = virtualinvoke r62.<com.android.email.mail.store.imap.ImapResponse: boolean isContinuationRequest()>();
+
+        if $z2 == 0 goto label11;
+
+        $r40 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r46 = $r40.<com.android.email.mail.store.ImapConnection: com.android.email.mail.transport.MailTransport mTransport>;
+
+        r63 = virtualinvoke $r46.<com.android.email.mail.transport.MailTransport: java.io.OutputStream getOutputStream()>();
+
+        $r47 = new java.io.FileInputStream;
+
+        specialinvoke $r47.<java.io.FileInputStream: void <init>(java.io.File)>(r4);
+
+        staticinvoke <org.apache.commons.io.IOUtils: long copyLarge(java.io.InputStream,java.io.OutputStream)>($r47, r63);
+
+        virtualinvoke r63.<java.io.OutputStream: void write(int)>(13);
+
+        virtualinvoke r63.<java.io.OutputStream: void write(int)>(10);
+
+        virtualinvoke r63.<java.io.OutputStream: void flush()>();
+
+        goto label12;
+
+     label11:
+        $z3 = virtualinvoke r62.<com.android.email.mail.store.imap.ImapResponse: boolean isTagged()>();
+
+        if $z3 != 0 goto label12;
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void handleUntaggedResponse(com.android.email.mail.store.imap.ImapResponse)>(r62);
+
+     label12:
+        $r32 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r31 = $r32.<com.android.email.mail.store.ImapConnection: com.android.email.mail.transport.MailTransport mTransport>;
+
+        virtualinvoke $r31.<com.android.email.mail.transport.MailTransport: void setSoTimeout(int)>(i11);
+
+        goto label15;
+
+     label13:
+        $r56 := @caughtexception;
+
+        r12 = $r56;
+
+     label14:
+        $r60 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r61 = $r60.<com.android.email.mail.store.ImapConnection: com.android.email.mail.transport.MailTransport mTransport>;
+
+        virtualinvoke $r61.<com.android.email.mail.transport.MailTransport: void setSoTimeout(int)>(i11);
+
+        throw r12;
+
+     label15:
+        $z4 = virtualinvoke r62.<com.android.email.mail.store.imap.ImapResponse: boolean isTagged()>();
+
+        if $z4 == 0 goto label08;
+
+        r64 = virtualinvoke r62.<com.android.email.mail.store.imap.ImapResponse: com.android.email.mail.store.imap.ImapList getListOrEmpty(int)>(1);
+
+        $i5 = virtualinvoke r64.<com.android.email.mail.store.imap.ImapList: int size()>();
+
+        if $i5 < 3 goto label17;
+
+        $z6 = virtualinvoke r64.<com.android.email.mail.store.imap.ImapList: boolean is(int,java.lang.String)>(0, "APPENDUID");
+
+        if $z6 == 0 goto label17;
+
+        $r39 = virtualinvoke r64.<com.android.email.mail.store.imap.ImapList: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(2);
+
+        r65 = virtualinvoke $r39.<com.android.email.mail.store.imap.ImapString: java.lang.String getString()>();
+
+        $z5 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r65);
+
+        if $z5 != 0 goto label17;
+
+        virtualinvoke r2.<com.android.emailcommon.mail.Message: void setUid(java.lang.String)>(r65);
+
+     label16:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        return;
+
+     label17:
+        r66 = virtualinvoke r2.<com.android.emailcommon.mail.Message: java.lang.String getMessageId()>();
+
+        if r66 == null goto label18;
+
+        $i4 = virtualinvoke r66.<java.lang.String: int length()>();
+
+        if $i4 != 0 goto label19;
+
+     label18:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        return;
+
+     label19:
+        $r35 = <java.util.Locale: java.util.Locale US>;
+
+        $r33 = newarray (java.lang.Object)[1];
+
+        $r33[0] = r66;
+
+        $r34 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r35, "HEADER MESSAGE-ID %s", $r33);
+
+        r67 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String[] searchForUids(java.lang.String)>($r34);
+
+        $i6 = lengthof r67;
+
+        if $i6 <= 0 goto label20;
+
+        $r42 = r67[0];
+
+        virtualinvoke r2.<com.android.emailcommon.mail.Message: void setUid(java.lang.String)>($r42);
+
+     label20:
+        $r37 = <java.util.Locale: java.util.Locale US>;
+
+        $r38 = newarray (java.lang.Object)[1];
+
+        $r38[0] = r66;
+
+        $r36 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r37, "(HEADER MESSAGE-ID %s)", $r38);
+
+        r68 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: java.lang.String[] searchForUids(java.lang.String)>($r36);
+
+        $i7 = lengthof r68;
+
+        if $i7 <= 0 goto label21;
+
+        $r41 = r68[0];
+
+        virtualinvoke r2.<com.android.emailcommon.mail.Message: void setUid(java.lang.String)>($r41);
+
+     label21:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        goto label25;
+
+     label22:
+        $r59 := @caughtexception;
+
+        r69 = $r59;
+
+        $r55 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r54 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>($r55, r69);
+
+        throw $r54;
+
+     label23:
+        $r57 := @caughtexception;
+
+        r14 = $r57;
+
+     label24:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        throw r14;
+
+     label25:
+        return;
+
+        catch java.lang.Throwable from label09 to label12 with label13;
+        catch java.lang.Throwable from label13 to label14 with label13;
+        catch java.io.IOException from label01 to label16 with label22;
+        catch java.io.IOException from label17 to label18 with label22;
+        catch java.io.IOException from label19 to label21 with label22;
+        catch java.lang.Throwable from label01 to label16 with label23;
+        catch java.lang.Throwable from label17 to label18 with label23;
+        catch java.lang.Throwable from label19 to label21 with label23;
+        catch java.lang.Throwable from label22 to label24 with label23;
+    }
+
+    public com.android.emailcommon.mail.Message[] expunge() throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.io.IOException r1, $r5;
+        java.lang.Throwable r2, $r8;
+        com.android.email.mail.store.ImapConnection $r3, $r6;
+        java.util.List $r4;
+        com.android.emailcommon.mail.MessagingException $r7;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void checkOpen()>();
+
+     label1:
+        $r3 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r4 = virtualinvoke $r3.<com.android.email.mail.store.ImapConnection: java.util.List executeSimpleCommand(java.lang.String)>("EXPUNGE");
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void handleUntaggedResponses(java.util.List)>($r4);
+
+     label2:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        goto label6;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r1 = $r5;
+
+        $r6 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r7 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>($r6, r1);
+
+        throw $r7;
+
+     label4:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+     label5:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        throw r2;
+
+     label6:
+        return null;
+
+        catch java.io.IOException from label1 to label2 with label3;
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label3 to label5 with label4;
+    }
+
+    public void setFlags(com.android.emailcommon.mail.Message[], com.android.emailcommon.mail.Flag[], boolean) throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        com.android.emailcommon.mail.Message[] r1;
+        com.android.emailcommon.mail.Flag[] r2;
+        boolean z0;
+        java.lang.String r3, $r11, $r12, $r13;
+        java.lang.StringBuilder r4, $r15;
+        int i0, i1, $i2;
+        com.android.emailcommon.mail.Flag r5, $r16, $r17, $r18, $r19;
+        java.lang.Throwable r6, $r27;
+        java.lang.Object[] $r7;
+        com.android.email.mail.store.ImapConnection $r8, $r24;
+        java.util.Locale $r9;
+        java.io.IOException $r25, r28;
+        com.android.emailcommon.mail.MessagingException $r26;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: com.android.emailcommon.mail.Message[];
+
+        r2 := @parameter1: com.android.emailcommon.mail.Flag[];
+
+        z0 := @parameter2: boolean;
+
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void checkOpen()>();
+
+        r3 = "";
+
+        $i2 = lengthof r2;
+
+        if $i2 <= 0 goto label07;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        r4 = $r15;
+
+        i0 = 0;
+
+        i1 = lengthof r2;
+
+     label01:
+        if i0 >= i1 goto label06;
+
+        r5 = r2[i0];
+
+        $r17 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag SEEN>;
+
+        if r5 != $r17 goto label02;
+
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" \\SEEN");
+
+        goto label05;
+
+     label02:
+        $r16 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag DELETED>;
+
+        if r5 != $r16 goto label03;
+
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" \\DELETED");
+
+        goto label05;
+
+     label03:
+        $r19 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag FLAGGED>;
+
+        if r5 != $r19 goto label04;
+
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" \\FLAGGED");
+
+        goto label05;
+
+     label04:
+        $r18 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag ANSWERED>;
+
+        if r5 != $r18 goto label05;
+
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" \\ANSWERED");
+
+     label05:
+        i0 = i0 + 1;
+
+        goto label01;
+
+     label06:
+        r3 = virtualinvoke r4.<java.lang.StringBuilder: java.lang.String substring(int)>(1);
+
+     label07:
+        $r8 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r9 = <java.util.Locale: java.util.Locale US>;
+
+        $r7 = newarray (java.lang.Object)[3];
+
+        $r12 = staticinvoke <com.android.email.mail.store.ImapStore: java.lang.String joinMessageUids(com.android.emailcommon.mail.Message[])>(r1);
+
+        $r7[0] = $r12;
+
+        if z0 == 0 goto label08;
+
+        $r13 = "+";
+
+        goto label09;
+
+     label08:
+        $r13 = "-";
+
+     label09:
+        $r7[1] = $r13;
+
+        $r7[2] = r3;
+
+        $r11 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r9, "UID STORE %s %sFLAGS.SILENT (%s)", $r7);
+
+        virtualinvoke $r8.<com.android.email.mail.store.ImapConnection: java.util.List executeSimpleCommand(java.lang.String)>($r11);
+
+     label10:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        goto label14;
+
+     label11:
+        $r25 := @caughtexception;
+
+        r28 = $r25;
+
+        $r24 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r26 = specialinvoke r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection,java.io.IOException)>($r24, r28);
+
+        throw $r26;
+
+     label12:
+        $r27 := @caughtexception;
+
+        r6 = $r27;
+
+     label13:
+        specialinvoke r0.<com.android.email.mail.store.ImapFolder: void destroyResponses()>();
+
+        throw r6;
+
+     label14:
+        return;
+
+        catch java.io.IOException from label07 to label10 with label11;
+        catch java.lang.Throwable from label07 to label10 with label12;
+        catch java.lang.Throwable from label11 to label13 with label12;
+    }
+
+    void save(android.content.Context)
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        android.content.Context r1;
+        com.android.emailcommon.provider.Mailbox r2;
+        java.lang.Object[] r3, $r4, $r7;
+        boolean $z0, $z1;
+        android.content.ContentValues $r5;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 = r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.provider.Mailbox mMailbox>;
+
+        $z0 = virtualinvoke r2.<com.android.emailcommon.provider.Mailbox: boolean isSaved()>();
+
+        if $z0 != 0 goto label1;
+
+        virtualinvoke r2.<com.android.emailcommon.provider.Mailbox: android.net.Uri save(android.content.Context)>(r1);
+
+        $r7 = virtualinvoke r2.<com.android.emailcommon.provider.Mailbox: java.lang.Object[] getHashes()>();
+
+        r0.<com.android.email.mail.store.ImapFolder: java.lang.Object[] mHash> = $r7;
+
+        goto label2;
+
+     label1:
+        r3 = virtualinvoke r2.<com.android.emailcommon.provider.Mailbox: java.lang.Object[] getHashes()>();
+
+        $r4 = r0.<com.android.email.mail.store.ImapFolder: java.lang.Object[] mHash>;
+
+        $z1 = staticinvoke <java.util.Arrays: boolean equals(java.lang.Object[],java.lang.Object[])>($r4, r3);
+
+        if $z1 != 0 goto label2;
+
+        $r5 = virtualinvoke r2.<com.android.emailcommon.provider.Mailbox: android.content.ContentValues toContentValues()>();
+
+        virtualinvoke r2.<com.android.emailcommon.provider.Mailbox: int update(android.content.Context,android.content.ContentValues)>(r1, $r5);
+
+        r0.<com.android.email.mail.store.ImapFolder: java.lang.Object[] mHash> = r3;
+
+     label2:
+        return;
+    }
+
+    private void doSelect() throws java.io.IOException, com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.util.List r1;
+        int i0;
+        java.util.Iterator r2;
+        com.android.email.mail.store.imap.ImapResponse r3;
+        com.android.email.mail.store.imap.ImapString r4, $r20, $r24;
+        java.lang.Object[] $r5;
+        com.android.email.mail.store.ImapStore $r6;
+        java.lang.String $r7, $r8, $r11, $r12, $r21;
+        com.android.email.mail.store.ImapConnection $r9;
+        java.util.Locale $r10;
+        com.android.emailcommon.mail.Folder$OpenMode $r13, $r22, $r23;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        java.lang.Object $r14;
+        com.android.emailcommon.mail.MessagingException $r15, $r16;
+        java.lang.StringBuilder $r17, $r18, $r19;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        $r9 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        $r10 = <java.util.Locale: java.util.Locale US>;
+
+        $r5 = newarray (java.lang.Object)[1];
+
+        $r8 = r0.<com.android.email.mail.store.ImapFolder: java.lang.String mName>;
+
+        $r6 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapStore mStore>;
+
+        $r7 = $r6.<com.android.email.mail.store.ImapStore: java.lang.String mPathPrefix>;
+
+        $r11 = staticinvoke <com.android.email.mail.store.ImapStore: java.lang.String encodeFolderName(java.lang.String,java.lang.String)>($r8, $r7);
+
+        $r5[0] = $r11;
+
+        $r12 = staticinvoke <java.lang.String: java.lang.String format(java.util.Locale,java.lang.String,java.lang.Object[])>($r10, "SELECT \"%s\"", $r5);
+
+        r1 = virtualinvoke $r9.<com.android.email.mail.store.ImapConnection: java.util.List executeSimpleCommand(java.lang.String)>($r12);
+
+        $r13 = <com.android.emailcommon.mail.Folder$OpenMode: com.android.emailcommon.mail.Folder$OpenMode READ_WRITE>;
+
+        r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Folder$OpenMode mMode> = $r13;
+
+        i0 = -1;
+
+        r2 = interfaceinvoke r1.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label7;
+
+        $r14 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.email.mail.store.imap.ImapResponse) $r14;
+
+        $z2 = virtualinvoke r3.<com.android.email.mail.store.imap.ImapResponse: boolean isDataResponse(int,java.lang.String)>(1, "EXISTS");
+
+        if $z2 == 0 goto label2;
+
+        $r24 = virtualinvoke r3.<com.android.email.mail.store.imap.ImapResponse: com.android.email.mail.store.imap.ImapString getStringOrEmpty(int)>(0);
+
+        i0 = virtualinvoke $r24.<com.android.email.mail.store.imap.ImapString: int getNumberOrZero()>();
+
+        goto label6;
+
+     label2:
+        $z1 = virtualinvoke r3.<com.android.email.mail.store.imap.ImapResponse: boolean isOk()>();
+
+        if $z1 == 0 goto label5;
+
+        r4 = virtualinvoke r3.<com.android.email.mail.store.imap.ImapResponse: com.android.email.mail.store.imap.ImapString getResponseCodeOrEmpty()>();
+
+        $z4 = virtualinvoke r4.<com.android.email.mail.store.imap.ImapString: boolean is(java.lang.String)>("READ-ONLY");
+
+        if $z4 == 0 goto label3;
+
+        $r23 = <com.android.emailcommon.mail.Folder$OpenMode: com.android.emailcommon.mail.Folder$OpenMode READ_ONLY>;
+
+        r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Folder$OpenMode mMode> = $r23;
+
+        goto label4;
+
+     label3:
+        $z5 = virtualinvoke r4.<com.android.email.mail.store.imap.ImapString: boolean is(java.lang.String)>("READ-WRITE");
+
+        if $z5 == 0 goto label4;
+
+        $r22 = <com.android.emailcommon.mail.Folder$OpenMode: com.android.emailcommon.mail.Folder$OpenMode READ_WRITE>;
+
+        r0.<com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Folder$OpenMode mMode> = $r22;
+
+     label4:
+        goto label6;
+
+     label5:
+        $z3 = virtualinvoke r3.<com.android.email.mail.store.imap.ImapResponse: boolean isTagged()>();
+
+        if $z3 == 0 goto label6;
+
+        $r16 = new com.android.emailcommon.mail.MessagingException;
+
+        $r18 = new java.lang.StringBuilder;
+
+        specialinvoke $r18.<java.lang.StringBuilder: void <init>()>();
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t open mailbox: ");
+
+        $r20 = virtualinvoke r3.<com.android.email.mail.store.imap.ImapResponse: com.android.email.mail.store.imap.ImapString getStatusResponseTextOrEmpty()>();
+
+        $r19 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r20);
+
+        $r21 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r16.<com.android.emailcommon.mail.MessagingException: void <init>(java.lang.String)>($r21);
+
+        throw $r16;
+
+     label6:
+        goto label1;
+
+     label7:
+        if i0 != -1 goto label8;
+
+        $r15 = new com.android.emailcommon.mail.MessagingException;
+
+        specialinvoke $r15.<com.android.emailcommon.mail.MessagingException: void <init>(java.lang.String)>("Did not find message count during select");
+
+        throw $r15;
+
+     label8:
+        r0.<com.android.email.mail.store.ImapFolder: int mMessageCount> = i0;
+
+        r0.<com.android.email.mail.store.ImapFolder: boolean mExists> = 1;
+
+        return;
+    }
+
+    private void checkOpen() throws com.android.emailcommon.mail.MessagingException
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        boolean $z0;
+        com.android.emailcommon.mail.MessagingException $r1;
+        java.lang.StringBuilder $r2, $r3, $r5, $r6;
+        java.lang.String $r4, $r7;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        $z0 = virtualinvoke r0.<com.android.email.mail.store.ImapFolder: boolean isOpen()>();
+
+        if $z0 != 0 goto label1;
+
+        $r1 = new com.android.emailcommon.mail.MessagingException;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Folder ");
+
+        $r4 = r0.<com.android.email.mail.store.ImapFolder: java.lang.String mName>;
+
+        $r5 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r4);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is not open.");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r1.<com.android.emailcommon.mail.MessagingException: void <init>(java.lang.String)>($r7);
+
+        throw $r1;
+
+     label1:
+        return;
+    }
+
+    private com.android.emailcommon.mail.MessagingException ioExceptionHandler(com.android.email.mail.store.ImapConnection, java.io.IOException)
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        com.android.email.mail.store.ImapConnection r1, $r3;
+        java.io.IOException r2;
+        boolean $z0;
+        com.android.emailcommon.mail.MessagingException $r4;
+        java.lang.Object[] $r5;
+        java.lang.String $r6;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: com.android.email.mail.store.ImapConnection;
+
+        r2 := @parameter1: java.io.IOException;
+
+        $z0 = <com.android.email2.ui.MailActivityEmail: boolean DEBUG>;
+
+        if $z0 == 0 goto label1;
+
+        $r6 = <com.android.emailcommon.Logging: java.lang.String LOG_TAG>;
+
+        $r5 = newarray (java.lang.Object)[1];
+
+        $r5[0] = r2;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>($r6, "IO Exception detected: ", $r5);
+
+     label1:
+        virtualinvoke r1.<com.android.email.mail.store.ImapConnection: void close()>();
+
+        $r3 = r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection>;
+
+        if r1 != $r3 goto label2;
+
+        r0.<com.android.email.mail.store.ImapFolder: com.android.email.mail.store.ImapConnection mConnection> = null;
+
+        virtualinvoke r0.<com.android.email.mail.store.ImapFolder: void close(boolean)>(0);
+
+     label2:
+        $r4 = new com.android.emailcommon.mail.MessagingException;
+
+        specialinvoke $r4.<com.android.emailcommon.mail.MessagingException: void <init>(int,java.lang.String,java.lang.Throwable)>(1, "IO Error", r2);
+
+        return $r4;
+    }
+
+    public boolean equals(java.lang.Object)
+    {
+        com.android.email.mail.store.ImapFolder r0, $r2;
+        java.lang.Object r1;
+        boolean $z0, $z1, $z2;
+        java.lang.String $r3, $r4;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: java.lang.Object;
+
+        $z0 = r1 instanceof com.android.email.mail.store.ImapFolder;
+
+        if $z0 == 0 goto label1;
+
+        $r2 = (com.android.email.mail.store.ImapFolder) r1;
+
+        $r4 = $r2.<com.android.email.mail.store.ImapFolder: java.lang.String mName>;
+
+        $r3 = r0.<com.android.email.mail.store.ImapFolder: java.lang.String mName>;
+
+        $z2 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>($r3);
+
+        return $z2;
+
+     label1:
+        $z1 = specialinvoke r0.<java.lang.Object: boolean equals(java.lang.Object)>(r1);
+
+        return $z1;
+    }
+
+    public com.android.emailcommon.mail.Message createMessage(java.lang.String)
+    {
+        com.android.email.mail.store.ImapFolder r0;
+        java.lang.String r1;
+        com.android.email.mail.store.ImapStore$ImapMessage $r2;
+
+        r0 := @this: com.android.email.mail.store.ImapFolder;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = new com.android.email.mail.store.ImapStore$ImapMessage;
+
+        specialinvoke $r2.<com.android.email.mail.store.ImapStore$ImapMessage: void <init>(java.lang.String,com.android.email.mail.store.ImapFolder)>(r1, r0);
+
+        return $r2;
+    }
+
+    static void <clinit>()
+    {
+        com.android.emailcommon.mail.Flag[] $r0;
+        com.android.emailcommon.mail.Flag $r1, $r2, $r3, $r4;
+
+        <com.android.email.mail.store.ImapFolder: int COPY_BUFFER_SIZE> = 16384;
+
+        $r0 = newarray (com.android.emailcommon.mail.Flag)[4];
+
+        $r1 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag DELETED>;
+
+        $r0[0] = $r1;
+
+        $r2 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag SEEN>;
+
+        $r0[1] = $r2;
+
+        $r3 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag FLAGGED>;
+
+        $r0[2] = $r3;
+
+        $r4 = <com.android.emailcommon.mail.Flag: com.android.emailcommon.mail.Flag ANSWERED>;
+
+        $r0[3] = $r4;
+
+        <com.android.email.mail.store.ImapFolder: com.android.emailcommon.mail.Flag[] PERMANENT_FLAGS> = $r0;
+
+        return;
+    }
+}

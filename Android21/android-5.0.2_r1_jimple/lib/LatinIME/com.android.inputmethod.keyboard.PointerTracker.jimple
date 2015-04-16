@@ -1,0 +1,3667 @@
+public final class com.android.inputmethod.keyboard.PointerTracker extends java.lang.Object implements com.android.inputmethod.keyboard.internal.PointerTrackerQueue$Element, com.android.inputmethod.keyboard.internal.BatchInputArbiter$BatchInputArbiterListener
+{
+    private static final java.lang.String TAG;
+    private static final boolean DEBUG_EVENT;
+    private static final boolean DEBUG_MOVE_EVENT;
+    private static final boolean DEBUG_LISTENER;
+    private static boolean DEBUG_MODE;
+    private static com.android.inputmethod.keyboard.internal.GestureEnabler sGestureEnabler;
+    private static com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams sParams;
+    private static com.android.inputmethod.keyboard.internal.GestureStrokeRecognitionParams sGestureStrokeRecognitionParams;
+    private static com.android.inputmethod.keyboard.internal.GestureStrokeDrawingParams sGestureStrokeDrawingParams;
+    private static boolean sNeedsPhantomSuddenMoveEventHack;
+    private static final float PHANTOM_SUDDEN_MOVE_THRESHOLD;
+    private static final java.util.ArrayList sTrackers;
+    private static final com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue;
+    public final int mPointerId;
+    private static com.android.inputmethod.keyboard.PointerTracker$DrawingProxy sDrawingProxy;
+    private static com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy;
+    private static com.android.inputmethod.keyboard.KeyboardActionListener sListener;
+    private com.android.inputmethod.keyboard.KeyDetector mKeyDetector;
+    private com.android.inputmethod.keyboard.Keyboard mKeyboard;
+    private int mPhantomSuddenMoveThreshold;
+    private final com.android.inputmethod.keyboard.internal.BogusMoveEventDetector mBogusMoveEventDetector;
+    private boolean mIsDetectingGesture;
+    private static boolean sInGesture;
+    private static com.android.inputmethod.keyboard.internal.TypingTimeRecorder sTypingTimeRecorder;
+    private long mDownTime;
+    private int[] mDownCoordinates;
+    private long mUpTime;
+    private com.android.inputmethod.keyboard.Key mCurrentKey;
+    private int mKeyX;
+    private int mKeyY;
+    private int mLastX;
+    private int mLastY;
+    private boolean mKeyboardLayoutHasBeenChanged;
+    private boolean mIsTrackingForActionDisabled;
+    private com.android.inputmethod.keyboard.MoreKeysPanel mMoreKeysPanel;
+    private static final int MULTIPLIER_FOR_LONG_PRESS_TIMEOUT_IN_SLIDING_INPUT;
+    boolean mIsInDraggingFinger;
+    boolean mIsInSlidingKeyInput;
+    private int mCurrentRepeatingKeyCode;
+    private boolean mIsAllowedDraggingFinger;
+    private final com.android.inputmethod.keyboard.internal.BatchInputArbiter mBatchInputArbiter;
+    private final com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints mGestureStrokeDrawingPoints;
+
+    public static void init(android.content.res.TypedArray, com.android.inputmethod.keyboard.PointerTracker$TimerProxy, com.android.inputmethod.keyboard.PointerTracker$DrawingProxy)
+    {
+        android.content.res.TypedArray r0;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy r1;
+        com.android.inputmethod.keyboard.PointerTracker$DrawingProxy r2;
+        android.content.res.Resources r3;
+        com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams $r4, $r9;
+        com.android.inputmethod.keyboard.internal.GestureStrokeRecognitionParams $r5, $r8;
+        com.android.inputmethod.keyboard.internal.GestureStrokeDrawingParams $r6;
+        com.android.inputmethod.keyboard.internal.TypingTimeRecorder $r7;
+        int $i0, $i1;
+        java.lang.Boolean $r10;
+        java.lang.String $r11, $r12;
+        boolean $z0;
+
+        r0 := @parameter0: android.content.res.TypedArray;
+
+        r1 := @parameter1: com.android.inputmethod.keyboard.PointerTracker$TimerProxy;
+
+        r2 := @parameter2: com.android.inputmethod.keyboard.PointerTracker$DrawingProxy;
+
+        $r4 = new com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams;
+
+        specialinvoke $r4.<com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams: void <init>(android.content.res.TypedArray)>(r0);
+
+        <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams sParams> = $r4;
+
+        $r5 = new com.android.inputmethod.keyboard.internal.GestureStrokeRecognitionParams;
+
+        specialinvoke $r5.<com.android.inputmethod.keyboard.internal.GestureStrokeRecognitionParams: void <init>(android.content.res.TypedArray)>(r0);
+
+        <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureStrokeRecognitionParams sGestureStrokeRecognitionParams> = $r5;
+
+        $r6 = new com.android.inputmethod.keyboard.internal.GestureStrokeDrawingParams;
+
+        specialinvoke $r6.<com.android.inputmethod.keyboard.internal.GestureStrokeDrawingParams: void <init>(android.content.res.TypedArray)>(r0);
+
+        <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureStrokeDrawingParams sGestureStrokeDrawingParams> = $r6;
+
+        $r7 = new com.android.inputmethod.keyboard.internal.TypingTimeRecorder;
+
+        $r8 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureStrokeRecognitionParams sGestureStrokeRecognitionParams>;
+
+        $i1 = $r8.<com.android.inputmethod.keyboard.internal.GestureStrokeRecognitionParams: int mStaticTimeThresholdAfterFastTyping>;
+
+        $r9 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams sParams>;
+
+        $i0 = $r9.<com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams: int mSuppressKeyPreviewAfterBatchInputDuration>;
+
+        specialinvoke $r7.<com.android.inputmethod.keyboard.internal.TypingTimeRecorder: void <init>(int,int)>($i1, $i0);
+
+        <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.TypingTimeRecorder sTypingTimeRecorder> = $r7;
+
+        r3 = virtualinvoke r0.<android.content.res.TypedArray: android.content.res.Resources getResources()>();
+
+        $r10 = <java.lang.Boolean: java.lang.Boolean FALSE>;
+
+        $r11 = virtualinvoke $r10.<java.lang.Boolean: java.lang.String toString()>();
+
+        $r12 = staticinvoke <com.android.inputmethod.latin.utils.ResourceUtils: java.lang.String getDeviceOverrideValue(android.content.res.Resources,int,java.lang.String)>(r3, 2131296278, $r11);
+
+        $z0 = staticinvoke <java.lang.Boolean: boolean parseBoolean(java.lang.String)>($r12);
+
+        <com.android.inputmethod.keyboard.PointerTracker: boolean sNeedsPhantomSuddenMoveEventHack> = $z0;
+
+        staticinvoke <com.android.inputmethod.keyboard.internal.BogusMoveEventDetector: void init(android.content.res.Resources)>(r3);
+
+        <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy> = r1;
+
+        <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$DrawingProxy sDrawingProxy> = r2;
+
+        return;
+    }
+
+    public static void setMainDictionaryAvailability(boolean)
+    {
+        boolean z0;
+        com.android.inputmethod.keyboard.internal.GestureEnabler $r0;
+
+        z0 := @parameter0: boolean;
+
+        $r0 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureEnabler sGestureEnabler>;
+
+        virtualinvoke $r0.<com.android.inputmethod.keyboard.internal.GestureEnabler: void setMainDictionaryAvailability(boolean)>(z0);
+
+        return;
+    }
+
+    public static void setGestureHandlingEnabledByUser(boolean)
+    {
+        boolean z0;
+        com.android.inputmethod.keyboard.internal.GestureEnabler $r0;
+
+        z0 := @parameter0: boolean;
+
+        $r0 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureEnabler sGestureEnabler>;
+
+        virtualinvoke $r0.<com.android.inputmethod.keyboard.internal.GestureEnabler: void setGestureHandlingEnabledByUser(boolean)>(z0);
+
+        return;
+    }
+
+    public static com.android.inputmethod.keyboard.PointerTracker getPointerTracker(int)
+    {
+        int i0, i1;
+        java.util.ArrayList r0;
+        com.android.inputmethod.keyboard.PointerTracker r1, $r3, $r4;
+        java.lang.Object $r2;
+
+        i0 := @parameter0: int;
+
+        r0 = <com.android.inputmethod.keyboard.PointerTracker: java.util.ArrayList sTrackers>;
+
+        i1 = virtualinvoke r0.<java.util.ArrayList: int size()>();
+
+     label1:
+        if i1 > i0 goto label2;
+
+        $r4 = new com.android.inputmethod.keyboard.PointerTracker;
+
+        specialinvoke $r4.<com.android.inputmethod.keyboard.PointerTracker: void <init>(int)>(i1);
+
+        r1 = $r4;
+
+        virtualinvoke r0.<java.util.ArrayList: boolean add(java.lang.Object)>(r1);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        $r2 = virtualinvoke r0.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        $r3 = (com.android.inputmethod.keyboard.PointerTracker) $r2;
+
+        return $r3;
+    }
+
+    public static boolean isAnyInDraggingFinger()
+    {
+        com.android.inputmethod.keyboard.internal.PointerTrackerQueue $r0;
+        boolean $z0;
+
+        $r0 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        $z0 = virtualinvoke $r0.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: boolean isAnyInDraggingFinger()>();
+
+        return $z0;
+    }
+
+    public static void cancelAllPointerTrackers()
+    {
+        com.android.inputmethod.keyboard.internal.PointerTrackerQueue $r0;
+
+        $r0 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        virtualinvoke $r0.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: void cancelAllPointerTrackers()>();
+
+        return;
+    }
+
+    public static void setKeyboardActionListener(com.android.inputmethod.keyboard.KeyboardActionListener)
+    {
+        com.android.inputmethod.keyboard.KeyboardActionListener r0;
+
+        r0 := @parameter0: com.android.inputmethod.keyboard.KeyboardActionListener;
+
+        <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener> = r0;
+
+        return;
+    }
+
+    public static void setKeyDetector(com.android.inputmethod.keyboard.KeyDetector)
+    {
+        com.android.inputmethod.keyboard.KeyDetector r0;
+        com.android.inputmethod.keyboard.Keyboard r1;
+        int i0, i1;
+        com.android.inputmethod.keyboard.PointerTracker r2;
+        java.util.ArrayList $r3, $r6;
+        com.android.inputmethod.keyboard.KeyboardId $r4;
+        com.android.inputmethod.keyboard.internal.GestureEnabler $r5;
+        boolean $z0;
+        java.lang.Object $r7;
+
+        r0 := @parameter0: com.android.inputmethod.keyboard.KeyDetector;
+
+        r1 = virtualinvoke r0.<com.android.inputmethod.keyboard.KeyDetector: com.android.inputmethod.keyboard.Keyboard getKeyboard()>();
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        $r3 = <com.android.inputmethod.keyboard.PointerTracker: java.util.ArrayList sTrackers>;
+
+        i0 = virtualinvoke $r3.<java.util.ArrayList: int size()>();
+
+        i1 = 0;
+
+     label2:
+        if i1 >= i0 goto label3;
+
+        $r6 = <com.android.inputmethod.keyboard.PointerTracker: java.util.ArrayList sTrackers>;
+
+        $r7 = virtualinvoke $r6.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r2 = (com.android.inputmethod.keyboard.PointerTracker) $r7;
+
+        specialinvoke r2.<com.android.inputmethod.keyboard.PointerTracker: void setKeyDetectorInner(com.android.inputmethod.keyboard.KeyDetector)>(r0);
+
+        i1 = i1 + 1;
+
+        goto label2;
+
+     label3:
+        $r5 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureEnabler sGestureEnabler>;
+
+        $r4 = r1.<com.android.inputmethod.keyboard.Keyboard: com.android.inputmethod.keyboard.KeyboardId mId>;
+
+        $z0 = virtualinvoke $r4.<com.android.inputmethod.keyboard.KeyboardId: boolean passwordInput()>();
+
+        virtualinvoke $r5.<com.android.inputmethod.keyboard.internal.GestureEnabler: void setPasswordMode(boolean)>($z0);
+
+        return;
+    }
+
+    public static void setReleasedKeyGraphicsToAllKeys()
+    {
+        int i0, i1;
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        java.util.ArrayList $r1, $r2;
+        java.lang.Object $r3;
+        com.android.inputmethod.keyboard.Key $r4;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: java.util.ArrayList sTrackers>;
+
+        i0 = virtualinvoke $r1.<java.util.ArrayList: int size()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: java.util.ArrayList sTrackers>;
+
+        $r3 = virtualinvoke $r2.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r0 = (com.android.inputmethod.keyboard.PointerTracker) $r3;
+
+        $r4 = virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key getKey()>();
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setReleasedKeyGraphics(com.android.inputmethod.keyboard.Key)>($r4);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    public static void dismissAllMoreKeysPanels()
+    {
+        int i0, i1;
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        java.util.ArrayList $r1, $r2;
+        java.lang.Object $r3;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: java.util.ArrayList sTrackers>;
+
+        i0 = virtualinvoke $r1.<java.util.ArrayList: int size()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: java.util.ArrayList sTrackers>;
+
+        $r3 = virtualinvoke $r2.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r0 = (com.android.inputmethod.keyboard.PointerTracker) $r3;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void dismissMoreKeysPanel()>();
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void <init>(int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0;
+        com.android.inputmethod.keyboard.KeyDetector $r1;
+        com.android.inputmethod.keyboard.internal.BogusMoveEventDetector $r2;
+        int[] $r3;
+        com.android.inputmethod.keyboard.internal.BatchInputArbiter $r4;
+        com.android.inputmethod.keyboard.internal.GestureStrokeRecognitionParams $r5;
+        com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints $r6;
+        com.android.inputmethod.keyboard.internal.GestureStrokeDrawingParams $r7;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r1 = new com.android.inputmethod.keyboard.KeyDetector;
+
+        specialinvoke $r1.<com.android.inputmethod.keyboard.KeyDetector: void <init>()>();
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyDetector mKeyDetector> = $r1;
+
+        $r2 = new com.android.inputmethod.keyboard.internal.BogusMoveEventDetector;
+
+        specialinvoke $r2.<com.android.inputmethod.keyboard.internal.BogusMoveEventDetector: void <init>()>();
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BogusMoveEventDetector mBogusMoveEventDetector> = $r2;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsDetectingGesture> = 0;
+
+        $r3 = staticinvoke <com.android.inputmethod.latin.utils.CoordinateUtils: int[] newInstance()>();
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: int[] mDownCoordinates> = $r3;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey> = null;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: int mCurrentRepeatingKeyCode> = -1;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId> = i0;
+
+        $r4 = new com.android.inputmethod.keyboard.internal.BatchInputArbiter;
+
+        $r5 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureStrokeRecognitionParams sGestureStrokeRecognitionParams>;
+
+        specialinvoke $r4.<com.android.inputmethod.keyboard.internal.BatchInputArbiter: void <init>(int,com.android.inputmethod.keyboard.internal.GestureStrokeRecognitionParams)>(i0, $r5);
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BatchInputArbiter mBatchInputArbiter> = $r4;
+
+        $r6 = new com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints;
+
+        $r7 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureStrokeDrawingParams sGestureStrokeDrawingParams>;
+
+        specialinvoke $r6.<com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints: void <init>(com.android.inputmethod.keyboard.internal.GestureStrokeDrawingParams)>($r7);
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints mGestureStrokeDrawingPoints> = $r6;
+
+        return;
+    }
+
+    private boolean callListenerOnPressAndCheckKeyboardLayoutChange(com.android.inputmethod.keyboard.Key, int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1;
+        int i0, $i1, $i2;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9;
+        com.android.inputmethod.keyboard.KeyboardActionListener $r2;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r3;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        i0 := @parameter1: int;
+
+        $z2 = <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture>;
+
+        if $z2 != 0 goto label1;
+
+        $z3 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsDetectingGesture>;
+
+        if $z3 != 0 goto label1;
+
+        $z4 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled>;
+
+        if $z4 == 0 goto label2;
+
+     label1:
+        return 0;
+
+     label2:
+        $z5 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInDraggingFinger>;
+
+        if $z5 == 0 goto label3;
+
+        $z8 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isModifier()>();
+
+        if $z8 == 0 goto label3;
+
+        $z9 = 1;
+
+        goto label4;
+
+     label3:
+        $z9 = 0;
+
+     label4:
+        z0 = $z9;
+
+        if z0 == 0 goto label5;
+
+        return 0;
+
+     label5:
+        $z6 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isEnabled()>();
+
+        if $z6 == 0 goto label8;
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener>;
+
+        $i1 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        $i2 = staticinvoke <com.android.inputmethod.keyboard.PointerTracker: int getActivePointerTrackerCount()>();
+
+        if $i2 != 1 goto label6;
+
+        $z7 = 1;
+
+        goto label7;
+
+     label6:
+        $z7 = 0;
+
+     label7:
+        interfaceinvoke $r2.<com.android.inputmethod.keyboard.KeyboardActionListener: void onPressKey(int,int,boolean)>($i1, i0, $z7);
+
+        z1 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mKeyboardLayoutHasBeenChanged>;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mKeyboardLayoutHasBeenChanged> = 0;
+
+        $r3 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r3.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void startTypingStateTimer(com.android.inputmethod.keyboard.Key)>(r1);
+
+        return z1;
+
+     label8:
+        return 0;
+    }
+
+    private void callListenerOnCodeInput(com.android.inputmethod.keyboard.Key, int, int, int, long, boolean)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1;
+        int i0, i1, i2, i4, $i5;
+        long l3;
+        boolean z0, z1, z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10;
+        com.android.inputmethod.keyboard.internal.TypingTimeRecorder $r2;
+        com.android.inputmethod.keyboard.Keyboard $r3;
+        com.android.inputmethod.keyboard.KeyboardActionListener $r4, $r5, $r6;
+        java.lang.String $r7;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r8;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        l3 := @parameter4: long;
+
+        z0 := @parameter5: boolean;
+
+        $z3 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInDraggingFinger>;
+
+        if $z3 == 0 goto label01;
+
+        $z8 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isModifier()>();
+
+        if $z8 == 0 goto label01;
+
+        $z10 = 1;
+
+        goto label02;
+
+     label01:
+        $z10 = 0;
+
+     label02:
+        z1 = $z10;
+
+        $z4 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean altCodeWhileTyping()>();
+
+        if $z4 == 0 goto label03;
+
+        $r8 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        $z7 = interfaceinvoke $r8.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: boolean isTypingState()>();
+
+        if $z7 == 0 goto label03;
+
+        $z9 = 1;
+
+        goto label04;
+
+     label03:
+        $z9 = 0;
+
+     label04:
+        z2 = $z9;
+
+        if z2 == 0 goto label05;
+
+        $i5 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getAltCode()>();
+
+        goto label06;
+
+     label05:
+        $i5 = i0;
+
+     label06:
+        i4 = $i5;
+
+        if z1 == 0 goto label07;
+
+        return;
+
+     label07:
+        $z5 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isEnabled()>();
+
+        if $z5 != 0 goto label08;
+
+        if z2 == 0 goto label11;
+
+     label08:
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.TypingTimeRecorder sTypingTimeRecorder>;
+
+        virtualinvoke $r2.<com.android.inputmethod.keyboard.internal.TypingTimeRecorder: void onCodeInput(int,long)>(i4, l3);
+
+        if i4 != -4 goto label09;
+
+        $r5 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener>;
+
+        $r7 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: java.lang.String getOutputText()>();
+
+        interfaceinvoke $r5.<com.android.inputmethod.keyboard.KeyboardActionListener: void onTextInput(java.lang.String)>($r7);
+
+        goto label11;
+
+     label09:
+        if i4 == -15 goto label11;
+
+        $r3 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $z6 = virtualinvoke $r3.<com.android.inputmethod.keyboard.Keyboard: boolean hasProximityCharsCorrection(int)>(i4);
+
+        if $z6 == 0 goto label10;
+
+        $r6 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener>;
+
+        interfaceinvoke $r6.<com.android.inputmethod.keyboard.KeyboardActionListener: void onCodeInput(int,int,int,boolean)>(i4, i1, i2, z0);
+
+        goto label11;
+
+     label10:
+        $r4 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener>;
+
+        interfaceinvoke $r4.<com.android.inputmethod.keyboard.KeyboardActionListener: void onCodeInput(int,int,int,boolean)>(i4, -1, -1, z0);
+
+     label11:
+        return;
+    }
+
+    private void callListenerOnRelease(com.android.inputmethod.keyboard.Key, int, boolean)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1;
+        int i0;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8;
+        com.android.inputmethod.keyboard.KeyboardActionListener $r2;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        $z2 = <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture>;
+
+        if $z2 != 0 goto label1;
+
+        $z3 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsDetectingGesture>;
+
+        if $z3 != 0 goto label1;
+
+        $z4 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled>;
+
+        if $z4 == 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $z5 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInDraggingFinger>;
+
+        if $z5 == 0 goto label3;
+
+        $z7 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isModifier()>();
+
+        if $z7 == 0 goto label3;
+
+        $z8 = 1;
+
+        goto label4;
+
+     label3:
+        $z8 = 0;
+
+     label4:
+        z1 = $z8;
+
+        if z1 == 0 goto label5;
+
+        return;
+
+     label5:
+        $z6 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isEnabled()>();
+
+        if $z6 == 0 goto label6;
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener>;
+
+        interfaceinvoke $r2.<com.android.inputmethod.keyboard.KeyboardActionListener: void onReleaseKey(int,boolean)>(i0, z0);
+
+     label6:
+        return;
+    }
+
+    private void callListenerOnFinishSlidingInput()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.KeyboardActionListener $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.KeyboardActionListener: void onFinishSlidingInput()>();
+
+        return;
+    }
+
+    private void callListenerOnCancelInput()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.KeyboardActionListener $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.KeyboardActionListener: void onCancelInput()>();
+
+        return;
+    }
+
+    private void setKeyDetectorInner(com.android.inputmethod.keyboard.KeyDetector)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.KeyDetector r1, $r3;
+        com.android.inputmethod.keyboard.Keyboard r2, $r4, $r5, $r6, $r9;
+        int i0, i1, $i2, $i3;
+        com.android.inputmethod.keyboard.internal.BatchInputArbiter $r7;
+        float $f0, $f1;
+        com.android.inputmethod.keyboard.internal.BogusMoveEventDetector $r8;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.KeyDetector;
+
+        r2 = virtualinvoke r1.<com.android.inputmethod.keyboard.KeyDetector: com.android.inputmethod.keyboard.Keyboard getKeyboard()>();
+
+        if r2 != null goto label1;
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyDetector mKeyDetector>;
+
+        if r1 != $r3 goto label2;
+
+        $r9 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        if r2 != $r9 goto label2;
+
+        return;
+
+     label2:
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyDetector mKeyDetector> = r1;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard> = r2;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mKeyboardLayoutHasBeenChanged> = 1;
+
+        $r4 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        i0 = $r4.<com.android.inputmethod.keyboard.Keyboard: int mMostCommonKeyWidth>;
+
+        $r5 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        i1 = $r5.<com.android.inputmethod.keyboard.Keyboard: int mMostCommonKeyHeight>;
+
+        $r7 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BatchInputArbiter mBatchInputArbiter>;
+
+        $r6 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $i2 = $r6.<com.android.inputmethod.keyboard.Keyboard: int mOccupiedHeight>;
+
+        virtualinvoke $r7.<com.android.inputmethod.keyboard.internal.BatchInputArbiter: void setKeyboardGeometry(int,int)>(i0, $i2);
+
+        $f0 = (float) i0;
+
+        $f1 = $f0 * 0.25F;
+
+        $i3 = (int) $f1;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: int mPhantomSuddenMoveThreshold> = $i3;
+
+        $r8 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BogusMoveEventDetector mBogusMoveEventDetector>;
+
+        virtualinvoke $r8.<com.android.inputmethod.keyboard.internal.BogusMoveEventDetector: void setKeyboardGeometry(int,int)>(i0, i1);
+
+        return;
+    }
+
+    public boolean isInDraggingFinger()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        boolean $z0;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInDraggingFinger>;
+
+        return $z0;
+    }
+
+    public com.android.inputmethod.keyboard.Key getKey()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey>;
+
+        return $r1;
+    }
+
+    public boolean isModifier()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key $r1, $r2;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey>;
+
+        $z0 = virtualinvoke $r2.<com.android.inputmethod.keyboard.Key: boolean isModifier()>();
+
+        if $z0 == 0 goto label1;
+
+        $z1 = 1;
+
+        goto label2;
+
+     label1:
+        $z1 = 0;
+
+     label2:
+        return $z1;
+    }
+
+    public com.android.inputmethod.keyboard.Key getKeyOn(int, int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1;
+        com.android.inputmethod.keyboard.KeyDetector $r1;
+        com.android.inputmethod.keyboard.Key $r2;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyDetector mKeyDetector>;
+
+        $r2 = virtualinvoke $r1.<com.android.inputmethod.keyboard.KeyDetector: com.android.inputmethod.keyboard.Key detectHitKey(int,int)>(i0, i1);
+
+        return $r2;
+    }
+
+    private void setReleasedKeyGraphics(com.android.inputmethod.keyboard.Key)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1, r3, r5, r14;
+        java.util.Iterator r2, r4;
+        com.android.inputmethod.keyboard.PointerTracker$DrawingProxy $r6;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.inputmethod.keyboard.Keyboard $r7, $r8, $r12;
+        java.util.List $r9, $r11;
+        int $i0, i1;
+        java.lang.Object $r10, $r13;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        $r6 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$DrawingProxy sDrawingProxy>;
+
+        interfaceinvoke $r6.<com.android.inputmethod.keyboard.PointerTracker$DrawingProxy: void dismissKeyPreview(com.android.inputmethod.keyboard.Key)>(r1);
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        staticinvoke <com.android.inputmethod.keyboard.PointerTracker: void updateReleaseKeyGraphics(com.android.inputmethod.keyboard.Key)>(r1);
+
+        $z0 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isShift()>();
+
+        if $z0 == 0 goto label4;
+
+        $r12 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $r11 = $r12.<com.android.inputmethod.keyboard.Keyboard: java.util.List mShiftKeys>;
+
+        r2 = interfaceinvoke $r11.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z3 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label4;
+
+        $r13 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.inputmethod.keyboard.Key) $r13;
+
+        if r3 == r1 goto label3;
+
+        staticinvoke <com.android.inputmethod.keyboard.PointerTracker: void updateReleaseKeyGraphics(com.android.inputmethod.keyboard.Key)>(r3);
+
+     label3:
+        goto label2;
+
+     label4:
+        $z1 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean altCodeWhileTyping()>();
+
+        if $z1 == 0 goto label8;
+
+        i1 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getAltCode()>();
+
+        $r7 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        r14 = virtualinvoke $r7.<com.android.inputmethod.keyboard.Keyboard: com.android.inputmethod.keyboard.Key getKey(int)>(i1);
+
+        if r14 == null goto label5;
+
+        staticinvoke <com.android.inputmethod.keyboard.PointerTracker: void updateReleaseKeyGraphics(com.android.inputmethod.keyboard.Key)>(r14);
+
+     label5:
+        $r8 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $r9 = $r8.<com.android.inputmethod.keyboard.Keyboard: java.util.List mAltCodeKeysWhileTyping>;
+
+        r4 = interfaceinvoke $r9.<java.util.List: java.util.Iterator iterator()>();
+
+     label6:
+        $z2 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label8;
+
+        $r10 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (com.android.inputmethod.keyboard.Key) $r10;
+
+        if r5 == r1 goto label7;
+
+        $i0 = virtualinvoke r5.<com.android.inputmethod.keyboard.Key: int getAltCode()>();
+
+        if $i0 != i1 goto label7;
+
+        staticinvoke <com.android.inputmethod.keyboard.PointerTracker: void updateReleaseKeyGraphics(com.android.inputmethod.keyboard.Key)>(r5);
+
+     label7:
+        goto label6;
+
+     label8:
+        return;
+    }
+
+    private static boolean needsToSuppressKeyPreviewPopup(long)
+    {
+        long l0;
+        com.android.inputmethod.keyboard.internal.GestureEnabler $r0;
+        boolean $z0, $z1;
+        com.android.inputmethod.keyboard.internal.TypingTimeRecorder $r1;
+
+        l0 := @parameter0: long;
+
+        $r0 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureEnabler sGestureEnabler>;
+
+        $z0 = virtualinvoke $r0.<com.android.inputmethod.keyboard.internal.GestureEnabler: boolean shouldHandleGesture()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.TypingTimeRecorder sTypingTimeRecorder>;
+
+        $z1 = virtualinvoke $r1.<com.android.inputmethod.keyboard.internal.TypingTimeRecorder: boolean needsToSuppressKeyPreviewPopup(long)>(l0);
+
+        return $z1;
+    }
+
+    private void setPressedKeyGraphics(com.android.inputmethod.keyboard.Key, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1, r3, r5, r15;
+        long l0;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12;
+        java.util.Iterator r2, r4;
+        com.android.inputmethod.keyboard.Keyboard $r6, $r7, $r10;
+        java.util.List $r8, $r11;
+        java.lang.Object $r9, $r12;
+        int $i1, i2;
+        com.android.inputmethod.keyboard.PointerTracker$DrawingProxy $r13;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r14;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        l0 := @parameter1: long;
+
+        if r1 != null goto label01;
+
+        return;
+
+     label01:
+        $z2 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean altCodeWhileTyping()>();
+
+        if $z2 == 0 goto label02;
+
+        $r14 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        $z12 = interfaceinvoke $r14.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: boolean isTypingState()>();
+
+        if $z12 == 0 goto label02;
+
+        $z11 = 1;
+
+        goto label03;
+
+     label02:
+        $z11 = 0;
+
+     label03:
+        z0 = $z11;
+
+        $z3 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isEnabled()>();
+
+        if $z3 != 0 goto label04;
+
+        if z0 == 0 goto label05;
+
+     label04:
+        $z10 = 1;
+
+        goto label06;
+
+     label05:
+        $z10 = 0;
+
+     label06:
+        z1 = $z10;
+
+        if z1 != 0 goto label07;
+
+        return;
+
+     label07:
+        $z4 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean noKeyPreview()>();
+
+        if $z4 != 0 goto label08;
+
+        $z9 = <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture>;
+
+        if $z9 != 0 goto label08;
+
+        $z8 = staticinvoke <com.android.inputmethod.keyboard.PointerTracker: boolean needsToSuppressKeyPreviewPopup(long)>(l0);
+
+        if $z8 != 0 goto label08;
+
+        $r13 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$DrawingProxy sDrawingProxy>;
+
+        interfaceinvoke $r13.<com.android.inputmethod.keyboard.PointerTracker$DrawingProxy: void showKeyPreview(com.android.inputmethod.keyboard.Key)>(r1);
+
+     label08:
+        staticinvoke <com.android.inputmethod.keyboard.PointerTracker: void updatePressKeyGraphics(com.android.inputmethod.keyboard.Key)>(r1);
+
+        $z5 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isShift()>();
+
+        if $z5 == 0 goto label11;
+
+        $r10 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $r11 = $r10.<com.android.inputmethod.keyboard.Keyboard: java.util.List mShiftKeys>;
+
+        r2 = interfaceinvoke $r11.<java.util.List: java.util.Iterator iterator()>();
+
+     label09:
+        $z7 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z7 == 0 goto label11;
+
+        $r12 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.inputmethod.keyboard.Key) $r12;
+
+        if r3 == r1 goto label10;
+
+        staticinvoke <com.android.inputmethod.keyboard.PointerTracker: void updatePressKeyGraphics(com.android.inputmethod.keyboard.Key)>(r3);
+
+     label10:
+        goto label09;
+
+     label11:
+        if z0 == 0 goto label15;
+
+        i2 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getAltCode()>();
+
+        $r6 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        r15 = virtualinvoke $r6.<com.android.inputmethod.keyboard.Keyboard: com.android.inputmethod.keyboard.Key getKey(int)>(i2);
+
+        if r15 == null goto label12;
+
+        staticinvoke <com.android.inputmethod.keyboard.PointerTracker: void updatePressKeyGraphics(com.android.inputmethod.keyboard.Key)>(r15);
+
+     label12:
+        $r7 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $r8 = $r7.<com.android.inputmethod.keyboard.Keyboard: java.util.List mAltCodeKeysWhileTyping>;
+
+        r4 = interfaceinvoke $r8.<java.util.List: java.util.Iterator iterator()>();
+
+     label13:
+        $z6 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z6 == 0 goto label15;
+
+        $r9 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (com.android.inputmethod.keyboard.Key) $r9;
+
+        if r5 == r1 goto label14;
+
+        $i1 = virtualinvoke r5.<com.android.inputmethod.keyboard.Key: int getAltCode()>();
+
+        if $i1 != i2 goto label14;
+
+        staticinvoke <com.android.inputmethod.keyboard.PointerTracker: void updatePressKeyGraphics(com.android.inputmethod.keyboard.Key)>(r5);
+
+     label14:
+        goto label13;
+
+     label15:
+        return;
+    }
+
+    private static void updateReleaseKeyGraphics(com.android.inputmethod.keyboard.Key)
+    {
+        com.android.inputmethod.keyboard.Key r0;
+        com.android.inputmethod.keyboard.PointerTracker$DrawingProxy $r1;
+
+        r0 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        virtualinvoke r0.<com.android.inputmethod.keyboard.Key: void onReleased()>();
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$DrawingProxy sDrawingProxy>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.PointerTracker$DrawingProxy: void invalidateKey(com.android.inputmethod.keyboard.Key)>(r0);
+
+        return;
+    }
+
+    private static void updatePressKeyGraphics(com.android.inputmethod.keyboard.Key)
+    {
+        com.android.inputmethod.keyboard.Key r0;
+        com.android.inputmethod.keyboard.PointerTracker$DrawingProxy $r1;
+
+        r0 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        virtualinvoke r0.<com.android.inputmethod.keyboard.Key: void onPressed()>();
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$DrawingProxy sDrawingProxy>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.PointerTracker$DrawingProxy: void invalidateKey(com.android.inputmethod.keyboard.Key)>(r0);
+
+        return;
+    }
+
+    public com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints getGestureStrokeDrawingPoints()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints mGestureStrokeDrawingPoints>;
+
+        return $r1;
+    }
+
+    public void getLastCoordinates(int[])
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int[] r1;
+        int $i0, $i1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: int[];
+
+        $i1 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastX>;
+
+        $i0 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastY>;
+
+        staticinvoke <com.android.inputmethod.latin.utils.CoordinateUtils: void set(int[],int,int)>(r1, $i1, $i0);
+
+        return;
+    }
+
+    public long getDownTime()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        long $l0;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $l0 = r0.<com.android.inputmethod.keyboard.PointerTracker: long mDownTime>;
+
+        return $l0;
+    }
+
+    public void getDownCoordinates(int[])
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int[] r1, $r2;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: int[];
+
+        $r2 = r0.<com.android.inputmethod.keyboard.PointerTracker: int[] mDownCoordinates>;
+
+        staticinvoke <com.android.inputmethod.latin.utils.CoordinateUtils: void copy(int[],int[])>(r1, $r2);
+
+        return;
+    }
+
+    private com.android.inputmethod.keyboard.Key onDownKey(int, int, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1;
+        long l2;
+        int[] $r1;
+        com.android.inputmethod.keyboard.internal.BogusMoveEventDetector $r2;
+        com.android.inputmethod.keyboard.Key $r3, $r4;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        l2 := @parameter2: long;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: long mDownTime> = l2;
+
+        $r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: int[] mDownCoordinates>;
+
+        staticinvoke <com.android.inputmethod.latin.utils.CoordinateUtils: void set(int[],int,int)>($r1, i0, i1);
+
+        $r2 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BogusMoveEventDetector mBogusMoveEventDetector>;
+
+        virtualinvoke $r2.<com.android.inputmethod.keyboard.internal.BogusMoveEventDetector: void onDownKey()>();
+
+        $r3 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key onMoveKeyInternal(int,int)>(i0, i1);
+
+        $r4 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key onMoveToNewKey(com.android.inputmethod.keyboard.Key,int,int)>($r3, i0, i1);
+
+        return $r4;
+    }
+
+    private static int getDistance(int, int, int, int)
+    {
+        int i0, i1, i2, i3, $i4, $i5, $i6;
+        double $d0, $d1, $d2;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        i3 := @parameter3: int;
+
+        $i4 = i0 - i2;
+
+        $d1 = (double) $i4;
+
+        $i5 = i1 - i3;
+
+        $d0 = (double) $i5;
+
+        $d2 = staticinvoke <java.lang.Math: double hypot(double,double)>($d1, $d0);
+
+        $i6 = (int) $d2;
+
+        return $i6;
+    }
+
+    private com.android.inputmethod.keyboard.Key onMoveKeyInternal(int, int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1, $i2, $i3, $i4;
+        com.android.inputmethod.keyboard.internal.BogusMoveEventDetector $r1;
+        com.android.inputmethod.keyboard.KeyDetector $r2;
+        com.android.inputmethod.keyboard.Key $r3;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BogusMoveEventDetector mBogusMoveEventDetector>;
+
+        $i3 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastX>;
+
+        $i2 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastY>;
+
+        $i4 = staticinvoke <com.android.inputmethod.keyboard.PointerTracker: int getDistance(int,int,int,int)>(i0, i1, $i3, $i2);
+
+        virtualinvoke $r1.<com.android.inputmethod.keyboard.internal.BogusMoveEventDetector: void onMoveKey(int)>($i4);
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastX> = i0;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastY> = i1;
+
+        $r2 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyDetector mKeyDetector>;
+
+        $r3 = virtualinvoke $r2.<com.android.inputmethod.keyboard.KeyDetector: com.android.inputmethod.keyboard.Key detectHitKey(int,int)>(i0, i1);
+
+        return $r3;
+    }
+
+    private com.android.inputmethod.keyboard.Key onMoveKey(int, int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1;
+        com.android.inputmethod.keyboard.Key $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $r1 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key onMoveKeyInternal(int,int)>(i0, i1);
+
+        return $r1;
+    }
+
+    private com.android.inputmethod.keyboard.Key onMoveToNewKey(com.android.inputmethod.keyboard.Key, int, int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1;
+        int i0, i1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey> = r1;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: int mKeyX> = i0;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: int mKeyY> = i1;
+
+        return r1;
+    }
+
+    static int getActivePointerTrackerCount()
+    {
+        com.android.inputmethod.keyboard.internal.PointerTrackerQueue $r0;
+        int $i0;
+
+        $r0 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        $i0 = virtualinvoke $r0.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: int size()>();
+
+        return $i0;
+    }
+
+    private boolean isOldestTrackerInQueue()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.internal.PointerTrackerQueue $r1;
+        com.android.inputmethod.keyboard.internal.PointerTrackerQueue$Element $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        $r2 = virtualinvoke $r1.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: com.android.inputmethod.keyboard.internal.PointerTrackerQueue$Element getOldestElement()>();
+
+        if $r2 != r0 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    public void onStartBatchInput()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.KeyboardActionListener $r1;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r2;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.KeyboardActionListener: void onStartBatchInput()>();
+
+        staticinvoke <com.android.inputmethod.keyboard.PointerTracker: void dismissAllMoreKeysPanels()>();
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r2.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void cancelLongPressTimerOf(com.android.inputmethod.keyboard.PointerTracker)>(r0);
+
+        return;
+    }
+
+    private void showGestureTrail()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        boolean $z0, $z1;
+        com.android.inputmethod.keyboard.PointerTracker$DrawingProxy $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$DrawingProxy sDrawingProxy>;
+
+        $z1 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean isOldestTrackerInQueue()>();
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.PointerTracker$DrawingProxy: void showGestureTrail(com.android.inputmethod.keyboard.PointerTracker,boolean)>(r0, $z1);
+
+        return;
+    }
+
+    public void updateBatchInputByTimer(long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        long l0;
+        com.android.inputmethod.keyboard.internal.BatchInputArbiter $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        l0 := @parameter0: long;
+
+        $r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BatchInputArbiter mBatchInputArbiter>;
+
+        virtualinvoke $r1.<com.android.inputmethod.keyboard.internal.BatchInputArbiter: void updateBatchInputByTimer(long,com.android.inputmethod.keyboard.internal.BatchInputArbiter$BatchInputArbiterListener)>(l0, r0);
+
+        return;
+    }
+
+    public void onUpdateBatchInput(com.android.inputmethod.latin.InputPointers, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.latin.InputPointers r1;
+        long l0;
+        com.android.inputmethod.keyboard.KeyboardActionListener $r2;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.latin.InputPointers;
+
+        l0 := @parameter1: long;
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener>;
+
+        interfaceinvoke $r2.<com.android.inputmethod.keyboard.KeyboardActionListener: void onUpdateBatchInput(com.android.inputmethod.latin.InputPointers)>(r1);
+
+        return;
+    }
+
+    public void onStartUpdateBatchInputTimer()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void startUpdateBatchInputTimer(com.android.inputmethod.keyboard.PointerTracker)>(r0);
+
+        return;
+    }
+
+    public void onEndBatchInput(com.android.inputmethod.latin.InputPointers, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.latin.InputPointers r1;
+        long l0;
+        com.android.inputmethod.keyboard.internal.TypingTimeRecorder $r2;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r3;
+        boolean $z0;
+        com.android.inputmethod.keyboard.KeyboardActionListener $r4;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.latin.InputPointers;
+
+        l0 := @parameter1: long;
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.TypingTimeRecorder sTypingTimeRecorder>;
+
+        virtualinvoke $r2.<com.android.inputmethod.keyboard.internal.TypingTimeRecorder: void onEndBatchInput(long)>(l0);
+
+        $r3 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r3.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void cancelAllUpdateBatchInputTimers()>();
+
+        $z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r4 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener>;
+
+        interfaceinvoke $r4.<com.android.inputmethod.keyboard.KeyboardActionListener: void onEndBatchInput(com.android.inputmethod.latin.InputPointers)>(r1);
+
+        return;
+    }
+
+    private void cancelBatchInput()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        boolean $z0;
+        com.android.inputmethod.keyboard.KeyboardActionListener $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        staticinvoke <com.android.inputmethod.keyboard.PointerTracker: void cancelAllPointerTrackers()>();
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsDetectingGesture> = 0;
+
+        $z0 = <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture>;
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture> = 0;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.KeyboardActionListener: void onCancelBatchInput()>();
+
+        return;
+    }
+
+    public void processMotionEvent(android.view.MotionEvent, com.android.inputmethod.keyboard.KeyDetector)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0, r3;
+        android.view.MotionEvent r1;
+        com.android.inputmethod.keyboard.KeyDetector r2;
+        int i0, i2, i3, i4, i5, i6, $i7, $i8, i9, i10, i11;
+        long l1;
+        boolean z0, $z1, $z2;
+        float $f0, $f1, $f2, $f3;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: com.android.inputmethod.keyboard.KeyDetector;
+
+        i0 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        l1 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        if i0 != 2 goto label07;
+
+        $z1 = virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean isShowingMoreKeysPanel()>();
+
+        if $z1 == 0 goto label01;
+
+        $i7 = staticinvoke <com.android.inputmethod.keyboard.PointerTracker: int getActivePointerTrackerCount()>();
+
+        if $i7 != 1 goto label01;
+
+        $z2 = 1;
+
+        goto label02;
+
+     label01:
+        $z2 = 0;
+
+     label02:
+        z0 = $z2;
+
+        i2 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        i3 = 0;
+
+     label03:
+        if i3 >= i2 goto label06;
+
+        i4 = virtualinvoke r1.<android.view.MotionEvent: int getPointerId(int)>(i3);
+
+        if z0 == 0 goto label04;
+
+        $i8 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        if i4 == $i8 goto label04;
+
+        goto label05;
+
+     label04:
+        $f2 = virtualinvoke r1.<android.view.MotionEvent: float getX(int)>(i3);
+
+        i5 = (int) $f2;
+
+        $f3 = virtualinvoke r1.<android.view.MotionEvent: float getY(int)>(i3);
+
+        i6 = (int) $f3;
+
+        r3 = staticinvoke <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker getPointerTracker(int)>(i4);
+
+        specialinvoke r3.<com.android.inputmethod.keyboard.PointerTracker: void onMoveEvent(int,int,long,android.view.MotionEvent)>(i5, i6, l1, r1);
+
+     label05:
+        i3 = i3 + 1;
+
+        goto label03;
+
+     label06:
+        return;
+
+     label07:
+        i9 = virtualinvoke r1.<android.view.MotionEvent: int getActionIndex()>();
+
+        $f1 = virtualinvoke r1.<android.view.MotionEvent: float getX(int)>(i9);
+
+        i10 = (int) $f1;
+
+        $f0 = virtualinvoke r1.<android.view.MotionEvent: float getY(int)>(i9);
+
+        i11 = (int) $f0;
+
+        tableswitch(i0)
+        {
+            case 0: goto label08;
+            case 1: goto label09;
+            case 2: goto label11;
+            case 3: goto label10;
+            case 4: goto label11;
+            case 5: goto label08;
+            case 6: goto label09;
+            default: goto label11;
+        };
+
+     label08:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onDownEvent(int,int,long,com.android.inputmethod.keyboard.KeyDetector)>(i10, i11, l1, r2);
+
+        goto label11;
+
+     label09:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onUpEvent(int,int,long)>(i10, i11, l1);
+
+        goto label11;
+
+     label10:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onCancelEvent(int,int,long)>(i10, i11, l1);
+
+     label11:
+        return;
+    }
+
+    private void onDownEvent(int, int, long, com.android.inputmethod.keyboard.KeyDetector)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1, i4, $i6, $i10, $i11, $i12, $i13, $i14, $i15;
+        long l2, l3, $l5, $l7, $l9;
+        com.android.inputmethod.keyboard.KeyDetector r1;
+        com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams $r2, $r14;
+        byte $b8;
+        com.android.inputmethod.keyboard.internal.BogusMoveEventDetector $r3;
+        com.android.inputmethod.keyboard.internal.GestureEnabler $r4;
+        com.android.inputmethod.keyboard.internal.PointerTrackerQueue $r5, $r13;
+        com.android.inputmethod.keyboard.Keyboard $r6, $r12;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6;
+        com.android.inputmethod.keyboard.internal.TypingTimeRecorder $r7;
+        com.android.inputmethod.keyboard.internal.BatchInputArbiter $r8, $r9;
+        com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints $r10;
+        com.android.inputmethod.keyboard.KeyboardId $r11;
+        java.lang.String $r15, $r18;
+        java.lang.Object[] $r16;
+        java.lang.Integer $r17, $r19;
+        java.lang.Long $r20;
+        com.android.inputmethod.keyboard.Key r21;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        l2 := @parameter2: long;
+
+        r1 := @parameter3: com.android.inputmethod.keyboard.KeyDetector;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setKeyDetectorInner(com.android.inputmethod.keyboard.KeyDetector)>(r1);
+
+        $l5 = r0.<com.android.inputmethod.keyboard.PointerTracker: long mUpTime>;
+
+        l3 = l2 - $l5;
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams sParams>;
+
+        $i6 = $r2.<com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams: int mTouchNoiseThresholdTime>;
+
+        $l7 = (long) $i6;
+
+        $b8 = l3 cmp $l7;
+
+        if $b8 >= 0 goto label2;
+
+        $i14 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastX>;
+
+        $i12 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastY>;
+
+        i4 = staticinvoke <com.android.inputmethod.keyboard.PointerTracker: int getDistance(int,int,int,int)>(i0, i1, $i14, $i12);
+
+        $r14 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams sParams>;
+
+        $i13 = $r14.<com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams: int mTouchNoiseThresholdDistance>;
+
+        if i4 >= $i13 goto label2;
+
+        $z6 = <com.android.inputmethod.keyboard.PointerTracker: boolean DEBUG_MODE>;
+
+        if $z6 == 0 goto label1;
+
+        $r15 = <com.android.inputmethod.keyboard.PointerTracker: java.lang.String TAG>;
+
+        $r16 = newarray (java.lang.Object)[3];
+
+        $i15 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        $r17 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i15);
+
+        $r16[0] = $r17;
+
+        $r20 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l3);
+
+        $r16[1] = $r20;
+
+        $r19 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i4);
+
+        $r16[2] = $r19;
+
+        $r18 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("[%d] onDownEvent: ignore potential noise: time=%d distance=%d", $r16);
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>($r15, $r18);
+
+     label1:
+        virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void cancelTrackingForAction()>();
+
+        return;
+
+     label2:
+        r21 = virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key getKeyOn(int,int)>(i0, i1);
+
+        $r3 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BogusMoveEventDetector mBogusMoveEventDetector>;
+
+        virtualinvoke $r3.<com.android.inputmethod.keyboard.internal.BogusMoveEventDetector: void onActualDownEvent(int,int)>(i0, i1);
+
+        if r21 == null goto label3;
+
+        $z5 = virtualinvoke r21.<com.android.inputmethod.keyboard.Key: boolean isModifier()>();
+
+        if $z5 == 0 goto label3;
+
+        $r13 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        virtualinvoke $r13.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: void releaseAllPointers(long)>(l2);
+
+     label3:
+        $r5 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        virtualinvoke $r5.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: void add(com.android.inputmethod.keyboard.internal.PointerTrackerQueue$Element)>(r0);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onDownEventInternal(int,int,long)>(i0, i1, l2);
+
+        $r4 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureEnabler sGestureEnabler>;
+
+        $z0 = virtualinvoke $r4.<com.android.inputmethod.keyboard.internal.GestureEnabler: boolean shouldHandleGesture()>();
+
+        if $z0 != 0 goto label4;
+
+        return;
+
+     label4:
+        $r6 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        if $r6 == null goto label5;
+
+        $r12 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $r11 = $r12.<com.android.inputmethod.keyboard.Keyboard: com.android.inputmethod.keyboard.KeyboardId mId>;
+
+        $z3 = virtualinvoke $r11.<com.android.inputmethod.keyboard.KeyboardId: boolean isAlphabetKeyboard()>();
+
+        if $z3 == 0 goto label5;
+
+        if r21 == null goto label5;
+
+        $z2 = virtualinvoke r21.<com.android.inputmethod.keyboard.Key: boolean isModifier()>();
+
+        if $z2 != 0 goto label5;
+
+        $z4 = 1;
+
+        goto label6;
+
+     label5:
+        $z4 = 0;
+
+     label6:
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsDetectingGesture> = $z4;
+
+        $z1 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsDetectingGesture>;
+
+        if $z1 == 0 goto label7;
+
+        $r8 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BatchInputArbiter mBatchInputArbiter>;
+
+        $r7 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.TypingTimeRecorder sTypingTimeRecorder>;
+
+        $l9 = virtualinvoke $r7.<com.android.inputmethod.keyboard.internal.TypingTimeRecorder: long getLastLetterTypingTime()>();
+
+        $i10 = staticinvoke <com.android.inputmethod.keyboard.PointerTracker: int getActivePointerTrackerCount()>();
+
+        virtualinvoke $r8.<com.android.inputmethod.keyboard.internal.BatchInputArbiter: void addDownEventPoint(int,int,long,long,int)>(i0, i1, l2, $l9, $i10);
+
+        $r10 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints mGestureStrokeDrawingPoints>;
+
+        $r9 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BatchInputArbiter mBatchInputArbiter>;
+
+        $i11 = virtualinvoke $r9.<com.android.inputmethod.keyboard.internal.BatchInputArbiter: int getElapsedTimeSinceFirstDown(long)>(l2);
+
+        virtualinvoke $r10.<com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints: void onDownEvent(int,int,int)>(i0, i1, $i11);
+
+     label7:
+        return;
+    }
+
+    boolean isShowingMoreKeysPanel()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.MoreKeysPanel $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.MoreKeysPanel mMoreKeysPanel>;
+
+        if $r1 == null goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    private void dismissMoreKeysPanel()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        boolean $z0;
+        com.android.inputmethod.keyboard.MoreKeysPanel $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $z0 = virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean isShowingMoreKeysPanel()>();
+
+        if $z0 == 0 goto label1;
+
+        $r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.MoreKeysPanel mMoreKeysPanel>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.MoreKeysPanel: void dismissMoreKeysPanel()>();
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.MoreKeysPanel mMoreKeysPanel> = null;
+
+     label1:
+        return;
+    }
+
+    private void onDownEventInternal(int, int, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1;
+        long l2;
+        com.android.inputmethod.keyboard.Key r1;
+        com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams $r2;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        com.android.inputmethod.keyboard.KeyDetector $r3;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        l2 := @parameter2: long;
+
+        r1 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key onDownKey(int,int,long)>(i0, i1, l2);
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams sParams>;
+
+        $z0 = $r2.<com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams: boolean mKeySelectionByDraggingFinger>;
+
+        if $z0 != 0 goto label2;
+
+        if r1 == null goto label1;
+
+        $z4 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isModifier()>();
+
+        if $z4 != 0 goto label2;
+
+     label1:
+        $r3 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyDetector mKeyDetector>;
+
+        $z2 = virtualinvoke $r3.<com.android.inputmethod.keyboard.KeyDetector: boolean alwaysAllowsKeySelectionByDraggingFinger()>();
+
+        if $z2 == 0 goto label3;
+
+     label2:
+        $z3 = 1;
+
+        goto label4;
+
+     label3:
+        $z3 = 0;
+
+     label4:
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsAllowedDraggingFinger> = $z3;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mKeyboardLayoutHasBeenChanged> = 0;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled> = 0;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void resetKeySelectionByDraggingFinger()>();
+
+        if r1 == null goto label6;
+
+        $z1 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean callListenerOnPressAndCheckKeyboardLayoutChange(com.android.inputmethod.keyboard.Key,int)>(r1, 0);
+
+        if $z1 == 0 goto label5;
+
+        r1 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key onDownKey(int,int,long)>(i0, i1, l2);
+
+     label5:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void startRepeatKey(com.android.inputmethod.keyboard.Key)>(r1);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void startLongPressTimer(com.android.inputmethod.keyboard.Key)>(r1);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setPressedKeyGraphics(com.android.inputmethod.keyboard.Key,long)>(r1, l2);
+
+     label6:
+        return;
+    }
+
+    private void startKeySelectionByDraggingFinger(com.android.inputmethod.keyboard.Key)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        $z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInDraggingFinger>;
+
+        if $z0 != 0 goto label1;
+
+        $z1 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isModifier()>();
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInSlidingKeyInput> = $z1;
+
+     label1:
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInDraggingFinger> = 1;
+
+        return;
+    }
+
+    private void resetKeySelectionByDraggingFinger()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.PointerTracker$DrawingProxy $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInDraggingFinger> = 0;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInSlidingKeyInput> = 0;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$DrawingProxy sDrawingProxy>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.PointerTracker$DrawingProxy: void dismissSlidingKeyInputPreview()>();
+
+        return;
+    }
+
+    private void onGestureMoveEvent(int, int, long, boolean, com.android.inputmethod.keyboard.Key)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1, $i3, $i4;
+        long l2;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7;
+        com.android.inputmethod.keyboard.Key r1;
+        com.android.inputmethod.keyboard.internal.BatchInputArbiter $r2, $r3, $r5, $r6;
+        com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints $r4;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        l2 := @parameter2: long;
+
+        z0 := @parameter3: boolean;
+
+        r1 := @parameter4: com.android.inputmethod.keyboard.Key;
+
+        $z2 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsDetectingGesture>;
+
+        if $z2 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BatchInputArbiter mBatchInputArbiter>;
+
+        z1 = virtualinvoke $r2.<com.android.inputmethod.keyboard.internal.BatchInputArbiter: boolean addMoveEventPoint(int,int,long,boolean,com.android.inputmethod.keyboard.internal.BatchInputArbiter$BatchInputArbiterListener)>(i0, i1, l2, z0, r0);
+
+        if z1 != 0 goto label2;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void cancelBatchInput()>();
+
+        return;
+
+     label2:
+        $r4 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints mGestureStrokeDrawingPoints>;
+
+        $r3 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BatchInputArbiter mBatchInputArbiter>;
+
+        $i3 = virtualinvoke $r3.<com.android.inputmethod.keyboard.internal.BatchInputArbiter: int getElapsedTimeSinceFirstDown(long)>(l2);
+
+        virtualinvoke $r4.<com.android.inputmethod.keyboard.internal.GestureStrokeDrawingPoints: void onMoveEvent(int,int,int)>(i0, i1, $i3);
+
+        $z3 = virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean isShowingMoreKeysPanel()>();
+
+        if $z3 == 0 goto label3;
+
+        return;
+
+     label3:
+        $z4 = <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture>;
+
+        if $z4 != 0 goto label4;
+
+        if r1 == null goto label4;
+
+        $i4 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        $z6 = staticinvoke <java.lang.Character: boolean isLetter(int)>($i4);
+
+        if $z6 == 0 goto label4;
+
+        $r6 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BatchInputArbiter mBatchInputArbiter>;
+
+        $z7 = virtualinvoke $r6.<com.android.inputmethod.keyboard.internal.BatchInputArbiter: boolean mayStartBatchInput(com.android.inputmethod.keyboard.internal.BatchInputArbiter$BatchInputArbiterListener)>(r0);
+
+        if $z7 == 0 goto label4;
+
+        <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture> = 1;
+
+     label4:
+        $z5 = <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture>;
+
+        if $z5 == 0 goto label6;
+
+        if r1 == null goto label5;
+
+        $r5 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BatchInputArbiter mBatchInputArbiter>;
+
+        virtualinvoke $r5.<com.android.inputmethod.keyboard.internal.BatchInputArbiter: void updateBatchInput(long,com.android.inputmethod.keyboard.internal.BatchInputArbiter$BatchInputArbiterListener)>(l2, r0);
+
+     label5:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void showGestureTrail()>();
+
+     label6:
+        return;
+    }
+
+    private void onMoveEvent(int, int, long, android.view.MotionEvent)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1, i3, i4, i5, i6, i7, $i9, $i10, i11, i12;
+        long l2, l8;
+        android.view.MotionEvent r1;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.inputmethod.keyboard.internal.GestureEnabler $r2;
+        com.android.inputmethod.keyboard.MoreKeysPanel $r3, $r4, $r6;
+        com.android.inputmethod.keyboard.PointerTracker$DrawingProxy $r7;
+        float $f0, $f1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        l2 := @parameter2: long;
+
+        r1 := @parameter3: android.view.MotionEvent;
+
+        $z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureEnabler sGestureEnabler>;
+
+        $z1 = virtualinvoke $r2.<com.android.inputmethod.keyboard.internal.GestureEnabler: boolean shouldHandleGesture()>();
+
+        if $z1 == 0 goto label3;
+
+        if r1 == null goto label3;
+
+        $i10 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        i3 = virtualinvoke r1.<android.view.MotionEvent: int findPointerIndex(int)>($i10);
+
+        i4 = virtualinvoke r1.<android.view.MotionEvent: int getHistorySize()>();
+
+        i5 = 0;
+
+     label2:
+        if i5 >= i4 goto label3;
+
+        $f0 = virtualinvoke r1.<android.view.MotionEvent: float getHistoricalX(int,int)>(i3, i5);
+
+        i6 = (int) $f0;
+
+        $f1 = virtualinvoke r1.<android.view.MotionEvent: float getHistoricalY(int,int)>(i3, i5);
+
+        i7 = (int) $f1;
+
+        l8 = virtualinvoke r1.<android.view.MotionEvent: long getHistoricalEventTime(int)>(i5);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onGestureMoveEvent(int,int,long,boolean,com.android.inputmethod.keyboard.Key)>(i6, i7, l8, 0, null);
+
+        i5 = i5 + 1;
+
+        goto label2;
+
+     label3:
+        $z2 = virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean isShowingMoreKeysPanel()>();
+
+        if $z2 == 0 goto label5;
+
+        $r3 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.MoreKeysPanel mMoreKeysPanel>;
+
+        i11 = interfaceinvoke $r3.<com.android.inputmethod.keyboard.MoreKeysPanel: int translateX(int)>(i0);
+
+        $r4 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.MoreKeysPanel mMoreKeysPanel>;
+
+        i12 = interfaceinvoke $r4.<com.android.inputmethod.keyboard.MoreKeysPanel: int translateY(int)>(i1);
+
+        $r6 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.MoreKeysPanel mMoreKeysPanel>;
+
+        $i9 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        interfaceinvoke $r6.<com.android.inputmethod.keyboard.MoreKeysPanel: void onMoveEvent(int,int,int,long)>(i11, i12, $i9, l2);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key onMoveKey(int,int)>(i0, i1);
+
+        $z3 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInSlidingKeyInput>;
+
+        if $z3 == 0 goto label4;
+
+        $r7 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$DrawingProxy sDrawingProxy>;
+
+        interfaceinvoke $r7.<com.android.inputmethod.keyboard.PointerTracker$DrawingProxy: void showSlidingKeyInputPreview(com.android.inputmethod.keyboard.PointerTracker)>(r0);
+
+     label4:
+        return;
+
+     label5:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onMoveEventInternal(int,int,long)>(i0, i1, l2);
+
+        return;
+    }
+
+    private void processDraggingFingerInToNewKey(com.android.inputmethod.keyboard.Key, int, int, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1, r2;
+        int i0, i1;
+        long l2;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        l2 := @parameter3: long;
+
+        r2 = r1;
+
+        $z0 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean callListenerOnPressAndCheckKeyboardLayoutChange(com.android.inputmethod.keyboard.Key,int)>(r2, 0);
+
+        if $z0 == 0 goto label1;
+
+        r2 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key onMoveKey(int,int)>(i0, i1);
+
+     label1:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key onMoveToNewKey(com.android.inputmethod.keyboard.Key,int,int)>(r2, i0, i1);
+
+        $z1 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled>;
+
+        if $z1 == 0 goto label2;
+
+        return;
+
+     label2:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void startLongPressTimer(com.android.inputmethod.keyboard.Key)>(r2);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setPressedKeyGraphics(com.android.inputmethod.keyboard.Key,long)>(r2, l2);
+
+        return;
+    }
+
+    private void processPhantomSuddenMoveHack(com.android.inputmethod.keyboard.Key, int, int, long, com.android.inputmethod.keyboard.Key, int, int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1, r2;
+        int i0, i1, i3, i4, $i5, $i6, $i7, $i8;
+        long l2;
+        boolean $z0;
+        java.lang.Object[] $r3;
+        java.lang.String $r4, $r9, $r12, $r13;
+        java.lang.Integer $r5, $r6, $r7, $r8, $r10, $r11;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        l2 := @parameter3: long;
+
+        r2 := @parameter4: com.android.inputmethod.keyboard.Key;
+
+        i3 := @parameter5: int;
+
+        i4 := @parameter6: int;
+
+        $z0 = <com.android.inputmethod.keyboard.PointerTracker: boolean DEBUG_MODE>;
+
+        if $z0 == 0 goto label1;
+
+        $r4 = <com.android.inputmethod.keyboard.PointerTracker: java.lang.String TAG>;
+
+        $r3 = newarray (java.lang.Object)[8];
+
+        $i5 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i5);
+
+        $r3[0] = $r5;
+
+        $i6 = staticinvoke <com.android.inputmethod.keyboard.PointerTracker: int getDistance(int,int,int,int)>(i0, i1, i3, i4);
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i6);
+
+        $r3[1] = $r6;
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        $r3[2] = $r7;
+
+        $r8 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i4);
+
+        $r3[3] = $r8;
+
+        $i7 = virtualinvoke r2.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        $r9 = staticinvoke <com.android.inputmethod.latin.Constants: java.lang.String printableCode(int)>($i7);
+
+        $r3[4] = $r9;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r3[5] = $r10;
+
+        $r11 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        $r3[6] = $r11;
+
+        $i8 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        $r12 = staticinvoke <com.android.inputmethod.latin.Constants: java.lang.String printableCode(int)>($i8);
+
+        $r3[7] = $r12;
+
+        $r13 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("[%d] onMoveEvent: phantom sudden move event (distance=%d) is translated to up[%d,%d,%s]/down[%d,%d,%s] events", $r3);
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>($r4, $r13);
+
+     label1:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onUpEventInternal(int,int,long)>(i0, i1, l2);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onDownEventInternal(int,int,long)>(i0, i1, l2);
+
+        return;
+    }
+
+    private void processProximateBogusDownMoveUpEventHack(com.android.inputmethod.keyboard.Key, int, int, long, com.android.inputmethod.keyboard.Key, int, int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1, r2;
+        int i0, i1, i3, i4, $i5, $i6, $i7, $i8, $i9, $i10;
+        long l2;
+        float f0, f1, $f2;
+        boolean $z0;
+        com.android.inputmethod.keyboard.Keyboard $r3, $r4;
+        double $d0, $d1, $d2;
+        com.android.inputmethod.keyboard.internal.BogusMoveEventDetector $r5;
+        java.lang.Object[] $r6;
+        java.lang.String $r7, $r13, $r14, $r16;
+        java.lang.Integer $r8, $r10, $r11, $r12, $r15;
+        java.lang.Float $r9;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        l2 := @parameter3: long;
+
+        r2 := @parameter4: com.android.inputmethod.keyboard.Key;
+
+        i3 := @parameter5: int;
+
+        i4 := @parameter6: int;
+
+        $z0 = <com.android.inputmethod.keyboard.PointerTracker: boolean DEBUG_MODE>;
+
+        if $z0 == 0 goto label1;
+
+        $r3 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $i5 = $r3.<com.android.inputmethod.keyboard.Keyboard: int mMostCommonKeyWidth>;
+
+        $d0 = (double) $i5;
+
+        $r4 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $i6 = $r4.<com.android.inputmethod.keyboard.Keyboard: int mMostCommonKeyHeight>;
+
+        $d1 = (double) $i6;
+
+        $d2 = staticinvoke <java.lang.Math: double hypot(double,double)>($d0, $d1);
+
+        f0 = (float) $d2;
+
+        $r5 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BogusMoveEventDetector mBogusMoveEventDetector>;
+
+        $i7 = virtualinvoke $r5.<com.android.inputmethod.keyboard.internal.BogusMoveEventDetector: int getDistanceFromDownEvent(int,int)>(i0, i1);
+
+        $f2 = (float) $i7;
+
+        f1 = $f2 / f0;
+
+        $r7 = <com.android.inputmethod.keyboard.PointerTracker: java.lang.String TAG>;
+
+        $r6 = newarray (java.lang.Object)[8];
+
+        $i8 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        $r8 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i8);
+
+        $r6[0] = $r8;
+
+        $r9 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>(f1);
+
+        $r6[1] = $r9;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        $r6[2] = $r10;
+
+        $r11 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i4);
+
+        $r6[3] = $r11;
+
+        $i9 = virtualinvoke r2.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        $r13 = staticinvoke <com.android.inputmethod.latin.Constants: java.lang.String printableCode(int)>($i9);
+
+        $r6[4] = $r13;
+
+        $r12 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r6[5] = $r12;
+
+        $r15 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        $r6[6] = $r15;
+
+        $i10 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        $r14 = staticinvoke <com.android.inputmethod.latin.Constants: java.lang.String printableCode(int)>($i10);
+
+        $r6[7] = $r14;
+
+        $r16 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("[%d] onMoveEvent: bogus down-move-up event (raidus=%.2f key diagonal) is  translated to up[%d,%d,%s]/down[%d,%d,%s] events", $r6);
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>($r7, $r16);
+
+     label1:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onUpEventInternal(int,int,long)>(i0, i1, l2);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onDownEventInternal(int,int,long)>(i0, i1, l2);
+
+        return;
+    }
+
+    private void processDraggingFingerOutFromOldKey(com.android.inputmethod.keyboard.Key)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1;
+        int $i0;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r2;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setReleasedKeyGraphics(com.android.inputmethod.keyboard.Key)>(r1);
+
+        $i0 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void callListenerOnRelease(com.android.inputmethod.keyboard.Key,int,boolean)>(r1, $i0, 1);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void startKeySelectionByDraggingFinger(com.android.inputmethod.keyboard.Key)>(r1);
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r2.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void cancelKeyTimersOf(com.android.inputmethod.keyboard.PointerTracker)>(r0);
+
+        return;
+    }
+
+    private void dragFingerFromOldKeyToNewKey(com.android.inputmethod.keyboard.Key, int, int, long, com.android.inputmethod.keyboard.Key, int, int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1, r2;
+        int i0, i1, i3, i4, $i5, $i6, $i8, $i9;
+        long l2;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6;
+        com.android.inputmethod.keyboard.internal.TypingTimeRecorder $r3;
+        com.android.inputmethod.keyboard.internal.PointerTrackerQueue $r4;
+        java.lang.Object[] $r5;
+        java.lang.String $r6, $r8;
+        java.lang.Integer $r7;
+        com.android.inputmethod.keyboard.internal.BogusMoveEventDetector $r9;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        l2 := @parameter3: long;
+
+        r2 := @parameter4: com.android.inputmethod.keyboard.Key;
+
+        i3 := @parameter5: int;
+
+        i4 := @parameter6: int;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void processDraggingFingerOutFromOldKey(com.android.inputmethod.keyboard.Key)>(r2);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void startRepeatKey(com.android.inputmethod.keyboard.Key)>(r1);
+
+        $z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsAllowedDraggingFinger>;
+
+        if $z0 == 0 goto label1;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void processDraggingFingerInToNewKey(com.android.inputmethod.keyboard.Key,int,int,long)>(r1, i0, i1, l2);
+
+        goto label7;
+
+     label1:
+        $z1 = <com.android.inputmethod.keyboard.PointerTracker: boolean sNeedsPhantomSuddenMoveEventHack>;
+
+        if $z1 == 0 goto label2;
+
+        $i9 = staticinvoke <com.android.inputmethod.keyboard.PointerTracker: int getDistance(int,int,int,int)>(i0, i1, i3, i4);
+
+        $i8 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPhantomSuddenMoveThreshold>;
+
+        if $i9 < $i8 goto label2;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void processPhantomSuddenMoveHack(com.android.inputmethod.keyboard.Key,int,int,long,com.android.inputmethod.keyboard.Key,int,int)>(r1, i0, i1, l2, r2, i3, i4);
+
+        goto label7;
+
+     label2:
+        $r3 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.TypingTimeRecorder sTypingTimeRecorder>;
+
+        $z2 = virtualinvoke $r3.<com.android.inputmethod.keyboard.internal.TypingTimeRecorder: boolean isInFastTyping(long)>(l2);
+
+        if $z2 == 0 goto label3;
+
+        $r9 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BogusMoveEventDetector mBogusMoveEventDetector>;
+
+        $z6 = virtualinvoke $r9.<com.android.inputmethod.keyboard.internal.BogusMoveEventDetector: boolean isCloseToActualDownEvent(int,int)>(i0, i1);
+
+        if $z6 == 0 goto label3;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void processProximateBogusDownMoveUpEventHack(com.android.inputmethod.keyboard.Key,int,int,long,com.android.inputmethod.keyboard.Key,int,int)>(r1, i0, i1, l2, r2, i3, i4);
+
+        goto label7;
+
+     label3:
+        $i5 = staticinvoke <com.android.inputmethod.keyboard.PointerTracker: int getActivePointerTrackerCount()>();
+
+        if $i5 <= 1 goto label5;
+
+        $r4 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        $z5 = virtualinvoke $r4.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: boolean hasModifierKeyOlderThan(com.android.inputmethod.keyboard.internal.PointerTrackerQueue$Element)>(r0);
+
+        if $z5 != 0 goto label5;
+
+        $z4 = <com.android.inputmethod.keyboard.PointerTracker: boolean DEBUG_MODE>;
+
+        if $z4 == 0 goto label4;
+
+        $r6 = <com.android.inputmethod.keyboard.PointerTracker: java.lang.String TAG>;
+
+        $r5 = newarray (java.lang.Object)[1];
+
+        $i6 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i6);
+
+        $r5[0] = $r7;
+
+        $r8 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("[%d] onMoveEvent: detected sliding finger while multi touching", $r5);
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>($r6, $r8);
+
+     label4:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onUpEvent(int,int,long)>(i0, i1, l2);
+
+        virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void cancelTrackingForAction()>();
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setReleasedKeyGraphics(com.android.inputmethod.keyboard.Key)>(r2);
+
+        goto label7;
+
+     label5:
+        $z3 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsDetectingGesture>;
+
+        if $z3 != 0 goto label6;
+
+        virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void cancelTrackingForAction()>();
+
+     label6:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setReleasedKeyGraphics(com.android.inputmethod.keyboard.Key)>(r2);
+
+     label7:
+        return;
+    }
+
+    private void dragFingerOutFromOldKey(com.android.inputmethod.keyboard.Key, int, int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1;
+        int i0, i1;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void processDraggingFingerOutFromOldKey(com.android.inputmethod.keyboard.Key)>(r1);
+
+        $z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsAllowedDraggingFinger>;
+
+        if $z0 == 0 goto label1;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key onMoveToNewKey(com.android.inputmethod.keyboard.Key,int,int)>(null, i0, i1);
+
+        goto label2;
+
+     label1:
+        $z1 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsDetectingGesture>;
+
+        if $z1 != 0 goto label2;
+
+        virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void cancelTrackingForAction()>();
+
+     label2:
+        return;
+    }
+
+    private void onMoveEventInternal(int, int, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1, i3, i4;
+        long l2;
+        com.android.inputmethod.keyboard.Key r1, r2;
+        com.android.inputmethod.keyboard.internal.GestureEnabler $r3;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        com.android.inputmethod.keyboard.PointerTracker$DrawingProxy $r4;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        l2 := @parameter2: long;
+
+        i3 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastX>;
+
+        i4 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastY>;
+
+        r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey>;
+
+        r2 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key onMoveKey(int,int)>(i0, i1);
+
+        $r3 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureEnabler sGestureEnabler>;
+
+        $z0 = virtualinvoke $r3.<com.android.inputmethod.keyboard.internal.GestureEnabler: boolean shouldHandleGesture()>();
+
+        if $z0 == 0 goto label1;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onGestureMoveEvent(int,int,long,boolean,com.android.inputmethod.keyboard.Key)>(i0, i1, l2, 1, r2);
+
+        $z4 = <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture>;
+
+        if $z4 == 0 goto label1;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey> = null;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setReleasedKeyGraphics(com.android.inputmethod.keyboard.Key)>(r1);
+
+        return;
+
+     label1:
+        if r2 == null goto label3;
+
+        if r1 == null goto label2;
+
+        $z3 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean isMajorEnoughMoveToBeOnNewKey(int,int,long,com.android.inputmethod.keyboard.Key)>(i0, i1, l2, r2);
+
+        if $z3 == 0 goto label2;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void dragFingerFromOldKeyToNewKey(com.android.inputmethod.keyboard.Key,int,int,long,com.android.inputmethod.keyboard.Key,int,int)>(r2, i0, i1, l2, r1, i3, i4);
+
+        goto label4;
+
+     label2:
+        if r1 != null goto label4;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void processDraggingFingerInToNewKey(com.android.inputmethod.keyboard.Key,int,int,long)>(r2, i0, i1, l2);
+
+        goto label4;
+
+     label3:
+        if r1 == null goto label4;
+
+        $z2 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean isMajorEnoughMoveToBeOnNewKey(int,int,long,com.android.inputmethod.keyboard.Key)>(i0, i1, l2, r2);
+
+        if $z2 == 0 goto label4;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void dragFingerOutFromOldKey(com.android.inputmethod.keyboard.Key,int,int)>(r1, i0, i1);
+
+     label4:
+        $z1 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInSlidingKeyInput>;
+
+        if $z1 == 0 goto label5;
+
+        $r4 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$DrawingProxy sDrawingProxy>;
+
+        interfaceinvoke $r4.<com.android.inputmethod.keyboard.PointerTracker$DrawingProxy: void showSlidingKeyInputPreview(com.android.inputmethod.keyboard.PointerTracker)>(r0);
+
+     label5:
+        return;
+    }
+
+    private void onUpEvent(int, int, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1;
+        long l2;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r1;
+        boolean $z0, $z1;
+        com.android.inputmethod.keyboard.internal.PointerTrackerQueue $r2, $r4, $r6;
+        com.android.inputmethod.keyboard.Key $r3, $r5;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        l2 := @parameter2: long;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void cancelUpdateBatchInputTimer(com.android.inputmethod.keyboard.PointerTracker)>(r0);
+
+        $z0 = <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture>;
+
+        if $z0 != 0 goto label2;
+
+        $r3 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey>;
+
+        if $r3 == null goto label1;
+
+        $r5 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey>;
+
+        $z1 = virtualinvoke $r5.<com.android.inputmethod.keyboard.Key: boolean isModifier()>();
+
+        if $z1 == 0 goto label1;
+
+        $r6 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        virtualinvoke $r6.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: void releaseAllPointersExcept(com.android.inputmethod.keyboard.internal.PointerTrackerQueue$Element,long)>(r0, l2);
+
+        goto label2;
+
+     label1:
+        $r4 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        virtualinvoke $r4.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: void releaseAllPointersOlderThan(com.android.inputmethod.keyboard.internal.PointerTrackerQueue$Element,long)>(r0, l2);
+
+     label2:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onUpEventInternal(int,int,long)>(i0, i1, l2);
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        virtualinvoke $r2.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: void remove(com.android.inputmethod.keyboard.internal.PointerTrackerQueue$Element)>(r0);
+
+        return;
+    }
+
+    public void onPhantomUpEvent(long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        long l0;
+        int $i1, $i2;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        l0 := @parameter0: long;
+
+        $i2 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastX>;
+
+        $i1 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastY>;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onUpEventInternal(int,int,long)>($i2, $i1, l0);
+
+        virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void cancelTrackingForAction()>();
+
+        return;
+    }
+
+    private void onUpEventInternal(int, int, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1, i3, i4, i5, $i6, $i7, $i8, $i9, $i10, $i11;
+        long l2;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7;
+        com.android.inputmethod.keyboard.Key r1;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r2;
+        com.android.inputmethod.keyboard.internal.BatchInputArbiter $r3;
+        com.android.inputmethod.keyboard.MoreKeysPanel $r4, $r5, $r6;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        l2 := @parameter2: long;
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r2.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void cancelKeyTimersOf(com.android.inputmethod.keyboard.PointerTracker)>(r0);
+
+        z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInDraggingFinger>;
+
+        z1 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInSlidingKeyInput>;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void resetKeySelectionByDraggingFinger()>();
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsDetectingGesture> = 0;
+
+        r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey>;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey> = null;
+
+        i3 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mCurrentRepeatingKeyCode>;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: int mCurrentRepeatingKeyCode> = -1;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setReleasedKeyGraphics(com.android.inputmethod.keyboard.Key)>(r1);
+
+        $z2 = virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean isShowingMoreKeysPanel()>();
+
+        if $z2 == 0 goto label2;
+
+        $z7 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled>;
+
+        if $z7 != 0 goto label1;
+
+        $r4 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.MoreKeysPanel mMoreKeysPanel>;
+
+        i4 = interfaceinvoke $r4.<com.android.inputmethod.keyboard.MoreKeysPanel: int translateX(int)>(i0);
+
+        $r5 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.MoreKeysPanel mMoreKeysPanel>;
+
+        i5 = interfaceinvoke $r5.<com.android.inputmethod.keyboard.MoreKeysPanel: int translateY(int)>(i1);
+
+        $r6 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.MoreKeysPanel mMoreKeysPanel>;
+
+        $i11 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        interfaceinvoke $r6.<com.android.inputmethod.keyboard.MoreKeysPanel: void onUpEvent(int,int,int,long)>(i4, i5, $i11, l2);
+
+     label1:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void dismissMoreKeysPanel()>();
+
+        return;
+
+     label2:
+        $z3 = <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture>;
+
+        if $z3 == 0 goto label5;
+
+        if r1 == null goto label3;
+
+        $i10 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void callListenerOnRelease(com.android.inputmethod.keyboard.Key,int,boolean)>(r1, $i10, 1);
+
+     label3:
+        $r3 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BatchInputArbiter mBatchInputArbiter>;
+
+        $i9 = staticinvoke <com.android.inputmethod.keyboard.PointerTracker: int getActivePointerTrackerCount()>();
+
+        $z6 = virtualinvoke $r3.<com.android.inputmethod.keyboard.internal.BatchInputArbiter: boolean mayEndBatchInput(long,int,com.android.inputmethod.keyboard.internal.BatchInputArbiter$BatchInputArbiterListener)>(l2, $i9, r0);
+
+        if $z6 == 0 goto label4;
+
+        <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture> = 0;
+
+     label4:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void showGestureTrail()>();
+
+        return;
+
+     label5:
+        $z4 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled>;
+
+        if $z4 == 0 goto label6;
+
+        return;
+
+     label6:
+        if r1 == null goto label7;
+
+        $z5 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isRepeatable()>();
+
+        if $z5 == 0 goto label7;
+
+        $i8 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        if $i8 != i3 goto label7;
+
+        if z0 != 0 goto label7;
+
+        return;
+
+     label7:
+        $i7 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mKeyX>;
+
+        $i6 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mKeyY>;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void detectAndSendKey(com.android.inputmethod.keyboard.Key,int,int,long)>(r1, $i7, $i6, l2);
+
+        if z1 == 0 goto label8;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void callListenerOnFinishSlidingInput()>();
+
+     label8:
+        return;
+    }
+
+    public void onShowMoreKeysPanel(com.android.inputmethod.keyboard.MoreKeysPanel)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.MoreKeysPanel r1;
+        int i0, i1, $i2, $i3, $i4;
+        com.android.inputmethod.keyboard.Key $r2;
+        long $l5;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.MoreKeysPanel;
+
+        $r2 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey>;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setReleasedKeyGraphics(com.android.inputmethod.keyboard.Key)>($r2);
+
+        $i2 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastX>;
+
+        i0 = interfaceinvoke r1.<com.android.inputmethod.keyboard.MoreKeysPanel: int translateX(int)>($i2);
+
+        $i3 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mLastY>;
+
+        i1 = interfaceinvoke r1.<com.android.inputmethod.keyboard.MoreKeysPanel: int translateY(int)>($i3);
+
+        $i4 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        $l5 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        interfaceinvoke r1.<com.android.inputmethod.keyboard.MoreKeysPanel: void onDownEvent(int,int,int,long)>(i0, i1, $i4, $l5);
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.MoreKeysPanel mMoreKeysPanel> = r1;
+
+        return;
+    }
+
+    public void cancelTrackingForAction()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        boolean $z0;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $z0 = virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean isShowingMoreKeysPanel()>();
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled> = 1;
+
+        return;
+    }
+
+    public boolean isInOperation()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled>;
+
+        if $z0 != 0 goto label1;
+
+        $z1 = 1;
+
+        goto label2;
+
+     label1:
+        $z1 = 0;
+
+     label2:
+        return $z1;
+    }
+
+    public void cancelLongPressTimer()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void cancelLongPressTimerOf(com.android.inputmethod.keyboard.PointerTracker)>(r0);
+
+        return;
+    }
+
+    public void onLongPressed()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key $r1;
+        com.android.inputmethod.keyboard.internal.PointerTrackerQueue $r2;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void resetKeySelectionByDraggingFinger()>();
+
+        virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void cancelTrackingForAction()>();
+
+        $r1 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey>;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setReleasedKeyGraphics(com.android.inputmethod.keyboard.Key)>($r1);
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        virtualinvoke $r2.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: void remove(com.android.inputmethod.keyboard.internal.PointerTrackerQueue$Element)>(r0);
+
+        return;
+    }
+
+    private void onCancelEvent(int, int, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1;
+        long l2;
+        com.android.inputmethod.keyboard.internal.PointerTrackerQueue $r1;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        l2 := @parameter2: long;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void cancelBatchInput()>();
+
+        staticinvoke <com.android.inputmethod.keyboard.PointerTracker: void cancelAllPointerTrackers()>();
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue>;
+
+        virtualinvoke $r1.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: void releaseAllPointers(long)>(l2);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void onCancelEventInternal()>();
+
+        return;
+    }
+
+    private void onCancelEventInternal()
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r1;
+        com.android.inputmethod.keyboard.Key $r2;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r1.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void cancelKeyTimersOf(com.android.inputmethod.keyboard.PointerTracker)>(r0);
+
+        $r2 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey>;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void setReleasedKeyGraphics(com.android.inputmethod.keyboard.Key)>($r2);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void resetKeySelectionByDraggingFinger()>();
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void dismissMoreKeysPanel()>();
+
+        return;
+    }
+
+    private boolean isMajorEnoughMoveToBeOnNewKey(int, int, long, com.android.inputmethod.keyboard.Key)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1, i3, i4, $i5, $i6, $i7, $i8, $i10, $i11;
+        long l2;
+        com.android.inputmethod.keyboard.Key r1, r2;
+        float f0, f1, $f2, $f3, $f4, f5;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        com.android.inputmethod.keyboard.KeyDetector $r3;
+        com.android.inputmethod.keyboard.internal.TypingTimeRecorder $r4;
+        com.android.inputmethod.keyboard.internal.BogusMoveEventDetector $r5, $r8;
+        com.android.inputmethod.keyboard.Keyboard $r6, $r7, $r14;
+        double $d0, $d1, $d2, $d3, $d4;
+        java.lang.Object[] $r9, $r16;
+        java.lang.String $r10, $r12, $r15, $r19;
+        java.lang.Float $r11, $r17;
+        java.lang.Integer $r13, $r18;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        l2 := @parameter2: long;
+
+        r1 := @parameter3: com.android.inputmethod.keyboard.Key;
+
+        r2 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key mCurrentKey>;
+
+        if r1 != r2 goto label1;
+
+        return 0;
+
+     label1:
+        if r2 != null goto label2;
+
+        return 1;
+
+     label2:
+        $r3 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyDetector mKeyDetector>;
+
+        $z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInSlidingKeyInput>;
+
+        i3 = virtualinvoke $r3.<com.android.inputmethod.keyboard.KeyDetector: int getKeyHysteresisDistanceSquared(boolean)>($z0);
+
+        i4 = virtualinvoke r2.<com.android.inputmethod.keyboard.Key: int squaredDistanceToEdge(int,int)>(i0, i1);
+
+        if i4 < i3 goto label4;
+
+        $z5 = <com.android.inputmethod.keyboard.PointerTracker: boolean DEBUG_MODE>;
+
+        if $z5 == 0 goto label3;
+
+        $d3 = (double) i4;
+
+        $d4 = staticinvoke <java.lang.Math: double sqrt(double)>($d3);
+
+        $f4 = (float) $d4;
+
+        $r14 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $i10 = $r14.<com.android.inputmethod.keyboard.Keyboard: int mMostCommonKeyWidth>;
+
+        $f3 = (float) $i10;
+
+        f0 = $f4 / $f3;
+
+        $r15 = <com.android.inputmethod.keyboard.PointerTracker: java.lang.String TAG>;
+
+        $r16 = newarray (java.lang.Object)[2];
+
+        $i11 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        $r18 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i11);
+
+        $r16[0] = $r18;
+
+        $r17 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>(f0);
+
+        $r16[1] = $r17;
+
+        $r19 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("[%d] isMajorEnoughMoveToBeOnNewKey: %.2f key width from key edge", $r16);
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>($r15, $r19);
+
+     label3:
+        return 1;
+
+     label4:
+        $z1 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsAllowedDraggingFinger>;
+
+        if $z1 != 0 goto label6;
+
+        $r4 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.TypingTimeRecorder sTypingTimeRecorder>;
+
+        $z2 = virtualinvoke $r4.<com.android.inputmethod.keyboard.internal.TypingTimeRecorder: boolean isInFastTyping(long)>(l2);
+
+        if $z2 == 0 goto label6;
+
+        $r5 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BogusMoveEventDetector mBogusMoveEventDetector>;
+
+        $z3 = virtualinvoke $r5.<com.android.inputmethod.keyboard.internal.BogusMoveEventDetector: boolean hasTraveledLongDistance(int,int)>(i0, i1);
+
+        if $z3 == 0 goto label6;
+
+        $z4 = <com.android.inputmethod.keyboard.PointerTracker: boolean DEBUG_MODE>;
+
+        if $z4 == 0 goto label5;
+
+        $r6 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $i5 = $r6.<com.android.inputmethod.keyboard.Keyboard: int mMostCommonKeyWidth>;
+
+        $d2 = (double) $i5;
+
+        $r7 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Keyboard mKeyboard>;
+
+        $i6 = $r7.<com.android.inputmethod.keyboard.Keyboard: int mMostCommonKeyHeight>;
+
+        $d0 = (double) $i6;
+
+        $d1 = staticinvoke <java.lang.Math: double hypot(double,double)>($d2, $d0);
+
+        f5 = (float) $d1;
+
+        $r8 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.BogusMoveEventDetector mBogusMoveEventDetector>;
+
+        $i7 = virtualinvoke $r8.<com.android.inputmethod.keyboard.internal.BogusMoveEventDetector: int getAccumulatedDistanceFromDownKey()>();
+
+        $f2 = (float) $i7;
+
+        f1 = $f2 / f5;
+
+        $r10 = <com.android.inputmethod.keyboard.PointerTracker: java.lang.String TAG>;
+
+        $r9 = newarray (java.lang.Object)[2];
+
+        $i8 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        $r13 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i8);
+
+        $r9[0] = $r13;
+
+        $r11 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>(f1);
+
+        $r9[1] = $r11;
+
+        $r12 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("[%d] isMajorEnoughMoveToBeOnNewKey: %.2f key diagonal from virtual down point", $r9);
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>($r10, $r12);
+
+     label5:
+        return 1;
+
+     label6:
+        return 0;
+    }
+
+    private void startLongPressTimer(com.android.inputmethod.keyboard.Key)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1;
+        int i0, $i1;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r2, $r3;
+        boolean $z0, $z1, $z2;
+        com.android.inputmethod.keyboard.internal.MoreKeySpec[] $r4;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r2.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void cancelLongPressShiftKeyTimers()>();
+
+        $z0 = <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        if r1 != null goto label2;
+
+        return;
+
+     label2:
+        $z1 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isLongPressEnabled()>();
+
+        if $z1 != 0 goto label3;
+
+        return;
+
+     label3:
+        $z2 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInDraggingFinger>;
+
+        if $z2 == 0 goto label4;
+
+        $r4 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: com.android.inputmethod.keyboard.internal.MoreKeySpec[] getMoreKeys()>();
+
+        if $r4 != null goto label4;
+
+        return;
+
+     label4:
+        $i1 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        i0 = specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: int getLongPressTimeout(int)>($i1);
+
+        if i0 > 0 goto label5;
+
+        return;
+
+     label5:
+        $r3 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r3.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void startLongPressTimerOf(com.android.inputmethod.keyboard.PointerTracker,int)>(r0, i0);
+
+        return;
+    }
+
+    private int getLongPressTimeout(int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1, $i2, $i3;
+        com.android.inputmethod.latin.settings.Settings $r1;
+        com.android.inputmethod.latin.settings.SettingsValues $r2;
+        boolean $z0;
+        com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams $r3;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        if i0 != -1 goto label1;
+
+        $r3 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams sParams>;
+
+        $i3 = $r3.<com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams: int mLongPressShiftLockTimeout>;
+
+        return $i3;
+
+     label1:
+        $r1 = staticinvoke <com.android.inputmethod.latin.settings.Settings: com.android.inputmethod.latin.settings.Settings getInstance()>();
+
+        $r2 = virtualinvoke $r1.<com.android.inputmethod.latin.settings.Settings: com.android.inputmethod.latin.settings.SettingsValues getCurrent()>();
+
+        i1 = $r2.<com.android.inputmethod.latin.settings.SettingsValues: int mKeyLongpressTimeout>;
+
+        $z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInSlidingKeyInput>;
+
+        if $z0 == 0 goto label2;
+
+        $i2 = i1 * 3;
+
+        return $i2;
+
+     label2:
+        return i1;
+    }
+
+    private void detectAndSendKey(com.android.inputmethod.keyboard.Key, int, int, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1;
+        int i0, i1, i3;
+        long l2;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        l2 := @parameter3: long;
+
+        if r1 != null goto label1;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void callListenerOnCancelInput()>();
+
+        return;
+
+     label1:
+        i3 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void callListenerOnCodeInput(com.android.inputmethod.keyboard.Key,int,int,int,long,boolean)>(r1, i3, i0, i1, l2, 0);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void callListenerOnRelease(com.android.inputmethod.keyboard.Key,int,boolean)>(r1, i3, 0);
+
+        return;
+    }
+
+    private void startRepeatKey(com.android.inputmethod.keyboard.Key)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        com.android.inputmethod.keyboard.Key r1;
+        boolean $z1, $z2, $z3;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: com.android.inputmethod.keyboard.Key;
+
+        $z1 = <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture>;
+
+        if $z1 == 0 goto label1;
+
+        return;
+
+     label1:
+        if r1 != null goto label2;
+
+        return;
+
+     label2:
+        $z2 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: boolean isRepeatable()>();
+
+        if $z2 != 0 goto label3;
+
+        return;
+
+     label3:
+        $z3 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsInDraggingFinger>;
+
+        if $z3 == 0 goto label4;
+
+        return;
+
+     label4:
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void startKeyRepeatTimer(int)>(1);
+
+        return;
+    }
+
+    public void onKeyRepeat(int, int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1, i2, $i3, $i4, $i5;
+        com.android.inputmethod.keyboard.Key r1;
+        long $l6;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 = virtualinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.Key getKey()>();
+
+        if r1 == null goto label1;
+
+        $i3 = virtualinvoke r1.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        if $i3 == i0 goto label2;
+
+     label1:
+        r0.<com.android.inputmethod.keyboard.PointerTracker: int mCurrentRepeatingKeyCode> = -1;
+
+        return;
+
+     label2:
+        r0.<com.android.inputmethod.keyboard.PointerTracker: int mCurrentRepeatingKeyCode> = i0;
+
+        r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsDetectingGesture> = 0;
+
+        i2 = i1 + 1;
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void startKeyRepeatTimer(int)>(i2);
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: boolean callListenerOnPressAndCheckKeyboardLayoutChange(com.android.inputmethod.keyboard.Key,int)>(r1, i1);
+
+        $i4 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mKeyX>;
+
+        $i5 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mKeyY>;
+
+        $l6 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        specialinvoke r0.<com.android.inputmethod.keyboard.PointerTracker: void callListenerOnCodeInput(com.android.inputmethod.keyboard.Key,int,int,int,long,boolean)>(r1, i0, $i4, $i5, $l6, 1);
+
+        return;
+    }
+
+    private void startKeyRepeatTimer(int)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        int i0, i1, $i2;
+        com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams $r1, $r3;
+        com.android.inputmethod.keyboard.PointerTracker$TimerProxy $r2;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        i0 := @parameter0: int;
+
+        if i0 != 1 goto label1;
+
+        $r3 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams sParams>;
+
+        $i2 = $r3.<com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams: int mKeyRepeatStartTimeout>;
+
+        goto label2;
+
+     label1:
+        $r1 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams sParams>;
+
+        $i2 = $r1.<com.android.inputmethod.keyboard.PointerTracker$PointerTrackerParams: int mKeyRepeatInterval>;
+
+     label2:
+        i1 = $i2;
+
+        $r2 = <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.PointerTracker$TimerProxy sTimerProxy>;
+
+        interfaceinvoke $r2.<com.android.inputmethod.keyboard.PointerTracker$TimerProxy: void startKeyRepeatTimerOf(com.android.inputmethod.keyboard.PointerTracker,int,int)>(r0, i0, i1);
+
+        return;
+    }
+
+    private void printTouchEvent(java.lang.String, int, int, long)
+    {
+        com.android.inputmethod.keyboard.PointerTracker r0;
+        java.lang.String r1, r3, $r5, $r7, $r12, $r14;
+        int i0, i1, $i3, $i4;
+        long l2;
+        com.android.inputmethod.keyboard.Key r2;
+        com.android.inputmethod.keyboard.KeyDetector $r4;
+        java.lang.Object[] $r6;
+        java.lang.Integer $r9, $r10, $r11;
+        boolean $z0;
+        java.lang.Long $r13;
+
+        r0 := @this: com.android.inputmethod.keyboard.PointerTracker;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        l2 := @parameter3: long;
+
+        $r4 = r0.<com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyDetector mKeyDetector>;
+
+        r2 = virtualinvoke $r4.<com.android.inputmethod.keyboard.KeyDetector: com.android.inputmethod.keyboard.Key detectHitKey(int,int)>(i0, i1);
+
+        if r2 != null goto label1;
+
+        $r5 = "none";
+
+        goto label2;
+
+     label1:
+        $i3 = virtualinvoke r2.<com.android.inputmethod.keyboard.Key: int getCode()>();
+
+        $r5 = staticinvoke <com.android.inputmethod.latin.Constants: java.lang.String printableCode(int)>($i3);
+
+     label2:
+        r3 = $r5;
+
+        $r7 = <com.android.inputmethod.keyboard.PointerTracker: java.lang.String TAG>;
+
+        $r6 = newarray (java.lang.Object)[7];
+
+        $i4 = r0.<com.android.inputmethod.keyboard.PointerTracker: int mPointerId>;
+
+        $r9 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i4);
+
+        $r6[0] = $r9;
+
+        $z0 = r0.<com.android.inputmethod.keyboard.PointerTracker: boolean mIsTrackingForActionDisabled>;
+
+        if $z0 == 0 goto label3;
+
+        $r14 = "-";
+
+        goto label4;
+
+     label3:
+        $r14 = " ";
+
+     label4:
+        $r6[1] = $r14;
+
+        $r6[2] = r1;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r6[3] = $r10;
+
+        $r11 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        $r6[4] = $r11;
+
+        $r13 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l2);
+
+        $r6[5] = $r13;
+
+        $r6[6] = r3;
+
+        $r12 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("[%d]%s%s %4d %4d %5d %s", $r6);
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>($r7, $r12);
+
+        return;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+        com.android.inputmethod.keyboard.internal.GestureEnabler $r2;
+        java.util.ArrayList $r3;
+        com.android.inputmethod.keyboard.internal.PointerTrackerQueue $r4;
+        com.android.inputmethod.keyboard.KeyboardActionListener $r5;
+
+        <com.android.inputmethod.keyboard.PointerTracker: int MULTIPLIER_FOR_LONG_PRESS_TIMEOUT_IN_SLIDING_INPUT> = 3;
+
+        <com.android.inputmethod.keyboard.PointerTracker: float PHANTOM_SUDDEN_MOVE_THRESHOLD> = 0.25F;
+
+        <com.android.inputmethod.keyboard.PointerTracker: boolean DEBUG_LISTENER> = 0;
+
+        <com.android.inputmethod.keyboard.PointerTracker: boolean DEBUG_MOVE_EVENT> = 0;
+
+        <com.android.inputmethod.keyboard.PointerTracker: boolean DEBUG_EVENT> = 0;
+
+        $r0 = class "com/android/inputmethod/keyboard/PointerTracker";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.inputmethod.keyboard.PointerTracker: java.lang.String TAG> = $r1;
+
+        <com.android.inputmethod.keyboard.PointerTracker: boolean DEBUG_MODE> = 0;
+
+        $r2 = new com.android.inputmethod.keyboard.internal.GestureEnabler;
+
+        specialinvoke $r2.<com.android.inputmethod.keyboard.internal.GestureEnabler: void <init>()>();
+
+        <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.GestureEnabler sGestureEnabler> = $r2;
+
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        <com.android.inputmethod.keyboard.PointerTracker: java.util.ArrayList sTrackers> = $r3;
+
+        $r4 = new com.android.inputmethod.keyboard.internal.PointerTrackerQueue;
+
+        specialinvoke $r4.<com.android.inputmethod.keyboard.internal.PointerTrackerQueue: void <init>()>();
+
+        <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.internal.PointerTrackerQueue sPointerTrackerQueue> = $r4;
+
+        $r5 = <com.android.inputmethod.keyboard.KeyboardActionListener: com.android.inputmethod.keyboard.KeyboardActionListener EMPTY_LISTENER>;
+
+        <com.android.inputmethod.keyboard.PointerTracker: com.android.inputmethod.keyboard.KeyboardActionListener sListener> = $r5;
+
+        <com.android.inputmethod.keyboard.PointerTracker: boolean sInGesture> = 0;
+
+        return;
+    }
+}

@@ -1,0 +1,2971 @@
+public final class com.android.mail.ui.ConversationListFragment extends android.app.Fragment implements android.widget.AdapterView$OnItemLongClickListener, com.android.mail.ui.ViewMode$ModeChangeListener, com.android.mail.ui.SwipeableListView$ListItemSwipedListener, android.support.v4.widget.SwipeRefreshLayout$OnRefreshListener, com.android.mail.ui.SwipeableListView$SwipeListener, android.view.View$OnKeyListener, android.widget.AdapterView$OnItemClickListener
+{
+    private static final java.lang.String CONVERSATION_LIST_KEY;
+    private static final java.lang.String LIST_STATE_KEY;
+    private static final java.lang.String LOG_TAG;
+    private static final java.lang.String CHOICE_MODE_KEY;
+    private static boolean mTabletDevice;
+    private static int LOADING_DELAY_MS;
+    private static int MINIMUM_LOADING_DURATION;
+    private static int TIMESTAMP_UPDATE_INTERVAL;
+    private com.android.mail.ui.ControllableActivity mActivity;
+    private com.android.mail.ui.ConversationListCallbacks mCallbacks;
+    private final android.os.Handler mHandler;
+    private com.android.mail.ui.SwipeableListView mListView;
+    private android.view.View mSearchHeaderView;
+    private android.widget.TextView mSearchResultCountTextView;
+    private com.android.mail.providers.Account mAccount;
+    private com.android.mail.providers.Folder mFolder;
+    private java.lang.Runnable mUpdateTimestampsRunnable;
+    private com.android.mail.ConversationListContext mViewContext;
+    private com.android.mail.ui.AnimatedAdapter mListAdapter;
+    private com.android.mail.browse.ConversationListFooterView mFooterView;
+    private com.android.mail.ui.ConversationListEmptyView mEmptyView;
+    private android.view.View mLoadingView;
+    private com.android.mail.ui.ErrorListener mErrorListener;
+    private com.android.mail.providers.FolderObserver mFolderObserver;
+    private android.database.DataSetObserver mConversationCursorObserver;
+    private com.android.mail.ui.ConversationSelectionSet mSelectedSet;
+    private final com.android.mail.providers.AccountObserver mAccountObserver;
+    private com.android.mail.ui.ConversationUpdater mUpdater;
+    private int mConversationCursorHash;
+    private int mConversationCursorLastCount;
+    private boolean mInitialCursorLoading;
+    private int mNextFocusLeftId;
+    private boolean mKeyInitiatedFromList;
+    private static long sSelectionModeAnimationDuration;
+    private final java.lang.Runnable mLoadingViewRunnable;
+    private final java.lang.Runnable mHideLoadingRunnable;
+    private boolean mLoadingViewPending;
+    private boolean mCanTakeDownLoadingView;
+    private boolean mScrollPositionRestored;
+    private com.android.mail.ui.MailSwipeRefreshLayout mSwipeRefreshWidget;
+    private final com.android.mail.ui.ConversationSetObserver mConversationSetObserver;
+
+    private void showListView()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.SwipeableListView $r1;
+        com.android.mail.ui.ConversationListEmptyView $r2;
+        android.view.View $r3;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r1.<com.android.mail.ui.SwipeableListView: void setVisibility(int)>(0);
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListEmptyView mEmptyView>;
+
+        virtualinvoke $r2.<com.android.mail.ui.ConversationListEmptyView: void setVisibility(int)>(4);
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: android.view.View mLoadingView>;
+
+        virtualinvoke $r3.<android.view.View: void setVisibility(int)>(4);
+
+        return;
+    }
+
+    private void showEmptyView()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ConversationListContext $r1;
+        com.android.mail.ui.AnimatedAdapter $r2;
+        com.android.mail.ui.ConversationListEmptyView $r3, $r8;
+        com.android.mail.providers.Folder $r4;
+        java.lang.String $r5;
+        android.support.v4.text.BidiFormatter $r6;
+        com.android.mail.ui.SwipeableListView $r7;
+        android.view.View $r9;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListEmptyView mEmptyView>;
+
+        $r4 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ConversationListContext mViewContext>;
+
+        $r5 = $r1.<com.android.mail.ConversationListContext: java.lang.String searchQuery>;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        $r6 = virtualinvoke $r2.<com.android.mail.ui.AnimatedAdapter: android.support.v4.text.BidiFormatter getBidiFormatter()>();
+
+        virtualinvoke $r3.<com.android.mail.ui.ConversationListEmptyView: void setupEmptyView(com.android.mail.providers.Folder,java.lang.String,android.support.v4.text.BidiFormatter)>($r4, $r5, $r6);
+
+        $r7 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r7.<com.android.mail.ui.SwipeableListView: void setVisibility(int)>(4);
+
+        $r8 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListEmptyView mEmptyView>;
+
+        virtualinvoke $r8.<com.android.mail.ui.ConversationListEmptyView: void setVisibility(int)>(0);
+
+        $r9 = r0.<com.android.mail.ui.ConversationListFragment: android.view.View mLoadingView>;
+
+        virtualinvoke $r9.<android.view.View: void setVisibility(int)>(4);
+
+        return;
+    }
+
+    private void showLoadingView()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.SwipeableListView $r1;
+        com.android.mail.ui.ConversationListEmptyView $r2;
+        android.view.View $r3;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r1.<com.android.mail.ui.SwipeableListView: void setVisibility(int)>(4);
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListEmptyView mEmptyView>;
+
+        virtualinvoke $r2.<com.android.mail.ui.ConversationListEmptyView: void setVisibility(int)>(4);
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: android.view.View mLoadingView>;
+
+        virtualinvoke $r3.<android.view.View: void setVisibility(int)>(0);
+
+        return;
+    }
+
+    public void <init>()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        android.os.Handler $r1;
+        com.android.mail.ui.ConversationListFragment$1 $r2;
+        com.android.mail.ui.ConversationListFragment$2 $r3;
+        com.android.mail.ui.ConversationListFragment$3 $r4;
+        com.android.mail.ui.ConversationListFragment$7 $r5;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        specialinvoke r0.<android.app.Fragment: void <init>()>();
+
+        $r1 = new android.os.Handler;
+
+        specialinvoke $r1.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.mail.ui.ConversationListFragment: android.os.Handler mHandler> = $r1;
+
+        r0.<com.android.mail.ui.ConversationListFragment: java.lang.Runnable mUpdateTimestampsRunnable> = null;
+
+        $r2 = new com.android.mail.ui.ConversationListFragment$1;
+
+        specialinvoke $r2.<com.android.mail.ui.ConversationListFragment$1: void <init>(com.android.mail.ui.ConversationListFragment)>(r0);
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.AccountObserver mAccountObserver> = $r2;
+
+        $r3 = new com.android.mail.ui.ConversationListFragment$2;
+
+        specialinvoke $r3.<com.android.mail.ui.ConversationListFragment$2: void <init>(com.android.mail.ui.ConversationListFragment,java.lang.String,android.app.Fragment)>(r0, "LoadingRunnable", r0);
+
+        r0.<com.android.mail.ui.ConversationListFragment: java.lang.Runnable mLoadingViewRunnable> = $r3;
+
+        $r4 = new com.android.mail.ui.ConversationListFragment$3;
+
+        specialinvoke $r4.<com.android.mail.ui.ConversationListFragment$3: void <init>(com.android.mail.ui.ConversationListFragment,java.lang.String,android.app.Fragment)>(r0, "CancelLoading", r0);
+
+        r0.<com.android.mail.ui.ConversationListFragment: java.lang.Runnable mHideLoadingRunnable> = $r4;
+
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mScrollPositionRestored> = 0;
+
+        $r5 = new com.android.mail.ui.ConversationListFragment$7;
+
+        specialinvoke $r5.<com.android.mail.ui.ConversationListFragment$7: void <init>(com.android.mail.ui.ConversationListFragment)>(r0);
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationSetObserver mConversationSetObserver> = $r5;
+
+        return;
+    }
+
+    public void onBeginSwipe()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.MailSwipeRefreshLayout $r1;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.MailSwipeRefreshLayout mSwipeRefreshWidget>;
+
+        virtualinvoke $r1.<com.android.mail.ui.MailSwipeRefreshLayout: void setEnabled(boolean)>(0);
+
+        return;
+    }
+
+    public void onEndSwipe()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.MailSwipeRefreshLayout $r1;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.MailSwipeRefreshLayout mSwipeRefreshWidget>;
+
+        virtualinvoke $r1.<com.android.mail.ui.MailSwipeRefreshLayout: void setEnabled(boolean)>(1);
+
+        return;
+    }
+
+    public static com.android.mail.ui.ConversationListFragment newInstance(com.android.mail.ConversationListContext)
+    {
+        com.android.mail.ConversationListContext r0;
+        com.android.mail.ui.ConversationListFragment r1, $r3;
+        android.os.Bundle r2, $r4, $r5;
+
+        r0 := @parameter0: com.android.mail.ConversationListContext;
+
+        $r3 = new com.android.mail.ui.ConversationListFragment;
+
+        specialinvoke $r3.<com.android.mail.ui.ConversationListFragment: void <init>()>();
+
+        r1 = $r3;
+
+        $r4 = new android.os.Bundle;
+
+        specialinvoke $r4.<android.os.Bundle: void <init>(int)>(1);
+
+        r2 = $r4;
+
+        $r5 = virtualinvoke r0.<com.android.mail.ConversationListContext: android.os.Bundle toBundle()>();
+
+        virtualinvoke r2.<android.os.Bundle: void putBundle(java.lang.String,android.os.Bundle)>("conversation-list", $r5);
+
+        virtualinvoke r1.<com.android.mail.ui.ConversationListFragment: void setArguments(android.os.Bundle)>(r2);
+
+        return r1;
+    }
+
+    private void updateSearchResultHeader(int)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        int i0;
+        com.android.mail.ui.ControllableActivity $r1;
+        android.view.View $r2;
+        android.widget.TextView $r3;
+        android.content.res.Resources $r4;
+        java.lang.Object[] $r5;
+        java.lang.Integer $r6;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: android.view.View mSearchHeaderView>;
+
+        if $r2 != null goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: android.widget.TextView mSearchResultCountTextView>;
+
+        $r4 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: android.content.res.Resources getResources()>();
+
+        $r5 = newarray (java.lang.Object)[1];
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r5[0] = $r6;
+
+        $r7 = virtualinvoke $r4.<android.content.res.Resources: java.lang.String getString(int,java.lang.Object[])>(2131296528, $r5);
+
+        virtualinvoke $r3.<android.widget.TextView: void setText(java.lang.CharSequence)>($r7);
+
+        return;
+    }
+
+    public void onActivityCreated(android.os.Bundle)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        android.os.Bundle r1;
+        android.app.Activity r2;
+        android.view.LayoutInflater r3;
+        com.android.mail.browse.ConversationCursor r4;
+        android.app.LoaderManager r5;
+        com.android.mail.ui.ConversationListHelper r6;
+        com.google.common.collect.ImmutableList r7, $r79;
+        java.util.Iterator r8;
+        com.android.mail.ui.ConversationSpecialItemView r9;
+        com.android.mail.ui.ToastBarOperation r10;
+        long $l0, $l5;
+        byte $b1;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, z7;
+        com.android.mail.ui.ControllableActivity $r11, $r13, $r17, $r19, $r21, $r23, $r27, $r28, $r30, $r35, $r42, $r44, $r47, $r51, $r56, $r60, $r61, $r62, $r63, $r67, $r70;
+        com.android.mail.providers.AccountObserver $r12;
+        com.android.mail.providers.Account $r14, $r71;
+        com.android.mail.ui.AccountController $r15;
+        com.android.mail.ui.ConversationListCallbacks $r16;
+        com.android.mail.ui.ErrorListener $r18;
+        android.content.Context $r20, $r31, $r58;
+        android.view.View $r22, $r64, $r65, $r66, $r72;
+        com.android.mail.browse.ConversationListFooterView $r24, $r25, $r32;
+        com.android.mail.ui.AnimatedAdapter $r26, $r33, $r36, $r46, $r74;
+        com.android.mail.ui.ConversationSelectionSet $r29, $r40, $r41;
+        com.android.mail.ui.SwipeableListView $r34, $r37, $r39, $r68;
+        com.android.mail.ConversationListContext $r38;
+        com.android.mail.providers.FolderObserver $r43;
+        com.android.mail.ui.ConversationListFragment$4 $r45;
+        com.android.mail.ui.ConversationListFragment$ConversationCursorObserver $r48;
+        com.android.mail.ui.FolderController $r50;
+        com.android.mail.ui.ConversationUpdater $r52, $r54;
+        android.database.DataSetObserver $r53;
+        com.android.mail.ui.ViewMode $r55, $r57;
+        int $i2, $i3, $i4, i7;
+        android.content.res.Resources $r59, $r75;
+        java.lang.Object $r69;
+        android.widget.TextView $r73;
+        java.lang.Object[] $r76;
+        java.lang.String $r77;
+        java.util.ArrayList $r78;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter0: android.os.Bundle;
+
+        specialinvoke r0.<android.app.Fragment: void onActivityCreated(android.os.Bundle)>(r1);
+
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mLoadingViewPending> = 0;
+
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mCanTakeDownLoadingView> = 1;
+
+        $l0 = <com.android.mail.ui.ConversationListFragment: long sSelectionModeAnimationDuration>;
+
+        $b1 = $l0 cmp 0L;
+
+        if $b1 >= 0 goto label01;
+
+        $r75 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: android.content.res.Resources getResources()>();
+
+        $i4 = virtualinvoke $r75.<android.content.res.Resources: int getInteger(int)>(2131492917);
+
+        $l5 = (long) $i4;
+
+        <com.android.mail.ui.ConversationListFragment: long sSelectionModeAnimationDuration> = $l5;
+
+     label01:
+        r2 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: android.app.Activity getActivity()>();
+
+        $z0 = r2 instanceof com.android.mail.ui.ControllableActivity;
+
+        if $z0 != 0 goto label02;
+
+        $r77 = <com.android.mail.ui.ConversationListFragment: java.lang.String LOG_TAG>;
+
+        $r76 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>($r77, "ConversationListFragment expects only a ControllableActivity tocreate it. Cannot proceed.", $r76);
+
+     label02:
+        $r11 = (com.android.mail.ui.ControllableActivity) r2;
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity> = $r11;
+
+        $r12 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.AccountObserver mAccountObserver>;
+
+        $r13 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r15 = interfaceinvoke $r13.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.AccountController getAccountController()>();
+
+        $r14 = virtualinvoke $r12.<com.android.mail.providers.AccountObserver: com.android.mail.providers.Account initialize(com.android.mail.ui.AccountController)>($r15);
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Account mAccount> = $r14;
+
+        $r17 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r16 = interfaceinvoke $r17.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ConversationListCallbacks getListHandler()>();
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListCallbacks mCallbacks> = $r16;
+
+        $r19 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r18 = interfaceinvoke $r19.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ErrorListener getErrorListener()>();
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ErrorListener mErrorListener> = $r18;
+
+        $r21 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r20 = interfaceinvoke $r21.<com.android.mail.ui.ControllableActivity: android.content.Context getActivityContext()>();
+
+        r3 = staticinvoke <android.view.LayoutInflater: android.view.LayoutInflater 'from'(android.content.Context)>($r20);
+
+        $r22 = virtualinvoke r3.<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup)>(2130968640, null);
+
+        $r24 = (com.android.mail.browse.ConversationListFooterView) $r22;
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.browse.ConversationListFooterView mFooterView> = $r24;
+
+        $r25 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.browse.ConversationListFooterView mFooterView>;
+
+        $r23 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        virtualinvoke $r25.<com.android.mail.browse.ConversationListFooterView: void setClickListener(com.android.mail.browse.ConversationListFooterView$FooterViewClickListener)>($r23);
+
+        r4 = specialinvoke r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.browse.ConversationCursor getConversationListCursor()>();
+
+        r5 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: android.app.LoaderManager getLoaderManager()>();
+
+        $r27 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        r6 = interfaceinvoke $r27.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ConversationListHelper getConversationListHelper()>();
+
+        if r6 == null goto label03;
+
+        $r70 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r71 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Account mAccount>;
+
+        $r78 = virtualinvoke r6.<com.android.mail.ui.ConversationListHelper: java.util.ArrayList makeConversationListSpecialViews(android.content.Context,com.android.mail.ui.ControllableActivity,com.android.mail.providers.Account)>(r2, $r70, $r71);
+
+        $r79 = staticinvoke <com.google.common.collect.ImmutableList: com.google.common.collect.ImmutableList copyOf(java.util.Collection)>($r78);
+
+        goto label04;
+
+     label03:
+        $r79 = null;
+
+     label04:
+        r7 = $r79;
+
+        if r7 == null goto label06;
+
+        r8 = interfaceinvoke r7.<java.util.List: java.util.Iterator iterator()>();
+
+     label05:
+        $z6 = interfaceinvoke r8.<java.util.Iterator: boolean hasNext()>();
+
+        if $z6 == 0 goto label06;
+
+        $r69 = interfaceinvoke r8.<java.util.Iterator: java.lang.Object next()>();
+
+        r9 = (com.android.mail.ui.ConversationSpecialItemView) $r69;
+
+        interfaceinvoke r9.<com.android.mail.ui.ConversationSpecialItemView: void bindFragment(android.app.LoaderManager,android.os.Bundle)>(r5, r1);
+
+        goto label05;
+
+     label06:
+        $r26 = new com.android.mail.ui.AnimatedAdapter;
+
+        $r30 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r31 = interfaceinvoke $r30.<com.android.mail.ui.ControllableActivity: android.content.Context getApplicationContext()>();
+
+        $r28 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r29 = interfaceinvoke $r28.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ConversationSelectionSet getSelectedSet()>();
+
+        $r35 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r34 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        specialinvoke $r26.<com.android.mail.ui.AnimatedAdapter: void <init>(android.content.Context,com.android.mail.browse.ConversationCursor,com.android.mail.ui.ConversationSelectionSet,com.android.mail.ui.ControllableActivity,com.android.mail.ui.SwipeableListView,java.util.List)>($r31, r4, $r29, $r35, $r34, r7);
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter> = $r26;
+
+        $r33 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        $r32 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.browse.ConversationListFooterView mFooterView>;
+
+        virtualinvoke $r33.<com.android.mail.ui.AnimatedAdapter: void addFooter(android.view.View)>($r32);
+
+        $r38 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ConversationListContext mViewContext>;
+
+        z7 = staticinvoke <com.android.mail.ConversationListContext: boolean isSearchResult(com.android.mail.ConversationListContext)>($r38);
+
+        if z7 == 0 goto label07;
+
+        $r64 = virtualinvoke r3.<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup)>(2130968709, null);
+
+        r0.<com.android.mail.ui.ConversationListFragment: android.view.View mSearchHeaderView> = $r64;
+
+        $r66 = r0.<com.android.mail.ui.ConversationListFragment: android.view.View mSearchHeaderView>;
+
+        $r65 = virtualinvoke $r66.<android.view.View: android.view.View findViewById(int)>(2131624337);
+
+        $r73 = (android.widget.TextView) $r65;
+
+        r0.<com.android.mail.ui.ConversationListFragment: android.widget.TextView mSearchResultCountTextView> = $r73;
+
+        $r74 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        $r72 = r0.<com.android.mail.ui.ConversationListFragment: android.view.View mSearchHeaderView>;
+
+        virtualinvoke $r74.<com.android.mail.ui.AnimatedAdapter: void addHeader(android.view.View)>($r72);
+
+     label07:
+        $r37 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $r36 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        virtualinvoke $r37.<com.android.mail.ui.SwipeableListView: void setAdapter(android.widget.ListAdapter)>($r36);
+
+        $r42 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r41 = interfaceinvoke $r42.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ConversationSelectionSet getSelectedSet()>();
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationSelectionSet mSelectedSet> = $r41;
+
+        $r39 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $r40 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationSelectionSet mSelectedSet>;
+
+        virtualinvoke $r39.<com.android.mail.ui.SwipeableListView: void setSelectionSet(com.android.mail.ui.ConversationSelectionSet)>($r40);
+
+        $r46 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        virtualinvoke $r46.<com.android.mail.ui.AnimatedAdapter: void setFooterVisibility(boolean)>(0);
+
+        $r45 = new com.android.mail.ui.ConversationListFragment$4;
+
+        specialinvoke $r45.<com.android.mail.ui.ConversationListFragment$4: void <init>(com.android.mail.ui.ConversationListFragment)>(r0);
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.FolderObserver mFolderObserver> = $r45;
+
+        $r43 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.FolderObserver mFolderObserver>;
+
+        $r44 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r50 = interfaceinvoke $r44.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.FolderController getFolderController()>();
+
+        virtualinvoke $r43.<com.android.mail.providers.FolderObserver: com.android.mail.providers.Folder initialize(com.android.mail.ui.FolderController)>($r50);
+
+        $r48 = new com.android.mail.ui.ConversationListFragment$ConversationCursorObserver;
+
+        specialinvoke $r48.<com.android.mail.ui.ConversationListFragment$ConversationCursorObserver: void <init>(com.android.mail.ui.ConversationListFragment,com.android.mail.ui.ConversationListFragment$1)>(r0, null);
+
+        r0.<com.android.mail.ui.ConversationListFragment: android.database.DataSetObserver mConversationCursorObserver> = $r48;
+
+        $r47 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r54 = interfaceinvoke $r47.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ConversationUpdater getConversationUpdater()>();
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationUpdater mUpdater> = $r54;
+
+        $r52 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationUpdater mUpdater>;
+
+        $r53 = r0.<com.android.mail.ui.ConversationListFragment: android.database.DataSetObserver mConversationCursorObserver>;
+
+        interfaceinvoke $r52.<com.android.mail.ui.ConversationUpdater: void registerConversationListObserver(android.database.DataSetObserver)>($r53);
+
+        $r51 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r58 = interfaceinvoke $r51.<com.android.mail.ui.ControllableActivity: android.content.Context getApplicationContext()>();
+
+        $r59 = virtualinvoke $r58.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $z1 = staticinvoke <com.android.mail.utils.Utils: boolean useTabletUI(android.content.res.Resources)>($r59);
+
+        <com.android.mail.ui.ConversationListFragment: boolean mTabletDevice> = $z1;
+
+        $r60 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r55 = interfaceinvoke $r60.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ViewMode getViewMode()>();
+
+        $i2 = virtualinvoke $r55.<com.android.mail.ui.ViewMode: int getMode()>();
+
+        virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: void onViewModeChanged(int)>($i2);
+
+        $r56 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r57 = interfaceinvoke $r56.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ViewMode getViewMode()>();
+
+        virtualinvoke $r57.<com.android.mail.ui.ViewMode: void addListener(com.android.mail.ui.ViewMode$ModeChangeListener)>(r0);
+
+        $r63 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $z2 = interfaceinvoke $r63.<com.android.mail.ui.ControllableActivity: boolean isFinishing()>();
+
+        if $z2 == 0 goto label08;
+
+        return;
+
+     label08:
+        if r4 != null goto label09;
+
+        $i3 = 0;
+
+        goto label10;
+
+     label09:
+        $i3 = virtualinvoke r4.<com.android.mail.browse.ConversationCursor: int hashCode()>();
+
+     label10:
+        r0.<com.android.mail.ui.ConversationListFragment: int mConversationCursorHash> = $i3;
+
+        if r4 == null goto label11;
+
+        $z4 = virtualinvoke r4.<com.android.mail.browse.ConversationCursor: boolean isRefreshReady()>();
+
+        if $z4 == 0 goto label11;
+
+        virtualinvoke r4.<com.android.mail.browse.ConversationCursor: void sync()>();
+
+     label11:
+        $z3 = <com.android.mail.ui.ConversationListFragment: boolean mTabletDevice>;
+
+        i7 = staticinvoke <com.android.mail.ui.ConversationListFragment: int getDefaultChoiceMode(boolean)>($z3);
+
+        if r1 == null goto label12;
+
+        i7 = virtualinvoke r1.<android.os.Bundle: int getInt(java.lang.String,int)>("choice-mode-key", i7);
+
+        $z5 = virtualinvoke r1.<android.os.Bundle: boolean containsKey(java.lang.String)>("list-state");
+
+        if $z5 == 0 goto label12;
+
+        $r68 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r68.<com.android.mail.ui.SwipeableListView: void clearChoices()>();
+
+     label12:
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void setChoiceMode(int)>(i7);
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void showList()>();
+
+        $r61 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        r10 = interfaceinvoke $r61.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ToastBarOperation getPendingToastOperation()>();
+
+        if r10 == null goto label13;
+
+        $r62 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        interfaceinvoke $r62.<com.android.mail.ui.ControllableActivity: void setPendingToastOperation(com.android.mail.ui.ToastBarOperation)>(null);
+
+        $r67 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        interfaceinvoke $r67.<com.android.mail.ui.ControllableActivity: void onUndoAvailable(com.android.mail.ui.ToastBarOperation)>(r10);
+
+     label13:
+        return;
+    }
+
+    private static final int getDefaultChoiceMode(boolean)
+    {
+        boolean z0;
+        byte $b0;
+
+        z0 := @parameter0: boolean;
+
+        if z0 == 0 goto label1;
+
+        $b0 = 1;
+
+        goto label2;
+
+     label1:
+        $b0 = 0;
+
+     label2:
+        return $b0;
+    }
+
+    public com.android.mail.ui.AnimatedAdapter getAnimatedAdapter()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.AnimatedAdapter $r1;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        return $r1;
+    }
+
+    public void onCreate(android.os.Bundle)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        android.os.Bundle r1, r3, $r5;
+        android.content.res.Resources r2;
+        int $i0, $i1, $i2;
+        com.android.mail.ui.ConversationListFragment$5 $r4;
+        com.android.mail.ConversationListContext $r6, $r7;
+        com.android.mail.providers.Account $r8;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter0: android.os.Bundle;
+
+        specialinvoke r0.<android.app.Fragment: void onCreate(android.os.Bundle)>(r1);
+
+        r2 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: android.content.res.Resources getResources()>();
+
+        $i0 = virtualinvoke r2.<android.content.res.Resources: int getInteger(int)>(2131492888);
+
+        <com.android.mail.ui.ConversationListFragment: int TIMESTAMP_UPDATE_INTERVAL> = $i0;
+
+        $i1 = virtualinvoke r2.<android.content.res.Resources: int getInteger(int)>(2131492909);
+
+        <com.android.mail.ui.ConversationListFragment: int LOADING_DELAY_MS> = $i1;
+
+        $i2 = virtualinvoke r2.<android.content.res.Resources: int getInteger(int)>(2131492910);
+
+        <com.android.mail.ui.ConversationListFragment: int MINIMUM_LOADING_DURATION> = $i2;
+
+        $r4 = new com.android.mail.ui.ConversationListFragment$5;
+
+        specialinvoke $r4.<com.android.mail.ui.ConversationListFragment$5: void <init>(com.android.mail.ui.ConversationListFragment)>(r0);
+
+        r0.<com.android.mail.ui.ConversationListFragment: java.lang.Runnable mUpdateTimestampsRunnable> = $r4;
+
+        r3 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: android.os.Bundle getArguments()>();
+
+        $r5 = virtualinvoke r3.<android.os.Bundle: android.os.Bundle getBundle(java.lang.String)>("conversation-list");
+
+        $r6 = staticinvoke <com.android.mail.ConversationListContext: com.android.mail.ConversationListContext forBundle(android.os.Bundle)>($r5);
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ConversationListContext mViewContext> = $r6;
+
+        $r7 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ConversationListContext mViewContext>;
+
+        $r8 = $r7.<com.android.mail.ConversationListContext: com.android.mail.providers.Account account>;
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Account mAccount> = $r8;
+
+        virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: void setRetainInstance(boolean)>(0);
+
+        return;
+    }
+
+    public java.lang.String toString()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        java.lang.String r1, $r13;
+        java.lang.StringBuilder r2, $r4;
+        com.android.mail.ConversationListContext $r3, $r9;
+        int $i0, $i1;
+        com.android.mail.ui.AnimatedAdapter $r6;
+        com.android.mail.providers.Folder $r10;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 = specialinvoke r0.<android.app.Fragment: java.lang.String toString()>();
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ConversationListContext mViewContext>;
+
+        if $r3 != null goto label1;
+
+        return r1;
+
+     label1:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>(java.lang.String)>(r1);
+
+        r2 = $r4;
+
+        $i0 = virtualinvoke r2.<java.lang.StringBuilder: int length()>();
+
+        $i1 = $i0 - 1;
+
+        virtualinvoke r2.<java.lang.StringBuilder: void setLength(int)>($i1);
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mListAdapter=");
+
+        $r6 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r6);
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" folder=");
+
+        $r9 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ConversationListContext mViewContext>;
+
+        $r10 = $r9.<com.android.mail.ConversationListContext: com.android.mail.providers.Folder folder>;
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r10);
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("}");
+
+        $r13 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r13;
+    }
+
+    public android.view.View onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        android.view.LayoutInflater r1;
+        android.view.ViewGroup r2, $r33;
+        android.os.Bundle r3;
+        android.view.View r4, $r5, $r7, $r8, $r9, $r10, $r11, $r21, $r29;
+        com.android.mail.ui.ConversationListEmptyView $r6;
+        com.android.mail.ui.SwipeableListView $r12, $r13, $r14, $r15, $r17, $r18, $r19, $r20, $r27, $r30, $r31;
+        com.android.mail.providers.Account $r16;
+        boolean $z0, $z1, $z2;
+        int $i0, $i1;
+        int[] $r22;
+        com.android.mail.ui.MailSwipeRefreshLayout $r23, $r24, $r25, $r26;
+        android.os.Parcelable $r28;
+        android.animation.LayoutTransition $r32;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter0: android.view.LayoutInflater;
+
+        r2 := @parameter1: android.view.ViewGroup;
+
+        r3 := @parameter2: android.os.Bundle;
+
+        r4 = virtualinvoke r1.<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup)>(2130968638, null);
+
+        $r5 = virtualinvoke r4.<android.view.View: android.view.View findViewById(int)>(2131624045);
+
+        $r6 = (com.android.mail.ui.ConversationListEmptyView) $r5;
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListEmptyView mEmptyView> = $r6;
+
+        $r7 = virtualinvoke r4.<android.view.View: android.view.View findViewById(int)>(2131624189);
+
+        r0.<com.android.mail.ui.ConversationListFragment: android.view.View mLoadingView> = $r7;
+
+        $r8 = r0.<com.android.mail.ui.ConversationListFragment: android.view.View mLoadingView>;
+
+        virtualinvoke $r8.<android.view.View: void setVisibility(int)>(8);
+
+        $r9 = r0.<com.android.mail.ui.ConversationListFragment: android.view.View mLoadingView>;
+
+        $r10 = virtualinvoke $r9.<android.view.View: android.view.View findViewById(int)>(2131624190);
+
+        virtualinvoke $r10.<android.view.View: void setVisibility(int)>(0);
+
+        $r11 = virtualinvoke r4.<android.view.View: android.view.View findViewById(int)>(2131624181);
+
+        $r12 = (com.android.mail.ui.SwipeableListView) $r11;
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView> = $r12;
+
+        $r13 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r13.<com.android.mail.ui.SwipeableListView: void setHeaderDividersEnabled(boolean)>(0);
+
+        $r14 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r14.<com.android.mail.ui.SwipeableListView: void setOnItemLongClickListener(android.widget.AdapterView$OnItemLongClickListener)>(r0);
+
+        $r15 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $r16 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Account mAccount>;
+
+        $z0 = virtualinvoke $r16.<com.android.mail.providers.Account: boolean supportsCapability(int)>(16384);
+
+        virtualinvoke $r15.<com.android.mail.ui.SwipeableListView: void enableSwipe(boolean)>($z0);
+
+        $r17 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r17.<com.android.mail.ui.SwipeableListView: void setListItemSwipedListener(com.android.mail.ui.SwipeableListView$ListItemSwipedListener)>(r0);
+
+        $r19 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r19.<com.android.mail.ui.SwipeableListView: void setSwipeListener(com.android.mail.ui.SwipeableListView$SwipeListener)>(r0);
+
+        $r18 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r18.<com.android.mail.ui.SwipeableListView: void setOnKeyListener(android.view.View$OnKeyListener)>(r0);
+
+        $r20 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r20.<com.android.mail.ui.SwipeableListView: void setOnItemClickListener(android.widget.AdapterView$OnItemClickListener)>(r0);
+
+        $i0 = r0.<com.android.mail.ui.ConversationListFragment: int mNextFocusLeftId>;
+
+        if $i0 == 0 goto label1;
+
+        $r31 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $i1 = r0.<com.android.mail.ui.ConversationListFragment: int mNextFocusLeftId>;
+
+        virtualinvoke $r31.<com.android.mail.ui.SwipeableListView: void setNextFocusLeftId(int)>($i1);
+
+     label1:
+        $z1 = staticinvoke <com.android.mail.utils.Utils: boolean isRunningJellybeanOrLater()>();
+
+        if $z1 == 0 goto label2;
+
+        $r29 = virtualinvoke r4.<android.view.View: android.view.View findViewById(int)>(2131624180);
+
+        $r33 = (android.view.ViewGroup) $r29;
+
+        $r32 = new android.animation.LayoutTransition;
+
+        specialinvoke $r32.<android.animation.LayoutTransition: void <init>()>();
+
+        virtualinvoke $r33.<android.view.ViewGroup: void setLayoutTransition(android.animation.LayoutTransition)>($r32);
+
+     label2:
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void showListView()>();
+
+        if r3 == null goto label3;
+
+        $z2 = virtualinvoke r3.<android.os.Bundle: boolean containsKey(java.lang.String)>("list-state");
+
+        if $z2 == 0 goto label3;
+
+        $r30 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $r28 = virtualinvoke r3.<android.os.Bundle: android.os.Parcelable getParcelable(java.lang.String)>("list-state");
+
+        virtualinvoke $r30.<com.android.mail.ui.SwipeableListView: void onRestoreInstanceState(android.os.Parcelable)>($r28);
+
+     label3:
+        $r21 = virtualinvoke r4.<android.view.View: android.view.View findViewById(int)>(2131624179);
+
+        $r23 = (com.android.mail.ui.MailSwipeRefreshLayout) $r21;
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.MailSwipeRefreshLayout mSwipeRefreshWidget> = $r23;
+
+        $r25 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.MailSwipeRefreshLayout mSwipeRefreshWidget>;
+
+        $r22 = newarray (int)[4];
+
+        $r22[0] = 2131230878;
+
+        $r22[1] = 2131230879;
+
+        $r22[2] = 2131230880;
+
+        $r22[3] = 2131230881;
+
+        virtualinvoke $r25.<com.android.mail.ui.MailSwipeRefreshLayout: void setColorScheme(int[])>($r22);
+
+        $r24 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.MailSwipeRefreshLayout mSwipeRefreshWidget>;
+
+        virtualinvoke $r24.<com.android.mail.ui.MailSwipeRefreshLayout: void setOnRefreshListener(android.support.v4.widget.SwipeRefreshLayout$OnRefreshListener)>(r0);
+
+        $r26 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.MailSwipeRefreshLayout mSwipeRefreshWidget>;
+
+        $r27 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r26.<com.android.mail.ui.MailSwipeRefreshLayout: void setScrollableChild(android.view.View)>($r27);
+
+        return r4;
+    }
+
+    private final void setChoiceMode(int)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        int i0;
+        com.android.mail.ui.SwipeableListView $r1;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r1.<com.android.mail.ui.SwipeableListView: void setChoiceMode(int)>(i0);
+
+        return;
+    }
+
+    public final void setChoiceNone()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        boolean $z0;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $z0 = <com.android.mail.ui.ConversationListFragment: boolean mTabletDevice>;
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void clearChoicesAndActivated()>();
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void setChoiceMode(int)>(0);
+
+        return;
+    }
+
+    public final void revertChoiceMode()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        boolean $z0, $z1;
+        int $i0;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $z0 = <com.android.mail.ui.ConversationListFragment: boolean mTabletDevice>;
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $z1 = <com.android.mail.ui.ConversationListFragment: boolean mTabletDevice>;
+
+        $i0 = staticinvoke <com.android.mail.ui.ConversationListFragment: int getDefaultChoiceMode(boolean)>($z1);
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void setChoiceMode(int)>($i0);
+
+        return;
+    }
+
+    public void onDestroy()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        specialinvoke r0.<android.app.Fragment: void onDestroy()>();
+
+        return;
+    }
+
+    public void onDestroyView()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.AnimatedAdapter $r1, $r8;
+        com.android.mail.ui.SwipeableListView $r2;
+        com.android.mail.ui.ControllableActivity $r3;
+        com.android.mail.ui.ViewMode $r4;
+        com.android.mail.providers.FolderObserver $r5, $r11;
+        android.database.DataSetObserver $r6, $r9;
+        com.android.mail.providers.AccountObserver $r7;
+        com.android.mail.ui.ConversationUpdater $r10;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        virtualinvoke $r1.<com.android.mail.ui.AnimatedAdapter: void destroy()>();
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r2.<com.android.mail.ui.SwipeableListView: void setAdapter(android.widget.ListAdapter)>(null);
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r4 = interfaceinvoke $r3.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ViewMode getViewMode()>();
+
+        virtualinvoke $r4.<com.android.mail.ui.ViewMode: void removeListener(com.android.mail.ui.ViewMode$ModeChangeListener)>(r0);
+
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.FolderObserver mFolderObserver>;
+
+        if $r5 == null goto label1;
+
+        $r11 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.FolderObserver mFolderObserver>;
+
+        virtualinvoke $r11.<com.android.mail.providers.FolderObserver: void unregisterAndDestroy()>();
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.FolderObserver mFolderObserver> = null;
+
+     label1:
+        $r6 = r0.<com.android.mail.ui.ConversationListFragment: android.database.DataSetObserver mConversationCursorObserver>;
+
+        if $r6 == null goto label2;
+
+        $r10 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationUpdater mUpdater>;
+
+        $r9 = r0.<com.android.mail.ui.ConversationListFragment: android.database.DataSetObserver mConversationCursorObserver>;
+
+        interfaceinvoke $r10.<com.android.mail.ui.ConversationUpdater: void unregisterConversationListObserver(android.database.DataSetObserver)>($r9);
+
+        r0.<com.android.mail.ui.ConversationListFragment: android.database.DataSetObserver mConversationCursorObserver> = null;
+
+     label2:
+        $r7 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.AccountObserver mAccountObserver>;
+
+        virtualinvoke $r7.<com.android.mail.providers.AccountObserver: void unregisterAndDestroy()>();
+
+        $r8 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter getAnimatedAdapter()>();
+
+        virtualinvoke $r8.<com.android.mail.ui.AnimatedAdapter: void cleanup()>();
+
+        specialinvoke r0.<android.app.Fragment: void onDestroyView()>();
+
+        return;
+    }
+
+    public boolean onItemLongClick(android.widget.AdapterView, android.view.View, int, long)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        android.widget.AdapterView r1;
+        android.view.View r2;
+        int i0;
+        long l1;
+        boolean $z0, $z1;
+        com.android.mail.browse.ConversationItemView $r3;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter0: android.widget.AdapterView;
+
+        r2 := @parameter1: android.view.View;
+
+        i0 := @parameter2: int;
+
+        l1 := @parameter3: long;
+
+        $z0 = r2 instanceof com.android.mail.browse.ConversationItemView;
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r3 = (com.android.mail.browse.ConversationItemView) r2;
+
+        $z1 = virtualinvoke $r3.<com.android.mail.browse.ConversationItemView: boolean toggleSelectedStateOrBeginDrag()>();
+
+        return $z1;
+    }
+
+    public void onItemClick(android.widget.AdapterView, android.view.View, int, long)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        android.widget.AdapterView r1;
+        android.view.View r2;
+        int i0;
+        long l1;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter0: android.widget.AdapterView;
+
+        r2 := @parameter1: android.view.View;
+
+        i0 := @parameter2: int;
+
+        l1 := @parameter3: long;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void onListItemSelected(android.view.View,int)>(r2, i0);
+
+        return;
+    }
+
+    private void onListItemSelected(android.view.View, int)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        android.view.View r1;
+        int i0, $i1, $i2;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z7;
+        com.android.mail.providers.Account $r2;
+        com.android.mail.providers.Settings $r3;
+        com.android.mail.ui.ConversationSelectionSet $r4, $r9;
+        com.android.mail.analytics.AnalyticsTimer $r5;
+        com.android.mail.ui.ControllableActivity $r6;
+        android.content.Context $r7;
+        android.content.res.Resources $r8;
+        com.android.mail.analytics.Tracker $r10;
+        com.android.mail.browse.ToggleableItem $r11;
+        long $l3;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter0: android.view.View;
+
+        i0 := @parameter1: int;
+
+        $z2 = r1 instanceof com.android.mail.browse.ToggleableItem;
+
+        if $z2 == 0 goto label8;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Account mAccount>;
+
+        $r3 = $r2.<com.android.mail.providers.Account: com.android.mail.providers.Settings settings>;
+
+        $i1 = $r3.<com.android.mail.providers.Settings: int convListIcon>;
+
+        if $i1 != 1 goto label1;
+
+        $z7 = 1;
+
+        goto label2;
+
+     label1:
+        $z7 = 0;
+
+     label2:
+        z0 = $z7;
+
+        $r4 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationSelectionSet mSelectedSet>;
+
+        $z3 = virtualinvoke $r4.<com.android.mail.ui.ConversationSelectionSet: boolean isEmpty()>();
+
+        if $z3 != 0 goto label3;
+
+        $z5 = 1;
+
+        goto label4;
+
+     label3:
+        $z5 = 0;
+
+     label4:
+        z1 = $z5;
+
+        if z0 != 0 goto label5;
+
+        if z1 == 0 goto label5;
+
+        $r11 = (com.android.mail.browse.ToggleableItem) r1;
+
+        interfaceinvoke $r11.<com.android.mail.browse.ToggleableItem: boolean toggleSelectedState()>();
+
+        goto label7;
+
+     label5:
+        if z1 == 0 goto label6;
+
+        $r10 = staticinvoke <com.android.mail.analytics.Analytics: com.android.mail.analytics.Tracker getInstance()>();
+
+        $r9 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationSelectionSet mSelectedSet>;
+
+        $i2 = virtualinvoke $r9.<com.android.mail.ui.ConversationSelectionSet: int size()>();
+
+        $l3 = (long) $i2;
+
+        interfaceinvoke $r10.<com.android.mail.analytics.Tracker: void sendEvent(java.lang.String,java.lang.String,java.lang.String,long)>("peek", null, null, $l3);
+
+     label6:
+        $r5 = staticinvoke <com.android.mail.analytics.AnalyticsTimer: com.android.mail.analytics.AnalyticsTimer getInstance()>();
+
+        virtualinvoke $r5.<com.android.mail.analytics.AnalyticsTimer: void trackStart(java.lang.String)>("open_conv_from_list");
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void viewConversation(int)>(i0);
+
+     label7:
+        goto label9;
+
+     label8:
+        return;
+
+     label9:
+        $r6 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r7 = interfaceinvoke $r6.<com.android.mail.ui.ControllableActivity: android.content.Context getActivityContext()>();
+
+        $r8 = virtualinvoke $r7.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $z4 = staticinvoke <com.android.mail.utils.Utils: boolean useTabletUI(android.content.res.Resources)>($r8);
+
+        virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: void commitDestructiveActions(boolean)>($z4);
+
+        return;
+    }
+
+    public boolean onKey(android.view.View, int, android.view.KeyEvent)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        android.view.View r1, $r9;
+        int i0, i1, $i2, $i3, $i4, $i5;
+        android.view.KeyEvent r2;
+        com.android.mail.ui.SwipeableListView r3;
+        java.lang.Object r4;
+        com.android.mail.providers.Conversation r5;
+        com.android.mail.ui.AnimatedAdapter $r6;
+        boolean $z0, $z1;
+        com.android.mail.browse.ConversationCursor $r7;
+        com.android.mail.ui.ConversationListCallbacks $r8;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter0: android.view.View;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: android.view.KeyEvent;
+
+        r3 = (com.android.mail.ui.SwipeableListView) r1;
+
+        if i0 != 22 goto label4;
+
+        $i4 = virtualinvoke r2.<android.view.KeyEvent: int getAction()>();
+
+        if $i4 != 1 goto label2;
+
+        $z1 = r0.<com.android.mail.ui.ConversationListFragment: boolean mKeyInitiatedFromList>;
+
+        if $z1 == 0 goto label1;
+
+        $r9 = virtualinvoke r3.<com.android.mail.ui.SwipeableListView: android.view.View getSelectedView()>();
+
+        $i5 = virtualinvoke r3.<com.android.mail.ui.SwipeableListView: int getSelectedItemPosition()>();
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void onListItemSelected(android.view.View,int)>($r9, $i5);
+
+     label1:
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mKeyInitiatedFromList> = 0;
+
+        goto label3;
+
+     label2:
+        $i3 = virtualinvoke r2.<android.view.KeyEvent: int getAction()>();
+
+        if $i3 != 0 goto label3;
+
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mKeyInitiatedFromList> = 1;
+
+     label3:
+        return 1;
+
+     label4:
+        $i2 = virtualinvoke r2.<android.view.KeyEvent: int getAction()>();
+
+        if $i2 != 1 goto label6;
+
+        if i0 == 19 goto label5;
+
+        if i0 != 20 goto label6;
+
+     label5:
+        i1 = virtualinvoke r3.<com.android.mail.ui.SwipeableListView: int getSelectedItemPosition()>();
+
+        $r6 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter getAnimatedAdapter()>();
+
+        r4 = virtualinvoke $r6.<com.android.mail.ui.AnimatedAdapter: java.lang.Object getItem(int)>(i1);
+
+        if r4 == null goto label6;
+
+        $z0 = r4 instanceof com.android.mail.browse.ConversationCursor;
+
+        if $z0 == 0 goto label6;
+
+        $r7 = (com.android.mail.browse.ConversationCursor) r4;
+
+        r5 = virtualinvoke $r7.<com.android.mail.browse.ConversationCursor: com.android.mail.providers.Conversation getConversation()>();
+
+        $r8 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListCallbacks mCallbacks>;
+
+        interfaceinvoke $r8.<com.android.mail.ui.ConversationListCallbacks: void onConversationFocused(com.android.mail.providers.Conversation)>(r5);
+
+     label6:
+        return 0;
+    }
+
+    public void onResume()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.browse.ConversationCursor r1;
+        boolean $z0;
+        com.android.mail.ui.ConversationSetObserver $r2;
+        com.android.mail.ui.ConversationSelectionSet $r3;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        specialinvoke r0.<android.app.Fragment: void onResume()>();
+
+        $z0 = specialinvoke r0.<com.android.mail.ui.ConversationListFragment: boolean isCursorReadyToShow()>();
+
+        if $z0 != 0 goto label1;
+
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mInitialCursorLoading> = 1;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void showListView()>();
+
+     label1:
+        r1 = specialinvoke r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.browse.ConversationCursor getConversationListCursor()>();
+
+        if r1 == null goto label2;
+
+        virtualinvoke r1.<com.android.mail.browse.ConversationCursor: void handleNotificationActions()>();
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void restoreLastScrolledPosition()>();
+
+     label2:
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationSelectionSet mSelectedSet>;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationSetObserver mConversationSetObserver>;
+
+        virtualinvoke $r3.<com.android.mail.ui.ConversationSelectionSet: void addObserver(com.android.mail.ui.ConversationSetObserver)>($r2);
+
+        return;
+    }
+
+    public void onPause()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.ConversationSetObserver $r1;
+        com.android.mail.ui.ConversationSelectionSet $r2;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        specialinvoke r0.<android.app.Fragment: void onPause()>();
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationSelectionSet mSelectedSet>;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationSetObserver mConversationSetObserver>;
+
+        virtualinvoke $r2.<com.android.mail.ui.ConversationSelectionSet: void removeObserver(com.android.mail.ui.ConversationSetObserver)>($r1);
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void saveLastScrolledPosition()>();
+
+        return;
+    }
+
+    public void onSaveInstanceState(android.os.Bundle)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        android.os.Bundle r1;
+        com.android.mail.ui.SwipeableListView $r2, $r5, $r7;
+        com.android.mail.ui.AnimatedAdapter $r3, $r4;
+        android.os.Parcelable $r6;
+        int $i0;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter0: android.os.Bundle;
+
+        specialinvoke r0.<android.app.Fragment: void onSaveInstanceState(android.os.Bundle)>(r1);
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        if $r2 == null goto label1;
+
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $r6 = virtualinvoke $r5.<com.android.mail.ui.SwipeableListView: android.os.Parcelable onSaveInstanceState()>();
+
+        virtualinvoke r1.<android.os.Bundle: void putParcelable(java.lang.String,android.os.Parcelable)>("list-state", $r6);
+
+        $r7 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $i0 = virtualinvoke $r7.<com.android.mail.ui.SwipeableListView: int getChoiceMode()>();
+
+        virtualinvoke r1.<android.os.Bundle: void putInt(java.lang.String,int)>("choice-mode-key", $i0);
+
+     label1:
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        if $r3 == null goto label2;
+
+        $r4 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        virtualinvoke $r4.<com.android.mail.ui.AnimatedAdapter: void saveSpecialItemInstanceState(android.os.Bundle)>(r1);
+
+     label2:
+        return;
+    }
+
+    public void onStart()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        int $i0;
+        long $l1;
+        java.lang.Runnable $r1;
+        android.os.Handler $r2;
+        com.android.mail.analytics.Tracker $r3;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        specialinvoke r0.<android.app.Fragment: void onStart()>();
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: android.os.Handler mHandler>;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: java.lang.Runnable mUpdateTimestampsRunnable>;
+
+        $i0 = <com.android.mail.ui.ConversationListFragment: int TIMESTAMP_UPDATE_INTERVAL>;
+
+        $l1 = (long) $i0;
+
+        virtualinvoke $r2.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r1, $l1);
+
+        $r3 = staticinvoke <com.android.mail.analytics.Analytics: com.android.mail.analytics.Tracker getInstance()>();
+
+        interfaceinvoke $r3.<com.android.mail.analytics.Tracker: void sendView(java.lang.String)>("ConversationListFragment");
+
+        return;
+    }
+
+    public void onStop()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        java.lang.Runnable $r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        specialinvoke r0.<android.app.Fragment: void onStop()>();
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: android.os.Handler mHandler>;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: java.lang.Runnable mUpdateTimestampsRunnable>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    public void onViewModeChanged(int)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        int i0;
+        boolean $z0, $z1, $z2, $z4;
+        com.android.mail.browse.ConversationListFooterView $r1, $r5;
+        com.android.mail.ui.SwipeableListView $r2, $r3, $r4;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        i0 := @parameter0: int;
+
+        $z0 = <com.android.mail.ui.ConversationListFragment: boolean mTabletDevice>;
+
+        if $z0 == 0 goto label1;
+
+        $z4 = staticinvoke <com.android.mail.ui.ViewMode: boolean isListMode(int)>(i0);
+
+        if $z4 == 0 goto label1;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void clearChoicesAndActivated()>();
+
+     label1:
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.browse.ConversationListFooterView mFooterView>;
+
+        if $r1 == null goto label2;
+
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.browse.ConversationListFooterView mFooterView>;
+
+        virtualinvoke $r5.<com.android.mail.browse.ConversationListFooterView: void onViewModeChanged(int)>(i0);
+
+     label2:
+        $z1 = staticinvoke <com.android.mail.ui.ViewMode: boolean isListMode(int)>(i0);
+
+        if $z1 == 0 goto label3;
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r3.<com.android.mail.ui.SwipeableListView: void setNextFocusRightId(int)>(2131624181);
+
+        $r4 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r4.<com.android.mail.ui.SwipeableListView: boolean requestFocus()>();
+
+        goto label4;
+
+     label3:
+        $z2 = staticinvoke <com.android.mail.ui.ViewMode: boolean isConversationMode(int)>(i0);
+
+        if $z2 == 0 goto label4;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r2.<com.android.mail.ui.SwipeableListView: void setNextFocusRightId(int)>(2131624245);
+
+     label4:
+        return;
+    }
+
+    public boolean isAnimating()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.AnimatedAdapter r1;
+        boolean z0, $z1, $z2, $z3;
+        com.android.mail.ui.SwipeableListView $r2, $r5;
+        java.lang.Object[] $r3;
+        java.lang.String $r4;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter getAnimatedAdapter()>();
+
+        if r1 == null goto label1;
+
+        $z3 = virtualinvoke r1.<com.android.mail.ui.AnimatedAdapter: boolean isAnimating()>();
+
+        if $z3 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        if $r2 == null goto label2;
+
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $z1 = virtualinvoke $r5.<com.android.mail.ui.SwipeableListView: boolean isScrolling()>();
+
+        if $z1 == 0 goto label2;
+
+        $z2 = 1;
+
+        goto label3;
+
+     label2:
+        $z2 = 0;
+
+     label3:
+        z0 = $z2;
+
+        if z0 == 0 goto label4;
+
+        $r4 = <com.android.mail.ui.ConversationListFragment: java.lang.String LOG_TAG>;
+
+        $r3 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int i(java.lang.String,java.lang.String,java.lang.Object[])>($r4, "CLF.isAnimating=true due to scrolling", $r3);
+
+     label4:
+        return z0;
+    }
+
+    private void clearChoicesAndActivated()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        int i0, $i1;
+        com.android.mail.ui.SwipeableListView $r1, $r2, $r3;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        i0 = virtualinvoke $r1.<com.android.mail.ui.SwipeableListView: int getCheckedItemPosition()>();
+
+        if i0 == -1 goto label1;
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $i1 = virtualinvoke $r2.<com.android.mail.ui.SwipeableListView: int getCheckedItemPosition()>();
+
+        virtualinvoke $r3.<com.android.mail.ui.SwipeableListView: void setItemChecked(int,boolean)>($i1, 0);
+
+     label1:
+        return;
+    }
+
+    private void showList()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.providers.Folder r1, $r4;
+        long l0, $l3;
+        com.android.mail.ui.ControllableActivity $r2;
+        com.android.mail.ui.FolderController $r3;
+        com.android.mail.ConversationListContext $r5;
+        int $i1, $i2, $i4;
+        com.android.mail.analytics.Tracker $r6;
+        java.lang.String $r7, $r8;
+        double $d0, $d1;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mInitialCursorLoading> = 1;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r3 = interfaceinvoke $r2.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.FolderController getFolderController()>();
+
+        $r4 = interfaceinvoke $r3.<com.android.mail.ui.FolderController: com.android.mail.providers.Folder getFolder()>();
+
+        virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: void onFolderUpdated(com.android.mail.providers.Folder)>($r4);
+
+        virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: void onConversationListStatusUpdated()>();
+
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ConversationListContext mViewContext>;
+
+        r1 = $r5.<com.android.mail.ConversationListContext: com.android.mail.providers.Folder folder>;
+
+        if r1 == null goto label3;
+
+        $i1 = r1.<com.android.mail.providers.Folder: int totalCount>;
+
+        if $i1 <= 0 goto label1;
+
+        $i4 = r1.<com.android.mail.providers.Folder: int totalCount>;
+
+        $d1 = (double) $i4;
+
+        $d0 = staticinvoke <java.lang.Math: double log10(double)>($d1);
+
+        l0 = (long) $d0;
+
+        goto label2;
+
+     label1:
+        l0 = 0L;
+
+     label2:
+        $r6 = staticinvoke <com.android.mail.analytics.Analytics: com.android.mail.analytics.Tracker getInstance()>();
+
+        $r7 = virtualinvoke r1.<com.android.mail.providers.Folder: java.lang.String getTypeDescription()>();
+
+        $r8 = staticinvoke <java.lang.Long: java.lang.String toString(long)>(l0);
+
+        $i2 = r1.<com.android.mail.providers.Folder: int totalCount>;
+
+        $l3 = (long) $i2;
+
+        interfaceinvoke $r6.<com.android.mail.analytics.Tracker: void sendEvent(java.lang.String,java.lang.String,java.lang.String,long)>("view_folder", $r7, $r8, $l3);
+
+     label3:
+        return;
+    }
+
+    private void viewConversation(int)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        int i0, $i2, $i3, $i4;
+        com.android.mail.browse.ConversationCursor r1;
+        com.android.mail.providers.Conversation r2;
+        java.lang.Object[] $r3, $r10;
+        java.lang.String $r4, $r9;
+        java.lang.Integer $r5, $r11, $r13;
+        com.android.mail.ui.AnimatedAdapter $r6, $r12;
+        java.lang.Object $r7;
+        com.android.mail.ui.ConversationListCallbacks $r8;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        i0 := @parameter0: int;
+
+        $r4 = <com.android.mail.ui.ConversationListFragment: java.lang.String LOG_TAG>;
+
+        $r3 = newarray (java.lang.Object)[1];
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r3[0] = $r5;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>($r4, "ConversationListFragment.viewConversation(%d)", $r3);
+
+        $r6 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter getAnimatedAdapter()>();
+
+        $r7 = virtualinvoke $r6.<com.android.mail.ui.AnimatedAdapter: java.lang.Object getItem(int)>(i0);
+
+        r1 = (com.android.mail.browse.ConversationCursor) $r7;
+
+        if r1 != null goto label1;
+
+        $r9 = <com.android.mail.ui.ConversationListFragment: java.lang.String LOG_TAG>;
+
+        $r10 = newarray (java.lang.Object)[3];
+
+        $r11 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r10[0] = $r11;
+
+        $r10[1] = r1;
+
+        $r12 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter getAnimatedAdapter()>();
+
+        $i4 = virtualinvoke $r12.<com.android.mail.ui.AnimatedAdapter: int getPositionOffset(int)>(i0);
+
+        $r13 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i4);
+
+        $r10[2] = $r13;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>($r9, "unable to open conv at cursor pos=%s cursor=%s getPositionOffset=%s", $r10);
+
+        return;
+
+     label1:
+        r2 = virtualinvoke r1.<com.android.mail.browse.ConversationCursor: com.android.mail.providers.Conversation getConversation()>();
+
+        $i2 = virtualinvoke r1.<com.android.mail.browse.ConversationCursor: int getPosition()>();
+
+        r2.<com.android.mail.providers.Conversation: int position> = $i2;
+
+        $i3 = r2.<com.android.mail.providers.Conversation: int position>;
+
+        virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: void setSelected(int,boolean)>($i3, 1);
+
+        $r8 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListCallbacks mCallbacks>;
+
+        interfaceinvoke $r8.<com.android.mail.ui.ConversationListCallbacks: void onConversationSelected(com.android.mail.providers.Conversation,boolean)>(r2, 0);
+
+        return;
+    }
+
+    public void setSelected(int, boolean)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        int i0, i1, $i2, $i3;
+        boolean z0;
+        com.android.mail.ui.SwipeableListView $r1;
+        com.android.mail.ui.AnimatedAdapter $r2;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $i2 = virtualinvoke $r1.<com.android.mail.ui.SwipeableListView: int getChoiceMode()>();
+
+        if $i2 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter getAnimatedAdapter()>();
+
+        $i3 = virtualinvoke $r2.<com.android.mail.ui.AnimatedAdapter: int getPositionOffset(int)>(i0);
+
+        i1 = i0 + $i3;
+
+        virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: void setRawSelected(int,boolean)>(i1, z0);
+
+        return;
+    }
+
+    public void setRawSelected(int, boolean)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        int i0, $i1;
+        boolean z0;
+        com.android.mail.ui.SwipeableListView $r1, $r2, $r3;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $i1 = virtualinvoke $r1.<com.android.mail.ui.SwipeableListView: int getChoiceMode()>();
+
+        if $i1 != 0 goto label1;
+
+        return;
+
+     label1:
+        if z0 == 0 goto label2;
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r3.<com.android.mail.ui.SwipeableListView: void smoothScrollToPosition(int)>(i0);
+
+     label2:
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r2.<com.android.mail.ui.SwipeableListView: void setItemChecked(int,boolean)>(i0, 1);
+
+        return;
+    }
+
+    private com.android.mail.browse.ConversationCursor getConversationListCursor()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.ConversationListCallbacks $r1, $r2;
+        com.android.mail.browse.ConversationCursor $r3;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListCallbacks mCallbacks>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListCallbacks mCallbacks>;
+
+        $r3 = interfaceinvoke $r2.<com.android.mail.ui.ConversationListCallbacks: com.android.mail.browse.ConversationCursor getConversationListCursor()>();
+
+        goto label2;
+
+     label1:
+        $r3 = null;
+
+     label2:
+        return $r3;
+    }
+
+    public void requestListRefresh()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.AnimatedAdapter $r1;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        virtualinvoke $r1.<com.android.mail.ui.AnimatedAdapter: void notifyDataSetChanged()>();
+
+        return;
+    }
+
+    public void requestDelete(int, java.util.Collection, com.android.mail.ui.DestructiveAction)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        int i0, $i1;
+        java.util.Collection r1;
+        com.android.mail.ui.DestructiveAction r2;
+        java.util.Iterator r3;
+        com.android.mail.providers.Conversation r4;
+        boolean $z0, $z1;
+        com.android.mail.ui.ConversationListFragment$6 $r5, r12;
+        com.android.mail.ui.SwipeableListView $r6, $r8;
+        com.android.mail.ui.AnimatedAdapter $r7;
+        java.lang.Object[] $r9;
+        java.lang.String $r10;
+        java.lang.Object $r11;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.util.Collection;
+
+        r2 := @parameter2: com.android.mail.ui.DestructiveAction;
+
+        r3 = interfaceinvoke r1.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r11 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.mail.providers.Conversation) $r11;
+
+        r4.<com.android.mail.providers.Conversation: boolean localDeleteOnUpdate> = 1;
+
+        goto label1;
+
+     label2:
+        $r5 = new com.android.mail.ui.ConversationListFragment$6;
+
+        specialinvoke $r5.<com.android.mail.ui.ConversationListFragment$6: void <init>(com.android.mail.ui.ConversationListFragment,com.android.mail.ui.DestructiveAction)>(r0, r2);
+
+        r12 = $r5;
+
+        $r6 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $i1 = virtualinvoke $r6.<com.android.mail.ui.SwipeableListView: int getSwipeAction()>();
+
+        if $i1 != i0 goto label4;
+
+        $r8 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $z1 = virtualinvoke $r8.<com.android.mail.ui.SwipeableListView: boolean destroyItems(java.util.Collection,com.android.mail.ui.SwipeableListView$ListItemsRemovedListener)>(r1, r12);
+
+        if $z1 != 0 goto label3;
+
+        $r10 = <com.android.mail.ui.ConversationListFragment: java.lang.String LOG_TAG>;
+
+        $r9 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>($r10, "ConversationListFragment.requestDelete: listView failed to destroy items.", $r9);
+
+        interfaceinvoke r2.<com.android.mail.ui.DestructiveAction: void performAction()>();
+
+     label3:
+        return;
+
+     label4:
+        $r7 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        virtualinvoke $r7.<com.android.mail.ui.AnimatedAdapter: void delete(java.util.Collection,com.android.mail.ui.SwipeableListView$ListItemsRemovedListener)>(r1, r12);
+
+        return;
+    }
+
+    public void onFolderUpdated(com.android.mail.providers.Folder)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.providers.Folder r1, $r4, $r5, $r7, $r9, $r10, $r11;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        com.android.mail.ConversationListContext $r2;
+        com.android.mail.ui.MailSwipeRefreshLayout $r3;
+        com.android.mail.ui.AnimatedAdapter $r6;
+        com.android.mail.browse.ConversationListFooterView $r8;
+        com.android.mail.ui.ErrorListener $r12;
+        long $l0;
+        int $i1;
+        android.os.Handler $r13;
+        java.lang.Runnable $r14;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter0: com.android.mail.providers.Folder;
+
+        $z0 = specialinvoke r0.<com.android.mail.ui.ConversationListFragment: boolean isCursorReadyToShow()>();
+
+        if $z0 != 0 goto label1;
+
+        $z3 = r0.<com.android.mail.ui.ConversationListFragment: boolean mLoadingViewPending>;
+
+        if $z3 != 0 goto label1;
+
+        $r13 = r0.<com.android.mail.ui.ConversationListFragment: android.os.Handler mHandler>;
+
+        $r14 = r0.<com.android.mail.ui.ConversationListFragment: java.lang.Runnable mLoadingViewRunnable>;
+
+        $i1 = <com.android.mail.ui.ConversationListFragment: int LOADING_DELAY_MS>;
+
+        $l0 = (long) $i1;
+
+        virtualinvoke $r13.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r14, $l0);
+
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mLoadingViewPending> = 1;
+
+     label1:
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder> = r1;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void setSwipeAction()>();
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.MailSwipeRefreshLayout mSwipeRefreshWidget>;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ConversationListContext mViewContext>;
+
+        $z1 = staticinvoke <com.android.mail.ConversationListContext: boolean isSearchResult(com.android.mail.ConversationListContext)>($r2);
+
+        if $z1 != 0 goto label2;
+
+        $z4 = 1;
+
+        goto label3;
+
+     label2:
+        $z4 = 0;
+
+     label3:
+        virtualinvoke $r3.<com.android.mail.ui.MailSwipeRefreshLayout: void setEnabled(boolean)>($z4);
+
+        $r4 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        if $r4 != null goto label4;
+
+        return;
+
+     label4:
+        $r6 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        virtualinvoke $r6.<com.android.mail.ui.AnimatedAdapter: void setFolder(com.android.mail.providers.Folder)>($r5);
+
+        $r8 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.browse.ConversationListFooterView mFooterView>;
+
+        $r7 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        virtualinvoke $r8.<com.android.mail.browse.ConversationListFooterView: void setFolder(com.android.mail.providers.Folder)>($r7);
+
+        $r9 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $z2 = virtualinvoke $r9.<com.android.mail.providers.Folder: boolean wasSyncSuccessful()>();
+
+        if $z2 != 0 goto label5;
+
+        $r12 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ErrorListener mErrorListener>;
+
+        $r11 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        interfaceinvoke $r12.<com.android.mail.ui.ErrorListener: void onError(com.android.mail.providers.Folder,boolean)>($r11, 0);
+
+     label5:
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void checkSyncStatus()>();
+
+        $r10 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        staticinvoke <com.android.mail.browse.ConversationItemViewModel: void onFolderUpdated(com.android.mail.providers.Folder)>($r10);
+
+        return;
+    }
+
+    public void onConversationListStatusUpdated()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void onCursorUpdated()>();
+
+        $z0 = specialinvoke r0.<com.android.mail.ui.ConversationListFragment: boolean isCursorReadyToShow()>();
+
+        if $z0 == 0 goto label1;
+
+        $z1 = r0.<com.android.mail.ui.ConversationListFragment: boolean mCanTakeDownLoadingView>;
+
+        if $z1 == 0 goto label1;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void hideLoadingViewAndShowContents()>();
+
+     label1:
+        return;
+    }
+
+    private void hideLoadingViewAndShowContents()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.browse.ConversationCursor r1;
+        boolean z0, $z1;
+        com.android.mail.browse.ConversationListFooterView $r2;
+        com.android.mail.ui.AnimatedAdapter $r3, $r6;
+        java.lang.Runnable $r4;
+        android.os.Handler $r5;
+        int $i0;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 = specialinvoke r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.browse.ConversationCursor getConversationListCursor()>();
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.browse.ConversationListFooterView mFooterView>;
+
+        z0 = virtualinvoke $r2.<com.android.mail.browse.ConversationListFooterView: boolean updateStatus(com.android.mail.browse.ConversationCursor)>(r1);
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void checkSyncStatus()>();
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        virtualinvoke $r3.<com.android.mail.ui.AnimatedAdapter: void setFooterVisibility(boolean)>(z0);
+
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mLoadingViewPending> = 0;
+
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: android.os.Handler mHandler>;
+
+        $r4 = r0.<com.android.mail.ui.ConversationListFragment: java.lang.Runnable mLoadingViewRunnable>;
+
+        virtualinvoke $r5.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r4);
+
+        if r1 == null goto label1;
+
+        $z1 = staticinvoke <com.android.mail.browse.ConversationCursor: boolean isCursorReadyToShow(com.android.mail.browse.ConversationCursor)>(r1);
+
+        if $z1 == 0 goto label1;
+
+        $r6 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        $i0 = virtualinvoke $r6.<com.android.mail.ui.AnimatedAdapter: int getCount()>();
+
+        if $i0 != 0 goto label1;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void showEmptyView()>();
+
+        goto label2;
+
+     label1:
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void showListView()>();
+
+     label2:
+        return;
+    }
+
+    private void setSwipeAction()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        int i0, i1;
+        com.android.mail.providers.Account $r1, $r4, $r8, $r13;
+        com.android.mail.providers.Settings $r2;
+        com.android.mail.ui.SwipeableListView $r3, $r5, $r7, $r10, $r14, $r15;
+        com.android.mail.providers.Folder $r6, $r9, $r11, $r12, $r16, $r17, $r18, $r19;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Account mAccount>;
+
+        $r2 = $r1.<com.android.mail.providers.Account: com.android.mail.providers.Settings settings>;
+
+        i0 = staticinvoke <com.android.mail.providers.Settings: int getSwipeSetting(com.android.mail.providers.Settings)>($r2);
+
+        if i0 == 2 goto label01;
+
+        $r8 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Account mAccount>;
+
+        $z0 = virtualinvoke $r8.<com.android.mail.providers.Account: boolean supportsCapability(int)>(16384);
+
+        if $z0 == 0 goto label01;
+
+        $r9 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        if $r9 == null goto label02;
+
+        $r19 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $z6 = virtualinvoke $r19.<com.android.mail.providers.Folder: boolean isTrash()>();
+
+        if $z6 == 0 goto label02;
+
+     label01:
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r3.<com.android.mail.ui.SwipeableListView: void enableSwipe(boolean)>(0);
+
+        goto label10;
+
+     label02:
+        $r10 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r10.<com.android.mail.ui.SwipeableListView: void enableSwipe(boolean)>(1);
+
+        $r11 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        if $r11 != null goto label03;
+
+        i1 = 2131624415;
+
+        goto label09;
+
+     label03:
+        lookupswitch(i0)
+        {
+            case 0: goto label06;
+            case 1: goto label04;
+            default: goto label08;
+        };
+
+     label04:
+        $r12 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $z1 = virtualinvoke $r12.<com.android.mail.providers.Folder: boolean isType(int)>(8);
+
+        if $z1 == 0 goto label05;
+
+        i1 = 2131624418;
+
+        goto label09;
+
+     label05:
+        i1 = 2131624416;
+
+        goto label09;
+
+     label06:
+        $r13 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Account mAccount>;
+
+        $z2 = virtualinvoke $r13.<com.android.mail.providers.Account: boolean supportsCapability(int)>(8);
+
+        if $z2 == 0 goto label08;
+
+        $r16 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $z3 = virtualinvoke $r16.<com.android.mail.providers.Folder: boolean isSpam()>();
+
+        if $z3 != 0 goto label08;
+
+        $r17 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $z4 = virtualinvoke $r17.<com.android.mail.providers.Folder: boolean supportsCapability(int)>(16);
+
+        if $z4 == 0 goto label07;
+
+        i1 = 2131624414;
+
+        goto label09;
+
+     label07:
+        $r18 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $z5 = virtualinvoke $r18.<com.android.mail.providers.Folder: boolean supportsCapability(int)>(8);
+
+        if $z5 == 0 goto label08;
+
+        i1 = 2131624415;
+
+        goto label09;
+
+     label08:
+        $r15 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r15.<com.android.mail.ui.SwipeableListView: void enableSwipe(boolean)>(0);
+
+        i1 = 0;
+
+     label09:
+        $r14 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r14.<com.android.mail.ui.SwipeableListView: void setSwipeAction(int)>(i1);
+
+     label10:
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $r4 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Account mAccount>;
+
+        virtualinvoke $r5.<com.android.mail.ui.SwipeableListView: void setCurrentAccount(com.android.mail.providers.Account)>($r4);
+
+        $r7 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $r6 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        virtualinvoke $r7.<com.android.mail.ui.SwipeableListView: void setCurrentFolder(com.android.mail.providers.Folder)>($r6);
+
+        return;
+    }
+
+    private void onCursorUpdated()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.browse.ConversationCursor r1;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        com.android.mail.ui.ConversationListCallbacks $r2, $r4, $r7;
+        com.android.mail.ui.AnimatedAdapter $r3, $r5, $r10, $r12;
+        com.android.mail.ui.SwipeableListView $r8, $r9;
+        android.database.Cursor $r11;
+        com.android.mail.providers.Conversation r13;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListCallbacks mCallbacks>;
+
+        if $r2 == null goto label1;
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        if $r3 != null goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r4 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListCallbacks mCallbacks>;
+
+        r1 = interfaceinvoke $r4.<com.android.mail.ui.ConversationListCallbacks: com.android.mail.browse.ConversationCursor getConversationListCursor()>();
+
+        if r1 != null goto label3;
+
+        $r12 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        $r11 = virtualinvoke $r12.<com.android.mail.ui.AnimatedAdapter: android.database.Cursor getCursor()>();
+
+        if $r11 == null goto label3;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void saveLastScrolledPosition()>();
+
+     label3:
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        virtualinvoke $r5.<com.android.mail.ui.AnimatedAdapter: android.database.Cursor swapCursor(android.database.Cursor)>(r1);
+
+        if r1 != null goto label4;
+
+        $i2 = 0;
+
+        goto label5;
+
+     label4:
+        $i2 = virtualinvoke r1.<com.android.mail.browse.ConversationCursor: int hashCode()>();
+
+     label5:
+        i0 = $i2;
+
+        $i3 = r0.<com.android.mail.ui.ConversationListFragment: int mConversationCursorHash>;
+
+        if $i3 != i0 goto label6;
+
+        $i7 = r0.<com.android.mail.ui.ConversationListFragment: int mConversationCursorHash>;
+
+        if $i7 == 0 goto label6;
+
+        $r10 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        virtualinvoke $r10.<com.android.mail.ui.AnimatedAdapter: void notifyDataSetChanged()>();
+
+     label6:
+        r0.<com.android.mail.ui.ConversationListFragment: int mConversationCursorHash> = i0;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void updateAnalyticsData(com.android.mail.browse.ConversationCursor)>(r1);
+
+        if r1 == null goto label7;
+
+        i1 = virtualinvoke r1.<com.android.mail.browse.ConversationCursor: int getCount()>();
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void updateSearchResultHeader(int)>(i1);
+
+        if i1 <= 0 goto label7;
+
+        virtualinvoke r1.<com.android.mail.browse.ConversationCursor: void markContentsSeen()>();
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void restoreLastScrolledPosition()>();
+
+     label7:
+        $r7 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationListCallbacks mCallbacks>;
+
+        r13 = interfaceinvoke $r7.<com.android.mail.ui.ConversationListCallbacks: com.android.mail.providers.Conversation getCurrentConversation()>();
+
+        if r13 == null goto label8;
+
+        $r8 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $i4 = virtualinvoke $r8.<com.android.mail.ui.SwipeableListView: int getChoiceMode()>();
+
+        if $i4 == 0 goto label8;
+
+        $r9 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $i5 = virtualinvoke $r9.<com.android.mail.ui.SwipeableListView: int getCheckedItemPosition()>();
+
+        if $i5 != -1 goto label8;
+
+        $i6 = r13.<com.android.mail.providers.Conversation: int position>;
+
+        virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: void setSelected(int,boolean)>($i6, 1);
+
+     label8:
+        return;
+    }
+
+    public void commitDestructiveActions(boolean)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        boolean z0;
+        com.android.mail.ui.SwipeableListView $r1, $r2;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r2.<com.android.mail.ui.SwipeableListView: void commitDestructiveActions(boolean)>(z0);
+
+     label1:
+        return;
+    }
+
+    public void onListItemSwiped(java.util.Collection)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        java.util.Collection r1;
+        com.android.mail.ui.ConversationUpdater $r2;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter0: java.util.Collection;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ConversationUpdater mUpdater>;
+
+        interfaceinvoke $r2.<com.android.mail.ui.ConversationUpdater: void showNextConversation(java.util.Collection)>(r1);
+
+        return;
+    }
+
+    private void checkSyncStatus()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.providers.Folder $r1, $r5;
+        java.lang.Object[] $r2, $r6;
+        java.lang.String $r3, $r7;
+        com.android.mail.ui.MailSwipeRefreshLayout $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        if $r1 == null goto label1;
+
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $z0 = virtualinvoke $r5.<com.android.mail.providers.Folder: boolean isSyncInProgress()>();
+
+        if $z0 == 0 goto label1;
+
+        $r7 = <com.android.mail.ui.ConversationListFragment: java.lang.String LOG_TAG>;
+
+        $r6 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>($r7, "CLF.checkSyncStatus still syncing", $r6);
+
+        goto label2;
+
+     label1:
+        $r3 = <com.android.mail.ui.ConversationListFragment: java.lang.String LOG_TAG>;
+
+        $r2 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>($r3, "CLF.checkSyncStatus done syncing", $r2);
+
+        $r4 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.MailSwipeRefreshLayout mSwipeRefreshWidget>;
+
+        virtualinvoke $r4.<com.android.mail.ui.MailSwipeRefreshLayout: void setRefreshing(boolean)>(0);
+
+     label2:
+        return;
+    }
+
+    protected void showSyncStatusBar()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.MailSwipeRefreshLayout $r1;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.MailSwipeRefreshLayout mSwipeRefreshWidget>;
+
+        virtualinvoke $r1.<com.android.mail.ui.MailSwipeRefreshLayout: void setRefreshing(boolean)>(1);
+
+        return;
+    }
+
+    public void clear()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.SwipeableListView $r1;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r1.<com.android.mail.ui.SwipeableListView: void setAdapter(android.widget.ListAdapter)>(null);
+
+        return;
+    }
+
+    private void saveLastScrolledPosition()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        android.os.Parcelable r1;
+        com.android.mail.ui.AnimatedAdapter $r2;
+        android.database.Cursor $r3;
+        com.android.mail.ui.SwipeableListView $r4;
+        com.android.mail.ui.ControllableActivity $r5;
+        com.android.mail.ui.ConversationListCallbacks $r6;
+        com.android.mail.providers.Folder $r7;
+        android.net.Uri $r8;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        $r3 = virtualinvoke $r2.<com.android.mail.ui.AnimatedAdapter: android.database.Cursor getCursor()>();
+
+        if $r3 != null goto label1;
+
+        return;
+
+     label1:
+        $r4 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        r1 = virtualinvoke $r4.<com.android.mail.ui.SwipeableListView: android.os.Parcelable onSaveInstanceState()>();
+
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r6 = interfaceinvoke $r5.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ConversationListCallbacks getListHandler()>();
+
+        $r7 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $r8 = $r7.<com.android.mail.providers.Folder: android.net.Uri conversationListUri>;
+
+        $r9 = virtualinvoke $r8.<android.net.Uri: java.lang.String toString()>();
+
+        interfaceinvoke $r6.<com.android.mail.ui.ConversationListCallbacks: void setConversationListScrollPosition(java.lang.String,android.os.Parcelable)>($r9, r1);
+
+        return;
+    }
+
+    private void restoreLastScrolledPosition()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        java.lang.String r1;
+        android.os.Parcelable r2;
+        boolean $z0;
+        com.android.mail.providers.Folder $r3, $r4;
+        android.net.Uri $r5;
+        com.android.mail.ui.ControllableActivity $r6;
+        com.android.mail.ui.ConversationListCallbacks $r7;
+        com.android.mail.ui.SwipeableListView $r8;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $z0 = r0.<com.android.mail.ui.ConversationListFragment: boolean mScrollPositionRestored>;
+
+        if $z0 != 0 goto label2;
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        if $r3 == null goto label2;
+
+        $r4 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $r5 = $r4.<com.android.mail.providers.Folder: android.net.Uri conversationListUri>;
+
+        r1 = virtualinvoke $r5.<android.net.Uri: java.lang.String toString()>();
+
+        $r6 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r7 = interfaceinvoke $r6.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.ConversationListCallbacks getListHandler()>();
+
+        r2 = interfaceinvoke $r7.<com.android.mail.ui.ConversationListCallbacks: android.os.Parcelable getConversationListScrollPosition(java.lang.String)>(r1);
+
+        if r2 == null goto label1;
+
+        $r8 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        virtualinvoke $r8.<com.android.mail.ui.SwipeableListView: void onRestoreInstanceState(android.os.Parcelable)>(r2);
+
+     label1:
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mScrollPositionRestored> = 1;
+
+     label2:
+        return;
+    }
+
+    public void onRefresh()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.analytics.Tracker $r1;
+        com.android.mail.ui.ControllableActivity $r2, $r6;
+        com.android.mail.ui.FolderController $r3;
+        com.android.mail.ui.AnimatedAdapter $r4, $r5;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = staticinvoke <com.android.mail.analytics.Analytics: com.android.mail.analytics.Tracker getInstance()>();
+
+        interfaceinvoke $r1.<com.android.mail.analytics.Tracker: void sendEvent(java.lang.String,java.lang.String,java.lang.String,long)>("menu_item", "swipe_refresh", null, 0L);
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r3 = interfaceinvoke $r2.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.FolderController getFolderController()>();
+
+        interfaceinvoke $r3.<com.android.mail.ui.FolderController: void requestFolderRefresh()>();
+
+        $r4 = virtualinvoke r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter getAnimatedAdapter()>();
+
+        virtualinvoke $r4.<com.android.mail.ui.AnimatedAdapter: void clearAnimationState()>();
+
+        $r6 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r5 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.AnimatedAdapter mListAdapter>;
+
+        interfaceinvoke $r6.<com.android.mail.ui.ControllableActivity: void onAnimationEnd(com.android.mail.ui.AnimatedAdapter)>($r5);
+
+        return;
+    }
+
+    private void updateAnalyticsData(com.android.mail.browse.ConversationCursor)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.browse.ConversationCursor r1;
+        boolean $z0, $z1, $z2;
+        int $i0, $i1, $i2, $i3;
+        com.android.mail.analytics.Tracker $r2, $r9;
+        com.android.mail.providers.Folder $r3, $r8, $r11;
+        java.lang.String $r4, $r12;
+        com.android.mail.analytics.AnalyticsTimer $r5, $r10;
+        com.android.mail.ui.ControllableActivity $r6;
+        com.android.mail.ui.FolderController $r7;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter0: com.android.mail.browse.ConversationCursor;
+
+        if r1 == null goto label5;
+
+        $z0 = r0.<com.android.mail.ui.ConversationListFragment: boolean mInitialCursorLoading>;
+
+        if $z0 == 0 goto label3;
+
+        $z1 = specialinvoke r0.<com.android.mail.ui.ConversationListFragment: boolean isCursorReadyToShow()>();
+
+        if $z1 == 0 goto label4;
+
+        $i3 = virtualinvoke r1.<com.android.mail.browse.ConversationCursor: int getCount()>();
+
+        if $i3 != 0 goto label1;
+
+        $r9 = staticinvoke <com.android.mail.analytics.Analytics: com.android.mail.analytics.Tracker getInstance()>();
+
+        $r11 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $r12 = virtualinvoke $r11.<com.android.mail.providers.Folder: java.lang.String getTypeDescription()>();
+
+        interfaceinvoke $r9.<com.android.mail.analytics.Tracker: void sendEvent(java.lang.String,java.lang.String,java.lang.String,long)>("empty_state", "post_label_change", $r12, 0L);
+
+     label1:
+        $r5 = staticinvoke <com.android.mail.analytics.AnalyticsTimer: com.android.mail.analytics.AnalyticsTimer getInstance()>();
+
+        virtualinvoke $r5.<com.android.mail.analytics.AnalyticsTimer: void logDuration(java.lang.String,boolean,java.lang.String,java.lang.String,java.lang.String)>("cold_start_to_list", 1, "cold_start_to_list", "from_launcher", null);
+
+        $r6 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.ControllableActivity mActivity>;
+
+        $r7 = interfaceinvoke $r6.<com.android.mail.ui.ControllableActivity: com.android.mail.ui.FolderController getFolderController()>();
+
+        $r8 = interfaceinvoke $r7.<com.android.mail.ui.FolderController: com.android.mail.providers.Folder getFolder()>();
+
+        $z2 = virtualinvoke $r8.<com.android.mail.providers.Folder: boolean isSearch()>();
+
+        if $z2 == 0 goto label2;
+
+        $r10 = staticinvoke <com.android.mail.analytics.AnalyticsTimer: com.android.mail.analytics.AnalyticsTimer getInstance()>();
+
+        virtualinvoke $r10.<com.android.mail.analytics.AnalyticsTimer: void logDuration(java.lang.String,boolean,java.lang.String,java.lang.String,java.lang.String)>("search_to_list", 1, "search_to_list", null, null);
+
+     label2:
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mInitialCursorLoading> = 0;
+
+        goto label4;
+
+     label3:
+        $i0 = virtualinvoke r1.<com.android.mail.browse.ConversationCursor: int getCount()>();
+
+        if $i0 != 0 goto label4;
+
+        $i2 = r0.<com.android.mail.ui.ConversationListFragment: int mConversationCursorLastCount>;
+
+        if $i2 <= 0 goto label4;
+
+        $r2 = staticinvoke <com.android.mail.analytics.Analytics: com.android.mail.analytics.Tracker getInstance()>();
+
+        $r3 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Folder mFolder>;
+
+        $r4 = virtualinvoke $r3.<com.android.mail.providers.Folder: java.lang.String getTypeDescription()>();
+
+        interfaceinvoke $r2.<com.android.mail.analytics.Tracker: void sendEvent(java.lang.String,java.lang.String,java.lang.String,long)>("empty_state", "post_delete", $r4, 0L);
+
+     label4:
+        $i1 = virtualinvoke r1.<com.android.mail.browse.ConversationCursor: int getCount()>();
+
+        r0.<com.android.mail.ui.ConversationListFragment: int mConversationCursorLastCount> = $i1;
+
+        goto label6;
+
+     label5:
+        r0.<com.android.mail.ui.ConversationListFragment: int mConversationCursorLastCount> = 0;
+
+     label6:
+        return;
+    }
+
+    private boolean isCursorReadyToShow()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.browse.ConversationCursor $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = specialinvoke r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.browse.ConversationCursor getConversationListCursor()>();
+
+        $z0 = staticinvoke <com.android.mail.browse.ConversationCursor: boolean isCursorReadyToShow(com.android.mail.browse.ConversationCursor)>($r1);
+
+        return $z0;
+    }
+
+    public android.widget.ListView getListView()
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.SwipeableListView $r1;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        return $r1;
+    }
+
+    public void setNextFocusLeftId(int)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        int i0, $i1;
+        com.android.mail.ui.SwipeableListView $r1, $r2;
+
+        r0 := @this: com.android.mail.ui.ConversationListFragment;
+
+        i0 := @parameter0: int;
+
+        r0.<com.android.mail.ui.ConversationListFragment: int mNextFocusLeftId> = i0;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        $i1 = r0.<com.android.mail.ui.ConversationListFragment: int mNextFocusLeftId>;
+
+        virtualinvoke $r2.<com.android.mail.ui.SwipeableListView: void setNextFocusLeftId(int)>($i1);
+
+     label1:
+        return;
+    }
+
+    static com.android.mail.providers.Account access$002(com.android.mail.ui.ConversationListFragment, com.android.mail.providers.Account)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.providers.Account r1;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        r1 := @parameter1: com.android.mail.providers.Account;
+
+        r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.providers.Account mAccount> = r1;
+
+        return r1;
+    }
+
+    static void access$100(com.android.mail.ui.ConversationListFragment)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void setSwipeAction()>();
+
+        return;
+    }
+
+    static boolean access$200(com.android.mail.ui.ConversationListFragment)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        $z0 = specialinvoke r0.<com.android.mail.ui.ConversationListFragment: boolean isCursorReadyToShow()>();
+
+        return $z0;
+    }
+
+    static boolean access$302(com.android.mail.ui.ConversationListFragment, boolean)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mCanTakeDownLoadingView> = z0;
+
+        return z0;
+    }
+
+    static void access$400(com.android.mail.ui.ConversationListFragment)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void showLoadingView()>();
+
+        return;
+    }
+
+    static java.lang.Runnable access$500(com.android.mail.ui.ConversationListFragment)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        java.lang.Runnable $r1;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: java.lang.Runnable mHideLoadingRunnable>;
+
+        return $r1;
+    }
+
+    static android.os.Handler access$600(com.android.mail.ui.ConversationListFragment)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        android.os.Handler $r1;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: android.os.Handler mHandler>;
+
+        return $r1;
+    }
+
+    static int access$700()
+    {
+        int $i0;
+
+        $i0 = <com.android.mail.ui.ConversationListFragment: int MINIMUM_LOADING_DURATION>;
+
+        return $i0;
+    }
+
+    static boolean access$802(com.android.mail.ui.ConversationListFragment, boolean)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.mail.ui.ConversationListFragment: boolean mLoadingViewPending> = z0;
+
+        return z0;
+    }
+
+    static void access$900(com.android.mail.ui.ConversationListFragment)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        specialinvoke r0.<com.android.mail.ui.ConversationListFragment: void hideLoadingViewAndShowContents()>();
+
+        return;
+    }
+
+    static com.android.mail.ui.SwipeableListView access$1100(com.android.mail.ui.ConversationListFragment)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.SwipeableListView $r1;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.SwipeableListView mListView>;
+
+        return $r1;
+    }
+
+    static java.lang.Runnable access$1200(com.android.mail.ui.ConversationListFragment)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        java.lang.Runnable $r1;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: java.lang.Runnable mUpdateTimestampsRunnable>;
+
+        return $r1;
+    }
+
+    static int access$1300()
+    {
+        int $i0;
+
+        $i0 = <com.android.mail.ui.ConversationListFragment: int TIMESTAMP_UPDATE_INTERVAL>;
+
+        return $i0;
+    }
+
+    static com.android.mail.ui.MailSwipeRefreshLayout access$1400(com.android.mail.ui.ConversationListFragment)
+    {
+        com.android.mail.ui.ConversationListFragment r0;
+        com.android.mail.ui.MailSwipeRefreshLayout $r1;
+
+        r0 := @parameter0: com.android.mail.ui.ConversationListFragment;
+
+        $r1 = r0.<com.android.mail.ui.ConversationListFragment: com.android.mail.ui.MailSwipeRefreshLayout mSwipeRefreshWidget>;
+
+        return $r1;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.String $r0;
+
+        <com.android.mail.ui.ConversationListFragment: java.lang.String CHOICE_MODE_KEY> = "choice-mode-key";
+
+        <com.android.mail.ui.ConversationListFragment: java.lang.String LIST_STATE_KEY> = "list-state";
+
+        <com.android.mail.ui.ConversationListFragment: java.lang.String CONVERSATION_LIST_KEY> = "conversation-list";
+
+        $r0 = staticinvoke <com.android.mail.utils.LogTag: java.lang.String getLogTag()>();
+
+        <com.android.mail.ui.ConversationListFragment: java.lang.String LOG_TAG> = $r0;
+
+        <com.android.mail.ui.ConversationListFragment: int TIMESTAMP_UPDATE_INTERVAL> = 0;
+
+        <com.android.mail.ui.ConversationListFragment: long sSelectionModeAnimationDuration> = -1L;
+
+        return;
+    }
+}

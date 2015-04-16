@@ -1,0 +1,3362 @@
+class com.android.browser.Tab extends java.lang.Object implements android.webkit.WebView$PictureListener
+{
+    private static final java.lang.String LOGTAG;
+    private static final boolean LOGD_ENABLED;
+    private static final java.lang.String CONSOLE_LOGTAG;
+    private static final int MSG_CAPTURE;
+    private static final int CAPTURE_DELAY;
+    private static final int INITIAL_PROGRESS;
+    private static final java.lang.String RESTRICTED;
+    private static android.graphics.Bitmap sDefaultFavicon;
+    private static android.graphics.Paint sAlphaPaint;
+    android.content.Context mContext;
+    protected com.android.browser.WebViewController mWebViewController;
+    private long mId;
+    private com.android.browser.GeolocationPermissionsPrompt mGeolocationPermissionsPrompt;
+    private com.android.browser.PermissionsPrompt mPermissionsPrompt;
+    private android.view.View mContainer;
+    private android.webkit.WebView mMainView;
+    private android.view.View mSubViewContainer;
+    private android.webkit.WebView mSubView;
+    private android.os.Bundle mSavedState;
+    private com.android.browser.Tab mParent;
+    private java.util.Vector mChildren;
+    private boolean mInForeground;
+    private boolean mInPageLoad;
+    private boolean mDisableOverrideUrlLoading;
+    private int mPageLoadProgress;
+    private long mLoadStartTime;
+    private java.lang.String mAppId;
+    private boolean mCloseOnBack;
+    private com.android.browser.ErrorConsoleView mErrorConsole;
+    private final com.android.browser.BrowserDownloadListener mDownloadListener;
+    private final com.android.browser.WebBackForwardListClient mWebBackForwardListClient;
+    private com.android.browser.DataController mDataController;
+    private com.android.browser.DeviceAccountLogin mDeviceAccountLogin;
+    com.android.browser.DownloadTouchIcon mTouchIconLoader;
+    private com.android.browser.BrowserSettings mSettings;
+    private int mCaptureWidth;
+    private int mCaptureHeight;
+    private android.graphics.Bitmap mCapture;
+    private android.os.Handler mHandler;
+    private boolean mUpdateThumbnail;
+    private java.util.regex.Pattern mClearHistoryUrlPattern;
+    protected com.android.browser.Tab$PageState mCurrentState;
+    static final java.lang.String ID;
+    static final java.lang.String CURRURL;
+    static final java.lang.String CURRTITLE;
+    static final java.lang.String PARENTTAB;
+    static final java.lang.String APPID;
+    static final java.lang.String INCOGNITO;
+    static final java.lang.String USERAGENT;
+    static final java.lang.String CLOSEFLAG;
+    private android.content.DialogInterface$OnDismissListener mDialogListener;
+    private java.util.LinkedList mQueuedErrors;
+    private final android.webkit.WebViewClient mWebViewClient;
+    private final android.webkit.WebChromeClient mWebChromeClient;
+    private com.android.browser.DataController$OnQueryUrlIsBookmark mIsBookmarkCallback;
+
+    private static synchronized android.graphics.Bitmap getDefaultFavicon(android.content.Context)
+    {
+        android.content.Context r0;
+        android.graphics.Bitmap $r1, $r2, $r4;
+        android.content.res.Resources $r3;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r1 = <com.android.browser.Tab: android.graphics.Bitmap sDefaultFavicon>;
+
+        if $r1 != null goto label1;
+
+        $r3 = virtualinvoke r0.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $r4 = staticinvoke <android.graphics.BitmapFactory: android.graphics.Bitmap decodeResource(android.content.res.Resources,int)>($r3, 2130837505);
+
+        <com.android.browser.Tab: android.graphics.Bitmap sDefaultFavicon> = $r4;
+
+     label1:
+        $r2 = <com.android.browser.Tab: android.graphics.Bitmap sDefaultFavicon>;
+
+        return $r2;
+    }
+
+    private void processNextError()
+    {
+        com.android.browser.Tab r0;
+        java.util.LinkedList $r1, $r2, $r4, $r5;
+        int $i0;
+        java.lang.Object $r6;
+        com.android.browser.Tab$ErrorDialog $r7;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors>;
+
+        if $r1 != null goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors>;
+
+        virtualinvoke $r2.<java.util.LinkedList: java.lang.Object removeFirst()>();
+
+        $r4 = r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors>;
+
+        $i0 = virtualinvoke $r4.<java.util.LinkedList: int size()>();
+
+        if $i0 != 0 goto label2;
+
+        r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors> = null;
+
+        return;
+
+     label2:
+        $r5 = r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors>;
+
+        $r6 = virtualinvoke $r5.<java.util.LinkedList: java.lang.Object getFirst()>();
+
+        $r7 = (com.android.browser.Tab$ErrorDialog) $r6;
+
+        specialinvoke r0.<com.android.browser.Tab: void showError(com.android.browser.Tab$ErrorDialog)>($r7);
+
+        return;
+    }
+
+    private void queueError(int, java.lang.String)
+    {
+        com.android.browser.Tab r0;
+        int i0, $i1, $i2, $i3;
+        java.lang.String r1;
+        java.util.Iterator r2;
+        com.android.browser.Tab$ErrorDialog r3, $r6, r11;
+        java.util.LinkedList $r4, $r5, $r7, $r8, $r10;
+        boolean $z0, $z1;
+        java.lang.Object $r9;
+
+        r0 := @this: com.android.browser.Tab;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r4 = r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors>;
+
+        if $r4 != null goto label1;
+
+        $r10 = new java.util.LinkedList;
+
+        specialinvoke $r10.<java.util.LinkedList: void <init>()>();
+
+        r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors> = $r10;
+
+     label1:
+        $r5 = r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors>;
+
+        r2 = virtualinvoke $r5.<java.util.LinkedList: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r9 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.browser.Tab$ErrorDialog) $r9;
+
+        $i3 = r3.<com.android.browser.Tab$ErrorDialog: int mError>;
+
+        if $i3 != i0 goto label3;
+
+        return;
+
+     label3:
+        goto label2;
+
+     label4:
+        $r6 = new com.android.browser.Tab$ErrorDialog;
+
+        if i0 != -14 goto label5;
+
+        $i2 = 2131493120;
+
+        goto label6;
+
+     label5:
+        $i2 = 2131493119;
+
+     label6:
+        specialinvoke $r6.<com.android.browser.Tab$ErrorDialog: void <init>(com.android.browser.Tab,int,java.lang.String,int)>(r0, $i2, r1, i0);
+
+        r11 = $r6;
+
+        $r7 = r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors>;
+
+        virtualinvoke $r7.<java.util.LinkedList: void addLast(java.lang.Object)>(r11);
+
+        $r8 = r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors>;
+
+        $i1 = virtualinvoke $r8.<java.util.LinkedList: int size()>();
+
+        if $i1 != 1 goto label7;
+
+        $z1 = r0.<com.android.browser.Tab: boolean mInForeground>;
+
+        if $z1 == 0 goto label7;
+
+        specialinvoke r0.<com.android.browser.Tab: void showError(com.android.browser.Tab$ErrorDialog)>(r11);
+
+     label7:
+        return;
+    }
+
+    private void showError(com.android.browser.Tab$ErrorDialog)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.Tab$ErrorDialog r1;
+        android.app.AlertDialog r2;
+        boolean $z0;
+        android.app.AlertDialog$Builder $r3, $r5, $r7, $r8;
+        android.content.Context $r4;
+        int $i0;
+        java.lang.String $r6;
+        android.content.DialogInterface$OnDismissListener $r9;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: com.android.browser.Tab$ErrorDialog;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mInForeground>;
+
+        if $z0 == 0 goto label1;
+
+        $r3 = new android.app.AlertDialog$Builder;
+
+        $r4 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        specialinvoke $r3.<android.app.AlertDialog$Builder: void <init>(android.content.Context)>($r4);
+
+        $i0 = r1.<com.android.browser.Tab$ErrorDialog: int mTitle>;
+
+        $r5 = virtualinvoke $r3.<android.app.AlertDialog$Builder: android.app.AlertDialog$Builder setTitle(int)>($i0);
+
+        $r6 = r1.<com.android.browser.Tab$ErrorDialog: java.lang.String mDescription>;
+
+        $r7 = virtualinvoke $r5.<android.app.AlertDialog$Builder: android.app.AlertDialog$Builder setMessage(java.lang.CharSequence)>($r6);
+
+        $r8 = virtualinvoke $r7.<android.app.AlertDialog$Builder: android.app.AlertDialog$Builder setPositiveButton(int,android.content.DialogInterface$OnClickListener)>(2131492883, null);
+
+        r2 = virtualinvoke $r8.<android.app.AlertDialog$Builder: android.app.AlertDialog create()>();
+
+        $r9 = r0.<com.android.browser.Tab: android.content.DialogInterface$OnDismissListener mDialogListener>;
+
+        virtualinvoke r2.<android.app.AlertDialog: void setOnDismissListener(android.content.DialogInterface$OnDismissListener)>($r9);
+
+        virtualinvoke r2.<android.app.AlertDialog: void show()>();
+
+     label1:
+        return;
+    }
+
+    private void syncCurrentState(android.webkit.WebView, java.lang.String)
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView r1;
+        java.lang.String r2, $r4, $r6, $r8, $r10, $r14;
+        com.android.browser.Tab$PageState $r3, $r5, $r7, $r9, $r11, $r13, $r15, $r16, $r18, $r19;
+        android.graphics.Bitmap $r12;
+        boolean $z0, $z1;
+        com.android.browser.Tab$SecurityState $r17;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.webkit.WebView;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r3 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r4 = virtualinvoke r1.<android.webkit.WebView: java.lang.String getUrl()>();
+
+        $r3.<com.android.browser.Tab$PageState: java.lang.String mUrl> = $r4;
+
+        $r5 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r6 = $r5.<com.android.browser.Tab$PageState: java.lang.String mUrl>;
+
+        if $r6 != null goto label1;
+
+        $r18 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r18.<com.android.browser.Tab$PageState: java.lang.String mUrl> = "";
+
+     label1:
+        $r7 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r8 = virtualinvoke r1.<android.webkit.WebView: java.lang.String getOriginalUrl()>();
+
+        $r7.<com.android.browser.Tab$PageState: java.lang.String mOriginalUrl> = $r8;
+
+        $r9 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r10 = virtualinvoke r1.<android.webkit.WebView: java.lang.String getTitle()>();
+
+        $r9.<com.android.browser.Tab$PageState: java.lang.String mTitle> = $r10;
+
+        $r11 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r12 = virtualinvoke r1.<android.webkit.WebView: android.graphics.Bitmap getFavicon()>();
+
+        $r11.<com.android.browser.Tab$PageState: android.graphics.Bitmap mFavicon> = $r12;
+
+        $r13 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r14 = $r13.<com.android.browser.Tab$PageState: java.lang.String mUrl>;
+
+        $z0 = staticinvoke <android.webkit.URLUtil: boolean isHttpsUrl(java.lang.String)>($r14);
+
+        if $z0 != 0 goto label2;
+
+        $r16 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r17 = <com.android.browser.Tab$SecurityState: com.android.browser.Tab$SecurityState SECURITY_STATE_NOT_SECURE>;
+
+        $r16.<com.android.browser.Tab$PageState: com.android.browser.Tab$SecurityState mSecurityState> = $r17;
+
+        $r19 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r19.<com.android.browser.Tab$PageState: android.net.http.SslError mSslCertificateError> = null;
+
+     label2:
+        $r15 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $z1 = virtualinvoke r1.<android.webkit.WebView: boolean isPrivateBrowsingEnabled()>();
+
+        $r15.<com.android.browser.Tab$PageState: boolean mIncognito> = $z1;
+
+        return;
+    }
+
+    void setDeviceAccountLogin(com.android.browser.DeviceAccountLogin)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.DeviceAccountLogin r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: com.android.browser.DeviceAccountLogin;
+
+        r0.<com.android.browser.Tab: com.android.browser.DeviceAccountLogin mDeviceAccountLogin> = r1;
+
+        return;
+    }
+
+    com.android.browser.DeviceAccountLogin getDeviceAccountLogin()
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.DeviceAccountLogin $r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.DeviceAccountLogin mDeviceAccountLogin>;
+
+        return $r1;
+    }
+
+    void <init>(com.android.browser.WebViewController, android.webkit.WebView)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.WebViewController r1;
+        android.webkit.WebView r2;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: com.android.browser.WebViewController;
+
+        r2 := @parameter1: android.webkit.WebView;
+
+        specialinvoke r0.<com.android.browser.Tab: void <init>(com.android.browser.WebViewController,android.webkit.WebView,android.os.Bundle)>(r1, r2, null);
+
+        return;
+    }
+
+    void <init>(com.android.browser.WebViewController, android.os.Bundle)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.WebViewController r1;
+        android.os.Bundle r2;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: com.android.browser.WebViewController;
+
+        r2 := @parameter1: android.os.Bundle;
+
+        specialinvoke r0.<com.android.browser.Tab: void <init>(com.android.browser.WebViewController,android.webkit.WebView,android.os.Bundle)>(r1, null, r2);
+
+        return;
+    }
+
+    void <init>(com.android.browser.WebViewController, android.webkit.WebView, android.os.Bundle)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.WebViewController r1, $r8;
+        android.webkit.WebView r2;
+        android.os.Bundle r3;
+        com.android.browser.Tab$1 $r4;
+        com.android.browser.Tab$2 $r5;
+        com.android.browser.Tab$3 $r6;
+        com.android.browser.Tab$8 $r7;
+        android.content.Context $r9, $r11, $r14, $r16, $r20;
+        com.android.browser.BrowserSettings $r10;
+        com.android.browser.DataController $r12;
+        com.android.browser.Tab$PageState $r13;
+        com.android.browser.Tab$4 $r15;
+        com.android.browser.Tab$5 $r17;
+        int $i0, $i2;
+        android.content.res.Resources $r18, $r19;
+        long $l1, $l4;
+        com.android.browser.Tab$6 $r21;
+        byte $b3;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: com.android.browser.WebViewController;
+
+        r2 := @parameter1: android.webkit.WebView;
+
+        r3 := @parameter2: android.os.Bundle;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.browser.Tab: long mId> = -1L;
+
+        $r4 = new com.android.browser.Tab$1;
+
+        specialinvoke $r4.<com.android.browser.Tab$1: void <init>(com.android.browser.Tab)>(r0);
+
+        r0.<com.android.browser.Tab: android.content.DialogInterface$OnDismissListener mDialogListener> = $r4;
+
+        $r5 = new com.android.browser.Tab$2;
+
+        specialinvoke $r5.<com.android.browser.Tab$2: void <init>(com.android.browser.Tab)>(r0);
+
+        r0.<com.android.browser.Tab: android.webkit.WebViewClient mWebViewClient> = $r5;
+
+        $r6 = new com.android.browser.Tab$3;
+
+        specialinvoke $r6.<com.android.browser.Tab$3: void <init>(com.android.browser.Tab)>(r0);
+
+        r0.<com.android.browser.Tab: android.webkit.WebChromeClient mWebChromeClient> = $r6;
+
+        $r7 = new com.android.browser.Tab$8;
+
+        specialinvoke $r7.<com.android.browser.Tab$8: void <init>(com.android.browser.Tab)>(r0);
+
+        r0.<com.android.browser.Tab: com.android.browser.DataController$OnQueryUrlIsBookmark mIsBookmarkCallback> = $r7;
+
+        r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController> = r1;
+
+        $r8 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        $r9 = interfaceinvoke $r8.<com.android.browser.WebViewController: android.content.Context getContext()>();
+
+        r0.<com.android.browser.Tab: android.content.Context mContext> = $r9;
+
+        $r10 = staticinvoke <com.android.browser.BrowserSettings: com.android.browser.BrowserSettings getInstance()>();
+
+        r0.<com.android.browser.Tab: com.android.browser.BrowserSettings mSettings> = $r10;
+
+        $r11 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        $r12 = staticinvoke <com.android.browser.DataController: com.android.browser.DataController getInstance(android.content.Context)>($r11);
+
+        r0.<com.android.browser.Tab: com.android.browser.DataController mDataController> = $r12;
+
+        $r13 = new com.android.browser.Tab$PageState;
+
+        $r14 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        if r2 == null goto label1;
+
+        $z0 = virtualinvoke r2.<android.webkit.WebView: boolean isPrivateBrowsingEnabled()>();
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        specialinvoke $r13.<com.android.browser.Tab$PageState: void <init>(android.content.Context,boolean)>($r14, $z0);
+
+        r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState> = $r13;
+
+        r0.<com.android.browser.Tab: boolean mInPageLoad> = 0;
+
+        r0.<com.android.browser.Tab: boolean mInForeground> = 0;
+
+        $r15 = new com.android.browser.Tab$4;
+
+        specialinvoke $r15.<com.android.browser.Tab$4: void <init>(com.android.browser.Tab)>(r0);
+
+        r0.<com.android.browser.Tab: com.android.browser.BrowserDownloadListener mDownloadListener> = $r15;
+
+        $r17 = new com.android.browser.Tab$5;
+
+        specialinvoke $r17.<com.android.browser.Tab$5: void <init>(com.android.browser.Tab)>(r0);
+
+        r0.<com.android.browser.Tab: com.android.browser.WebBackForwardListClient mWebBackForwardListClient> = $r17;
+
+        $r16 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        $r18 = virtualinvoke $r16.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i0 = virtualinvoke $r18.<android.content.res.Resources: int getDimensionPixelSize(int)>(2131427374);
+
+        r0.<com.android.browser.Tab: int mCaptureWidth> = $i0;
+
+        $r20 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        $r19 = virtualinvoke $r20.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i2 = virtualinvoke $r19.<android.content.res.Resources: int getDimensionPixelSize(int)>(2131427375);
+
+        r0.<com.android.browser.Tab: int mCaptureHeight> = $i2;
+
+        virtualinvoke r0.<com.android.browser.Tab: void updateShouldCaptureThumbnails()>();
+
+        specialinvoke r0.<com.android.browser.Tab: void restoreState(android.os.Bundle)>(r3);
+
+        $l1 = virtualinvoke r0.<com.android.browser.Tab: long getId()>();
+
+        $b3 = $l1 cmp -1L;
+
+        if $b3 != 0 goto label3;
+
+        $l4 = staticinvoke <com.android.browser.TabControl: long getNextId()>();
+
+        r0.<com.android.browser.Tab: long mId> = $l4;
+
+     label3:
+        virtualinvoke r0.<com.android.browser.Tab: void setWebView(android.webkit.WebView)>(r2);
+
+        $r21 = new com.android.browser.Tab$6;
+
+        specialinvoke $r21.<com.android.browser.Tab$6: void <init>(com.android.browser.Tab)>(r0);
+
+        r0.<com.android.browser.Tab: android.os.Handler mHandler> = $r21;
+
+        return;
+    }
+
+    public boolean shouldUpdateThumbnail()
+    {
+        com.android.browser.Tab r0;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mUpdateThumbnail>;
+
+        return $z0;
+    }
+
+    public void refreshIdAfterPreload()
+    {
+        com.android.browser.Tab r0;
+        long $l0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $l0 = staticinvoke <com.android.browser.TabControl: long getNextId()>();
+
+        r0.<com.android.browser.Tab: long mId> = $l0;
+
+        return;
+    }
+
+    public void updateShouldCaptureThumbnails()
+    {
+        com.android.browser.Tab r0, r1, r13;
+        java.lang.Throwable r2, r3, $r11, $r12;
+        com.android.browser.WebViewController $r4;
+        boolean $z0, $z1;
+        android.graphics.Bitmap $r7, $r9, $r10;
+        android.graphics.Bitmap$Config $r8;
+        int $i0, $i1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r4 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        $z0 = interfaceinvoke $r4.<com.android.browser.WebViewController: boolean shouldCaptureThumbnails()>();
+
+        if $z0 == 0 goto label07;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label01:
+        $r7 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        if $r7 != null goto label02;
+
+        $i1 = r0.<com.android.browser.Tab: int mCaptureWidth>;
+
+        $i0 = r0.<com.android.browser.Tab: int mCaptureHeight>;
+
+        $r8 = <android.graphics.Bitmap$Config: android.graphics.Bitmap$Config RGB_565>;
+
+        $r9 = staticinvoke <android.graphics.Bitmap: android.graphics.Bitmap createBitmap(int,int,android.graphics.Bitmap$Config)>($i1, $i0, $r8);
+
+        r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture> = $r9;
+
+        $r10 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        virtualinvoke $r10.<android.graphics.Bitmap: void eraseColor(int)>(-1);
+
+        $z1 = r0.<com.android.browser.Tab: boolean mInForeground>;
+
+        if $z1 == 0 goto label02;
+
+        specialinvoke r0.<com.android.browser.Tab: void postCapture()>();
+
+     label02:
+        exitmonitor r1;
+
+     label03:
+        goto label06;
+
+     label04:
+        $r11 := @caughtexception;
+
+        r2 = $r11;
+
+        exitmonitor r1;
+
+     label05:
+        throw r2;
+
+     label06:
+        goto label12;
+
+     label07:
+        r13 = r0;
+
+        entermonitor r0;
+
+     label08:
+        r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture> = null;
+
+        virtualinvoke r0.<com.android.browser.Tab: void deleteThumbnail()>();
+
+        exitmonitor r13;
+
+     label09:
+        goto label12;
+
+     label10:
+        $r12 := @caughtexception;
+
+        r3 = $r12;
+
+        exitmonitor r13;
+
+     label11:
+        throw r3;
+
+     label12:
+        return;
+
+        catch java.lang.Throwable from label01 to label03 with label04;
+        catch java.lang.Throwable from label04 to label05 with label04;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label10 to label11 with label10;
+    }
+
+    public void setController(com.android.browser.WebViewController)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.WebViewController r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: com.android.browser.WebViewController;
+
+        r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController> = r1;
+
+        virtualinvoke r0.<com.android.browser.Tab: void updateShouldCaptureThumbnails()>();
+
+        return;
+    }
+
+    public long getId()
+    {
+        com.android.browser.Tab r0;
+        long $l0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $l0 = r0.<com.android.browser.Tab: long mId>;
+
+        return $l0;
+    }
+
+    void setWebView(android.webkit.WebView)
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.webkit.WebView;
+
+        virtualinvoke r0.<com.android.browser.Tab: void setWebView(android.webkit.WebView,boolean)>(r1, 1);
+
+        return;
+    }
+
+    void setWebView(android.webkit.WebView, boolean)
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView r1, $r4, $r8, $r9, $r11, $r13, $r16, $r18, $r23, $r24;
+        boolean z0;
+        com.android.browser.TabControl r2;
+        android.webkit.WebBackForwardList r3;
+        com.android.browser.GeolocationPermissionsPrompt $r5, $r28;
+        com.android.browser.PermissionsPrompt $r6, $r27;
+        com.android.browser.WebViewController $r7, $r15;
+        android.webkit.WebViewClient $r10;
+        android.webkit.WebChromeClient $r12;
+        com.android.browser.BrowserDownloadListener $r14;
+        android.os.Bundle $r17, $r19;
+        java.lang.String $r20;
+        com.android.browser.Tab$PageState $r21, $r26;
+        com.android.browser.TabControl$OnThumbnailUpdatedListener $r22;
+        int $i1;
+        android.content.Context $r25;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.webkit.WebView;
+
+        z0 := @parameter1: boolean;
+
+        $r4 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r4 != r1 goto label1;
+
+        return;
+
+     label1:
+        $r5 = r0.<com.android.browser.Tab: com.android.browser.GeolocationPermissionsPrompt mGeolocationPermissionsPrompt>;
+
+        if $r5 == null goto label2;
+
+        $r28 = r0.<com.android.browser.Tab: com.android.browser.GeolocationPermissionsPrompt mGeolocationPermissionsPrompt>;
+
+        virtualinvoke $r28.<com.android.browser.GeolocationPermissionsPrompt: void hide()>();
+
+     label2:
+        $r6 = r0.<com.android.browser.Tab: com.android.browser.PermissionsPrompt mPermissionsPrompt>;
+
+        if $r6 == null goto label3;
+
+        $r27 = r0.<com.android.browser.Tab: com.android.browser.PermissionsPrompt mPermissionsPrompt>;
+
+        virtualinvoke $r27.<com.android.browser.PermissionsPrompt: void hide()>();
+
+     label3:
+        $r7 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        interfaceinvoke $r7.<com.android.browser.WebViewController: void onSetWebView(com.android.browser.Tab,android.webkit.WebView)>(r0, r1);
+
+        $r8 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r8 == null goto label5;
+
+        $r23 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r23.<android.webkit.WebView: void setPictureListener(android.webkit.WebView$PictureListener)>(null);
+
+        if r1 == null goto label4;
+
+        specialinvoke r0.<com.android.browser.Tab: void syncCurrentState(android.webkit.WebView,java.lang.String)>(r1, null);
+
+        goto label5;
+
+     label4:
+        $r26 = new com.android.browser.Tab$PageState;
+
+        $r25 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        specialinvoke $r26.<com.android.browser.Tab$PageState: void <init>(android.content.Context,boolean)>($r25, 0);
+
+        r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState> = $r26;
+
+     label5:
+        r0.<com.android.browser.Tab: android.webkit.WebView mMainView> = r1;
+
+        $r9 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r9 == null goto label9;
+
+        $r11 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $r10 = r0.<com.android.browser.Tab: android.webkit.WebViewClient mWebViewClient>;
+
+        virtualinvoke $r11.<android.webkit.WebView: void setWebViewClient(android.webkit.WebViewClient)>($r10);
+
+        $r13 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $r12 = r0.<com.android.browser.Tab: android.webkit.WebChromeClient mWebChromeClient>;
+
+        virtualinvoke $r13.<android.webkit.WebView: void setWebChromeClient(android.webkit.WebChromeClient)>($r12);
+
+        $r16 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $r14 = r0.<com.android.browser.Tab: com.android.browser.BrowserDownloadListener mDownloadListener>;
+
+        virtualinvoke $r16.<android.webkit.WebView: void setDownloadListener(android.webkit.DownloadListener)>($r14);
+
+        $r15 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        r2 = interfaceinvoke $r15.<com.android.browser.WebViewController: com.android.browser.TabControl getTabControl()>();
+
+        if r2 == null goto label6;
+
+        $r22 = virtualinvoke r2.<com.android.browser.TabControl: com.android.browser.TabControl$OnThumbnailUpdatedListener getOnThumbnailUpdatedListener()>();
+
+        if $r22 == null goto label6;
+
+        $r24 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r24.<android.webkit.WebView: void setPictureListener(android.webkit.WebView$PictureListener)>(r0);
+
+     label6:
+        if z0 == 0 goto label9;
+
+        $r17 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        if $r17 == null goto label9;
+
+        specialinvoke r0.<com.android.browser.Tab: void restoreUserAgent()>();
+
+        $r18 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $r19 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        r3 = virtualinvoke $r18.<android.webkit.WebView: android.webkit.WebBackForwardList restoreState(android.os.Bundle)>($r19);
+
+        if r3 == null goto label7;
+
+        $i1 = virtualinvoke r3.<android.webkit.WebBackForwardList: int getSize()>();
+
+        if $i1 != 0 goto label8;
+
+     label7:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Tab", "Failed to restore WebView state!");
+
+        $r21 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r20 = $r21.<com.android.browser.Tab$PageState: java.lang.String mOriginalUrl>;
+
+        virtualinvoke r0.<com.android.browser.Tab: void loadUrl(java.lang.String,java.util.Map)>($r20, null);
+
+     label8:
+        r0.<com.android.browser.Tab: android.os.Bundle mSavedState> = null;
+
+     label9:
+        return;
+    }
+
+    void destroy()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView r1, $r2;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r2 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r2 == null goto label1;
+
+        virtualinvoke r0.<com.android.browser.Tab: void dismissSubWindow()>();
+
+        r1 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke r0.<com.android.browser.Tab: void setWebView(android.webkit.WebView)>(null);
+
+        virtualinvoke r1.<android.webkit.WebView: void destroy()>();
+
+     label1:
+        return;
+    }
+
+    void removeFromTree()
+    {
+        com.android.browser.Tab r0, r2, $r4, $r5;
+        java.util.Iterator r1;
+        java.util.Vector $r3, $r6, $r7;
+        boolean $z1;
+        java.lang.Object $r8;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r3 = r0.<com.android.browser.Tab: java.util.Vector mChildren>;
+
+        if $r3 == null goto label2;
+
+        $r7 = r0.<com.android.browser.Tab: java.util.Vector mChildren>;
+
+        r1 = virtualinvoke $r7.<java.util.Vector: java.util.Iterator iterator()>();
+
+     label1:
+        $z1 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label2;
+
+        $r8 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.browser.Tab) $r8;
+
+        virtualinvoke r2.<com.android.browser.Tab: void setParent(com.android.browser.Tab)>(null);
+
+        goto label1;
+
+     label2:
+        $r4 = r0.<com.android.browser.Tab: com.android.browser.Tab mParent>;
+
+        if $r4 == null goto label3;
+
+        $r5 = r0.<com.android.browser.Tab: com.android.browser.Tab mParent>;
+
+        $r6 = $r5.<com.android.browser.Tab: java.util.Vector mChildren>;
+
+        virtualinvoke $r6.<java.util.Vector: boolean remove(java.lang.Object)>(r0);
+
+     label3:
+        virtualinvoke r0.<com.android.browser.Tab: void deleteThumbnail()>();
+
+        return;
+    }
+
+    boolean createSubWindow()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1, $r6, $r9, $r11, $r13;
+        com.android.browser.WebViewController $r2, $r4, $r12;
+        com.android.browser.Tab$SubWindowClient $r3;
+        android.webkit.WebViewClient $r5;
+        com.android.browser.Tab$SubWindowChromeClient $r7;
+        android.webkit.WebChromeClient $r8;
+        com.android.browser.Tab$7 $r10;
+        android.app.Activity $r14;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        if $r1 != null goto label1;
+
+        $r2 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        interfaceinvoke $r2.<com.android.browser.WebViewController: void createSubWindow(com.android.browser.Tab)>(r0);
+
+        $r6 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        $r3 = new com.android.browser.Tab$SubWindowClient;
+
+        $r5 = r0.<com.android.browser.Tab: android.webkit.WebViewClient mWebViewClient>;
+
+        $r4 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        specialinvoke $r3.<com.android.browser.Tab$SubWindowClient: void <init>(android.webkit.WebViewClient,com.android.browser.WebViewController)>($r5, $r4);
+
+        virtualinvoke $r6.<android.webkit.WebView: void setWebViewClient(android.webkit.WebViewClient)>($r3);
+
+        $r9 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        $r7 = new com.android.browser.Tab$SubWindowChromeClient;
+
+        $r8 = r0.<com.android.browser.Tab: android.webkit.WebChromeClient mWebChromeClient>;
+
+        specialinvoke $r7.<com.android.browser.Tab$SubWindowChromeClient: void <init>(com.android.browser.Tab,android.webkit.WebChromeClient)>(r0, $r8);
+
+        virtualinvoke $r9.<android.webkit.WebView: void setWebChromeClient(android.webkit.WebChromeClient)>($r7);
+
+        $r11 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        $r10 = new com.android.browser.Tab$7;
+
+        specialinvoke $r10.<com.android.browser.Tab$7: void <init>(com.android.browser.Tab)>(r0);
+
+        virtualinvoke $r11.<android.webkit.WebView: void setDownloadListener(android.webkit.DownloadListener)>($r10);
+
+        $r13 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        $r12 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        $r14 = interfaceinvoke $r12.<com.android.browser.WebViewController: android.app.Activity getActivity()>();
+
+        virtualinvoke $r13.<android.webkit.WebView: void setOnCreateContextMenuListener(android.view.View$OnCreateContextMenuListener)>($r14);
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    void dismissSubWindow()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1, $r3;
+        com.android.browser.WebViewController $r2;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        interfaceinvoke $r2.<com.android.browser.WebViewController: void endActionMode()>();
+
+        $r3 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        virtualinvoke $r3.<android.webkit.WebView: void destroy()>();
+
+        r0.<com.android.browser.Tab: android.webkit.WebView mSubView> = null;
+
+        r0.<com.android.browser.Tab: android.view.View mSubViewContainer> = null;
+
+     label1:
+        return;
+    }
+
+    void setParent(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0, r1;
+        android.os.Bundle $r2, $r10, $r12;
+        long $l0, $l1, $l3;
+        byte $b2;
+        java.lang.IllegalStateException $r3, $r11;
+        com.android.browser.BrowserSettings $r4, $r6, $r8;
+        android.webkit.WebView $r5, $r7, $r9;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: com.android.browser.Tab;
+
+        if r1 != r0 goto label1;
+
+        $r11 = new java.lang.IllegalStateException;
+
+        specialinvoke $r11.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Cannot set parent to self!");
+
+        throw $r11;
+
+     label1:
+        r0.<com.android.browser.Tab: com.android.browser.Tab mParent> = r1;
+
+        $r2 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        if $r2 == null goto label3;
+
+        if r1 != null goto label2;
+
+        $r12 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        virtualinvoke $r12.<android.os.Bundle: void remove(java.lang.String)>("parentTab");
+
+        goto label3;
+
+     label2:
+        $r10 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        $l3 = virtualinvoke r1.<com.android.browser.Tab: long getId()>();
+
+        virtualinvoke $r10.<android.os.Bundle: void putLong(java.lang.String,long)>("parentTab", $l3);
+
+     label3:
+        if r1 == null goto label4;
+
+        $r4 = r0.<com.android.browser.Tab: com.android.browser.BrowserSettings mSettings>;
+
+        $r5 = virtualinvoke r1.<com.android.browser.Tab: android.webkit.WebView getWebView()>();
+
+        $z0 = virtualinvoke $r4.<com.android.browser.BrowserSettings: boolean hasDesktopUseragent(android.webkit.WebView)>($r5);
+
+        $r6 = r0.<com.android.browser.Tab: com.android.browser.BrowserSettings mSettings>;
+
+        $r7 = virtualinvoke r0.<com.android.browser.Tab: android.webkit.WebView getWebView()>();
+
+        $z1 = virtualinvoke $r6.<com.android.browser.BrowserSettings: boolean hasDesktopUseragent(android.webkit.WebView)>($r7);
+
+        if $z0 == $z1 goto label4;
+
+        $r8 = r0.<com.android.browser.Tab: com.android.browser.BrowserSettings mSettings>;
+
+        $r9 = virtualinvoke r0.<com.android.browser.Tab: android.webkit.WebView getWebView()>();
+
+        virtualinvoke $r8.<com.android.browser.BrowserSettings: void toggleDesktopUseragent(android.webkit.WebView)>($r9);
+
+     label4:
+        if r1 == null goto label5;
+
+        $l0 = virtualinvoke r1.<com.android.browser.Tab: long getId()>();
+
+        $l1 = virtualinvoke r0.<com.android.browser.Tab: long getId()>();
+
+        $b2 = $l0 cmp $l1;
+
+        if $b2 != 0 goto label5;
+
+        $r3 = new java.lang.IllegalStateException;
+
+        specialinvoke $r3.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Parent has same ID as child!");
+
+        throw $r3;
+
+     label5:
+        return;
+    }
+
+    public com.android.browser.Tab getParent()
+    {
+        com.android.browser.Tab r0, $r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.Tab mParent>;
+
+        return $r1;
+    }
+
+    void addChildTab(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0, r1;
+        java.util.Vector $r2, $r3, $r4;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: com.android.browser.Tab;
+
+        $r2 = r0.<com.android.browser.Tab: java.util.Vector mChildren>;
+
+        if $r2 != null goto label1;
+
+        $r4 = new java.util.Vector;
+
+        specialinvoke $r4.<java.util.Vector: void <init>()>();
+
+        r0.<com.android.browser.Tab: java.util.Vector mChildren> = $r4;
+
+     label1:
+        $r3 = r0.<com.android.browser.Tab: java.util.Vector mChildren>;
+
+        virtualinvoke $r3.<java.util.Vector: boolean add(java.lang.Object)>(r1);
+
+        virtualinvoke r1.<com.android.browser.Tab: void setParent(com.android.browser.Tab)>(r0);
+
+        return;
+    }
+
+    java.util.Vector getChildren()
+    {
+        com.android.browser.Tab r0;
+        java.util.Vector $r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: java.util.Vector mChildren>;
+
+        return $r1;
+    }
+
+    void resume()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1, $r2, $r3, $r4, $r5;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        specialinvoke r0.<com.android.browser.Tab: void setupHwAcceleration(android.view.View)>($r2);
+
+        $r3 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r3.<android.webkit.WebView: void onResume()>();
+
+        $r4 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        if $r4 == null goto label1;
+
+        $r5 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        virtualinvoke $r5.<android.webkit.WebView: void onResume()>();
+
+     label1:
+        return;
+    }
+
+    private void setupHwAcceleration(android.view.View)
+    {
+        com.android.browser.Tab r0;
+        android.view.View r1;
+        com.android.browser.BrowserSettings r2;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.view.View;
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        r2 = staticinvoke <com.android.browser.BrowserSettings: com.android.browser.BrowserSettings getInstance()>();
+
+        $z0 = virtualinvoke r2.<com.android.browser.BrowserSettings: boolean isHardwareAccelerated()>();
+
+        if $z0 == 0 goto label2;
+
+        virtualinvoke r1.<android.view.View: void setLayerType(int,android.graphics.Paint)>(0, null);
+
+        goto label3;
+
+     label2:
+        virtualinvoke r1.<android.view.View: void setLayerType(int,android.graphics.Paint)>(1, null);
+
+     label3:
+        return;
+    }
+
+    void pause()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1, $r2, $r3, $r4;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r2.<android.webkit.WebView: void onPause()>();
+
+        $r3 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        if $r3 == null goto label1;
+
+        $r4 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        virtualinvoke $r4.<android.webkit.WebView: void onPause()>();
+
+     label1:
+        return;
+    }
+
+    void putInForeground()
+    {
+        com.android.browser.Tab r0;
+        android.app.Activity r1;
+        boolean $z0;
+        com.android.browser.WebViewController $r2, $r6;
+        android.webkit.WebView $r3, $r4, $r11;
+        java.util.LinkedList $r5, $r7, $r8;
+        int $i0;
+        java.lang.Object $r9;
+        com.android.browser.Tab$ErrorDialog $r10;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mInForeground>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.browser.Tab: boolean mInForeground> = 1;
+
+        virtualinvoke r0.<com.android.browser.Tab: void resume()>();
+
+        $r2 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        r1 = interfaceinvoke $r2.<com.android.browser.WebViewController: android.app.Activity getActivity()>();
+
+        $r3 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r3.<android.webkit.WebView: void setOnCreateContextMenuListener(android.view.View$OnCreateContextMenuListener)>(r1);
+
+        $r4 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        if $r4 == null goto label2;
+
+        $r11 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        virtualinvoke $r11.<android.webkit.WebView: void setOnCreateContextMenuListener(android.view.View$OnCreateContextMenuListener)>(r1);
+
+     label2:
+        $r5 = r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors>;
+
+        if $r5 == null goto label3;
+
+        $r7 = r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors>;
+
+        $i0 = virtualinvoke $r7.<java.util.LinkedList: int size()>();
+
+        if $i0 <= 0 goto label3;
+
+        $r8 = r0.<com.android.browser.Tab: java.util.LinkedList mQueuedErrors>;
+
+        $r9 = virtualinvoke $r8.<java.util.LinkedList: java.lang.Object getFirst()>();
+
+        $r10 = (com.android.browser.Tab$ErrorDialog) $r9;
+
+        specialinvoke r0.<com.android.browser.Tab: void showError(com.android.browser.Tab$ErrorDialog)>($r10);
+
+     label3:
+        $r6 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        interfaceinvoke $r6.<com.android.browser.WebViewController: void bookmarkedStatusHasChanged(com.android.browser.Tab)>(r0);
+
+        return;
+    }
+
+    void putInBackground()
+    {
+        com.android.browser.Tab r0;
+        boolean $z0;
+        android.webkit.WebView $r1, $r2, $r3;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mInForeground>;
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        virtualinvoke r0.<com.android.browser.Tab: void capture()>();
+
+        r0.<com.android.browser.Tab: boolean mInForeground> = 0;
+
+        virtualinvoke r0.<com.android.browser.Tab: void pause()>();
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r1.<android.webkit.WebView: void setOnCreateContextMenuListener(android.view.View$OnCreateContextMenuListener)>(null);
+
+        $r2 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        if $r2 == null goto label2;
+
+        $r3 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        virtualinvoke $r3.<android.webkit.WebView: void setOnCreateContextMenuListener(android.view.View$OnCreateContextMenuListener)>(null);
+
+     label2:
+        return;
+    }
+
+    boolean inForeground()
+    {
+        com.android.browser.Tab r0;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mInForeground>;
+
+        return $z0;
+    }
+
+    android.webkit.WebView getTopWindow()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1, $r2, $r3;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        if $r1 == null goto label1;
+
+        $r3 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        return $r3;
+
+     label1:
+        $r2 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        return $r2;
+    }
+
+    android.webkit.WebView getWebView()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        return $r1;
+    }
+
+    void setViewContainer(android.view.View)
+    {
+        com.android.browser.Tab r0;
+        android.view.View r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.view.View;
+
+        r0.<com.android.browser.Tab: android.view.View mContainer> = r1;
+
+        return;
+    }
+
+    android.view.View getViewContainer()
+    {
+        com.android.browser.Tab r0;
+        android.view.View $r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.view.View mContainer>;
+
+        return $r1;
+    }
+
+    boolean isPrivateBrowsingEnabled()
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.Tab$PageState $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $z0 = $r1.<com.android.browser.Tab$PageState: boolean mIncognito>;
+
+        return $z0;
+    }
+
+    android.webkit.WebView getSubWebView()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        return $r1;
+    }
+
+    void setSubWebView(android.webkit.WebView)
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.webkit.WebView;
+
+        r0.<com.android.browser.Tab: android.webkit.WebView mSubView> = r1;
+
+        return;
+    }
+
+    android.view.View getSubViewContainer()
+    {
+        com.android.browser.Tab r0;
+        android.view.View $r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.view.View mSubViewContainer>;
+
+        return $r1;
+    }
+
+    void setSubViewContainer(android.view.View)
+    {
+        com.android.browser.Tab r0;
+        android.view.View r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.view.View;
+
+        r0.<com.android.browser.Tab: android.view.View mSubViewContainer> = r1;
+
+        return;
+    }
+
+    com.android.browser.GeolocationPermissionsPrompt getGeolocationPermissionsPrompt()
+    {
+        com.android.browser.Tab r0;
+        android.view.ViewStub r1;
+        com.android.browser.GeolocationPermissionsPrompt $r2, $r3, $r7;
+        android.view.View $r4, $r5, $r6;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r2 = r0.<com.android.browser.Tab: com.android.browser.GeolocationPermissionsPrompt mGeolocationPermissionsPrompt>;
+
+        if $r2 != null goto label1;
+
+        $r4 = r0.<com.android.browser.Tab: android.view.View mContainer>;
+
+        $r5 = virtualinvoke $r4.<android.view.View: android.view.View findViewById(int)>(2131558513);
+
+        r1 = (android.view.ViewStub) $r5;
+
+        $r6 = virtualinvoke r1.<android.view.ViewStub: android.view.View inflate()>();
+
+        $r7 = (com.android.browser.GeolocationPermissionsPrompt) $r6;
+
+        r0.<com.android.browser.Tab: com.android.browser.GeolocationPermissionsPrompt mGeolocationPermissionsPrompt> = $r7;
+
+     label1:
+        $r3 = r0.<com.android.browser.Tab: com.android.browser.GeolocationPermissionsPrompt mGeolocationPermissionsPrompt>;
+
+        return $r3;
+    }
+
+    com.android.browser.PermissionsPrompt getPermissionsPrompt()
+    {
+        com.android.browser.Tab r0;
+        android.view.ViewStub r1;
+        com.android.browser.PermissionsPrompt $r2, $r3, $r7;
+        android.view.View $r4, $r5, $r6;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r2 = r0.<com.android.browser.Tab: com.android.browser.PermissionsPrompt mPermissionsPrompt>;
+
+        if $r2 != null goto label1;
+
+        $r4 = r0.<com.android.browser.Tab: android.view.View mContainer>;
+
+        $r5 = virtualinvoke $r4.<android.view.View: android.view.View findViewById(int)>(2131558512);
+
+        r1 = (android.view.ViewStub) $r5;
+
+        $r6 = virtualinvoke r1.<android.view.ViewStub: android.view.View inflate()>();
+
+        $r7 = (com.android.browser.PermissionsPrompt) $r6;
+
+        r0.<com.android.browser.Tab: com.android.browser.PermissionsPrompt mPermissionsPrompt> = $r7;
+
+     label1:
+        $r3 = r0.<com.android.browser.Tab: com.android.browser.PermissionsPrompt mPermissionsPrompt>;
+
+        return $r3;
+    }
+
+    java.lang.String getAppId()
+    {
+        com.android.browser.Tab r0;
+        java.lang.String $r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: java.lang.String mAppId>;
+
+        return $r1;
+    }
+
+    void setAppId(java.lang.String)
+    {
+        com.android.browser.Tab r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: java.lang.String;
+
+        r0.<com.android.browser.Tab: java.lang.String mAppId> = r1;
+
+        return;
+    }
+
+    boolean closeOnBack()
+    {
+        com.android.browser.Tab r0;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mCloseOnBack>;
+
+        return $z0;
+    }
+
+    void setCloseOnBack(boolean)
+    {
+        com.android.browser.Tab r0;
+        boolean z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        z0 := @parameter0: boolean;
+
+        r0.<com.android.browser.Tab: boolean mCloseOnBack> = z0;
+
+        return;
+    }
+
+    java.lang.String getUrl()
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.Tab$PageState $r1;
+        java.lang.String $r2, $r3;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r2 = $r1.<com.android.browser.Tab$PageState: java.lang.String mUrl>;
+
+        $r3 = staticinvoke <com.android.browser.UrlUtils: java.lang.String filteredUrl(java.lang.String)>($r2);
+
+        return $r3;
+    }
+
+    java.lang.String getOriginalUrl()
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.Tab$PageState $r1, $r3;
+        java.lang.String $r2, $r4, $r5, $r6;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r2 = $r1.<com.android.browser.Tab$PageState: java.lang.String mOriginalUrl>;
+
+        if $r2 != null goto label1;
+
+        $r6 = virtualinvoke r0.<com.android.browser.Tab: java.lang.String getUrl()>();
+
+        return $r6;
+
+     label1:
+        $r3 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r4 = $r3.<com.android.browser.Tab$PageState: java.lang.String mOriginalUrl>;
+
+        $r5 = staticinvoke <com.android.browser.UrlUtils: java.lang.String filteredUrl(java.lang.String)>($r4);
+
+        return $r5;
+    }
+
+    java.lang.String getTitle()
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.Tab$PageState $r1, $r3;
+        java.lang.String $r2, $r4, $r6;
+        boolean $z0;
+        android.content.Context $r5;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r2 = $r1.<com.android.browser.Tab$PageState: java.lang.String mTitle>;
+
+        if $r2 != null goto label1;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mInPageLoad>;
+
+        if $z0 == 0 goto label1;
+
+        $r5 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        $r6 = virtualinvoke $r5.<android.content.Context: java.lang.String getString(int)>(2131492884);
+
+        return $r6;
+
+     label1:
+        $r3 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r4 = $r3.<com.android.browser.Tab$PageState: java.lang.String mTitle>;
+
+        return $r4;
+    }
+
+    android.graphics.Bitmap getFavicon()
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.Tab$PageState $r1, $r5;
+        android.graphics.Bitmap $r2, $r4, $r6;
+        android.content.Context $r3;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r2 = $r1.<com.android.browser.Tab$PageState: android.graphics.Bitmap mFavicon>;
+
+        if $r2 == null goto label1;
+
+        $r5 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r6 = $r5.<com.android.browser.Tab$PageState: android.graphics.Bitmap mFavicon>;
+
+        return $r6;
+
+     label1:
+        $r3 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        $r4 = staticinvoke <com.android.browser.Tab: android.graphics.Bitmap getDefaultFavicon(android.content.Context)>($r3);
+
+        return $r4;
+    }
+
+    public boolean isBookmarkedSite()
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.Tab$PageState $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $z0 = $r1.<com.android.browser.Tab$PageState: boolean mIsBookmarkedSite>;
+
+        return $z0;
+    }
+
+    com.android.browser.ErrorConsoleView getErrorConsole(boolean)
+    {
+        com.android.browser.Tab r0;
+        boolean z0;
+        com.android.browser.ErrorConsoleView $r1, $r2, $r3, $r6;
+        android.content.Context $r4;
+        android.webkit.WebView $r5;
+
+        r0 := @this: com.android.browser.Tab;
+
+        z0 := @parameter0: boolean;
+
+        if z0 == 0 goto label1;
+
+        $r2 = r0.<com.android.browser.Tab: com.android.browser.ErrorConsoleView mErrorConsole>;
+
+        if $r2 != null goto label1;
+
+        $r3 = new com.android.browser.ErrorConsoleView;
+
+        $r4 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        specialinvoke $r3.<com.android.browser.ErrorConsoleView: void <init>(android.content.Context)>($r4);
+
+        r0.<com.android.browser.Tab: com.android.browser.ErrorConsoleView mErrorConsole> = $r3;
+
+        $r6 = r0.<com.android.browser.Tab: com.android.browser.ErrorConsoleView mErrorConsole>;
+
+        $r5 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r6.<com.android.browser.ErrorConsoleView: void setWebView(android.webkit.WebView)>($r5);
+
+     label1:
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.ErrorConsoleView mErrorConsole>;
+
+        return $r1;
+    }
+
+    private void setSecurityState(com.android.browser.Tab$SecurityState)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.Tab$SecurityState r1;
+        com.android.browser.Tab$PageState $r2, $r3;
+        com.android.browser.WebViewController $r4;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: com.android.browser.Tab$SecurityState;
+
+        $r2 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r2.<com.android.browser.Tab$PageState: com.android.browser.Tab$SecurityState mSecurityState> = r1;
+
+        $r3 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r3.<com.android.browser.Tab$PageState: android.net.http.SslError mSslCertificateError> = null;
+
+        $r4 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        interfaceinvoke $r4.<com.android.browser.WebViewController: void onUpdatedSecurityState(com.android.browser.Tab)>(r0);
+
+        return;
+    }
+
+    com.android.browser.Tab$SecurityState getSecurityState()
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.Tab$PageState $r1;
+        com.android.browser.Tab$SecurityState $r2;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r2 = $r1.<com.android.browser.Tab$PageState: com.android.browser.Tab$SecurityState mSecurityState>;
+
+        return $r2;
+    }
+
+    android.net.http.SslError getSslCertificateError()
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.Tab$PageState $r1;
+        android.net.http.SslError $r2;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r2 = $r1.<com.android.browser.Tab$PageState: android.net.http.SslError mSslCertificateError>;
+
+        return $r2;
+    }
+
+    int getLoadProgress()
+    {
+        com.android.browser.Tab r0;
+        boolean $z0;
+        int $i0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mInPageLoad>;
+
+        if $z0 == 0 goto label1;
+
+        $i0 = r0.<com.android.browser.Tab: int mPageLoadProgress>;
+
+        return $i0;
+
+     label1:
+        return 100;
+    }
+
+    boolean inPageLoad()
+    {
+        com.android.browser.Tab r0;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mInPageLoad>;
+
+        return $z0;
+    }
+
+    public android.os.Bundle saveState()
+    {
+        com.android.browser.Tab r0, $r26, $r32;
+        android.webkit.WebBackForwardList r1;
+        android.webkit.WebView $r2, $r7, $r22, $r29;
+        com.android.browser.Tab$PageState $r3, $r10, $r16, $r17;
+        java.lang.String $r4, $r11, $r13, $r15, $r20, $r23, $r31;
+        boolean $z0, $z1, $z2, $z3;
+        android.os.Bundle $r5, $r6, $r14, $r18, $r19, $r21, $r24, $r25, $r27, $r30, $r33, $r34;
+        java.lang.StringBuilder $r8, $r9, $r12;
+        long $l1, $l2;
+        com.android.browser.BrowserSettings $r28;
+        int $i3;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r2 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r2 != null goto label1;
+
+        $r33 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        return $r33;
+
+     label1:
+        $r3 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r4 = $r3.<com.android.browser.Tab$PageState: java.lang.String mUrl>;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>($r4);
+
+        if $z0 == 0 goto label2;
+
+        return null;
+
+     label2:
+        $r5 = new android.os.Bundle;
+
+        specialinvoke $r5.<android.os.Bundle: void <init>()>();
+
+        r0.<com.android.browser.Tab: android.os.Bundle mSavedState> = $r5;
+
+        $r7 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $r6 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        r1 = virtualinvoke $r7.<android.webkit.WebView: android.webkit.WebBackForwardList saveState(android.os.Bundle)>($r6);
+
+        if r1 == null goto label3;
+
+        $i3 = virtualinvoke r1.<android.webkit.WebBackForwardList: int getSize()>();
+
+        if $i3 != 0 goto label4;
+
+     label3:
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to save back/forward list for ");
+
+        $r10 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r11 = $r10.<com.android.browser.Tab$PageState: java.lang.String mUrl>;
+
+        $r12 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Tab", $r13);
+
+     label4:
+        $r14 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        $l1 = r0.<com.android.browser.Tab: long mId>;
+
+        virtualinvoke $r14.<android.os.Bundle: void putLong(java.lang.String,long)>("ID", $l1);
+
+        $r18 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        $r16 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r15 = $r16.<com.android.browser.Tab$PageState: java.lang.String mUrl>;
+
+        virtualinvoke $r18.<android.os.Bundle: void putString(java.lang.String,java.lang.String)>("currentUrl", $r15);
+
+        $r19 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        $r17 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r20 = $r17.<com.android.browser.Tab$PageState: java.lang.String mTitle>;
+
+        virtualinvoke $r19.<android.os.Bundle: void putString(java.lang.String,java.lang.String)>("currentTitle", $r20);
+
+        $r21 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        $r22 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $z1 = virtualinvoke $r22.<android.webkit.WebView: boolean isPrivateBrowsingEnabled()>();
+
+        virtualinvoke $r21.<android.os.Bundle: void putBoolean(java.lang.String,boolean)>("privateBrowsingEnabled", $z1);
+
+        $r23 = r0.<com.android.browser.Tab: java.lang.String mAppId>;
+
+        if $r23 == null goto label5;
+
+        $r34 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        $r31 = r0.<com.android.browser.Tab: java.lang.String mAppId>;
+
+        virtualinvoke $r34.<android.os.Bundle: void putString(java.lang.String,java.lang.String)>("appid", $r31);
+
+     label5:
+        $r25 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        $z2 = r0.<com.android.browser.Tab: boolean mCloseOnBack>;
+
+        virtualinvoke $r25.<android.os.Bundle: void putBoolean(java.lang.String,boolean)>("closeOnBack", $z2);
+
+        $r26 = r0.<com.android.browser.Tab: com.android.browser.Tab mParent>;
+
+        if $r26 == null goto label6;
+
+        $r30 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        $r32 = r0.<com.android.browser.Tab: com.android.browser.Tab mParent>;
+
+        $l2 = $r32.<com.android.browser.Tab: long mId>;
+
+        virtualinvoke $r30.<android.os.Bundle: void putLong(java.lang.String,long)>("parentTab", $l2);
+
+     label6:
+        $r24 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        $r28 = r0.<com.android.browser.Tab: com.android.browser.BrowserSettings mSettings>;
+
+        $r29 = virtualinvoke r0.<com.android.browser.Tab: android.webkit.WebView getWebView()>();
+
+        $z3 = virtualinvoke $r28.<com.android.browser.BrowserSettings: boolean hasDesktopUseragent(android.webkit.WebView)>($r29);
+
+        virtualinvoke $r24.<android.os.Bundle: void putBoolean(java.lang.String,boolean)>("useragent", $z3);
+
+        $r27 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        return $r27;
+    }
+
+    private void restoreState(android.os.Bundle)
+    {
+        com.android.browser.Tab r0, r4;
+        android.os.Bundle r1, $r6;
+        java.lang.String r2, r3, $r7;
+        boolean z0, $z1;
+        java.lang.Throwable r5, $r15;
+        long $l0;
+        com.android.browser.Tab$PageState $r8, $r11;
+        android.content.Context $r9, $r14;
+        android.graphics.Bitmap $r12;
+        com.android.browser.DataController $r13;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.os.Bundle;
+
+        r0.<com.android.browser.Tab: android.os.Bundle mSavedState> = r1;
+
+        $r6 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        if $r6 != null goto label1;
+
+        return;
+
+     label1:
+        $l0 = virtualinvoke r1.<android.os.Bundle: long getLong(java.lang.String)>("ID");
+
+        r0.<com.android.browser.Tab: long mId> = $l0;
+
+        $r7 = virtualinvoke r1.<android.os.Bundle: java.lang.String getString(java.lang.String)>("appid");
+
+        r0.<com.android.browser.Tab: java.lang.String mAppId> = $r7;
+
+        $z1 = virtualinvoke r1.<android.os.Bundle: boolean getBoolean(java.lang.String)>("closeOnBack");
+
+        r0.<com.android.browser.Tab: boolean mCloseOnBack> = $z1;
+
+        specialinvoke r0.<com.android.browser.Tab: void restoreUserAgent()>();
+
+        r2 = virtualinvoke r1.<android.os.Bundle: java.lang.String getString(java.lang.String)>("currentUrl");
+
+        r3 = virtualinvoke r1.<android.os.Bundle: java.lang.String getString(java.lang.String)>("currentTitle");
+
+        z0 = virtualinvoke r1.<android.os.Bundle: boolean getBoolean(java.lang.String)>("privateBrowsingEnabled");
+
+        $r8 = new com.android.browser.Tab$PageState;
+
+        $r9 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        specialinvoke $r8.<com.android.browser.Tab$PageState: void <init>(android.content.Context,boolean,java.lang.String,android.graphics.Bitmap)>($r9, z0, r2, null);
+
+        r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState> = $r8;
+
+        $r11 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r11.<com.android.browser.Tab$PageState: java.lang.String mTitle> = r3;
+
+        r4 = r0;
+
+        entermonitor r0;
+
+     label2:
+        $r12 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        if $r12 == null goto label3;
+
+        $r14 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        $r13 = staticinvoke <com.android.browser.DataController: com.android.browser.DataController getInstance(android.content.Context)>($r14);
+
+        virtualinvoke $r13.<com.android.browser.DataController: void loadThumbnail(com.android.browser.Tab)>(r0);
+
+     label3:
+        exitmonitor r4;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r15 := @caughtexception;
+
+        r5 = $r15;
+
+        exitmonitor r4;
+
+     label6:
+        throw r5;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label2 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private void restoreUserAgent()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1, $r4, $r6;
+        android.os.Bundle $r2, $r3;
+        boolean $z0, $z1;
+        com.android.browser.BrowserSettings $r5, $r7;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        if $r2 != null goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r3 = r0.<com.android.browser.Tab: android.os.Bundle mSavedState>;
+
+        $z0 = virtualinvoke $r3.<android.os.Bundle: boolean getBoolean(java.lang.String)>("useragent");
+
+        $r5 = r0.<com.android.browser.Tab: com.android.browser.BrowserSettings mSettings>;
+
+        $r4 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $z1 = virtualinvoke $r5.<com.android.browser.BrowserSettings: boolean hasDesktopUseragent(android.webkit.WebView)>($r4);
+
+        if $z0 == $z1 goto label3;
+
+        $r7 = r0.<com.android.browser.Tab: com.android.browser.BrowserSettings mSettings>;
+
+        $r6 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r7.<com.android.browser.BrowserSettings: void toggleDesktopUseragent(android.webkit.WebView)>($r6);
+
+     label3:
+        return;
+    }
+
+    public void updateBookmarkedStatus()
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.DataController $r1;
+        java.lang.String $r2;
+        com.android.browser.DataController$OnQueryUrlIsBookmark $r3;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.DataController mDataController>;
+
+        $r2 = virtualinvoke r0.<com.android.browser.Tab: java.lang.String getUrl()>();
+
+        $r3 = r0.<com.android.browser.Tab: com.android.browser.DataController$OnQueryUrlIsBookmark mIsBookmarkCallback>;
+
+        virtualinvoke $r1.<com.android.browser.DataController: void queryBookmarkStatus(java.lang.String,com.android.browser.DataController$OnQueryUrlIsBookmark)>($r2, $r3);
+
+        return;
+    }
+
+    public android.graphics.Bitmap getScreenshot()
+    {
+        com.android.browser.Tab r0, r1;
+        java.lang.Throwable r2, $r5;
+        android.graphics.Bitmap $r4;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        exitmonitor r1;
+
+     label2:
+        return $r4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public boolean isSnapshot()
+    {
+        com.android.browser.Tab r0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        return 0;
+    }
+
+    public android.content.ContentValues createSnapshotValues()
+    {
+        com.android.browser.Tab r0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        return null;
+    }
+
+    public boolean saveViewState(android.content.ContentValues)
+    {
+        com.android.browser.Tab r0;
+        android.content.ContentValues r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.content.ContentValues;
+
+        return 0;
+    }
+
+    public byte[] compressBitmap(android.graphics.Bitmap)
+    {
+        com.android.browser.Tab r0;
+        android.graphics.Bitmap r1;
+        java.io.ByteArrayOutputStream r2, $r3;
+        android.graphics.Bitmap$CompressFormat $r4;
+        byte[] $r5;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.graphics.Bitmap;
+
+        if r1 != null goto label1;
+
+        return null;
+
+     label1:
+        $r3 = new java.io.ByteArrayOutputStream;
+
+        specialinvoke $r3.<java.io.ByteArrayOutputStream: void <init>()>();
+
+        r2 = $r3;
+
+        $r4 = <android.graphics.Bitmap$CompressFormat: android.graphics.Bitmap$CompressFormat PNG>;
+
+        virtualinvoke r1.<android.graphics.Bitmap: boolean compress(android.graphics.Bitmap$CompressFormat,int,java.io.OutputStream)>($r4, 100, r2);
+
+        $r5 = virtualinvoke r2.<java.io.ByteArrayOutputStream: byte[] toByteArray()>();
+
+        return $r5;
+    }
+
+    public void loadUrl(java.lang.String, java.util.Map)
+    {
+        com.android.browser.Tab r0;
+        java.lang.String r1;
+        java.util.Map r2;
+        android.webkit.WebView $r3, $r6, $r8;
+        com.android.browser.Tab$PageState $r4;
+        android.content.Context $r5;
+        com.android.browser.WebViewController $r7;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.util.Map;
+
+        $r3 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r3 == null goto label1;
+
+        r0.<com.android.browser.Tab: int mPageLoadProgress> = 5;
+
+        r0.<com.android.browser.Tab: boolean mInPageLoad> = 1;
+
+        $r4 = new com.android.browser.Tab$PageState;
+
+        $r5 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        specialinvoke $r4.<com.android.browser.Tab$PageState: void <init>(android.content.Context,boolean,java.lang.String,android.graphics.Bitmap)>($r5, 0, r1, null);
+
+        r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState> = $r4;
+
+        $r7 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        $r6 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        interfaceinvoke $r7.<com.android.browser.WebViewController: void onPageStarted(com.android.browser.Tab,android.webkit.WebView,android.graphics.Bitmap)>(r0, $r6, null);
+
+        $r8 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r8.<android.webkit.WebView: void loadUrl(java.lang.String,java.util.Map)>(r1, r2);
+
+     label1:
+        return;
+    }
+
+    public void disableUrlOverridingForLoad()
+    {
+        com.android.browser.Tab r0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r0.<com.android.browser.Tab: boolean mDisableOverrideUrlLoading> = 1;
+
+        return;
+    }
+
+    protected void capture()
+    {
+        com.android.browser.Tab r0;
+        android.graphics.Canvas r1, $r8;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20;
+        float f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14;
+        com.android.browser.TabControl r2;
+        com.android.browser.TabControl$OnThumbnailUpdatedListener r3;
+        android.webkit.WebView $r4, $r6, $r7, $r10, $r11, $r12, $r13, $r14, $r15, $r27;
+        android.graphics.Bitmap $r5, $r9, $r16, $r18, $r19, $r20, $r22, $r23, $r25, $r26;
+        boolean $z0;
+        android.graphics.Paint $r17, $r21, $r24, $r29;
+        com.android.browser.BrowserWebView $r28;
+        android.os.Handler $r30;
+        com.android.browser.WebViewController $r31;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r4 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r4 == null goto label1;
+
+        $r5 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        if $r5 != null goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r6 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $i3 = virtualinvoke $r6.<android.webkit.WebView: int getContentWidth()>();
+
+        if $i3 <= 0 goto label3;
+
+        $r7 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $i4 = virtualinvoke $r7.<android.webkit.WebView: int getContentHeight()>();
+
+        if $i4 > 0 goto label4;
+
+     label3:
+        return;
+
+     label4:
+        $r8 = new android.graphics.Canvas;
+
+        $r9 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        specialinvoke $r8.<android.graphics.Canvas: void <init>(android.graphics.Bitmap)>($r9);
+
+        r1 = $r8;
+
+        $r10 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        i0 = virtualinvoke $r10.<android.webkit.WebView: int getScrollX()>();
+
+        $r11 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $i5 = virtualinvoke $r11.<android.webkit.WebView: int getScrollY()>();
+
+        $r12 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $i6 = virtualinvoke $r12.<android.webkit.WebView: int getVisibleTitleHeight()>();
+
+        i1 = $i5 + $i6;
+
+        i2 = virtualinvoke r1.<android.graphics.Canvas: int save()>();
+
+        $i7 = neg i0;
+
+        $f2 = (float) $i7;
+
+        $i8 = neg i1;
+
+        $f1 = (float) $i8;
+
+        virtualinvoke r1.<android.graphics.Canvas: void translate(float,float)>($f2, $f1);
+
+        $i9 = r0.<com.android.browser.Tab: int mCaptureWidth>;
+
+        $f3 = (float) $i9;
+
+        $r13 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $i10 = virtualinvoke $r13.<android.webkit.WebView: int getWidth()>();
+
+        $f4 = (float) $i10;
+
+        f0 = $f3 / $f4;
+
+        $f6 = (float) i0;
+
+        $f5 = (float) i1;
+
+        virtualinvoke r1.<android.graphics.Canvas: void scale(float,float,float,float)>(f0, f0, $f6, $f5);
+
+        $r14 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $z0 = $r14 instanceof com.android.browser.BrowserWebView;
+
+        if $z0 == 0 goto label5;
+
+        $r27 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $r28 = (com.android.browser.BrowserWebView) $r27;
+
+        virtualinvoke $r28.<com.android.browser.BrowserWebView: void drawContent(android.graphics.Canvas)>(r1);
+
+        goto label6;
+
+     label5:
+        $r15 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r15.<android.webkit.WebView: void draw(android.graphics.Canvas)>(r1);
+
+     label6:
+        virtualinvoke r1.<android.graphics.Canvas: void restoreToCount(int)>(i2);
+
+        $r16 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        $i11 = virtualinvoke $r16.<android.graphics.Bitmap: int getHeight()>();
+
+        $f7 = (float) $i11;
+
+        $r17 = <com.android.browser.Tab: android.graphics.Paint sAlphaPaint>;
+
+        virtualinvoke r1.<android.graphics.Canvas: void drawRect(float,float,float,float,android.graphics.Paint)>(0.0F, 0.0F, 1.0F, $f7, $r17);
+
+        $r19 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        $i13 = virtualinvoke $r19.<android.graphics.Bitmap: int getWidth()>();
+
+        $i12 = $i13 - 1;
+
+        $f8 = (float) $i12;
+
+        $r18 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        $i14 = virtualinvoke $r18.<android.graphics.Bitmap: int getWidth()>();
+
+        $f10 = (float) $i14;
+
+        $r20 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        $i15 = virtualinvoke $r20.<android.graphics.Bitmap: int getHeight()>();
+
+        $f9 = (float) $i15;
+
+        $r21 = <com.android.browser.Tab: android.graphics.Paint sAlphaPaint>;
+
+        virtualinvoke r1.<android.graphics.Canvas: void drawRect(float,float,float,float,android.graphics.Paint)>($f8, 0.0F, $f10, $f9, $r21);
+
+        $r22 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        $i16 = virtualinvoke $r22.<android.graphics.Bitmap: int getWidth()>();
+
+        $f11 = (float) $i16;
+
+        $r24 = <com.android.browser.Tab: android.graphics.Paint sAlphaPaint>;
+
+        virtualinvoke r1.<android.graphics.Canvas: void drawRect(float,float,float,float,android.graphics.Paint)>(0.0F, 0.0F, $f11, 1.0F, $r24);
+
+        $r23 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        $i19 = virtualinvoke $r23.<android.graphics.Bitmap: int getHeight()>();
+
+        $i20 = $i19 - 1;
+
+        $f13 = (float) $i20;
+
+        $r26 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        $i17 = virtualinvoke $r26.<android.graphics.Bitmap: int getWidth()>();
+
+        $f12 = (float) $i17;
+
+        $r25 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        $i18 = virtualinvoke $r25.<android.graphics.Bitmap: int getHeight()>();
+
+        $f14 = (float) $i18;
+
+        $r29 = <com.android.browser.Tab: android.graphics.Paint sAlphaPaint>;
+
+        virtualinvoke r1.<android.graphics.Canvas: void drawRect(float,float,float,float,android.graphics.Paint)>(0.0F, $f13, $f12, $f14, $r29);
+
+        virtualinvoke r1.<android.graphics.Canvas: void setBitmap(android.graphics.Bitmap)>(null);
+
+        $r30 = r0.<com.android.browser.Tab: android.os.Handler mHandler>;
+
+        virtualinvoke $r30.<android.os.Handler: void removeMessages(int)>(42);
+
+        virtualinvoke r0.<com.android.browser.Tab: void persistThumbnail()>();
+
+        $r31 = r0.<com.android.browser.Tab: com.android.browser.WebViewController mWebViewController>;
+
+        r2 = interfaceinvoke $r31.<com.android.browser.WebViewController: com.android.browser.TabControl getTabControl()>();
+
+        if r2 == null goto label7;
+
+        r3 = virtualinvoke r2.<com.android.browser.TabControl: com.android.browser.TabControl$OnThumbnailUpdatedListener getOnThumbnailUpdatedListener()>();
+
+        if r3 == null goto label7;
+
+        interfaceinvoke r3.<com.android.browser.TabControl$OnThumbnailUpdatedListener: void onThumbnailUpdated(com.android.browser.Tab)>(r0);
+
+     label7:
+        return;
+    }
+
+    public void onNewPicture(android.webkit.WebView, android.graphics.Picture)
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView r1;
+        android.graphics.Picture r2;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.webkit.WebView;
+
+        r2 := @parameter1: android.graphics.Picture;
+
+        specialinvoke r0.<com.android.browser.Tab: void postCapture()>();
+
+        return;
+    }
+
+    private void postCapture()
+    {
+        com.android.browser.Tab r0;
+        android.os.Handler $r1, $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.os.Handler mHandler>;
+
+        $z0 = virtualinvoke $r1.<android.os.Handler: boolean hasMessages(int)>(42);
+
+        if $z0 != 0 goto label1;
+
+        $r2 = r0.<com.android.browser.Tab: android.os.Handler mHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: boolean sendEmptyMessageDelayed(int,long)>(42, 100L);
+
+     label1:
+        return;
+    }
+
+    public boolean canGoBack()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1, $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $z0 = virtualinvoke $r2.<android.webkit.WebView: boolean canGoBack()>();
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    public boolean canGoForward()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1, $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        $z0 = virtualinvoke $r2.<android.webkit.WebView: boolean canGoForward()>();
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    public void goBack()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1, $r2;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r2.<android.webkit.WebView: void goBack()>();
+
+     label1:
+        return;
+    }
+
+    public void goForward()
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1, $r2;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke $r2.<android.webkit.WebView: void goForward()>();
+
+     label1:
+        return;
+    }
+
+    public void clearBackStackWhenItemAdded(java.util.regex.Pattern)
+    {
+        com.android.browser.Tab r0;
+        java.util.regex.Pattern r1;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: java.util.regex.Pattern;
+
+        r0.<com.android.browser.Tab: java.util.regex.Pattern mClearHistoryUrlPattern> = r1;
+
+        return;
+    }
+
+    protected void persistThumbnail()
+    {
+        com.android.browser.Tab r0;
+        android.content.Context $r1;
+        com.android.browser.DataController $r2;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        $r2 = staticinvoke <com.android.browser.DataController: com.android.browser.DataController getInstance(android.content.Context)>($r1);
+
+        virtualinvoke $r2.<com.android.browser.DataController: void saveThumbnail(com.android.browser.Tab)>(r0);
+
+        return;
+    }
+
+    protected void deleteThumbnail()
+    {
+        com.android.browser.Tab r0;
+        android.content.Context $r1;
+        com.android.browser.DataController $r2;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.content.Context mContext>;
+
+        $r2 = staticinvoke <com.android.browser.DataController: com.android.browser.DataController getInstance(android.content.Context)>($r1);
+
+        virtualinvoke $r2.<com.android.browser.DataController: void deleteThumbnail(com.android.browser.Tab)>(r0);
+
+        return;
+    }
+
+    void updateCaptureFromBlob(byte[])
+    {
+        com.android.browser.Tab r0, r2;
+        byte[] r1;
+        java.nio.ByteBuffer r3;
+        java.lang.RuntimeException r4, $r9;
+        java.lang.Throwable r5, $r19;
+        android.graphics.Bitmap $r7, $r8, $r16;
+        java.lang.StringBuilder $r10, $r11, $r12, $r13, $r14, $r15, $r18;
+        int $i0, $i1, $i2;
+        java.lang.String $r17;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: byte[];
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label01:
+        $r7 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        if $r7 != null goto label03;
+
+        exitmonitor r2;
+
+     label02:
+        return;
+
+     label03:
+        r3 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer wrap(byte[])>(r1);
+
+     label04:
+        $r8 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        virtualinvoke $r8.<android.graphics.Bitmap: void copyPixelsFromBuffer(java.nio.Buffer)>(r3);
+
+     label05:
+        goto label07;
+
+     label06:
+        $r9 := @caughtexception;
+
+        r4 = $r9;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Load capture has mismatched sizes; buffer: ");
+
+        $i0 = virtualinvoke r3.<java.nio.ByteBuffer: int capacity()>();
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" blob: ");
+
+        $i1 = lengthof r1;
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("capture: ");
+
+        $r16 = r0.<com.android.browser.Tab: android.graphics.Bitmap mCapture>;
+
+        $i2 = virtualinvoke $r16.<android.graphics.Bitmap: int getByteCount()>();
+
+        $r18 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Tab", $r17);
+
+        throw r4;
+
+     label07:
+        exitmonitor r2;
+
+     label08:
+        goto label11;
+
+     label09:
+        $r19 := @caughtexception;
+
+        r5 = $r19;
+
+        exitmonitor r2;
+
+     label10:
+        throw r5;
+
+     label11:
+        return;
+
+        catch java.lang.RuntimeException from label04 to label05 with label06;
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label03 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    public java.lang.String toString()
+    {
+        com.android.browser.Tab r0, $r5, $r17;
+        java.lang.StringBuilder r1, $r2;
+        long $l0, $l1;
+        boolean $z0, $z1;
+        java.lang.String $r9, $r11, $r13;
+
+        r0 := @this: com.android.browser.Tab;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>(int)>(100);
+
+        r1 = $r2;
+
+        $l0 = r0.<com.android.browser.Tab: long mId>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l0);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(") has parent: ");
+
+        $r5 = virtualinvoke r0.<com.android.browser.Tab: com.android.browser.Tab getParent()>();
+
+        if $r5 == null goto label1;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("true[");
+
+        $r17 = virtualinvoke r0.<com.android.browser.Tab: com.android.browser.Tab getParent()>();
+
+        $l1 = virtualinvoke $r17.<com.android.browser.Tab: long getId()>();
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l1);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        goto label2;
+
+     label1:
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("false");
+
+     label2:
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", incog: ");
+
+        $z0 = virtualinvoke r0.<com.android.browser.Tab: boolean isPrivateBrowsingEnabled()>();
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $z1 = virtualinvoke r0.<com.android.browser.Tab: boolean isPrivateBrowsingEnabled()>();
+
+        if $z1 != 0 goto label3;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", title: ");
+
+        $r11 = virtualinvoke r0.<com.android.browser.Tab: java.lang.String getTitle()>();
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", url: ");
+
+        $r13 = virtualinvoke r0.<com.android.browser.Tab: java.lang.String getUrl()>();
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r13);
+
+     label3:
+        $r9 = virtualinvoke r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r9;
+    }
+
+    private void handleProceededAfterSslError(android.net.http.SslError)
+    {
+        com.android.browser.Tab r0;
+        android.net.http.SslError r1;
+        java.lang.String $r2, $r4;
+        com.android.browser.Tab$PageState $r3, $r9;
+        boolean $z0;
+        com.android.browser.Tab$SecurityState $r5, $r6, $r7, $r8;
+
+        r0 := @this: com.android.browser.Tab;
+
+        r1 := @parameter0: android.net.http.SslError;
+
+        $r2 = virtualinvoke r1.<android.net.http.SslError: java.lang.String getUrl()>();
+
+        $r3 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r4 = $r3.<com.android.browser.Tab$PageState: java.lang.String mUrl>;
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>($r4);
+
+        if $z0 == 0 goto label1;
+
+        $r8 = <com.android.browser.Tab$SecurityState: com.android.browser.Tab$SecurityState SECURITY_STATE_BAD_CERTIFICATE>;
+
+        specialinvoke r0.<com.android.browser.Tab: void setSecurityState(com.android.browser.Tab$SecurityState)>($r8);
+
+        $r9 = r0.<com.android.browser.Tab: com.android.browser.Tab$PageState mCurrentState>;
+
+        $r9.<com.android.browser.Tab$PageState: android.net.http.SslError mSslCertificateError> = r1;
+
+        goto label2;
+
+     label1:
+        $r5 = virtualinvoke r0.<com.android.browser.Tab: com.android.browser.Tab$SecurityState getSecurityState()>();
+
+        $r6 = <com.android.browser.Tab$SecurityState: com.android.browser.Tab$SecurityState SECURITY_STATE_SECURE>;
+
+        if $r5 != $r6 goto label2;
+
+        $r7 = <com.android.browser.Tab$SecurityState: com.android.browser.Tab$SecurityState SECURITY_STATE_MIXED>;
+
+        specialinvoke r0.<com.android.browser.Tab: void setSecurityState(com.android.browser.Tab$SecurityState)>($r7);
+
+     label2:
+        return;
+    }
+
+    public void setAcceptThirdPartyCookies(boolean)
+    {
+        com.android.browser.Tab r0;
+        boolean z0;
+        android.webkit.CookieManager r1;
+        android.webkit.WebView $r2, $r3, $r4, $r5;
+
+        r0 := @this: com.android.browser.Tab;
+
+        z0 := @parameter0: boolean;
+
+        r1 = staticinvoke <android.webkit.CookieManager: android.webkit.CookieManager getInstance()>();
+
+        $r2 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        if $r2 == null goto label1;
+
+        $r5 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        virtualinvoke r1.<android.webkit.CookieManager: void setAcceptThirdPartyCookies(android.webkit.WebView,boolean)>($r5, z0);
+
+     label1:
+        $r3 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        if $r3 == null goto label2;
+
+        $r4 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        virtualinvoke r1.<android.webkit.CookieManager: void setAcceptThirdPartyCookies(android.webkit.WebView,boolean)>($r4, z0);
+
+     label2:
+        return;
+    }
+
+    static void access$000(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        specialinvoke r0.<com.android.browser.Tab: void processNextError()>();
+
+        return;
+    }
+
+    static boolean access$102(com.android.browser.Tab, boolean)
+    {
+        com.android.browser.Tab r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.browser.Tab: boolean mInPageLoad> = z0;
+
+        return z0;
+    }
+
+    static boolean access$202(com.android.browser.Tab, boolean)
+    {
+        com.android.browser.Tab r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.browser.Tab: boolean mUpdateThumbnail> = z0;
+
+        return z0;
+    }
+
+    static int access$302(com.android.browser.Tab, int)
+    {
+        com.android.browser.Tab r0;
+        int i0;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.browser.Tab: int mPageLoadProgress> = i0;
+
+        return i0;
+    }
+
+    static long access$402(com.android.browser.Tab, long)
+    {
+        com.android.browser.Tab r0;
+        long l0;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        l0 := @parameter1: long;
+
+        r0.<com.android.browser.Tab: long mLoadStartTime> = l0;
+
+        return l0;
+    }
+
+    static com.android.browser.ErrorConsoleView access$500(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.ErrorConsoleView $r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.ErrorConsoleView mErrorConsole>;
+
+        return $r1;
+    }
+
+    static com.android.browser.DeviceAccountLogin access$600(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.DeviceAccountLogin $r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.DeviceAccountLogin mDeviceAccountLogin>;
+
+        return $r1;
+    }
+
+    static com.android.browser.DeviceAccountLogin access$602(com.android.browser.Tab, com.android.browser.DeviceAccountLogin)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.DeviceAccountLogin r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        r1 := @parameter1: com.android.browser.DeviceAccountLogin;
+
+        r0.<com.android.browser.Tab: com.android.browser.DeviceAccountLogin mDeviceAccountLogin> = r1;
+
+        return r1;
+    }
+
+    static boolean access$702(com.android.browser.Tab, boolean)
+    {
+        com.android.browser.Tab r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.browser.Tab: boolean mDisableOverrideUrlLoading> = z0;
+
+        return z0;
+    }
+
+    static long access$400(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        long $l0;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $l0 = r0.<com.android.browser.Tab: long mLoadStartTime>;
+
+        return $l0;
+    }
+
+    static void access$800(com.android.browser.Tab, android.webkit.WebView, java.lang.String)
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView r1;
+        java.lang.String r2;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        r1 := @parameter1: android.webkit.WebView;
+
+        r2 := @parameter2: java.lang.String;
+
+        specialinvoke r0.<com.android.browser.Tab: void syncCurrentState(android.webkit.WebView,java.lang.String)>(r1, r2);
+
+        return;
+    }
+
+    static boolean access$700(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mDisableOverrideUrlLoading>;
+
+        return $z0;
+    }
+
+    static boolean access$900(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mInForeground>;
+
+        return $z0;
+    }
+
+    static void access$1000(com.android.browser.Tab, int, java.lang.String)
+    {
+        com.android.browser.Tab r0;
+        int i0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        specialinvoke r0.<com.android.browser.Tab: void queueError(int,java.lang.String)>(i0, r1);
+
+        return;
+    }
+
+    static void access$1300(com.android.browser.Tab, com.android.browser.Tab$SecurityState)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.Tab$SecurityState r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        r1 := @parameter1: com.android.browser.Tab$SecurityState;
+
+        specialinvoke r0.<com.android.browser.Tab: void setSecurityState(com.android.browser.Tab$SecurityState)>(r1);
+
+        return;
+    }
+
+    static com.android.browser.BrowserSettings access$1400(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.BrowserSettings $r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.BrowserSettings mSettings>;
+
+        return $r1;
+    }
+
+    static void access$1500(com.android.browser.Tab, android.net.http.SslError)
+    {
+        com.android.browser.Tab r0;
+        android.net.http.SslError r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        r1 := @parameter1: android.net.http.SslError;
+
+        specialinvoke r0.<com.android.browser.Tab: void handleProceededAfterSslError(android.net.http.SslError)>(r1);
+
+        return;
+    }
+
+    static android.webkit.WebView access$1600(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mSubView>;
+
+        return $r1;
+    }
+
+    static com.android.browser.Tab access$1800(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0, $r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.Tab mParent>;
+
+        return $r1;
+    }
+
+    static boolean access$200(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $z0 = r0.<com.android.browser.Tab: boolean mUpdateThumbnail>;
+
+        return $z0;
+    }
+
+    static com.android.browser.GeolocationPermissionsPrompt access$1900(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.GeolocationPermissionsPrompt $r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.GeolocationPermissionsPrompt mGeolocationPermissionsPrompt>;
+
+        return $r1;
+    }
+
+    static com.android.browser.PermissionsPrompt access$2000(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        com.android.browser.PermissionsPrompt $r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: com.android.browser.PermissionsPrompt mPermissionsPrompt>;
+
+        return $r1;
+    }
+
+    static java.util.regex.Pattern access$2100(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        java.util.regex.Pattern $r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: java.util.regex.Pattern mClearHistoryUrlPattern>;
+
+        return $r1;
+    }
+
+    static android.webkit.WebView access$2200(com.android.browser.Tab)
+    {
+        com.android.browser.Tab r0;
+        android.webkit.WebView $r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        $r1 = r0.<com.android.browser.Tab: android.webkit.WebView mMainView>;
+
+        return $r1;
+    }
+
+    static java.util.regex.Pattern access$2102(com.android.browser.Tab, java.util.regex.Pattern)
+    {
+        com.android.browser.Tab r0;
+        java.util.regex.Pattern r1;
+
+        r0 := @parameter0: com.android.browser.Tab;
+
+        r1 := @parameter1: java.util.regex.Pattern;
+
+        r0.<com.android.browser.Tab: java.util.regex.Pattern mClearHistoryUrlPattern> = r1;
+
+        return r1;
+    }
+
+    static void <clinit>()
+    {
+        android.graphics.Paint $r0, $r3, $r5;
+        android.graphics.PorterDuffXfermode $r1;
+        android.graphics.PorterDuff$Mode $r2;
+
+        <com.android.browser.Tab: java.lang.String CLOSEFLAG> = "closeOnBack";
+
+        <com.android.browser.Tab: java.lang.String USERAGENT> = "useragent";
+
+        <com.android.browser.Tab: java.lang.String INCOGNITO> = "privateBrowsingEnabled";
+
+        <com.android.browser.Tab: java.lang.String APPID> = "appid";
+
+        <com.android.browser.Tab: java.lang.String PARENTTAB> = "parentTab";
+
+        <com.android.browser.Tab: java.lang.String CURRTITLE> = "currentTitle";
+
+        <com.android.browser.Tab: java.lang.String CURRURL> = "currentUrl";
+
+        <com.android.browser.Tab: java.lang.String ID> = "ID";
+
+        <com.android.browser.Tab: java.lang.String RESTRICTED> = "<html><body>not allowed</body></html>";
+
+        <com.android.browser.Tab: int INITIAL_PROGRESS> = 5;
+
+        <com.android.browser.Tab: int CAPTURE_DELAY> = 100;
+
+        <com.android.browser.Tab: int MSG_CAPTURE> = 42;
+
+        <com.android.browser.Tab: java.lang.String CONSOLE_LOGTAG> = "browser";
+
+        <com.android.browser.Tab: boolean LOGD_ENABLED> = 1;
+
+        <com.android.browser.Tab: java.lang.String LOGTAG> = "Tab";
+
+        $r0 = new android.graphics.Paint;
+
+        specialinvoke $r0.<android.graphics.Paint: void <init>()>();
+
+        <com.android.browser.Tab: android.graphics.Paint sAlphaPaint> = $r0;
+
+        $r3 = <com.android.browser.Tab: android.graphics.Paint sAlphaPaint>;
+
+        $r1 = new android.graphics.PorterDuffXfermode;
+
+        $r2 = <android.graphics.PorterDuff$Mode: android.graphics.PorterDuff$Mode CLEAR>;
+
+        specialinvoke $r1.<android.graphics.PorterDuffXfermode: void <init>(android.graphics.PorterDuff$Mode)>($r2);
+
+        virtualinvoke $r3.<android.graphics.Paint: android.graphics.Xfermode setXfermode(android.graphics.Xfermode)>($r1);
+
+        $r5 = <com.android.browser.Tab: android.graphics.Paint sAlphaPaint>;
+
+        virtualinvoke $r5.<android.graphics.Paint: void setColor(int)>(0);
+
+        return;
+    }
+}

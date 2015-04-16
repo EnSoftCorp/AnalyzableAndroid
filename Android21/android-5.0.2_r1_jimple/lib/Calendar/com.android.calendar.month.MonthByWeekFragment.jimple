@@ -1,0 +1,1670 @@
+public class com.android.calendar.month.MonthByWeekFragment extends com.android.calendar.month.SimpleDayPickerFragment implements com.android.calendar.CalendarController$EventHandler, android.app.LoaderManager$LoaderCallbacks, android.widget.AbsListView$OnScrollListener, android.view.View$OnTouchListener
+{
+    private static final java.lang.String TAG;
+    private static final java.lang.String TAG_EVENT_DIALOG;
+    private com.android.calendar.event.CreateEventDialogFragment mEventDialog;
+    private static final java.lang.String WHERE_CALENDARS_VISIBLE;
+    private static final java.lang.String INSTANCES_SORT_ORDER;
+    protected static boolean mShowDetailsInMonth;
+    protected float mMinimumTwoMonthFlingVelocity;
+    protected boolean mIsMiniMonth;
+    protected boolean mHideDeclined;
+    protected int mFirstLoadedJulianDay;
+    protected int mLastLoadedJulianDay;
+    private static final int WEEKS_BUFFER;
+    private static final int LOADER_DELAY;
+    private static final int LOADER_THROTTLE_DELAY;
+    private android.content.CursorLoader mLoader;
+    private android.net.Uri mEventUri;
+    private final android.text.format.Time mDesiredDay;
+    private volatile boolean mShouldLoad;
+    private boolean mUserScrolled;
+    private int mEventsLoadingDelay;
+    private boolean mShowCalendarControls;
+    private boolean mIsDetached;
+    private android.os.Handler mEventDialogHandler;
+    private final java.lang.Runnable mTZUpdater;
+    private final java.lang.Runnable mUpdateLoader;
+    java.lang.Runnable mLoadingRunnable;
+
+    private android.net.Uri updateUri()
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        com.android.calendar.month.SimpleWeekView r1;
+        int i0, $i2, $i3, $i5, $i6, $i7, $i8, $i9, $i10, $i11;
+        long l1, l13;
+        android.net.Uri$Builder r2;
+        android.widget.ListView $r3;
+        android.view.View $r4;
+        android.text.format.Time $r5, $r6, $r7, $r8;
+        android.net.Uri $r9, $r12;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        $r3 = r0.<com.android.calendar.month.MonthByWeekFragment: android.widget.ListView mListView>;
+
+        $r4 = virtualinvoke $r3.<android.widget.ListView: android.view.View getChildAt(int)>(0);
+
+        r1 = (com.android.calendar.month.SimpleWeekView) $r4;
+
+        if r1 == null goto label1;
+
+        i0 = virtualinvoke r1.<com.android.calendar.month.SimpleWeekView: int getFirstJulianDay()>();
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: int mFirstLoadedJulianDay> = i0;
+
+     label1:
+        $r5 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mTempTime>;
+
+        $i2 = r0.<com.android.calendar.month.MonthByWeekFragment: int mFirstLoadedJulianDay>;
+
+        $i3 = $i2 - 1;
+
+        virtualinvoke $r5.<android.text.format.Time: long setJulianDay(int)>($i3);
+
+        $r6 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mTempTime>;
+
+        l13 = virtualinvoke $r6.<android.text.format.Time: long toMillis(boolean)>(1);
+
+        $i9 = r0.<com.android.calendar.month.MonthByWeekFragment: int mFirstLoadedJulianDay>;
+
+        $i5 = r0.<com.android.calendar.month.MonthByWeekFragment: int mNumWeeks>;
+
+        $i7 = $i5 + 2;
+
+        $i6 = $i7 * 7;
+
+        $i8 = $i9 + $i6;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: int mLastLoadedJulianDay> = $i8;
+
+        $r7 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mTempTime>;
+
+        $i11 = r0.<com.android.calendar.month.MonthByWeekFragment: int mLastLoadedJulianDay>;
+
+        $i10 = $i11 + 1;
+
+        virtualinvoke $r7.<android.text.format.Time: long setJulianDay(int)>($i10);
+
+        $r8 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mTempTime>;
+
+        l1 = virtualinvoke $r8.<android.text.format.Time: long toMillis(boolean)>(1);
+
+        $r9 = <android.provider.CalendarContract$Instances: android.net.Uri CONTENT_URI>;
+
+        r2 = virtualinvoke $r9.<android.net.Uri: android.net.Uri$Builder buildUpon()>();
+
+        staticinvoke <android.content.ContentUris: android.net.Uri$Builder appendId(android.net.Uri$Builder,long)>(r2, l13);
+
+        staticinvoke <android.content.ContentUris: android.net.Uri$Builder appendId(android.net.Uri$Builder,long)>(r2, l1);
+
+        $r12 = virtualinvoke r2.<android.net.Uri$Builder: android.net.Uri build()>();
+
+        return $r12;
+    }
+
+    private void updateLoadedDays()
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        java.util.List r1;
+        int i0, $i3, $i4, $i5, $i7;
+        long l1, l2, $l6, $l8;
+        android.net.Uri $r2;
+        java.lang.Object $r3, $r5;
+        java.lang.String $r4, $r6;
+        android.text.format.Time $r7, $r8, $r9, $r10;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        $r2 = r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri mEventUri>;
+
+        r1 = virtualinvoke $r2.<android.net.Uri: java.util.List getPathSegments()>();
+
+        i0 = interfaceinvoke r1.<java.util.List: int size()>();
+
+        if i0 > 2 goto label1;
+
+        return;
+
+     label1:
+        $i3 = i0 - 2;
+
+        $r3 = interfaceinvoke r1.<java.util.List: java.lang.Object get(int)>($i3);
+
+        $r4 = (java.lang.String) $r3;
+
+        l1 = staticinvoke <java.lang.Long: long parseLong(java.lang.String)>($r4);
+
+        $i4 = i0 - 1;
+
+        $r5 = interfaceinvoke r1.<java.util.List: java.lang.Object get(int)>($i4);
+
+        $r6 = (java.lang.String) $r5;
+
+        l2 = staticinvoke <java.lang.Long: long parseLong(java.lang.String)>($r6);
+
+        $r8 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mTempTime>;
+
+        virtualinvoke $r8.<android.text.format.Time: void set(long)>(l1);
+
+        $r7 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mTempTime>;
+
+        $l6 = $r7.<android.text.format.Time: long gmtoff>;
+
+        $i5 = staticinvoke <android.text.format.Time: int getJulianDay(long,long)>(l1, $l6);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: int mFirstLoadedJulianDay> = $i5;
+
+        $r10 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mTempTime>;
+
+        virtualinvoke $r10.<android.text.format.Time: void set(long)>(l2);
+
+        $r9 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mTempTime>;
+
+        $l8 = $r9.<android.text.format.Time: long gmtoff>;
+
+        $i7 = staticinvoke <android.text.format.Time: int getJulianDay(long,long)>(l2, $l8);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: int mLastLoadedJulianDay> = $i7;
+
+        return;
+    }
+
+    protected java.lang.String updateWhere()
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        java.lang.String r1;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r2, $r3, $r4;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 = "visible=1";
+
+        $z0 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mHideDeclined>;
+
+        if $z0 != 0 goto label1;
+
+        $z1 = <com.android.calendar.month.MonthByWeekFragment: boolean mShowDetailsInMonth>;
+
+        if $z1 != 0 goto label2;
+
+     label1:
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" AND selfAttendeeStatus!=2");
+
+        r1 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label2:
+        return r1;
+    }
+
+    private void stopLoader()
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        java.lang.Runnable r1, $r3, $r4;
+        java.lang.Throwable r2, $r8;
+        android.os.Handler $r5;
+        android.content.CursorLoader $r6, $r7;
+        boolean $z0;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        $r3 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mUpdateLoader>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $r5 = r0.<com.android.calendar.month.MonthByWeekFragment: android.os.Handler mHandler>;
+
+        $r4 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mUpdateLoader>;
+
+        virtualinvoke $r5.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r4);
+
+        $r6 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.CursorLoader mLoader>;
+
+        if $r6 == null goto label2;
+
+        $r7 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.CursorLoader mLoader>;
+
+        virtualinvoke $r7.<android.content.CursorLoader: void stopLoading()>();
+
+        $z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("MonthFragment", 3);
+
+        if $z0 == 0 goto label2;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("MonthFragment", "Stopped loader from loading");
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public void onAttach(android.app.Activity)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.app.Activity r1;
+        android.view.ViewConfiguration r2;
+        android.content.res.Resources r3;
+        java.lang.Runnable $r4;
+        com.android.calendar.month.SimpleWeeksAdapter $r5, $r7;
+        int $i0, $i1, $i2;
+        float $f0;
+        boolean $z0, $z1, $z2;
+        android.text.format.Time $r6;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter0: android.app.Activity;
+
+        specialinvoke r0.<com.android.calendar.month.SimpleDayPickerFragment: void onAttach(android.app.Activity)>(r1);
+
+        $r4 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mTZUpdater>;
+
+        interfaceinvoke $r4.<java.lang.Runnable: void run()>();
+
+        $r5 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter>;
+
+        if $r5 == null goto label1;
+
+        $r7 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter>;
+
+        $r6 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        virtualinvoke $r7.<com.android.calendar.month.SimpleWeeksAdapter: void setSelectedDay(android.text.format.Time)>($r6);
+
+     label1:
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mIsDetached> = 0;
+
+        r2 = staticinvoke <android.view.ViewConfiguration: android.view.ViewConfiguration get(android.content.Context)>(r1);
+
+        $i0 = virtualinvoke r2.<android.view.ViewConfiguration: int getScaledMaximumFlingVelocity()>();
+
+        $i1 = $i0 / 2;
+
+        $f0 = (float) $i1;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: float mMinimumTwoMonthFlingVelocity> = $f0;
+
+        r3 = virtualinvoke r1.<android.app.Activity: android.content.res.Resources getResources()>();
+
+        $z0 = staticinvoke <com.android.calendar.Utils: boolean getConfigBool(android.content.Context,int)>(r1, 2131296256);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mShowCalendarControls> = $z0;
+
+        $z1 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mShowCalendarControls>;
+
+        if $z1 == 0 goto label2;
+
+        $i2 = virtualinvoke r3.<android.content.res.Resources: int getInteger(int)>(2131427338);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: int mEventsLoadingDelay> = $i2;
+
+     label2:
+        $z2 = virtualinvoke r3.<android.content.res.Resources: boolean getBoolean(int)>(2131296258);
+
+        <com.android.calendar.month.MonthByWeekFragment: boolean mShowDetailsInMonth> = $z2;
+
+        return;
+    }
+
+    public void onDetach()
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        boolean $z0;
+        android.widget.ListView $r1, $r3;
+        java.lang.Runnable $r2;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mIsDetached> = 1;
+
+        specialinvoke r0.<com.android.calendar.month.SimpleDayPickerFragment: void onDetach()>();
+
+        $z0 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mShowCalendarControls>;
+
+        if $z0 == 0 goto label1;
+
+        $r1 = r0.<com.android.calendar.month.MonthByWeekFragment: android.widget.ListView mListView>;
+
+        if $r1 == null goto label1;
+
+        $r3 = r0.<com.android.calendar.month.MonthByWeekFragment: android.widget.ListView mListView>;
+
+        $r2 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mLoadingRunnable>;
+
+        virtualinvoke $r3.<android.widget.ListView: boolean removeCallbacks(java.lang.Runnable)>($r2);
+
+     label1:
+        return;
+    }
+
+    protected void setUpAdapter()
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        java.util.HashMap r1, $r4;
+        android.content.Context $r2, $r3;
+        int $i0, $i1, $i2, $i5, $i6;
+        boolean $z0, $z1, $z2;
+        java.lang.Integer $r5, $r8, $r10, $r12, $r17, $r21;
+        android.text.format.Time $r14, $r16;
+        long $l3, $l4;
+        com.android.calendar.month.SimpleWeeksAdapter $r20, $r24, $r25, $r26;
+        com.android.calendar.month.MonthByWeekAdapter $r22;
+        android.app.Activity $r23;
+        byte $b7, $b8;
+        android.os.Handler $r27;
+        android.database.DataSetObserver $r28;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        $r2 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.Context mContext>;
+
+        $i0 = staticinvoke <com.android.calendar.Utils: int getFirstDayOfWeek(android.content.Context)>($r2);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: int mFirstDayOfWeek> = $i0;
+
+        $r3 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.Context mContext>;
+
+        $z0 = staticinvoke <com.android.calendar.Utils: boolean getShowWeekNumber(android.content.Context)>($r3);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mShowWeekNumber> = $z0;
+
+        $r4 = new java.util.HashMap;
+
+        specialinvoke $r4.<java.util.HashMap: void <init>()>();
+
+        r1 = $r4;
+
+        $i1 = r0.<com.android.calendar.month.MonthByWeekFragment: int mNumWeeks>;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i1);
+
+        virtualinvoke r1.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>("num_weeks", $r5);
+
+        $z1 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mShowWeekNumber>;
+
+        if $z1 == 0 goto label1;
+
+        $b8 = 1;
+
+        goto label2;
+
+     label1:
+        $b8 = 0;
+
+     label2:
+        $r8 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($b8);
+
+        virtualinvoke r1.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>("week_numbers", $r8);
+
+        $i2 = r0.<com.android.calendar.month.MonthByWeekFragment: int mFirstDayOfWeek>;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        virtualinvoke r1.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>("week_start", $r10);
+
+        $z2 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mIsMiniMonth>;
+
+        if $z2 == 0 goto label3;
+
+        $b7 = 1;
+
+        goto label4;
+
+     label3:
+        $b7 = 0;
+
+     label4:
+        $r12 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($b7);
+
+        virtualinvoke r1.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>("mini_month", $r12);
+
+        $r14 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        $l3 = virtualinvoke $r14.<android.text.format.Time: long toMillis(boolean)>(1);
+
+        $r16 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        $l4 = $r16.<android.text.format.Time: long gmtoff>;
+
+        $i5 = staticinvoke <android.text.format.Time: int getJulianDay(long,long)>($l3, $l4);
+
+        $r17 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i5);
+
+        virtualinvoke r1.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>("selected_day", $r17);
+
+        $i6 = r0.<com.android.calendar.month.MonthByWeekFragment: int mDaysPerWeek>;
+
+        $r21 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i6);
+
+        virtualinvoke r1.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>("days_per_week", $r21);
+
+        $r20 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter>;
+
+        if $r20 != null goto label5;
+
+        $r22 = new com.android.calendar.month.MonthByWeekAdapter;
+
+        $r23 = virtualinvoke r0.<com.android.calendar.month.MonthByWeekFragment: android.app.Activity getActivity()>();
+
+        $r27 = r0.<com.android.calendar.month.MonthByWeekFragment: android.os.Handler mEventDialogHandler>;
+
+        specialinvoke $r22.<com.android.calendar.month.MonthByWeekAdapter: void <init>(android.content.Context,java.util.HashMap,android.os.Handler)>($r23, r1, $r27);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter> = $r22;
+
+        $r26 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter>;
+
+        $r28 = r0.<com.android.calendar.month.MonthByWeekFragment: android.database.DataSetObserver mObserver>;
+
+        virtualinvoke $r26.<com.android.calendar.month.SimpleWeeksAdapter: void registerDataSetObserver(android.database.DataSetObserver)>($r28);
+
+        goto label6;
+
+     label5:
+        $r24 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter>;
+
+        virtualinvoke $r24.<com.android.calendar.month.SimpleWeeksAdapter: void updateParams(java.util.HashMap)>(r1);
+
+     label6:
+        $r25 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter>;
+
+        virtualinvoke $r25.<com.android.calendar.month.SimpleWeeksAdapter: void notifyDataSetChanged()>();
+
+        return;
+    }
+
+    public android.view.View onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.view.LayoutInflater r1;
+        android.view.ViewGroup r2, $r6;
+        android.os.Bundle r3;
+        android.view.View r4, $r5;
+        boolean $z0;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter0: android.view.LayoutInflater;
+
+        r2 := @parameter1: android.view.ViewGroup;
+
+        r3 := @parameter2: android.os.Bundle;
+
+        $z0 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mIsMiniMonth>;
+
+        if $z0 == 0 goto label1;
+
+        r4 = virtualinvoke r1.<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup,boolean)>(2130968630, r2, 0);
+
+        goto label2;
+
+     label1:
+        r4 = virtualinvoke r1.<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup,boolean)>(2130968625, r2, 0);
+
+     label2:
+        $r5 = virtualinvoke r4.<android.view.View: android.view.View findViewById(int)>(2131755188);
+
+        $r6 = (android.view.ViewGroup) $r5;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: android.view.ViewGroup mDayNamesHeader> = $r6;
+
+        return r4;
+    }
+
+    public void onActivityCreated(android.os.Bundle)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.os.Bundle r1;
+        android.graphics.drawable.StateListDrawable $r2;
+        android.widget.ListView $r3, $r4, $r8, $r11, $r12;
+        boolean $z0, $z1;
+        android.app.LoaderManager $r5;
+        android.content.Loader $r6;
+        android.content.CursorLoader $r7;
+        com.android.calendar.month.SimpleWeeksAdapter $r9;
+        int $i0, $i2;
+        long $l1;
+        java.lang.Runnable $r10;
+        android.content.res.Resources $r13;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter0: android.os.Bundle;
+
+        specialinvoke r0.<com.android.calendar.month.SimpleDayPickerFragment: void onActivityCreated(android.os.Bundle)>(r1);
+
+        $r3 = r0.<com.android.calendar.month.MonthByWeekFragment: android.widget.ListView mListView>;
+
+        $r2 = new android.graphics.drawable.StateListDrawable;
+
+        specialinvoke $r2.<android.graphics.drawable.StateListDrawable: void <init>()>();
+
+        virtualinvoke $r3.<android.widget.ListView: void setSelector(android.graphics.drawable.Drawable)>($r2);
+
+        $r4 = r0.<com.android.calendar.month.MonthByWeekFragment: android.widget.ListView mListView>;
+
+        virtualinvoke $r4.<android.widget.ListView: void setOnTouchListener(android.view.View$OnTouchListener)>(r0);
+
+        $z0 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mIsMiniMonth>;
+
+        if $z0 != 0 goto label1;
+
+        $r12 = r0.<com.android.calendar.month.MonthByWeekFragment: android.widget.ListView mListView>;
+
+        $r13 = virtualinvoke r0.<com.android.calendar.month.MonthByWeekFragment: android.content.res.Resources getResources()>();
+
+        $i2 = virtualinvoke $r13.<android.content.res.Resources: int getColor(int)>(2131230760);
+
+        virtualinvoke $r12.<android.widget.ListView: void setBackgroundColor(int)>($i2);
+
+     label1:
+        $z1 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mShowCalendarControls>;
+
+        if $z1 == 0 goto label2;
+
+        $r11 = r0.<com.android.calendar.month.MonthByWeekFragment: android.widget.ListView mListView>;
+
+        $r10 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mLoadingRunnable>;
+
+        $i0 = r0.<com.android.calendar.month.MonthByWeekFragment: int mEventsLoadingDelay>;
+
+        $l1 = (long) $i0;
+
+        virtualinvoke $r11.<android.widget.ListView: boolean postDelayed(java.lang.Runnable,long)>($r10, $l1);
+
+        goto label3;
+
+     label2:
+        $r5 = virtualinvoke r0.<com.android.calendar.month.MonthByWeekFragment: android.app.LoaderManager getLoaderManager()>();
+
+        $r6 = virtualinvoke $r5.<android.app.LoaderManager: android.content.Loader initLoader(int,android.os.Bundle,android.app.LoaderManager$LoaderCallbacks)>(0, null, r0);
+
+        $r7 = (android.content.CursorLoader) $r6;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: android.content.CursorLoader mLoader> = $r7;
+
+     label3:
+        $r9 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter>;
+
+        $r8 = r0.<com.android.calendar.month.MonthByWeekFragment: android.widget.ListView mListView>;
+
+        virtualinvoke $r9.<com.android.calendar.month.SimpleWeeksAdapter: void setListView(android.widget.ListView)>($r8);
+
+        return;
+    }
+
+    public void <init>()
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        long $l0;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        $l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        specialinvoke r0.<com.android.calendar.month.MonthByWeekFragment: void <init>(long,boolean)>($l0, 1);
+
+        return;
+    }
+
+    public void <init>(long, boolean)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        long l0;
+        boolean z0;
+        android.text.format.Time $r1;
+        com.android.calendar.month.MonthByWeekFragment$1 $r2;
+        com.android.calendar.month.MonthByWeekFragment$2 $r3;
+        com.android.calendar.month.MonthByWeekFragment$3 $r4;
+        com.android.calendar.month.MonthByWeekFragment$4 $r5;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        l0 := @parameter0: long;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.calendar.month.SimpleDayPickerFragment: void <init>(long)>(l0);
+
+        $r1 = new android.text.format.Time;
+
+        specialinvoke $r1.<android.text.format.Time: void <init>()>();
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mDesiredDay> = $r1;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mShouldLoad> = 1;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mUserScrolled> = 0;
+
+        $r2 = new com.android.calendar.month.MonthByWeekFragment$1;
+
+        specialinvoke $r2.<com.android.calendar.month.MonthByWeekFragment$1: void <init>(com.android.calendar.month.MonthByWeekFragment)>(r0);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: android.os.Handler mEventDialogHandler> = $r2;
+
+        $r3 = new com.android.calendar.month.MonthByWeekFragment$2;
+
+        specialinvoke $r3.<com.android.calendar.month.MonthByWeekFragment$2: void <init>(com.android.calendar.month.MonthByWeekFragment)>(r0);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mTZUpdater> = $r3;
+
+        $r4 = new com.android.calendar.month.MonthByWeekFragment$3;
+
+        specialinvoke $r4.<com.android.calendar.month.MonthByWeekFragment$3: void <init>(com.android.calendar.month.MonthByWeekFragment)>(r0);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mUpdateLoader> = $r4;
+
+        $r5 = new com.android.calendar.month.MonthByWeekFragment$4;
+
+        specialinvoke $r5.<com.android.calendar.month.MonthByWeekFragment$4: void <init>(com.android.calendar.month.MonthByWeekFragment)>(r0);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mLoadingRunnable> = $r5;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mIsMiniMonth> = z0;
+
+        return;
+    }
+
+    protected void setUpHeader()
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        int i0, $i1;
+        boolean $z0;
+        java.lang.String[] $r1, $r2;
+        java.lang.String $r3, $r4;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        $z0 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mIsMiniMonth>;
+
+        if $z0 == 0 goto label1;
+
+        specialinvoke r0.<com.android.calendar.month.SimpleDayPickerFragment: void setUpHeader()>();
+
+        return;
+
+     label1:
+        $r1 = newarray (java.lang.String)[7];
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.String[] mDayLabels> = $r1;
+
+        i0 = 1;
+
+     label2:
+        if i0 > 7 goto label3;
+
+        $r2 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.String[] mDayLabels>;
+
+        $i1 = i0 - 1;
+
+        $r3 = staticinvoke <android.text.format.DateUtils: java.lang.String getDayOfWeekString(int,int)>(i0, 20);
+
+        $r4 = virtualinvoke $r3.<java.lang.String: java.lang.String toUpperCase()>();
+
+        $r2[$i1] = $r4;
+
+        i0 = i0 + 1;
+
+        goto label2;
+
+     label3:
+        return;
+    }
+
+    public android.content.Loader onCreateLoader(int, android.os.Bundle)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        int i0, $i3, $i4, $i5, $i6, $i7;
+        android.os.Bundle r1;
+        android.content.CursorLoader r2, $r11;
+        java.lang.Runnable r3, $r6;
+        java.lang.String r4, $r17;
+        java.lang.Throwable r5, $r19;
+        boolean $z0, $z1;
+        android.text.format.Time $r7, $r8;
+        long $l1, $l2;
+        android.net.Uri $r9, $r12, $r15;
+        android.app.Activity $r10;
+        java.lang.String[] $r13;
+        java.lang.StringBuilder $r14, $r16, $r18;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.os.Bundle;
+
+        $z0 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mIsMiniMonth>;
+
+        if $z0 == 0 goto label1;
+
+        return null;
+
+     label1:
+        $r6 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mUpdateLoader>;
+
+        r3 = $r6;
+
+        entermonitor $r6;
+
+     label2:
+        $r7 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        $l1 = virtualinvoke $r7.<android.text.format.Time: long toMillis(boolean)>(1);
+
+        $r8 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        $l2 = $r8.<android.text.format.Time: long gmtoff>;
+
+        $i3 = staticinvoke <android.text.format.Time: int getJulianDay(long,long)>($l1, $l2);
+
+        $i4 = r0.<com.android.calendar.month.MonthByWeekFragment: int mNumWeeks>;
+
+        $i5 = $i4 * 7;
+
+        $i7 = $i5 / 2;
+
+        $i6 = $i3 - $i7;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: int mFirstLoadedJulianDay> = $i6;
+
+        $r9 = specialinvoke r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri updateUri()>();
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri mEventUri> = $r9;
+
+        r4 = virtualinvoke r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.String updateWhere()>();
+
+        $r11 = new android.content.CursorLoader;
+
+        $r10 = virtualinvoke r0.<com.android.calendar.month.MonthByWeekFragment: android.app.Activity getActivity()>();
+
+        $r12 = r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri mEventUri>;
+
+        $r13 = <com.android.calendar.Event: java.lang.String[] EVENT_PROJECTION>;
+
+        specialinvoke $r11.<android.content.CursorLoader: void <init>(android.content.Context,android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r10, $r12, $r13, r4, null, "startDay,startMinute,title");
+
+        r2 = $r11;
+
+        virtualinvoke r2.<android.content.CursorLoader: void setUpdateThrottle(long)>(500L);
+
+        exitmonitor r3;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r19 := @caughtexception;
+
+        r5 = $r19;
+
+        exitmonitor r3;
+
+     label5:
+        throw r5;
+
+     label6:
+        $z1 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("MonthFragment", 3);
+
+        if $z1 == 0 goto label7;
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Returning new loader with uri: ");
+
+        $r15 = r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri mEventUri>;
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r15);
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("MonthFragment", $r17);
+
+     label7:
+        return r2;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public void doResumeUpdates()
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        boolean z0, $z1, $z2, $z3;
+        android.content.Context $r1, $r2, $r3, $r4;
+        int $i0, $i1;
+        android.text.format.Time $r5, $r9;
+        com.android.calendar.month.SimpleWeeksAdapter $r6;
+        java.lang.Runnable $r7, $r8;
+        long $l2;
+        android.content.CursorLoader $r10, $r11;
+        java.lang.String $r12;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        $r1 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.Context mContext>;
+
+        $i0 = staticinvoke <com.android.calendar.Utils: int getFirstDayOfWeek(android.content.Context)>($r1);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: int mFirstDayOfWeek> = $i0;
+
+        $r2 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.Context mContext>;
+
+        $z1 = staticinvoke <com.android.calendar.Utils: boolean getShowWeekNumber(android.content.Context)>($r2);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mShowWeekNumber> = $z1;
+
+        z0 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mHideDeclined>;
+
+        $r3 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.Context mContext>;
+
+        $z2 = staticinvoke <com.android.calendar.Utils: boolean getHideDeclinedEvents(android.content.Context)>($r3);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mHideDeclined> = $z2;
+
+        $z3 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mHideDeclined>;
+
+        if z0 == $z3 goto label1;
+
+        $r11 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.CursorLoader mLoader>;
+
+        if $r11 == null goto label1;
+
+        $r10 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.CursorLoader mLoader>;
+
+        $r12 = virtualinvoke r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.String updateWhere()>();
+
+        virtualinvoke $r10.<android.content.CursorLoader: void setSelection(java.lang.String)>($r12);
+
+     label1:
+        $r4 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.Context mContext>;
+
+        $i1 = staticinvoke <com.android.calendar.Utils: int getDaysPerWeek(android.content.Context)>($r4);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: int mDaysPerWeek> = $i1;
+
+        virtualinvoke r0.<com.android.calendar.month.MonthByWeekFragment: void updateHeader()>();
+
+        $r6 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter>;
+
+        $r5 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        virtualinvoke $r6.<com.android.calendar.month.SimpleWeeksAdapter: void setSelectedDay(android.text.format.Time)>($r5);
+
+        $r7 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mTZUpdater>;
+
+        interfaceinvoke $r7.<java.lang.Runnable: void run()>();
+
+        $r8 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mTodayUpdater>;
+
+        interfaceinvoke $r8.<java.lang.Runnable: void run()>();
+
+        $r9 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        $l2 = virtualinvoke $r9.<android.text.format.Time: long toMillis(boolean)>(1);
+
+        virtualinvoke r0.<com.android.calendar.month.MonthByWeekFragment: boolean goTo(long,boolean,boolean,boolean)>($l2, 0, 1, 0);
+
+        return;
+    }
+
+    public void onLoadFinished(android.content.Loader, android.database.Cursor)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.content.Loader r1;
+        android.database.Cursor r2;
+        java.lang.Runnable r3, $r7;
+        android.content.CursorLoader r4;
+        java.util.ArrayList r5, $r11;
+        java.lang.Throwable r6, $r23;
+        boolean $z0;
+        android.net.Uri $r8, $r9, $r10, $r16, $r22;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        com.android.calendar.month.SimpleWeeksAdapter $r12;
+        android.content.Context $r13;
+        com.android.calendar.month.MonthByWeekAdapter $r14;
+        java.lang.StringBuilder $r15, $r17, $r18, $r19, $r21;
+        java.lang.String $r20;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter0: android.content.Loader;
+
+        r2 := @parameter1: android.database.Cursor;
+
+        $r7 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mUpdateLoader>;
+
+        r3 = $r7;
+
+        entermonitor $r7;
+
+     label1:
+        $z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("MonthFragment", 3);
+
+        if $z0 == 0 goto label2;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        $r17 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Found ");
+
+        $i8 = interfaceinvoke r2.<android.database.Cursor: int getCount()>();
+
+        $r18 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i8);
+
+        $r21 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" cursor entries for uri ");
+
+        $r22 = r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri mEventUri>;
+
+        $r19 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r22);
+
+        $r20 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("MonthFragment", $r20);
+
+     label2:
+        r4 = (android.content.CursorLoader) r1;
+
+        $r8 = r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri mEventUri>;
+
+        if $r8 != null goto label3;
+
+        $r16 = virtualinvoke r4.<android.content.CursorLoader: android.net.Uri getUri()>();
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri mEventUri> = $r16;
+
+        specialinvoke r0.<com.android.calendar.month.MonthByWeekFragment: void updateLoadedDays()>();
+
+     label3:
+        $r9 = virtualinvoke r4.<android.content.CursorLoader: android.net.Uri getUri()>();
+
+        $r10 = r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri mEventUri>;
+
+        $i0 = virtualinvoke $r9.<android.net.Uri: int compareTo(android.net.Uri)>($r10);
+
+        if $i0 == 0 goto label5;
+
+        exitmonitor r3;
+
+     label4:
+        return;
+
+     label5:
+        $r11 = new java.util.ArrayList;
+
+        specialinvoke $r11.<java.util.ArrayList: void <init>()>();
+
+        r5 = $r11;
+
+        $r13 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.Context mContext>;
+
+        $i2 = r0.<com.android.calendar.month.MonthByWeekFragment: int mFirstLoadedJulianDay>;
+
+        $i1 = r0.<com.android.calendar.month.MonthByWeekFragment: int mLastLoadedJulianDay>;
+
+        staticinvoke <com.android.calendar.Event: void buildEventsFromCursor(java.util.ArrayList,android.database.Cursor,android.content.Context,int,int)>(r5, r2, $r13, $i2, $i1);
+
+        $r12 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter>;
+
+        $r14 = (com.android.calendar.month.MonthByWeekAdapter) $r12;
+
+        $i7 = r0.<com.android.calendar.month.MonthByWeekFragment: int mFirstLoadedJulianDay>;
+
+        $i3 = r0.<com.android.calendar.month.MonthByWeekFragment: int mLastLoadedJulianDay>;
+
+        $i4 = r0.<com.android.calendar.month.MonthByWeekFragment: int mFirstLoadedJulianDay>;
+
+        $i6 = $i3 - $i4;
+
+        $i5 = $i6 + 1;
+
+        virtualinvoke $r14.<com.android.calendar.month.MonthByWeekAdapter: void setEvents(int,int,java.util.ArrayList)>($i7, $i5, r5);
+
+        exitmonitor r3;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r23 := @caughtexception;
+
+        r6 = $r23;
+
+        exitmonitor r3;
+
+     label8:
+        throw r6;
+
+     label9:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    public void onLoaderReset(android.content.Loader)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.content.Loader r1;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter0: android.content.Loader;
+
+        return;
+    }
+
+    public void eventsChanged()
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.content.CursorLoader $r1, $r2;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        $r1 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.CursorLoader mLoader>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.CursorLoader mLoader>;
+
+        virtualinvoke $r2.<android.content.CursorLoader: void forceLoad()>();
+
+     label1:
+        return;
+    }
+
+    public long getSupportedEventTypes()
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        return 160L;
+    }
+
+    public void handleEvent(com.android.calendar.CalendarController$EventInfo)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        com.android.calendar.CalendarController$EventInfo r1;
+        boolean z0, z1, z2, $z4;
+        long $l0, $l2, $l8, $l10, $l11, $l12, $l21, $l22, $l24, $l26;
+        byte $b1, $b3, $b25;
+        int $i4, $i5, $i6, $i7, $i9, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20;
+        android.text.format.Time $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9;
+        com.android.calendar.month.MonthByWeekFragment$5 $r10;
+        android.os.Handler $r11;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter0: com.android.calendar.CalendarController$EventInfo;
+
+        $l0 = r1.<com.android.calendar.CalendarController$EventInfo: long eventType>;
+
+        $b1 = $l0 cmp 32L;
+
+        if $b1 != 0 goto label7;
+
+        z0 = 1;
+
+        $i5 = r0.<com.android.calendar.month.MonthByWeekFragment: int mDaysPerWeek>;
+
+        $i4 = r0.<com.android.calendar.month.MonthByWeekFragment: int mNumWeeks>;
+
+        $i6 = $i5 * $i4;
+
+        $i7 = $i6 * 2;
+
+        $r2 = r1.<com.android.calendar.CalendarController$EventInfo: android.text.format.Time selectedTime>;
+
+        $l8 = virtualinvoke $r2.<android.text.format.Time: long toMillis(boolean)>(1);
+
+        $r3 = r1.<com.android.calendar.CalendarController$EventInfo: android.text.format.Time selectedTime>;
+
+        $l10 = $r3.<android.text.format.Time: long gmtoff>;
+
+        $i9 = staticinvoke <android.text.format.Time: int getJulianDay(long,long)>($l8, $l10);
+
+        $r4 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mFirstVisibleDay>;
+
+        $l11 = virtualinvoke $r4.<android.text.format.Time: long toMillis(boolean)>(1);
+
+        $r5 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mFirstVisibleDay>;
+
+        $l12 = $r5.<android.text.format.Time: long gmtoff>;
+
+        $i14 = staticinvoke <android.text.format.Time: int getJulianDay(long,long)>($l11, $l12);
+
+        $i17 = $i9 - $i14;
+
+        $i16 = r0.<com.android.calendar.month.MonthByWeekFragment: int mDaysPerWeek>;
+
+        $i13 = r0.<com.android.calendar.month.MonthByWeekFragment: int mNumWeeks>;
+
+        $i15 = $i16 * $i13;
+
+        $i18 = $i15 / 2;
+
+        $i20 = $i17 - $i18;
+
+        $i19 = staticinvoke <java.lang.Math: int abs(int)>($i20);
+
+        if $i7 >= $i19 goto label1;
+
+        z0 = 0;
+
+     label1:
+        $r6 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mDesiredDay>;
+
+        $r7 = r1.<com.android.calendar.CalendarController$EventInfo: android.text.format.Time selectedTime>;
+
+        virtualinvoke $r6.<android.text.format.Time: void set(android.text.format.Time)>($r7);
+
+        $r8 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mDesiredDay>;
+
+        virtualinvoke $r8.<android.text.format.Time: long normalize(boolean)>(1);
+
+        $l21 = r1.<com.android.calendar.CalendarController$EventInfo: long extraLong>;
+
+        $l22 = $l21 & 8L;
+
+        $b25 = $l22 cmp 0L;
+
+        if $b25 == 0 goto label2;
+
+        $z4 = 1;
+
+        goto label3;
+
+     label2:
+        $z4 = 0;
+
+     label3:
+        z1 = $z4;
+
+        $r9 = r1.<com.android.calendar.CalendarController$EventInfo: android.text.format.Time selectedTime>;
+
+        $l24 = virtualinvoke $r9.<android.text.format.Time: long toMillis(boolean)>(1);
+
+        z2 = virtualinvoke r0.<com.android.calendar.month.MonthByWeekFragment: boolean goTo(long,boolean,boolean,boolean)>($l24, z0, 1, 0);
+
+        if z1 == 0 goto label6;
+
+        $r11 = r0.<com.android.calendar.month.MonthByWeekFragment: android.os.Handler mHandler>;
+
+        $r10 = new com.android.calendar.month.MonthByWeekFragment$5;
+
+        specialinvoke $r10.<com.android.calendar.month.MonthByWeekFragment$5: void <init>(com.android.calendar.month.MonthByWeekFragment)>(r0);
+
+        if z2 == 0 goto label4;
+
+        $l26 = 500L;
+
+        goto label5;
+
+     label4:
+        $l26 = 0L;
+
+     label5:
+        virtualinvoke $r11.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r10, $l26);
+
+     label6:
+        goto label8;
+
+     label7:
+        $l2 = r1.<com.android.calendar.CalendarController$EventInfo: long eventType>;
+
+        $b3 = $l2 cmp 128L;
+
+        if $b3 != 0 goto label8;
+
+        virtualinvoke r0.<com.android.calendar.month.MonthByWeekFragment: void eventsChanged()>();
+
+     label8:
+        return;
+    }
+
+    protected void setMonthDisplayed(android.text.format.Time, boolean)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.text.format.Time r1, $r3, $r4, $r7, $r8, $r9, $r10, $r11, $r12, $r13, $r14;
+        boolean z0, z1, $z2, $z3;
+        com.android.calendar.CalendarController r2;
+        long l0, l1, $l6, $l8, $l9, $l10, $l11;
+        int $i2, $i3, $i4, $i7, $i12, $i13;
+        com.android.calendar.month.SimpleWeeksAdapter $r5, $r15;
+        android.content.Context $r6;
+        byte $b5;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter0: android.text.format.Time;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.calendar.month.SimpleDayPickerFragment: void setMonthDisplayed(android.text.format.Time,boolean)>(r1, z0);
+
+        $z2 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mIsMiniMonth>;
+
+        if $z2 != 0 goto label8;
+
+        z1 = 0;
+
+        $i3 = r1.<android.text.format.Time: int year>;
+
+        $r3 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mDesiredDay>;
+
+        $i2 = $r3.<android.text.format.Time: int year>;
+
+        if $i3 != $i2 goto label1;
+
+        $i13 = r1.<android.text.format.Time: int month>;
+
+        $r10 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mDesiredDay>;
+
+        $i12 = $r10.<android.text.format.Time: int month>;
+
+        if $i13 != $i12 goto label1;
+
+        $r13 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        $r12 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mDesiredDay>;
+
+        virtualinvoke $r13.<android.text.format.Time: void set(android.text.format.Time)>($r12);
+
+        $r15 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter>;
+
+        $r14 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mDesiredDay>;
+
+        virtualinvoke $r15.<com.android.calendar.month.SimpleWeeksAdapter: void setSelectedDay(android.text.format.Time)>($r14);
+
+        z1 = 1;
+
+        goto label2;
+
+     label1:
+        $r4 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        virtualinvoke $r4.<android.text.format.Time: void set(android.text.format.Time)>(r1);
+
+        $r5 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleWeeksAdapter mAdapter>;
+
+        virtualinvoke $r5.<com.android.calendar.month.SimpleWeeksAdapter: void setSelectedDay(android.text.format.Time)>(r1);
+
+     label2:
+        $r6 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.Context mContext>;
+
+        r2 = staticinvoke <com.android.calendar.CalendarController: com.android.calendar.CalendarController getInstance(android.content.Context)>($r6);
+
+        $r7 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        $i4 = $r7.<android.text.format.Time: int minute>;
+
+        if $i4 < 30 goto label3;
+
+        $r11 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        $r11.<android.text.format.Time: int minute> = 30;
+
+        goto label4;
+
+     label3:
+        $r8 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        $r8.<android.text.format.Time: int minute> = 0;
+
+     label4:
+        $r9 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mSelectedDay>;
+
+        l0 = virtualinvoke $r9.<android.text.format.Time: long normalize(boolean)>(1);
+
+        $l6 = virtualinvoke r2.<com.android.calendar.CalendarController: long getTime()>();
+
+        $b5 = l0 cmp $l6;
+
+        if $b5 == 0 goto label7;
+
+        $z3 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mUserScrolled>;
+
+        if $z3 == 0 goto label7;
+
+        if z1 == 0 goto label5;
+
+        $l10 = 0L;
+
+        goto label6;
+
+     label5:
+        $i7 = r0.<com.android.calendar.month.MonthByWeekFragment: int mNumWeeks>;
+
+        $l9 = (long) $i7;
+
+        $l8 = 604800000L * $l9;
+
+        $l10 = $l8 / 3L;
+
+     label6:
+        l1 = $l10;
+
+        $l11 = l0 + l1;
+
+        virtualinvoke r2.<com.android.calendar.CalendarController: void setTime(long)>($l11);
+
+     label7:
+        virtualinvoke r2.<com.android.calendar.CalendarController: void sendEvent(java.lang.Object,long,android.text.format.Time,android.text.format.Time,android.text.format.Time,long,int,long,java.lang.String,android.content.ComponentName)>(r0, 1024L, r1, r1, r1, -1L, 0, 52L, null, null);
+
+     label8:
+        return;
+    }
+
+    public void onScrollStateChanged(android.widget.AbsListView, int)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.widget.AbsListView r1;
+        int i0;
+        java.lang.Runnable r2, $r4, $r5, $r7;
+        java.lang.Throwable r3, $r11;
+        android.os.Handler $r6, $r8;
+        com.android.calendar.month.SimpleDayPickerFragment$ScrollStateRunnable $r9;
+        android.text.format.Time $r10;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter0: android.widget.AbsListView;
+
+        i0 := @parameter1: int;
+
+        $r4 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mUpdateLoader>;
+
+        r2 = $r4;
+
+        entermonitor $r4;
+
+     label1:
+        if i0 == 0 goto label2;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mShouldLoad> = 0;
+
+        specialinvoke r0.<com.android.calendar.month.MonthByWeekFragment: void stopLoader()>();
+
+        $r10 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mDesiredDay>;
+
+        virtualinvoke $r10.<android.text.format.Time: void setToNow()>();
+
+        goto label3;
+
+     label2:
+        $r6 = r0.<com.android.calendar.month.MonthByWeekFragment: android.os.Handler mHandler>;
+
+        $r5 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mUpdateLoader>;
+
+        virtualinvoke $r6.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r5);
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mShouldLoad> = 1;
+
+        $r8 = r0.<com.android.calendar.month.MonthByWeekFragment: android.os.Handler mHandler>;
+
+        $r7 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mUpdateLoader>;
+
+        virtualinvoke $r8.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r7, 200L);
+
+     label3:
+        exitmonitor r2;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r11 := @caughtexception;
+
+        r3 = $r11;
+
+        exitmonitor r2;
+
+     label6:
+        throw r3;
+
+     label7:
+        if i0 != 1 goto label8;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: boolean mUserScrolled> = 1;
+
+     label8:
+        $r9 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.month.SimpleDayPickerFragment$ScrollStateRunnable mScrollStateChangedRunnable>;
+
+        virtualinvoke $r9.<com.android.calendar.month.SimpleDayPickerFragment$ScrollStateRunnable: void doScrollStateChange(android.widget.AbsListView,int)>(r1, i0);
+
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public boolean onTouch(android.view.View, android.view.MotionEvent)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.view.View r1;
+        android.view.MotionEvent r2;
+        android.text.format.Time $r3;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter0: android.view.View;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        $r3 = r0.<com.android.calendar.month.MonthByWeekFragment: android.text.format.Time mDesiredDay>;
+
+        virtualinvoke $r3.<android.text.format.Time: void setToNow()>();
+
+        return 0;
+    }
+
+    public volatile void onLoadFinished(android.content.Loader, java.lang.Object)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.content.Loader r1;
+        java.lang.Object r2;
+        android.database.Cursor $r3;
+
+        r0 := @this: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter0: android.content.Loader;
+
+        r2 := @parameter1: java.lang.Object;
+
+        $r3 = (android.database.Cursor) r2;
+
+        virtualinvoke r0.<com.android.calendar.month.MonthByWeekFragment: void onLoadFinished(android.content.Loader,android.database.Cursor)>(r1, $r3);
+
+        return;
+    }
+
+    static com.android.calendar.event.CreateEventDialogFragment access$002(com.android.calendar.month.MonthByWeekFragment, com.android.calendar.event.CreateEventDialogFragment)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        com.android.calendar.event.CreateEventDialogFragment r1;
+
+        r0 := @parameter0: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter1: com.android.calendar.event.CreateEventDialogFragment;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.event.CreateEventDialogFragment mEventDialog> = r1;
+
+        return r1;
+    }
+
+    static com.android.calendar.event.CreateEventDialogFragment access$000(com.android.calendar.month.MonthByWeekFragment)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        com.android.calendar.event.CreateEventDialogFragment $r1;
+
+        r0 := @parameter0: com.android.calendar.month.MonthByWeekFragment;
+
+        $r1 = r0.<com.android.calendar.month.MonthByWeekFragment: com.android.calendar.event.CreateEventDialogFragment mEventDialog>;
+
+        return $r1;
+    }
+
+    static java.lang.Runnable access$100(com.android.calendar.month.MonthByWeekFragment)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        java.lang.Runnable $r1;
+
+        r0 := @parameter0: com.android.calendar.month.MonthByWeekFragment;
+
+        $r1 = r0.<com.android.calendar.month.MonthByWeekFragment: java.lang.Runnable mTZUpdater>;
+
+        return $r1;
+    }
+
+    static boolean access$200(com.android.calendar.month.MonthByWeekFragment)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.calendar.month.MonthByWeekFragment;
+
+        $z0 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mShouldLoad>;
+
+        return $z0;
+    }
+
+    static android.content.CursorLoader access$300(com.android.calendar.month.MonthByWeekFragment)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.content.CursorLoader $r1;
+
+        r0 := @parameter0: com.android.calendar.month.MonthByWeekFragment;
+
+        $r1 = r0.<com.android.calendar.month.MonthByWeekFragment: android.content.CursorLoader mLoader>;
+
+        return $r1;
+    }
+
+    static void access$400(com.android.calendar.month.MonthByWeekFragment)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+
+        r0 := @parameter0: com.android.calendar.month.MonthByWeekFragment;
+
+        specialinvoke r0.<com.android.calendar.month.MonthByWeekFragment: void stopLoader()>();
+
+        return;
+    }
+
+    static android.net.Uri access$502(com.android.calendar.month.MonthByWeekFragment, android.net.Uri)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.net.Uri r1;
+
+        r0 := @parameter0: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter1: android.net.Uri;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri mEventUri> = r1;
+
+        return r1;
+    }
+
+    static android.net.Uri access$600(com.android.calendar.month.MonthByWeekFragment)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.net.Uri $r1;
+
+        r0 := @parameter0: com.android.calendar.month.MonthByWeekFragment;
+
+        $r1 = specialinvoke r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri updateUri()>();
+
+        return $r1;
+    }
+
+    static android.net.Uri access$500(com.android.calendar.month.MonthByWeekFragment)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.net.Uri $r1;
+
+        r0 := @parameter0: com.android.calendar.month.MonthByWeekFragment;
+
+        $r1 = r0.<com.android.calendar.month.MonthByWeekFragment: android.net.Uri mEventUri>;
+
+        return $r1;
+    }
+
+    static boolean access$700(com.android.calendar.month.MonthByWeekFragment)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.calendar.month.MonthByWeekFragment;
+
+        $z0 = r0.<com.android.calendar.month.MonthByWeekFragment: boolean mIsDetached>;
+
+        return $z0;
+    }
+
+    static android.content.CursorLoader access$302(com.android.calendar.month.MonthByWeekFragment, android.content.CursorLoader)
+    {
+        com.android.calendar.month.MonthByWeekFragment r0;
+        android.content.CursorLoader r1;
+
+        r0 := @parameter0: com.android.calendar.month.MonthByWeekFragment;
+
+        r1 := @parameter1: android.content.CursorLoader;
+
+        r0.<com.android.calendar.month.MonthByWeekFragment: android.content.CursorLoader mLoader> = r1;
+
+        return r1;
+    }
+
+    static void <clinit>()
+    {
+        <com.android.calendar.month.MonthByWeekFragment: int LOADER_THROTTLE_DELAY> = 500;
+
+        <com.android.calendar.month.MonthByWeekFragment: int LOADER_DELAY> = 200;
+
+        <com.android.calendar.month.MonthByWeekFragment: int WEEKS_BUFFER> = 1;
+
+        <com.android.calendar.month.MonthByWeekFragment: java.lang.String INSTANCES_SORT_ORDER> = "startDay,startMinute,title";
+
+        <com.android.calendar.month.MonthByWeekFragment: java.lang.String WHERE_CALENDARS_VISIBLE> = "visible=1";
+
+        <com.android.calendar.month.MonthByWeekFragment: java.lang.String TAG_EVENT_DIALOG> = "event_dialog";
+
+        <com.android.calendar.month.MonthByWeekFragment: java.lang.String TAG> = "MonthFragment";
+
+        <com.android.calendar.month.MonthByWeekFragment: boolean mShowDetailsInMonth> = 0;
+
+        return;
+    }
+}

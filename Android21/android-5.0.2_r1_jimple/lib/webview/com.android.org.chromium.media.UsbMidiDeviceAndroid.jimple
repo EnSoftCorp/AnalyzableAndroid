@@ -1,0 +1,558 @@
+class com.android.org.chromium.media.UsbMidiDeviceAndroid extends java.lang.Object
+{
+    private final android.hardware.usb.UsbDeviceConnection mConnection;
+    private final android.util.SparseArray mEndpointMap;
+    private final java.util.Map mRequestMap;
+    private final android.os.Handler mHandler;
+    private boolean mIsClosed;
+    private boolean mHasInputThread;
+    private long mNativePointer;
+    static final int MIDI_SUBCLASS;
+
+    void <init>(android.hardware.usb.UsbManager, android.hardware.usb.UsbDevice)
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        android.hardware.usb.UsbManager r1;
+        android.hardware.usb.UsbDevice r2;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        android.hardware.usb.UsbInterface r3;
+        android.hardware.usb.UsbEndpoint r4;
+        android.hardware.usb.UsbDeviceConnection $r5, $r9;
+        android.util.SparseArray $r6, $r10;
+        java.util.HashMap $r7;
+        android.os.Handler $r8;
+
+        r0 := @this: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        r1 := @parameter0: android.hardware.usb.UsbManager;
+
+        r2 := @parameter1: android.hardware.usb.UsbDevice;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r5 = virtualinvoke r1.<android.hardware.usb.UsbManager: android.hardware.usb.UsbDeviceConnection openDevice(android.hardware.usb.UsbDevice)>(r2);
+
+        r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.hardware.usb.UsbDeviceConnection mConnection> = $r5;
+
+        $r6 = new android.util.SparseArray;
+
+        specialinvoke $r6.<android.util.SparseArray: void <init>()>();
+
+        r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.util.SparseArray mEndpointMap> = $r6;
+
+        $r7 = new java.util.HashMap;
+
+        specialinvoke $r7.<java.util.HashMap: void <init>()>();
+
+        r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: java.util.Map mRequestMap> = $r7;
+
+        $r8 = new android.os.Handler;
+
+        specialinvoke $r8.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.os.Handler mHandler> = $r8;
+
+        r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: boolean mIsClosed> = 0;
+
+        r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: boolean mHasInputThread> = 0;
+
+        r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: long mNativePointer> = 0L;
+
+        i0 = 0;
+
+     label1:
+        $i2 = virtualinvoke r2.<android.hardware.usb.UsbDevice: int getInterfaceCount()>();
+
+        if i0 >= $i2 goto label6;
+
+        r3 = virtualinvoke r2.<android.hardware.usb.UsbDevice: android.hardware.usb.UsbInterface getInterface(int)>(i0);
+
+        $i3 = virtualinvoke r3.<android.hardware.usb.UsbInterface: int getInterfaceClass()>();
+
+        if $i3 != 1 goto label5;
+
+        $i4 = virtualinvoke r3.<android.hardware.usb.UsbInterface: int getInterfaceSubclass()>();
+
+        if $i4 == 3 goto label2;
+
+        goto label5;
+
+     label2:
+        $r9 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.hardware.usb.UsbDeviceConnection mConnection>;
+
+        virtualinvoke $r9.<android.hardware.usb.UsbDeviceConnection: boolean claimInterface(android.hardware.usb.UsbInterface,boolean)>(r3, 1);
+
+        i1 = 0;
+
+     label3:
+        $i5 = virtualinvoke r3.<android.hardware.usb.UsbInterface: int getEndpointCount()>();
+
+        if i1 >= $i5 goto label5;
+
+        r4 = virtualinvoke r3.<android.hardware.usb.UsbInterface: android.hardware.usb.UsbEndpoint getEndpoint(int)>(i1);
+
+        $i6 = virtualinvoke r4.<android.hardware.usb.UsbEndpoint: int getDirection()>();
+
+        if $i6 != 0 goto label4;
+
+        $r10 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.util.SparseArray mEndpointMap>;
+
+        $i7 = virtualinvoke r4.<android.hardware.usb.UsbEndpoint: int getEndpointNumber()>();
+
+        virtualinvoke $r10.<android.util.SparseArray: void put(int,java.lang.Object)>($i7, r4);
+
+     label4:
+        i1 = i1 + 1;
+
+        goto label3;
+
+     label5:
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label6:
+        specialinvoke r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: void startListen(android.hardware.usb.UsbDevice)>(r2);
+
+        return;
+    }
+
+    private void startListen(android.hardware.usb.UsbDevice)
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        android.hardware.usb.UsbDevice r1;
+        java.util.HashMap r2, $r7;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        android.hardware.usb.UsbInterface r3;
+        android.hardware.usb.UsbEndpoint r4;
+        java.nio.ByteBuffer r5;
+        android.hardware.usb.UsbRequest r6, $r9;
+        boolean $z0;
+        com.android.org.chromium.media.UsbMidiDeviceAndroid$1 $r8;
+        android.hardware.usb.UsbDeviceConnection $r10;
+
+        r0 := @this: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        r1 := @parameter0: android.hardware.usb.UsbDevice;
+
+        $r7 = new java.util.HashMap;
+
+        specialinvoke $r7.<java.util.HashMap: void <init>()>();
+
+        r2 = $r7;
+
+        i0 = 0;
+
+     label1:
+        $i2 = virtualinvoke r1.<android.hardware.usb.UsbDevice: int getInterfaceCount()>();
+
+        if i0 >= $i2 goto label6;
+
+        r3 = virtualinvoke r1.<android.hardware.usb.UsbDevice: android.hardware.usb.UsbInterface getInterface(int)>(i0);
+
+        $i3 = virtualinvoke r3.<android.hardware.usb.UsbInterface: int getInterfaceClass()>();
+
+        if $i3 != 1 goto label5;
+
+        $i4 = virtualinvoke r3.<android.hardware.usb.UsbInterface: int getInterfaceSubclass()>();
+
+        if $i4 == 3 goto label2;
+
+        goto label5;
+
+     label2:
+        i1 = 0;
+
+     label3:
+        $i5 = virtualinvoke r3.<android.hardware.usb.UsbInterface: int getEndpointCount()>();
+
+        if i1 >= $i5 goto label5;
+
+        r4 = virtualinvoke r3.<android.hardware.usb.UsbInterface: android.hardware.usb.UsbEndpoint getEndpoint(int)>(i1);
+
+        $i7 = virtualinvoke r4.<android.hardware.usb.UsbEndpoint: int getDirection()>();
+
+        if $i7 != 128 goto label4;
+
+        $i6 = virtualinvoke r4.<android.hardware.usb.UsbEndpoint: int getMaxPacketSize()>();
+
+        r5 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer allocate(int)>($i6);
+
+        $r9 = new android.hardware.usb.UsbRequest;
+
+        specialinvoke $r9.<android.hardware.usb.UsbRequest: void <init>()>();
+
+        r6 = $r9;
+
+        $r10 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.hardware.usb.UsbDeviceConnection mConnection>;
+
+        virtualinvoke r6.<android.hardware.usb.UsbRequest: boolean initialize(android.hardware.usb.UsbDeviceConnection,android.hardware.usb.UsbEndpoint)>($r10, r4);
+
+        $i8 = virtualinvoke r5.<java.nio.ByteBuffer: int remaining()>();
+
+        virtualinvoke r6.<android.hardware.usb.UsbRequest: boolean queue(java.nio.ByteBuffer,int)>(r5, $i8);
+
+        interfaceinvoke r2.<java.util.Map: java.lang.Object put(java.lang.Object,java.lang.Object)>(r4, r5);
+
+     label4:
+        i1 = i1 + 1;
+
+        goto label3;
+
+     label5:
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label6:
+        $z0 = interfaceinvoke r2.<java.util.Map: boolean isEmpty()>();
+
+        if $z0 == 0 goto label7;
+
+        return;
+
+     label7:
+        r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: boolean mHasInputThread> = 1;
+
+        $r8 = new com.android.org.chromium.media.UsbMidiDeviceAndroid$1;
+
+        specialinvoke $r8.<com.android.org.chromium.media.UsbMidiDeviceAndroid$1: void <init>(com.android.org.chromium.media.UsbMidiDeviceAndroid,java.util.Map)>(r0, r2);
+
+        virtualinvoke $r8.<com.android.org.chromium.media.UsbMidiDeviceAndroid$1: void start()>();
+
+        return;
+    }
+
+    private void postOnDataEvent(int, byte[])
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        int i0;
+        byte[] r1;
+        com.android.org.chromium.media.UsbMidiDeviceAndroid$2 $r2;
+        android.os.Handler $r3;
+
+        r0 := @this: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: byte[];
+
+        $r3 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.os.Handler mHandler>;
+
+        $r2 = new com.android.org.chromium.media.UsbMidiDeviceAndroid$2;
+
+        specialinvoke $r2.<com.android.org.chromium.media.UsbMidiDeviceAndroid$2: void <init>(com.android.org.chromium.media.UsbMidiDeviceAndroid,int,byte[])>(r0, i0, r1);
+
+        virtualinvoke $r3.<android.os.Handler: boolean post(java.lang.Runnable)>($r2);
+
+        return;
+    }
+
+    void registerSelf(long)
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        long l0;
+
+        r0 := @this: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        l0 := @parameter0: long;
+
+        r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: long mNativePointer> = l0;
+
+        return;
+    }
+
+    void send(int, byte[])
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        int i0, $i2, $i3;
+        byte[] r1;
+        android.hardware.usb.UsbEndpoint r2;
+        boolean $z0, $z1;
+        android.util.SparseArray $r3;
+        java.lang.Object $r4, $r6;
+        java.util.Map $r5, $r10;
+        java.nio.ByteBuffer $r7;
+        android.hardware.usb.UsbRequest $r8, r13;
+        android.hardware.usb.UsbDeviceConnection $r9, $r12;
+
+        r0 := @this: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: byte[];
+
+        $z0 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: boolean mIsClosed>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.util.SparseArray mEndpointMap>;
+
+        $r4 = virtualinvoke $r3.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        r2 = (android.hardware.usb.UsbEndpoint) $r4;
+
+        if r2 != null goto label2;
+
+        return;
+
+     label2:
+        $z1 = specialinvoke r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: boolean shouldUseBulkTransfer()>();
+
+        if $z1 == 0 goto label3;
+
+        $r12 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.hardware.usb.UsbDeviceConnection mConnection>;
+
+        $i3 = lengthof r1;
+
+        virtualinvoke $r12.<android.hardware.usb.UsbDeviceConnection: int bulkTransfer(android.hardware.usb.UsbEndpoint,byte[],int,int,int)>(r2, r1, 0, $i3, 100);
+
+        goto label5;
+
+     label3:
+        $r5 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: java.util.Map mRequestMap>;
+
+        $r6 = interfaceinvoke $r5.<java.util.Map: java.lang.Object get(java.lang.Object)>(r2);
+
+        r13 = (android.hardware.usb.UsbRequest) $r6;
+
+        if r13 != null goto label4;
+
+        $r8 = new android.hardware.usb.UsbRequest;
+
+        specialinvoke $r8.<android.hardware.usb.UsbRequest: void <init>()>();
+
+        r13 = $r8;
+
+        $r9 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.hardware.usb.UsbDeviceConnection mConnection>;
+
+        virtualinvoke r13.<android.hardware.usb.UsbRequest: boolean initialize(android.hardware.usb.UsbDeviceConnection,android.hardware.usb.UsbEndpoint)>($r9, r2);
+
+        $r10 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: java.util.Map mRequestMap>;
+
+        interfaceinvoke $r10.<java.util.Map: java.lang.Object put(java.lang.Object,java.lang.Object)>(r2, r13);
+
+     label4:
+        $r7 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer wrap(byte[])>(r1);
+
+        $i2 = lengthof r1;
+
+        virtualinvoke r13.<android.hardware.usb.UsbRequest: boolean queue(java.nio.ByteBuffer,int)>($r7, $i2);
+
+     label5:
+        return;
+    }
+
+    private boolean shouldUseBulkTransfer()
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        boolean $z0;
+
+        r0 := @this: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        $z0 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: boolean mHasInputThread>;
+
+        return $z0;
+    }
+
+    byte[] getDescriptors()
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        android.hardware.usb.UsbDeviceConnection $r1, $r2;
+        byte[] $r3, $r4;
+
+        r0 := @this: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        $r1 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.hardware.usb.UsbDeviceConnection mConnection>;
+
+        if $r1 != null goto label1;
+
+        $r4 = newarray (byte)[0];
+
+        return $r4;
+
+     label1:
+        $r2 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.hardware.usb.UsbDeviceConnection mConnection>;
+
+        $r3 = virtualinvoke $r2.<android.hardware.usb.UsbDeviceConnection: byte[] getRawDescriptors()>();
+
+        return $r3;
+    }
+
+    void close()
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        java.util.Iterator r1;
+        android.hardware.usb.UsbRequest r2;
+        android.util.SparseArray $r3;
+        java.util.Map $r4, $r6;
+        java.util.Collection $r5;
+        boolean $z0;
+        android.hardware.usb.UsbDeviceConnection $r7;
+        java.lang.Object $r8;
+
+        r0 := @this: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        $r3 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.util.SparseArray mEndpointMap>;
+
+        virtualinvoke $r3.<android.util.SparseArray: void clear()>();
+
+        $r4 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: java.util.Map mRequestMap>;
+
+        $r5 = interfaceinvoke $r4.<java.util.Map: java.util.Collection values()>();
+
+        r1 = interfaceinvoke $r5.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r8 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (android.hardware.usb.UsbRequest) $r8;
+
+        virtualinvoke r2.<android.hardware.usb.UsbRequest: void close()>();
+
+        goto label1;
+
+     label2:
+        $r6 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: java.util.Map mRequestMap>;
+
+        interfaceinvoke $r6.<java.util.Map: void clear()>();
+
+        $r7 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.hardware.usb.UsbDeviceConnection mConnection>;
+
+        virtualinvoke $r7.<android.hardware.usb.UsbDeviceConnection: void close()>();
+
+        r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: long mNativePointer> = 0L;
+
+        r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: boolean mIsClosed> = 1;
+
+        return;
+    }
+
+    private static int getInputDataLength(java.nio.ByteBuffer)
+    {
+        java.nio.ByteBuffer r0;
+        int i0, i1;
+        byte $b2;
+
+        r0 := @parameter0: java.nio.ByteBuffer;
+
+        i0 = virtualinvoke r0.<java.nio.ByteBuffer: int position()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label3;
+
+        $b2 = virtualinvoke r0.<java.nio.ByteBuffer: byte get(int)>(i1);
+
+        if $b2 != 0 goto label2;
+
+        return i1;
+
+     label2:
+        i1 = i1 + 4;
+
+        goto label1;
+
+     label3:
+        return i0;
+    }
+
+    private static native void nativeOnData(long, int, byte[]);
+
+    static android.hardware.usb.UsbDeviceConnection access$000(com.android.org.chromium.media.UsbMidiDeviceAndroid)
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        android.hardware.usb.UsbDeviceConnection $r1;
+
+        r0 := @parameter0: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        $r1 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: android.hardware.usb.UsbDeviceConnection mConnection>;
+
+        return $r1;
+    }
+
+    static int access$100(java.nio.ByteBuffer)
+    {
+        java.nio.ByteBuffer r0;
+        int $i0;
+
+        r0 := @parameter0: java.nio.ByteBuffer;
+
+        $i0 = staticinvoke <com.android.org.chromium.media.UsbMidiDeviceAndroid: int getInputDataLength(java.nio.ByteBuffer)>(r0);
+
+        return $i0;
+    }
+
+    static void access$200(com.android.org.chromium.media.UsbMidiDeviceAndroid, int, byte[])
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        int i0;
+        byte[] r1;
+
+        r0 := @parameter0: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: byte[];
+
+        specialinvoke r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: void postOnDataEvent(int,byte[])>(i0, r1);
+
+        return;
+    }
+
+    static boolean access$300(com.android.org.chromium.media.UsbMidiDeviceAndroid)
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        $z0 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: boolean mIsClosed>;
+
+        return $z0;
+    }
+
+    static long access$400(com.android.org.chromium.media.UsbMidiDeviceAndroid)
+    {
+        com.android.org.chromium.media.UsbMidiDeviceAndroid r0;
+        long $l0;
+
+        r0 := @parameter0: com.android.org.chromium.media.UsbMidiDeviceAndroid;
+
+        $l0 = r0.<com.android.org.chromium.media.UsbMidiDeviceAndroid: long mNativePointer>;
+
+        return $l0;
+    }
+
+    static void access$500(long, int, byte[])
+    {
+        long l0;
+        int i1;
+        byte[] r0;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        r0 := @parameter2: byte[];
+
+        staticinvoke <com.android.org.chromium.media.UsbMidiDeviceAndroid: void nativeOnData(long,int,byte[])>(l0, i1, r0);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.org.chromium.media.UsbMidiDeviceAndroid: int MIDI_SUBCLASS> = 3;
+
+        return;
+    }
+}

@@ -1,0 +1,620 @@
+public class com.android.camera.processing.ProcessingService extends android.app.Service implements com.android.camera.session.CaptureSession$ProgressListener
+{
+    private static final com.android.camera.debug.Log$Tag TAG;
+    private static final int THREAD_PRIORITY;
+    private static final int CAMERA_NOTIFICATION_ID;
+    private android.app.Notification$Builder mNotificationBuilder;
+    private android.app.NotificationManager mNotificationManager;
+    public static final java.lang.String ACTION_PAUSE_PROCESSING_SERVICE;
+    public static final java.lang.String ACTION_RESUME_PROCESSING_SERVICE;
+    private android.os.PowerManager$WakeLock mWakeLock;
+    private final com.android.camera.processing.ProcessingService$ServiceController mServiceController;
+    private com.android.camera.session.CaptureSessionManager mSessionManager;
+    private com.android.camera.processing.ProcessingServiceManager mProcessingServiceManager;
+    private java.lang.Thread mProcessingThread;
+    private volatile boolean mPaused;
+    private com.android.camera.processing.ProcessingTask mCurrentTask;
+    private final java.util.concurrent.locks.Lock mSuspendStatusLock;
+
+    public void <init>()
+    {
+        com.android.camera.processing.ProcessingService r0;
+        com.android.camera.processing.ProcessingService$ServiceController $r1;
+        java.util.concurrent.locks.ReentrantLock $r2;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        specialinvoke r0.<android.app.Service: void <init>()>();
+
+        $r1 = new com.android.camera.processing.ProcessingService$ServiceController;
+
+        specialinvoke $r1.<com.android.camera.processing.ProcessingService$ServiceController: void <init>(com.android.camera.processing.ProcessingService)>(r0);
+
+        r0.<com.android.camera.processing.ProcessingService: com.android.camera.processing.ProcessingService$ServiceController mServiceController> = $r1;
+
+        r0.<com.android.camera.processing.ProcessingService: boolean mPaused> = 0;
+
+        $r2 = new java.util.concurrent.locks.ReentrantLock;
+
+        specialinvoke $r2.<java.util.concurrent.locks.ReentrantLock: void <init>()>();
+
+        r0.<com.android.camera.processing.ProcessingService: java.util.concurrent.locks.Lock mSuspendStatusLock> = $r2;
+
+        return;
+    }
+
+    public void onCreate()
+    {
+        com.android.camera.processing.ProcessingService r0;
+        android.os.PowerManager r1;
+        android.content.IntentFilter r2, $r11;
+        com.android.camera.processing.ProcessingServiceManager $r3;
+        com.android.camera.app.CameraServices $r4;
+        com.android.camera.session.CaptureSessionManager $r5;
+        java.lang.Object $r6, $r16;
+        com.android.camera.debug.Log$Tag $r7;
+        java.lang.String $r8;
+        android.os.PowerManager$WakeLock $r9, $r10;
+        android.support.v4.content.LocalBroadcastManager $r12;
+        com.android.camera.processing.ProcessingService$ServiceController $r13;
+        android.app.Notification$Builder $r14;
+        android.app.NotificationManager $r15;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        $r3 = staticinvoke <com.android.camera.processing.ProcessingServiceManager: com.android.camera.processing.ProcessingServiceManager getInstance()>();
+
+        r0.<com.android.camera.processing.ProcessingService: com.android.camera.processing.ProcessingServiceManager mProcessingServiceManager> = $r3;
+
+        $r4 = specialinvoke r0.<com.android.camera.processing.ProcessingService: com.android.camera.app.CameraServices getServices()>();
+
+        $r5 = interfaceinvoke $r4.<com.android.camera.app.CameraServices: com.android.camera.session.CaptureSessionManager getCaptureSessionManager()>();
+
+        r0.<com.android.camera.processing.ProcessingService: com.android.camera.session.CaptureSessionManager mSessionManager> = $r5;
+
+        $r6 = virtualinvoke r0.<com.android.camera.processing.ProcessingService: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        r1 = (android.os.PowerManager) $r6;
+
+        $r7 = <com.android.camera.processing.ProcessingService: com.android.camera.debug.Log$Tag TAG>;
+
+        $r8 = virtualinvoke $r7.<com.android.camera.debug.Log$Tag: java.lang.String toString()>();
+
+        $r9 = virtualinvoke r1.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, $r8);
+
+        r0.<com.android.camera.processing.ProcessingService: android.os.PowerManager$WakeLock mWakeLock> = $r9;
+
+        $r10 = r0.<com.android.camera.processing.ProcessingService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r10.<android.os.PowerManager$WakeLock: void acquire()>();
+
+        $r11 = new android.content.IntentFilter;
+
+        specialinvoke $r11.<android.content.IntentFilter: void <init>()>();
+
+        r2 = $r11;
+
+        virtualinvoke r2.<android.content.IntentFilter: void addAction(java.lang.String)>("com.android.camera.processing.PAUSE");
+
+        virtualinvoke r2.<android.content.IntentFilter: void addAction(java.lang.String)>("com.android.camera.processing.RESUME");
+
+        $r12 = staticinvoke <android.support.v4.content.LocalBroadcastManager: android.support.v4.content.LocalBroadcastManager getInstance(android.content.Context)>(r0);
+
+        $r13 = r0.<com.android.camera.processing.ProcessingService: com.android.camera.processing.ProcessingService$ServiceController mServiceController>;
+
+        virtualinvoke $r12.<android.support.v4.content.LocalBroadcastManager: void registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r13, r2);
+
+        $r14 = specialinvoke r0.<com.android.camera.processing.ProcessingService: android.app.Notification$Builder createInProgressNotificationBuilder()>();
+
+        r0.<com.android.camera.processing.ProcessingService: android.app.Notification$Builder mNotificationBuilder> = $r14;
+
+        $r16 = virtualinvoke r0.<com.android.camera.processing.ProcessingService: java.lang.Object getSystemService(java.lang.String)>("notification");
+
+        $r15 = (android.app.NotificationManager) $r16;
+
+        r0.<com.android.camera.processing.ProcessingService: android.app.NotificationManager mNotificationManager> = $r15;
+
+        return;
+    }
+
+    public void onDestroy()
+    {
+        com.android.camera.processing.ProcessingService r0;
+        com.android.camera.debug.Log$Tag $r1;
+        android.os.PowerManager$WakeLock $r2, $r5;
+        boolean $z0;
+        android.support.v4.content.LocalBroadcastManager $r3;
+        com.android.camera.processing.ProcessingService$ServiceController $r4;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        $r1 = <com.android.camera.processing.ProcessingService: com.android.camera.debug.Log$Tag TAG>;
+
+        staticinvoke <com.android.camera.debug.Log: void d(com.android.camera.debug.Log$Tag,java.lang.String)>($r1, "Shutting down");
+
+        $r2 = r0.<com.android.camera.processing.ProcessingService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        $z0 = virtualinvoke $r2.<android.os.PowerManager$WakeLock: boolean isHeld()>();
+
+        if $z0 == 0 goto label1;
+
+        $r5 = r0.<com.android.camera.processing.ProcessingService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r5.<android.os.PowerManager$WakeLock: void release()>();
+
+     label1:
+        $r3 = staticinvoke <android.support.v4.content.LocalBroadcastManager: android.support.v4.content.LocalBroadcastManager getInstance(android.content.Context)>(r0);
+
+        $r4 = r0.<com.android.camera.processing.ProcessingService: com.android.camera.processing.ProcessingService$ServiceController mServiceController>;
+
+        virtualinvoke $r3.<android.support.v4.content.LocalBroadcastManager: void unregisterReceiver(android.content.BroadcastReceiver)>($r4);
+
+        virtualinvoke r0.<com.android.camera.processing.ProcessingService: void stopForeground(boolean)>(1);
+
+        return;
+    }
+
+    public int onStartCommand(android.content.Intent, int, int)
+    {
+        com.android.camera.processing.ProcessingService r0;
+        android.content.Intent r1;
+        int i0, i1;
+        com.android.camera.debug.Log$Tag $r2;
+        android.app.Notification$Builder $r3;
+        android.app.Notification $r4;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        r1 := @parameter0: android.content.Intent;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $r2 = <com.android.camera.processing.ProcessingService: com.android.camera.debug.Log$Tag TAG>;
+
+        staticinvoke <com.android.camera.debug.Log: void d(com.android.camera.debug.Log$Tag,java.lang.String)>($r2, "Starting in foreground.");
+
+        $r3 = r0.<com.android.camera.processing.ProcessingService: android.app.Notification$Builder mNotificationBuilder>;
+
+        $r4 = virtualinvoke $r3.<android.app.Notification$Builder: android.app.Notification build()>();
+
+        virtualinvoke r0.<com.android.camera.processing.ProcessingService: void startForeground(int,android.app.Notification)>(2, $r4);
+
+        specialinvoke r0.<com.android.camera.processing.ProcessingService: void asyncProcessAllTasksAndShutdown()>();
+
+        return 1;
+    }
+
+    public android.os.IBinder onBind(android.content.Intent)
+    {
+        com.android.camera.processing.ProcessingService r0;
+        android.content.Intent r1;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        r1 := @parameter0: android.content.Intent;
+
+        return null;
+    }
+
+    private void pause()
+    {
+        com.android.camera.processing.ProcessingService r0;
+        java.lang.Throwable r1, $r7;
+        com.android.camera.debug.Log$Tag $r2;
+        java.util.concurrent.locks.Lock $r3, $r5, $r8;
+        com.android.camera.processing.ProcessingTask $r4, $r6;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        $r2 = <com.android.camera.processing.ProcessingService: com.android.camera.debug.Log$Tag TAG>;
+
+        staticinvoke <com.android.camera.debug.Log: void d(com.android.camera.debug.Log$Tag,java.lang.String)>($r2, "Pausing");
+
+     label1:
+        $r3 = r0.<com.android.camera.processing.ProcessingService: java.util.concurrent.locks.Lock mSuspendStatusLock>;
+
+        interfaceinvoke $r3.<java.util.concurrent.locks.Lock: void lock()>();
+
+        r0.<com.android.camera.processing.ProcessingService: boolean mPaused> = 1;
+
+        $r4 = r0.<com.android.camera.processing.ProcessingService: com.android.camera.processing.ProcessingTask mCurrentTask>;
+
+        if $r4 == null goto label2;
+
+        $r6 = r0.<com.android.camera.processing.ProcessingService: com.android.camera.processing.ProcessingTask mCurrentTask>;
+
+        interfaceinvoke $r6.<com.android.camera.processing.ProcessingTask: void suspend()>();
+
+     label2:
+        $r5 = r0.<com.android.camera.processing.ProcessingService: java.util.concurrent.locks.Lock mSuspendStatusLock>;
+
+        interfaceinvoke $r5.<java.util.concurrent.locks.Lock: void unlock()>();
+
+        goto label5;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r1 = $r7;
+
+     label4:
+        $r8 = r0.<com.android.camera.processing.ProcessingService: java.util.concurrent.locks.Lock mSuspendStatusLock>;
+
+        interfaceinvoke $r8.<java.util.concurrent.locks.Lock: void unlock()>();
+
+        throw r1;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private void resume()
+    {
+        com.android.camera.processing.ProcessingService r0;
+        java.lang.Throwable r1, $r7;
+        com.android.camera.debug.Log$Tag $r2;
+        java.util.concurrent.locks.Lock $r3, $r5, $r8;
+        com.android.camera.processing.ProcessingTask $r4, $r6;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        $r2 = <com.android.camera.processing.ProcessingService: com.android.camera.debug.Log$Tag TAG>;
+
+        staticinvoke <com.android.camera.debug.Log: void d(com.android.camera.debug.Log$Tag,java.lang.String)>($r2, "Resuming");
+
+     label1:
+        $r3 = r0.<com.android.camera.processing.ProcessingService: java.util.concurrent.locks.Lock mSuspendStatusLock>;
+
+        interfaceinvoke $r3.<java.util.concurrent.locks.Lock: void lock()>();
+
+        r0.<com.android.camera.processing.ProcessingService: boolean mPaused> = 0;
+
+        $r4 = r0.<com.android.camera.processing.ProcessingService: com.android.camera.processing.ProcessingTask mCurrentTask>;
+
+        if $r4 == null goto label2;
+
+        $r6 = r0.<com.android.camera.processing.ProcessingService: com.android.camera.processing.ProcessingTask mCurrentTask>;
+
+        interfaceinvoke $r6.<com.android.camera.processing.ProcessingTask: void resume()>();
+
+     label2:
+        $r5 = r0.<com.android.camera.processing.ProcessingService: java.util.concurrent.locks.Lock mSuspendStatusLock>;
+
+        interfaceinvoke $r5.<java.util.concurrent.locks.Lock: void unlock()>();
+
+        goto label5;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r1 = $r7;
+
+     label4:
+        $r8 = r0.<com.android.camera.processing.ProcessingService: java.util.concurrent.locks.Lock mSuspendStatusLock>;
+
+        interfaceinvoke $r8.<java.util.concurrent.locks.Lock: void unlock()>();
+
+        throw r1;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private void asyncProcessAllTasksAndShutdown()
+    {
+        com.android.camera.processing.ProcessingService r0;
+        java.lang.Thread $r1, $r3;
+        com.android.camera.processing.ProcessingService$1 $r2;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        $r1 = r0.<com.android.camera.processing.ProcessingService: java.lang.Thread mProcessingThread>;
+
+        if $r1 == null goto label1;
+
+        return;
+
+     label1:
+        $r2 = new com.android.camera.processing.ProcessingService$1;
+
+        specialinvoke $r2.<com.android.camera.processing.ProcessingService$1: void <init>(com.android.camera.processing.ProcessingService,java.lang.String)>(r0, "CameraProcessingThread");
+
+        r0.<com.android.camera.processing.ProcessingService: java.lang.Thread mProcessingThread> = $r2;
+
+        $r3 = r0.<com.android.camera.processing.ProcessingService: java.lang.Thread mProcessingThread>;
+
+        virtualinvoke $r3.<java.lang.Thread: void start()>();
+
+        return;
+    }
+
+    void processAndNotify(com.android.camera.processing.ProcessingTask)
+    {
+        com.android.camera.processing.ProcessingService r0;
+        com.android.camera.processing.ProcessingTask r1;
+        com.android.camera.session.CaptureSession r2;
+        com.android.camera.debug.Log$Tag $r3, $r6, $r10;
+        com.android.camera.app.CameraServices $r4;
+        com.android.camera.session.CaptureSessionManager $r7;
+        java.lang.String $r8;
+        android.location.Location $r9;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        r1 := @parameter0: com.android.camera.processing.ProcessingTask;
+
+        if r1 != null goto label1;
+
+        $r10 = <com.android.camera.processing.ProcessingService: com.android.camera.debug.Log$Tag TAG>;
+
+        staticinvoke <com.android.camera.debug.Log: void e(com.android.camera.debug.Log$Tag,java.lang.String)>($r10, "Reference to ProcessingTask is null");
+
+        return;
+
+     label1:
+        r2 = interfaceinvoke r1.<com.android.camera.processing.ProcessingTask: com.android.camera.session.CaptureSession getSession()>();
+
+        if r2 != null goto label2;
+
+        $r7 = r0.<com.android.camera.processing.ProcessingService: com.android.camera.session.CaptureSessionManager mSessionManager>;
+
+        $r8 = interfaceinvoke r1.<com.android.camera.processing.ProcessingTask: java.lang.String getName()>();
+
+        $r9 = interfaceinvoke r1.<com.android.camera.processing.ProcessingTask: android.location.Location getLocation()>();
+
+        r2 = interfaceinvoke $r7.<com.android.camera.session.CaptureSessionManager: com.android.camera.session.CaptureSession createNewSession(java.lang.String,long,android.location.Location)>($r8, 0L, $r9);
+
+     label2:
+        specialinvoke r0.<com.android.camera.processing.ProcessingService: void resetNotification()>();
+
+        interfaceinvoke r2.<com.android.camera.session.CaptureSession: void addProgressListener(com.android.camera.session.CaptureSession$ProgressListener)>(r0);
+
+        staticinvoke <java.lang.System: void gc()>();
+
+        $r3 = <com.android.camera.processing.ProcessingService: com.android.camera.debug.Log$Tag TAG>;
+
+        staticinvoke <com.android.camera.debug.Log: void d(com.android.camera.debug.Log$Tag,java.lang.String)>($r3, "Processing start");
+
+        $r4 = specialinvoke r0.<com.android.camera.processing.ProcessingService: com.android.camera.app.CameraServices getServices()>();
+
+        interfaceinvoke r1.<com.android.camera.processing.ProcessingTask: com.android.camera.processing.ProcessingTask$ProcessingResult process(android.content.Context,com.android.camera.app.CameraServices,com.android.camera.session.CaptureSession)>(r0, $r4, r2);
+
+        $r6 = <com.android.camera.processing.ProcessingService: com.android.camera.debug.Log$Tag TAG>;
+
+        staticinvoke <com.android.camera.debug.Log: void d(com.android.camera.debug.Log$Tag,java.lang.String)>($r6, "Processing done");
+
+        return;
+    }
+
+    private void resetNotification()
+    {
+        com.android.camera.processing.ProcessingService r0;
+        android.app.Notification$Builder $r1, $r2;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        $r1 = r0.<com.android.camera.processing.ProcessingService: android.app.Notification$Builder mNotificationBuilder>;
+
+        $r2 = virtualinvoke $r1.<android.app.Notification$Builder: android.app.Notification$Builder setContentText(java.lang.CharSequence)>("\u2026");
+
+        virtualinvoke $r2.<android.app.Notification$Builder: android.app.Notification$Builder setProgress(int,int,boolean)>(100, 0, 0);
+
+        specialinvoke r0.<com.android.camera.processing.ProcessingService: void postNotification()>();
+
+        return;
+    }
+
+    private com.android.camera.app.CameraServices getServices()
+    {
+        com.android.camera.processing.ProcessingService r0;
+        android.app.Application $r1;
+        com.android.camera.app.CameraApp $r2;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        $r1 = virtualinvoke r0.<com.android.camera.processing.ProcessingService: android.app.Application getApplication()>();
+
+        $r2 = (com.android.camera.app.CameraApp) $r1;
+
+        return $r2;
+    }
+
+    private void postNotification()
+    {
+        com.android.camera.processing.ProcessingService r0;
+        android.app.Notification$Builder $r1;
+        android.app.NotificationManager $r2;
+        android.app.Notification $r3;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        $r2 = r0.<com.android.camera.processing.ProcessingService: android.app.NotificationManager mNotificationManager>;
+
+        $r1 = r0.<com.android.camera.processing.ProcessingService: android.app.Notification$Builder mNotificationBuilder>;
+
+        $r3 = virtualinvoke $r1.<android.app.Notification$Builder: android.app.Notification build()>();
+
+        virtualinvoke $r2.<android.app.NotificationManager: void notify(int,android.app.Notification)>(2, $r3);
+
+        return;
+    }
+
+    private android.app.Notification$Builder createInProgressNotificationBuilder()
+    {
+        com.android.camera.processing.ProcessingService r0;
+        android.app.Notification$Builder $r1, $r2, $r3, $r4, $r6;
+        long $l0;
+        java.lang.CharSequence $r5;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        $r1 = new android.app.Notification$Builder;
+
+        specialinvoke $r1.<android.app.Notification$Builder: void <init>(android.content.Context)>(r0);
+
+        $r2 = virtualinvoke $r1.<android.app.Notification$Builder: android.app.Notification$Builder setSmallIcon(int)>(2130837700);
+
+        $l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r3 = virtualinvoke $r2.<android.app.Notification$Builder: android.app.Notification$Builder setWhen(long)>($l0);
+
+        $r4 = virtualinvoke $r3.<android.app.Notification$Builder: android.app.Notification$Builder setOngoing(boolean)>(1);
+
+        $r5 = virtualinvoke r0.<com.android.camera.processing.ProcessingService: java.lang.CharSequence getText(int)>(2131230721);
+
+        $r6 = virtualinvoke $r4.<android.app.Notification$Builder: android.app.Notification$Builder setContentTitle(java.lang.CharSequence)>($r5);
+
+        return $r6;
+    }
+
+    public void onProgressChanged(int)
+    {
+        com.android.camera.processing.ProcessingService r0;
+        int i0;
+        android.app.Notification$Builder $r1;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.camera.processing.ProcessingService: android.app.Notification$Builder mNotificationBuilder>;
+
+        virtualinvoke $r1.<android.app.Notification$Builder: android.app.Notification$Builder setProgress(int,int,boolean)>(100, i0, 0);
+
+        specialinvoke r0.<com.android.camera.processing.ProcessingService: void postNotification()>();
+
+        return;
+    }
+
+    public void onStatusMessageChanged(java.lang.CharSequence)
+    {
+        com.android.camera.processing.ProcessingService r0;
+        java.lang.CharSequence r1;
+        android.app.Notification$Builder $r2;
+
+        r0 := @this: com.android.camera.processing.ProcessingService;
+
+        r1 := @parameter0: java.lang.CharSequence;
+
+        $r2 = r0.<com.android.camera.processing.ProcessingService: android.app.Notification$Builder mNotificationBuilder>;
+
+        virtualinvoke $r2.<android.app.Notification$Builder: android.app.Notification$Builder setContentText(java.lang.CharSequence)>(r1);
+
+        specialinvoke r0.<com.android.camera.processing.ProcessingService: void postNotification()>();
+
+        return;
+    }
+
+    static void access$000(com.android.camera.processing.ProcessingService)
+    {
+        com.android.camera.processing.ProcessingService r0;
+
+        r0 := @parameter0: com.android.camera.processing.ProcessingService;
+
+        specialinvoke r0.<com.android.camera.processing.ProcessingService: void pause()>();
+
+        return;
+    }
+
+    static void access$100(com.android.camera.processing.ProcessingService)
+    {
+        com.android.camera.processing.ProcessingService r0;
+
+        r0 := @parameter0: com.android.camera.processing.ProcessingService;
+
+        specialinvoke r0.<com.android.camera.processing.ProcessingService: void resume()>();
+
+        return;
+    }
+
+    static com.android.camera.processing.ProcessingServiceManager access$200(com.android.camera.processing.ProcessingService)
+    {
+        com.android.camera.processing.ProcessingService r0;
+        com.android.camera.processing.ProcessingServiceManager $r1;
+
+        r0 := @parameter0: com.android.camera.processing.ProcessingService;
+
+        $r1 = r0.<com.android.camera.processing.ProcessingService: com.android.camera.processing.ProcessingServiceManager mProcessingServiceManager>;
+
+        return $r1;
+    }
+
+    static com.android.camera.processing.ProcessingTask access$302(com.android.camera.processing.ProcessingService, com.android.camera.processing.ProcessingTask)
+    {
+        com.android.camera.processing.ProcessingService r0;
+        com.android.camera.processing.ProcessingTask r1;
+
+        r0 := @parameter0: com.android.camera.processing.ProcessingService;
+
+        r1 := @parameter1: com.android.camera.processing.ProcessingTask;
+
+        r0.<com.android.camera.processing.ProcessingService: com.android.camera.processing.ProcessingTask mCurrentTask> = r1;
+
+        return r1;
+    }
+
+    static java.util.concurrent.locks.Lock access$400(com.android.camera.processing.ProcessingService)
+    {
+        com.android.camera.processing.ProcessingService r0;
+        java.util.concurrent.locks.Lock $r1;
+
+        r0 := @parameter0: com.android.camera.processing.ProcessingService;
+
+        $r1 = r0.<com.android.camera.processing.ProcessingService: java.util.concurrent.locks.Lock mSuspendStatusLock>;
+
+        return $r1;
+    }
+
+    static boolean access$500(com.android.camera.processing.ProcessingService)
+    {
+        com.android.camera.processing.ProcessingService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.camera.processing.ProcessingService;
+
+        $z0 = r0.<com.android.camera.processing.ProcessingService: boolean mPaused>;
+
+        return $z0;
+    }
+
+    static com.android.camera.processing.ProcessingTask access$300(com.android.camera.processing.ProcessingService)
+    {
+        com.android.camera.processing.ProcessingService r0;
+        com.android.camera.processing.ProcessingTask $r1;
+
+        r0 := @parameter0: com.android.camera.processing.ProcessingService;
+
+        $r1 = r0.<com.android.camera.processing.ProcessingService: com.android.camera.processing.ProcessingTask mCurrentTask>;
+
+        return $r1;
+    }
+
+    static void <clinit>()
+    {
+        com.android.camera.debug.Log$Tag $r0;
+
+        <com.android.camera.processing.ProcessingService: java.lang.String ACTION_RESUME_PROCESSING_SERVICE> = "com.android.camera.processing.RESUME";
+
+        <com.android.camera.processing.ProcessingService: java.lang.String ACTION_PAUSE_PROCESSING_SERVICE> = "com.android.camera.processing.PAUSE";
+
+        <com.android.camera.processing.ProcessingService: int CAMERA_NOTIFICATION_ID> = 2;
+
+        <com.android.camera.processing.ProcessingService: int THREAD_PRIORITY> = -4;
+
+        $r0 = new com.android.camera.debug.Log$Tag;
+
+        specialinvoke $r0.<com.android.camera.debug.Log$Tag: void <init>(java.lang.String)>("ProcessingService");
+
+        <com.android.camera.processing.ProcessingService: com.android.camera.debug.Log$Tag TAG> = $r0;
+
+        return;
+    }
+}

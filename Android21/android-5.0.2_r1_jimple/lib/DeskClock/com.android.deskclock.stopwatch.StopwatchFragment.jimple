@@ -1,0 +1,1940 @@
+public class com.android.deskclock.stopwatch.StopwatchFragment extends com.android.deskclock.DeskClockFragment implements android.content.SharedPreferences$OnSharedPreferenceChangeListener
+{
+    private static final boolean DEBUG;
+    private static final java.lang.String TAG;
+    private static final int STOPWATCH_REFRESH_INTERVAL_MILLIS;
+    int mState;
+    private com.android.deskclock.CircleTimerView mTime;
+    private com.android.deskclock.timer.CountingTimerView mTimeText;
+    private android.widget.ListView mLapsList;
+    private android.widget.ListPopupWindow mSharePopup;
+    private android.os.PowerManager$WakeLock mWakeLock;
+    private com.android.deskclock.CircleButtonsLayout mCircleLayout;
+    private android.animation.LayoutTransition mLayoutTransition;
+    private android.animation.LayoutTransition mCircleLayoutTransition;
+    private android.view.View mStartSpace;
+    private android.view.View mEndSpace;
+    private boolean mSpacersUsed;
+    long mStartTime;
+    long mAccumulatedTime;
+    com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter;
+    java.lang.Runnable mTimeUpdateThread;
+
+    public void <init>()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        com.android.deskclock.stopwatch.StopwatchFragment$2 $r1;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        specialinvoke r0.<com.android.deskclock.DeskClockFragment: void <init>()>();
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState> = 0;
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mStartTime> = 0L;
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime> = 0L;
+
+        $r1 = new com.android.deskclock.stopwatch.StopwatchFragment$2;
+
+        specialinvoke $r1.<com.android.deskclock.stopwatch.StopwatchFragment$2: void <init>(com.android.deskclock.stopwatch.StopwatchFragment)>(r0);
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: java.lang.Runnable mTimeUpdateThread> = $r1;
+
+        return;
+    }
+
+    private void rightButtonAction()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        long l0, l1, $l3, $l4, $l5, $l6;
+        android.content.Context r1;
+        android.content.Intent r2, $r4;
+        android.app.Activity $r3;
+        int $i2, $i7;
+        java.lang.StringBuilder $r10, $r12, $r13, $r14;
+        java.lang.Object[] $r15;
+        java.lang.String $r16;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        l0 = staticinvoke <com.android.deskclock.Utils: long getTimeNow()>();
+
+        $r3 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        r1 = virtualinvoke $r3.<android.app.Activity: android.content.Context getApplicationContext()>();
+
+        $r4 = new android.content.Intent;
+
+        specialinvoke $r4.<android.content.Intent: void <init>(android.content.Context,java.lang.Class)>(r1, class "com/android/deskclock/stopwatch/StopwatchService");
+
+        r2 = $r4;
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,long)>("message_time", l0);
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,boolean)>("show_notification", 0);
+
+        $i2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        tableswitch($i2)
+        {
+            case 0: goto label2;
+            case 1: goto label1;
+            case 2: goto label2;
+            default: goto label3;
+        };
+
+     label1:
+        l1 = staticinvoke <com.android.deskclock.Utils: long getTimeNow()>();
+
+        $l4 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime>;
+
+        $l3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mStartTime>;
+
+        $l5 = l1 - $l3;
+
+        $l6 = $l4 + $l5;
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime> = $l6;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void doStop()>();
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent setAction(java.lang.String)>("stop_stopwatch");
+
+        virtualinvoke r1.<android.content.Context: android.content.ComponentName startService(android.content.Intent)>(r2);
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void releaseWakeLock()>();
+
+        goto label4;
+
+     label2:
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void doStart(long)>(l0);
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent setAction(java.lang.String)>("start_stopwatch");
+
+        virtualinvoke r1.<android.content.Context: android.content.ComponentName startService(android.content.Intent)>(r2);
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void acquireWakeLock()>();
+
+        goto label4;
+
+     label3:
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Illegal state ");
+
+        $i7 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" while pressing the right stopwatch button");
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r15 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.deskclock.LogUtils: void wtf(java.lang.String,java.lang.Object[])>($r16, $r15);
+
+     label4:
+        return;
+    }
+
+    public android.view.View onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.view.LayoutInflater r1;
+        android.view.ViewGroup r2, r4;
+        android.os.Bundle r3;
+        android.view.View $r5, $r6, $r8, $r10, $r19, $r28, $r30, $r31, $r32;
+        com.android.deskclock.CircleTimerView $r7;
+        com.android.deskclock.timer.CountingTimerView $r9, $r16;
+        android.widget.ListView $r11, $r12, $r17;
+        com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter $r13, $r15;
+        android.app.Activity $r14;
+        com.android.deskclock.CircleButtonsLayout $r18, $r21;
+        android.animation.LayoutTransition $r20, $r22, $r23, $r24, $r25, $r26, $r27, $r29, $r34;
+        boolean $z0;
+        com.android.deskclock.stopwatch.StopwatchFragment$1 $r33;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        r1 := @parameter0: android.view.LayoutInflater;
+
+        r2 := @parameter1: android.view.ViewGroup;
+
+        r3 := @parameter2: android.os.Bundle;
+
+        $r5 = virtualinvoke r1.<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup,boolean)>(2130968595, r2, 0);
+
+        r4 = (android.view.ViewGroup) $r5;
+
+        $r6 = virtualinvoke r4.<android.view.ViewGroup: android.view.View findViewById(int)>(2131624009);
+
+        $r7 = (com.android.deskclock.CircleTimerView) $r6;
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime> = $r7;
+
+        $r8 = virtualinvoke r4.<android.view.ViewGroup: android.view.View findViewById(int)>(2131624008);
+
+        $r9 = (com.android.deskclock.timer.CountingTimerView) $r8;
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText> = $r9;
+
+        $r10 = virtualinvoke r4.<android.view.ViewGroup: android.view.View findViewById(int)>(2131624011);
+
+        $r11 = (android.widget.ListView) $r10;
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ListView mLapsList> = $r11;
+
+        $r12 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ListView mLapsList>;
+
+        virtualinvoke $r12.<android.widget.ListView: void setDividerHeight(int)>(0);
+
+        $r13 = new com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter;
+
+        $r14 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        specialinvoke $r13.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: void <init>(com.android.deskclock.stopwatch.StopwatchFragment,android.content.Context)>(r0, $r14);
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter> = $r13;
+
+        $r17 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ListView mLapsList>;
+
+        $r15 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        virtualinvoke $r17.<android.widget.ListView: void setAdapter(android.widget.ListAdapter)>($r15);
+
+        $r16 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText>;
+
+        virtualinvoke $r16.<com.android.deskclock.timer.CountingTimerView: void setVirtualButtonEnabled(boolean)>(1);
+
+        $r19 = virtualinvoke r4.<android.view.ViewGroup: android.view.View findViewById(int)>(2131624007);
+
+        $r18 = (com.android.deskclock.CircleButtonsLayout) $r19;
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleButtonsLayout mCircleLayout> = $r18;
+
+        $r21 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleButtonsLayout mCircleLayout>;
+
+        virtualinvoke $r21.<com.android.deskclock.CircleButtonsLayout: void setCircleTimerViewIds(int,int,int,int)>(2131624009, 0, 0, 0);
+
+        $r20 = new android.animation.LayoutTransition;
+
+        specialinvoke $r20.<android.animation.LayoutTransition: void <init>()>();
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mLayoutTransition> = $r20;
+
+        $r23 = new android.animation.LayoutTransition;
+
+        specialinvoke $r23.<android.animation.LayoutTransition: void <init>()>();
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mCircleLayoutTransition> = $r23;
+
+        $r22 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mCircleLayoutTransition>;
+
+        virtualinvoke $r22.<android.animation.LayoutTransition: void enableTransitionType(int)>(4);
+
+        $r25 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mCircleLayoutTransition>;
+
+        virtualinvoke $r25.<android.animation.LayoutTransition: void disableTransitionType(int)>(2);
+
+        $r24 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mCircleLayoutTransition>;
+
+        virtualinvoke $r24.<android.animation.LayoutTransition: void disableTransitionType(int)>(3);
+
+        $r27 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mCircleLayoutTransition>;
+
+        virtualinvoke $r27.<android.animation.LayoutTransition: void disableTransitionType(int)>(0);
+
+        $r26 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mCircleLayoutTransition>;
+
+        virtualinvoke $r26.<android.animation.LayoutTransition: void disableTransitionType(int)>(1);
+
+        $r29 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mCircleLayoutTransition>;
+
+        virtualinvoke $r29.<android.animation.LayoutTransition: void setAnimateParentHierarchy(boolean)>(0);
+
+        $r28 = virtualinvoke r4.<android.view.ViewGroup: android.view.View findViewById(int)>(2131624006);
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mStartSpace> = $r28;
+
+        $r31 = virtualinvoke r4.<android.view.ViewGroup: android.view.View findViewById(int)>(2131624010);
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mEndSpace> = $r31;
+
+        $r30 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mStartSpace>;
+
+        if $r30 != null goto label1;
+
+        $r32 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mEndSpace>;
+
+        if $r32 == null goto label2;
+
+     label1:
+        $z0 = 1;
+
+        goto label3;
+
+     label2:
+        $z0 = 0;
+
+     label3:
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: boolean mSpacersUsed> = $z0;
+
+        $r34 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mLayoutTransition>;
+
+        $r33 = new com.android.deskclock.stopwatch.StopwatchFragment$1;
+
+        specialinvoke $r33.<com.android.deskclock.stopwatch.StopwatchFragment$1: void <init>(com.android.deskclock.stopwatch.StopwatchFragment)>(r0);
+
+        virtualinvoke $r34.<android.animation.LayoutTransition: void addTransitionListener(android.animation.LayoutTransition$TransitionListener)>($r33);
+
+        return r4;
+    }
+
+    public void onStart()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        boolean z0, $z1, $z2;
+        byte b0, $b2, $b3;
+        com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter $r1;
+        int $i1;
+        android.widget.ListView $r2;
+        android.view.View $r3, $r8, $r9, $r10, $r11;
+        android.animation.LayoutTransition $r4, $r6;
+        android.view.ViewGroup $r5;
+        com.android.deskclock.CircleButtonsLayout $r7;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        specialinvoke r0.<com.android.deskclock.DeskClockFragment: void onStart()>();
+
+        $r1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $i1 = virtualinvoke $r1.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: int getCount()>();
+
+        if $i1 <= 0 goto label1;
+
+        $z2 = 1;
+
+        goto label2;
+
+     label1:
+        $z2 = 0;
+
+     label2:
+        z0 = $z2;
+
+        $r2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ListView mLapsList>;
+
+        if z0 == 0 goto label3;
+
+        $b2 = 0;
+
+        goto label4;
+
+     label3:
+        $b2 = 8;
+
+     label4:
+        virtualinvoke $r2.<android.widget.ListView: void setVisibility(int)>($b2);
+
+        $z1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: boolean mSpacersUsed>;
+
+        if $z1 == 0 goto label8;
+
+        if z0 == 0 goto label5;
+
+        $b3 = 8;
+
+        goto label6;
+
+     label5:
+        $b3 = 0;
+
+     label6:
+        b0 = $b3;
+
+        $r8 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mStartSpace>;
+
+        if $r8 == null goto label7;
+
+        $r11 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mStartSpace>;
+
+        virtualinvoke $r11.<android.view.View: void setVisibility(int)>(b0);
+
+     label7:
+        $r9 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mEndSpace>;
+
+        if $r9 == null goto label8;
+
+        $r10 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mEndSpace>;
+
+        virtualinvoke $r10.<android.view.View: void setVisibility(int)>(b0);
+
+     label8:
+        $r3 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View getView()>();
+
+        $r5 = (android.view.ViewGroup) $r3;
+
+        $r4 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mLayoutTransition>;
+
+        virtualinvoke $r5.<android.view.ViewGroup: void setLayoutTransition(android.animation.LayoutTransition)>($r4);
+
+        $r7 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleButtonsLayout mCircleLayout>;
+
+        $r6 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mCircleLayoutTransition>;
+
+        virtualinvoke $r7.<com.android.deskclock.CircleButtonsLayout: void setLayoutTransition(android.animation.LayoutTransition)>($r6);
+
+        return;
+    }
+
+    public void onResume()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.content.SharedPreferences r1;
+        android.view.View r2;
+        android.app.Activity $r3, $r7;
+        com.android.deskclock.CircleTimerView $r4, $r5;
+        long $l0, $l3;
+        com.android.deskclock.timer.CountingTimerView $r6, $r9;
+        int $i1, $i2;
+        com.android.deskclock.DeskClock $r8;
+        byte $b4;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r3 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        r1 = staticinvoke <android.preference.PreferenceManager: android.content.SharedPreferences getDefaultSharedPreferences(android.content.Context)>($r3);
+
+        interfaceinvoke r1.<android.content.SharedPreferences: void registerOnSharedPreferenceChangeListener(android.content.SharedPreferences$OnSharedPreferenceChangeListener)>(r0);
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void readFromSharedPref(android.content.SharedPreferences)>(r1);
+
+        $r4 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r4.<com.android.deskclock.CircleTimerView: void readFromSharedPref(android.content.SharedPreferences,java.lang.String)>(r1, "sw");
+
+        $r5 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r5.<com.android.deskclock.CircleTimerView: void postInvalidate()>();
+
+        virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void setFabAppearance()>();
+
+        virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void setLeftRightButtonAppearance()>();
+
+        $r6 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText>;
+
+        $l0 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime>;
+
+        virtualinvoke $r6.<com.android.deskclock.timer.CountingTimerView: void setTime(long,boolean,boolean)>($l0, 1, 1);
+
+        $i1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        if $i1 != 1 goto label1;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void acquireWakeLock()>();
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void startUpdateThread()>();
+
+        goto label2;
+
+     label1:
+        $i2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        if $i2 != 2 goto label2;
+
+        $l3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime>;
+
+        $b4 = $l3 cmp 0L;
+
+        if $b4 == 0 goto label2;
+
+        $r9 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText>;
+
+        virtualinvoke $r9.<com.android.deskclock.timer.CountingTimerView: void blinkTimeStr(boolean)>(1);
+
+     label2:
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void showLaps()>();
+
+        $r7 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        $r8 = (com.android.deskclock.DeskClock) $r7;
+
+        virtualinvoke $r8.<com.android.deskclock.DeskClock: void registerPageChangedListener(com.android.deskclock.DeskClockFragment)>(r0);
+
+        r2 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View getView()>();
+
+        if r2 == null goto label3;
+
+        virtualinvoke r2.<android.view.View: void setVisibility(int)>(0);
+
+     label3:
+        specialinvoke r0.<com.android.deskclock.DeskClockFragment: void onResume()>();
+
+        return;
+    }
+
+    public void onPause()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.view.View r1;
+        int $i0;
+        android.app.Activity $r2, $r5;
+        com.android.deskclock.CircleTimerView $r3;
+        com.android.deskclock.timer.CountingTimerView $r4;
+        com.android.deskclock.DeskClock $r6;
+        android.content.SharedPreferences r7;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $i0 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        if $i0 != 1 goto label1;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void stopUpdateThread()>();
+
+        r1 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View getView()>();
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<android.view.View: void setVisibility(int)>(4);
+
+     label1:
+        $r2 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        r7 = staticinvoke <android.preference.PreferenceManager: android.content.SharedPreferences getDefaultSharedPreferences(android.content.Context)>($r2);
+
+        interfaceinvoke r7.<android.content.SharedPreferences: void unregisterOnSharedPreferenceChangeListener(android.content.SharedPreferences$OnSharedPreferenceChangeListener)>(r0);
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void writeToSharedPref(android.content.SharedPreferences)>(r7);
+
+        $r3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r3.<com.android.deskclock.CircleTimerView: void writeToSharedPref(android.content.SharedPreferences,java.lang.String)>(r7, "sw");
+
+        $r4 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText>;
+
+        virtualinvoke $r4.<com.android.deskclock.timer.CountingTimerView: void blinkTimeStr(boolean)>(0);
+
+        $r5 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        $r6 = (com.android.deskclock.DeskClock) $r5;
+
+        virtualinvoke $r6.<com.android.deskclock.DeskClock: void unregisterPageChangedListener(com.android.deskclock.DeskClockFragment)>(r0);
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void releaseWakeLock()>();
+
+        specialinvoke r0.<com.android.deskclock.DeskClockFragment: void onPause()>();
+
+        return;
+    }
+
+    public void onPageChanged(int)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        int i0, $i1;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        i0 := @parameter0: int;
+
+        if i0 != 3 goto label1;
+
+        $i1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        if $i1 != 1 goto label1;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void acquireWakeLock()>();
+
+        goto label2;
+
+     label1:
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void releaseWakeLock()>();
+
+     label2:
+        return;
+    }
+
+    private void doStop()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        com.android.deskclock.CircleTimerView $r1;
+        long $l0, $l1;
+        com.android.deskclock.timer.CountingTimerView $r2, $r3;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void stopUpdateThread()>();
+
+        $r1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r1.<com.android.deskclock.CircleTimerView: void pauseIntervalAnimation()>();
+
+        $r2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText>;
+
+        $l0 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime>;
+
+        virtualinvoke $r2.<com.android.deskclock.timer.CountingTimerView: void setTime(long,boolean,boolean)>($l0, 1, 1);
+
+        $r3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText>;
+
+        virtualinvoke $r3.<com.android.deskclock.timer.CountingTimerView: void blinkTimeStr(boolean)>(1);
+
+        $l1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime>;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void updateCurrentLap(long)>($l1);
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState> = 2;
+
+        virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void setFabAppearance()>();
+
+        virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void setLeftRightButtonAppearance()>();
+
+        return;
+    }
+
+    private void doStart(long)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        long l0;
+        com.android.deskclock.timer.CountingTimerView $r1;
+        com.android.deskclock.CircleTimerView $r2, $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        l0 := @parameter0: long;
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mStartTime> = l0;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void startUpdateThread()>();
+
+        $r1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText>;
+
+        virtualinvoke $r1.<com.android.deskclock.timer.CountingTimerView: void blinkTimeStr(boolean)>(0);
+
+        $r2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        $z0 = virtualinvoke $r2.<com.android.deskclock.CircleTimerView: boolean isAnimating()>();
+
+        if $z0 == 0 goto label1;
+
+        $r3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r3.<com.android.deskclock.CircleTimerView: void startIntervalAnimation()>();
+
+     label1:
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState> = 1;
+
+        virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void setFabAppearance()>();
+
+        virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void setLeftRightButtonAppearance()>();
+
+        return;
+    }
+
+    private void doLap()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void showLaps()>();
+
+        virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void setFabAppearance()>();
+
+        virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void setLeftRightButtonAppearance()>();
+
+        return;
+    }
+
+    private void doReset()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.content.SharedPreferences r1;
+        android.app.Activity $r2;
+        com.android.deskclock.CircleTimerView $r3, $r5, $r6;
+        com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter $r4;
+        long $l0;
+        com.android.deskclock.timer.CountingTimerView $r7, $r8;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r2 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        r1 = staticinvoke <android.preference.PreferenceManager: android.content.SharedPreferences getDefaultSharedPreferences(android.content.Context)>($r2);
+
+        staticinvoke <com.android.deskclock.Utils: void clearSwSharedPref(android.content.SharedPreferences)>(r1);
+
+        $r3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r3.<com.android.deskclock.CircleTimerView: void clearSharedPref(android.content.SharedPreferences,java.lang.String)>(r1, "sw");
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime> = 0L;
+
+        $r4 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        virtualinvoke $r4.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: void clearLaps()>();
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void showLaps()>();
+
+        $r5 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r5.<com.android.deskclock.CircleTimerView: void stopIntervalAnimation()>();
+
+        $r6 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r6.<com.android.deskclock.CircleTimerView: void reset()>();
+
+        $r7 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText>;
+
+        $l0 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime>;
+
+        virtualinvoke $r7.<com.android.deskclock.timer.CountingTimerView: void setTime(long,boolean,boolean)>($l0, 1, 1);
+
+        $r8 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText>;
+
+        virtualinvoke $r8.<com.android.deskclock.timer.CountingTimerView: void blinkTimeStr(boolean)>(0);
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState> = 0;
+
+        virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void setFabAppearance()>();
+
+        virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void setLeftRightButtonAppearance()>();
+
+        return;
+    }
+
+    private void shareResults()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.app.Activity r1, $r11;
+        android.content.Intent r2, r3, $r5;
+        android.content.Context $r8, $r12;
+        java.lang.String $r9, $r13, $r17, $r19;
+        com.android.deskclock.timer.CountingTimerView $r14;
+        long[] $r15, $r18;
+        com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter $r16;
+        android.content.ActivityNotFoundException $r21;
+        java.lang.Object[] $r22;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        r1 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        $r5 = new android.content.Intent;
+
+        specialinvoke $r5.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.SEND");
+
+        r2 = $r5;
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent setType(java.lang.String)>("text/plain");
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent addFlags(int)>(524288);
+
+        $r8 = virtualinvoke r1.<android.content.Context: android.content.Context getApplicationContext()>();
+
+        $r9 = staticinvoke <com.android.deskclock.stopwatch.Stopwatches: java.lang.String getShareTitle(android.content.Context)>($r8);
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("android.intent.extra.SUBJECT", $r9);
+
+        $r11 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        $r12 = virtualinvoke $r11.<android.app.Activity: android.content.Context getApplicationContext()>();
+
+        $r14 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText>;
+
+        $r13 = virtualinvoke $r14.<com.android.deskclock.timer.CountingTimerView: java.lang.String getTimeString()>();
+
+        $r16 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $r15 = virtualinvoke $r16.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: long[] getLapTimes()>();
+
+        $r18 = specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: long[] getLapShareTimes(long[])>($r15);
+
+        $r17 = staticinvoke <com.android.deskclock.stopwatch.Stopwatches: java.lang.String buildShareResults(android.content.Context,java.lang.String,long[])>($r12, $r13, $r18);
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("android.intent.extra.TEXT", $r17);
+
+        $r19 = virtualinvoke r1.<android.content.Context: java.lang.String getString(int)>(2131558497);
+
+        r3 = staticinvoke <android.content.Intent: android.content.Intent createChooser(android.content.Intent,java.lang.CharSequence)>(r2, $r19);
+
+     label1:
+        virtualinvoke r1.<android.content.Context: void startActivity(android.content.Intent)>(r3);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r21 := @caughtexception;
+
+        $r22 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.deskclock.LogUtils: void e(java.lang.String,java.lang.Object[])>("No compatible receiver is found", $r22);
+
+     label4:
+        return;
+
+        catch android.content.ActivityNotFoundException from label1 to label2 with label3;
+    }
+
+    private long[] getLapShareTimes(long[])
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        long[] r1, r2;
+        int i0, i2;
+        long l1, l3, $l4;
+        java.lang.StringBuilder $r3, $r4, $r5, $r6, $r7;
+        java.lang.String $r8;
+        java.lang.Object[] $r9;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        r1 := @parameter0: long[];
+
+        if r1 != null goto label1;
+
+        return null;
+
+     label1:
+        i0 = lengthof r1;
+
+        r2 = newarray (long)[i0];
+
+        l1 = 0L;
+
+        i2 = i0 - 1;
+
+     label2:
+        if i2 < 0 goto label3;
+
+        l3 = r1[i2];
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("lap ");
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l3);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r9 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.deskclock.LogUtils: void v(java.lang.String,java.lang.Object[])>($r8, $r9);
+
+        $l4 = l3 - l1;
+
+        r2[i2] = $l4;
+
+        l1 = l3;
+
+        i2 = i2 + -1;
+
+        goto label2;
+
+     label3:
+        return r2;
+    }
+
+    private boolean reachedMaxLaps()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter $r1;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $i0 = virtualinvoke $r1.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: int getCount()>();
+
+        if $i0 < 99 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    private void addLapTime(long)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        long l0, l1, $l3, $l4, $l5, $l6, l7;
+        int i2;
+        com.android.deskclock.stopwatch.StopwatchFragment$Lap r1, $r4, $r5, $r7, $r10, $r17, $r19;
+        com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter $r2, $r3, $r6, $r8, $r9, $r11, $r14, $r16, $r18, $r21;
+        com.android.deskclock.CircleTimerView $r12, $r13, $r15, $r20;
+        boolean $z0;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        l0 := @parameter0: long;
+
+        $l3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mStartTime>;
+
+        $l5 = l0 - $l3;
+
+        $l4 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime>;
+
+        l1 = $l5 + $l4;
+
+        $r2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        i2 = virtualinvoke $r2.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: int getCount()>();
+
+        if i2 != 0 goto label1;
+
+        $r17 = new com.android.deskclock.stopwatch.StopwatchFragment$Lap;
+
+        specialinvoke $r17.<com.android.deskclock.stopwatch.StopwatchFragment$Lap: void <init>(com.android.deskclock.stopwatch.StopwatchFragment,long,long)>(r0, l1, l1);
+
+        r1 = $r17;
+
+        $r16 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        virtualinvoke $r16.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: void addLap(com.android.deskclock.stopwatch.StopwatchFragment$Lap)>(r1);
+
+        $r18 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $r19 = new com.android.deskclock.stopwatch.StopwatchFragment$Lap;
+
+        specialinvoke $r19.<com.android.deskclock.stopwatch.StopwatchFragment$Lap: void <init>(com.android.deskclock.stopwatch.StopwatchFragment,long,long)>(r0, 0L, l1);
+
+        virtualinvoke $r18.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: void addLap(com.android.deskclock.stopwatch.StopwatchFragment$Lap)>($r19);
+
+        $r20 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r20.<com.android.deskclock.CircleTimerView: void setIntervalTime(long)>(l1);
+
+        $r21 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        virtualinvoke $r21.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: boolean updateTimeFormats(com.android.deskclock.stopwatch.StopwatchFragment$Lap)>(r1);
+
+        goto label2;
+
+     label1:
+        $r3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $r4 = virtualinvoke $r3.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: com.android.deskclock.stopwatch.StopwatchFragment$Lap getItem(int)>(1);
+
+        $l6 = $r4.<com.android.deskclock.stopwatch.StopwatchFragment$Lap: long mTotalTime>;
+
+        l7 = l1 - $l6;
+
+        $r6 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $r5 = virtualinvoke $r6.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: com.android.deskclock.stopwatch.StopwatchFragment$Lap getItem(int)>(0);
+
+        $r5.<com.android.deskclock.stopwatch.StopwatchFragment$Lap: long mLapTime> = l7;
+
+        $r8 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $r7 = virtualinvoke $r8.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: com.android.deskclock.stopwatch.StopwatchFragment$Lap getItem(int)>(0);
+
+        $r7.<com.android.deskclock.stopwatch.StopwatchFragment$Lap: long mTotalTime> = l1;
+
+        $r9 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $r10 = new com.android.deskclock.stopwatch.StopwatchFragment$Lap;
+
+        specialinvoke $r10.<com.android.deskclock.stopwatch.StopwatchFragment$Lap: void <init>(com.android.deskclock.stopwatch.StopwatchFragment,long,long)>(r0, 0L, l1);
+
+        virtualinvoke $r9.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: void addLap(com.android.deskclock.stopwatch.StopwatchFragment$Lap)>($r10);
+
+        $r12 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r12.<com.android.deskclock.CircleTimerView: void setMarkerTime(long)>(l7);
+
+        $r11 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        staticinvoke <com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: void access$200(com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter)>($r11);
+
+     label2:
+        $r14 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        virtualinvoke $r14.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: void notifyDataSetChanged()>();
+
+        $r13 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r13.<com.android.deskclock.CircleTimerView: void stopIntervalAnimation()>();
+
+        $z0 = specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: boolean reachedMaxLaps()>();
+
+        if $z0 != 0 goto label3;
+
+        $r15 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r15.<com.android.deskclock.CircleTimerView: void startIntervalAnimation()>();
+
+     label3:
+        return;
+    }
+
+    private void updateCurrentLap(long)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        long l0, $l2, $l3;
+        com.android.deskclock.stopwatch.StopwatchFragment$Lap r1, $r5;
+        com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter $r2, $r3, $r4, $r6, $r7;
+        int $i1;
+        boolean $z0;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        l0 := @parameter0: long;
+
+        $r2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $i1 = virtualinvoke $r2.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: int getCount()>();
+
+        if $i1 <= 0 goto label2;
+
+        $r3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        r1 = virtualinvoke $r3.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: com.android.deskclock.stopwatch.StopwatchFragment$Lap getItem(int)>(0);
+
+        $r4 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $r5 = virtualinvoke $r4.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: com.android.deskclock.stopwatch.StopwatchFragment$Lap getItem(int)>(1);
+
+        $l2 = $r5.<com.android.deskclock.stopwatch.StopwatchFragment$Lap: long mTotalTime>;
+
+        $l3 = l0 - $l2;
+
+        r1.<com.android.deskclock.stopwatch.StopwatchFragment$Lap: long mLapTime> = $l3;
+
+        r1.<com.android.deskclock.stopwatch.StopwatchFragment$Lap: long mTotalTime> = l0;
+
+        $r6 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $z0 = virtualinvoke $r6.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: boolean updateTimeFormats(com.android.deskclock.stopwatch.StopwatchFragment$Lap)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        $r7 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        virtualinvoke $r7.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: void notifyDataSetChanged()>();
+
+        goto label2;
+
+     label1:
+        virtualinvoke r1.<com.android.deskclock.stopwatch.StopwatchFragment$Lap: void updateView()>();
+
+     label2:
+        return;
+    }
+
+    private void showLaps()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        boolean z0, $z1, $z2;
+        byte b0, $b4;
+        android.view.ViewGroup r1;
+        com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter $r2;
+        int $i1;
+        android.animation.LayoutTransition $r3, $r4, $r5, $r7, $r13;
+        long $l2, $l3, l5;
+        android.widget.ListView $r6, $r8;
+        android.view.View $r9, $r10, $r11, $r12, $r14;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        $i1 = virtualinvoke $r2.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: int getCount()>();
+
+        if $i1 <= 0 goto label1;
+
+        $z2 = 1;
+
+        goto label2;
+
+     label1:
+        $z2 = 0;
+
+     label2:
+        z0 = $z2;
+
+        $z1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: boolean mSpacersUsed>;
+
+        if $z1 == 0 goto label7;
+
+        if z0 == 0 goto label3;
+
+        $b4 = 8;
+
+        goto label4;
+
+     label3:
+        $b4 = 0;
+
+     label4:
+        b0 = $b4;
+
+        $r9 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View getView()>();
+
+        r1 = (android.view.ViewGroup) $r9;
+
+        if r1 == null goto label7;
+
+        virtualinvoke r1.<android.view.ViewGroup: void setLayoutTransition(android.animation.LayoutTransition)>(null);
+
+        $r11 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mStartSpace>;
+
+        if $r11 == null goto label5;
+
+        $r14 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mStartSpace>;
+
+        virtualinvoke $r14.<android.view.View: void setVisibility(int)>(b0);
+
+     label5:
+        $r10 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mEndSpace>;
+
+        if $r10 == null goto label6;
+
+        $r12 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.view.View mEndSpace>;
+
+        virtualinvoke $r12.<android.view.View: void setVisibility(int)>(b0);
+
+     label6:
+        $r13 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mLayoutTransition>;
+
+        virtualinvoke r1.<android.view.ViewGroup: void setLayoutTransition(android.animation.LayoutTransition)>($r13);
+
+     label7:
+        if z0 == 0 goto label8;
+
+        $r7 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mCircleLayoutTransition>;
+
+        virtualinvoke $r7.<android.animation.LayoutTransition: void setStartDelay(int,long)>(4, 0L);
+
+        $r8 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ListView mLapsList>;
+
+        virtualinvoke $r8.<android.widget.ListView: void setVisibility(int)>(0);
+
+        goto label9;
+
+     label8:
+        $r3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mLayoutTransition>;
+
+        $l2 = virtualinvoke $r3.<android.animation.LayoutTransition: long getStartDelay(int)>(3);
+
+        $r4 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mLayoutTransition>;
+
+        $l3 = virtualinvoke $r4.<android.animation.LayoutTransition: long getDuration(int)>(3);
+
+        l5 = $l2 + $l3;
+
+        $r5 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.animation.LayoutTransition mCircleLayoutTransition>;
+
+        virtualinvoke $r5.<android.animation.LayoutTransition: void setStartDelay(int,long)>(4, l5);
+
+        $r6 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ListView mLapsList>;
+
+        virtualinvoke $r6.<android.widget.ListView: void setVisibility(int)>(8);
+
+     label9:
+        return;
+    }
+
+    private void startUpdateThread()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        java.lang.Runnable $r1;
+        com.android.deskclock.CircleTimerView $r2;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        $r1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: java.lang.Runnable mTimeUpdateThread>;
+
+        virtualinvoke $r2.<com.android.deskclock.CircleTimerView: boolean post(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    private void stopUpdateThread()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        java.lang.Runnable $r1;
+        com.android.deskclock.CircleTimerView $r2;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        $r1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: java.lang.Runnable mTimeUpdateThread>;
+
+        virtualinvoke $r2.<com.android.deskclock.CircleTimerView: boolean removeCallbacks(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    private void writeToSharedPref(android.content.SharedPreferences)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.content.SharedPreferences r1;
+        android.content.SharedPreferences$Editor r2;
+        long[] r3;
+        int i0, $i3, $i4, $i5, $i6, $i11, $i12, $i13, $i14;
+        java.lang.String r4, $r23;
+        long $l1, $l2, $l7, $l8, $l9, $l10, $l15;
+        com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter $r8, $r18;
+        java.lang.StringBuilder $r21, $r22, $r24;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        r1 := @parameter0: android.content.SharedPreferences;
+
+        r2 = interfaceinvoke r1.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        $l1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mStartTime>;
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putLong(java.lang.String,long)>("sw_start_time", $l1);
+
+        $l2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime>;
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putLong(java.lang.String,long)>("sw_accum_time", $l2);
+
+        $i3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putInt(java.lang.String,int)>("sw_state", $i3);
+
+        $r8 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        if $r8 == null goto label2;
+
+        $r18 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        r3 = virtualinvoke $r18.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: long[] getLapTimes()>();
+
+        if r3 == null goto label2;
+
+        $i12 = lengthof r3;
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putInt(java.lang.String,int)>("sw_lap_num", $i12);
+
+        i0 = 0;
+
+     label1:
+        $i11 = lengthof r3;
+
+        if i0 >= $i11 goto label2;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        $r22 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sw_lap_time_");
+
+        $i13 = lengthof r3;
+
+        $i14 = $i13 - i0;
+
+        $r23 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>($i14);
+
+        $r24 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r23);
+
+        r4 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $l15 = r3[i0];
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putLong(java.lang.String,long)>(r4, $l15);
+
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label2:
+        $i4 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        if $i4 != 1 goto label3;
+
+        $l10 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mStartTime>;
+
+        $l8 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime>;
+
+        $l9 = $l10 - $l8;
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putLong(java.lang.String,long)>("notif_clock_base", $l9);
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putLong(java.lang.String,long)>("notif_clock_elapsed", -1L);
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putBoolean(java.lang.String,boolean)>("notif_clock_running", 1);
+
+        goto label5;
+
+     label3:
+        $i5 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        if $i5 != 2 goto label4;
+
+        $l7 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime>;
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putLong(java.lang.String,long)>("notif_clock_elapsed", $l7);
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putLong(java.lang.String,long)>("notif_clock_base", -1L);
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putBoolean(java.lang.String,boolean)>("notif_clock_running", 0);
+
+        goto label5;
+
+     label4:
+        $i6 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        if $i6 != 0 goto label5;
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor remove(java.lang.String)>("notif_clock_base");
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor remove(java.lang.String)>("notif_clock_running");
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor remove(java.lang.String)>("notif_clock_elapsed");
+
+     label5:
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putBoolean(java.lang.String,boolean)>("sw_update_circle", 0);
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    private void readFromSharedPref(android.content.SharedPreferences)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.content.SharedPreferences r1;
+        int i0, i2, $i6, $i7, $i8, $i9, $i11, $i12, $i13, $i15;
+        long[] r2, r3;
+        long l1, l3, $l4, $l5, $l10, $l14;
+        java.lang.String r4, $r10;
+        com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter $r5, $r6, $r7;
+        boolean $z0;
+        java.lang.StringBuilder $r8, $r9, $r11;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        r1 := @parameter0: android.content.SharedPreferences;
+
+        $l4 = interfaceinvoke r1.<android.content.SharedPreferences: long getLong(java.lang.String,long)>("sw_start_time", 0L);
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mStartTime> = $l4;
+
+        $l5 = interfaceinvoke r1.<android.content.SharedPreferences: long getLong(java.lang.String,long)>("sw_accum_time", 0L);
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mAccumulatedTime> = $l5;
+
+        $i6 = interfaceinvoke r1.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("sw_state", 0);
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState> = $i6;
+
+        i0 = interfaceinvoke r1.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("sw_lap_num", 0);
+
+        $r5 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        if $r5 == null goto label4;
+
+        $r6 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        r2 = virtualinvoke $r6.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: long[] getLapTimes()>();
+
+        if r2 == null goto label1;
+
+        $i13 = lengthof r2;
+
+        if $i13 >= i0 goto label4;
+
+     label1:
+        r3 = newarray (long)[i0];
+
+        l1 = 0L;
+
+        i2 = 0;
+
+     label2:
+        if i2 >= i0 goto label3;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sw_lap_time_");
+
+        $i11 = i2 + 1;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>($i11);
+
+        $r11 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        r4 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        l3 = interfaceinvoke r1.<android.content.SharedPreferences: long getLong(java.lang.String,long)>(r4, 0L);
+
+        $i12 = i0 - i2;
+
+        $i15 = $i12 - 1;
+
+        $l14 = l3 - l1;
+
+        r3[$i15] = $l14;
+
+        l1 = l3;
+
+        i2 = i2 + 1;
+
+        goto label2;
+
+     label3:
+        $r7 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter mLapsAdapter>;
+
+        virtualinvoke $r7.<com.android.deskclock.stopwatch.StopwatchFragment$LapsListAdapter: void setLapTimes(long[])>(r3);
+
+     label4:
+        $z0 = interfaceinvoke r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("sw_update_circle", 1);
+
+        if $z0 == 0 goto label7;
+
+        $i7 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        if $i7 != 2 goto label5;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void doStop()>();
+
+        goto label7;
+
+     label5:
+        $i9 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        if $i9 != 1 goto label6;
+
+        $l10 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: long mStartTime>;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void doStart(long)>($l10);
+
+        goto label7;
+
+     label6:
+        $i8 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        if $i8 != 0 goto label7;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void doReset()>();
+
+     label7:
+        return;
+    }
+
+    public void onSharedPreferenceChanged(android.content.SharedPreferences, java.lang.String)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.content.SharedPreferences r1, $r4;
+        java.lang.String r2;
+        android.app.Activity $r3;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.deskclock.CircleTimerView $r5;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        r1 := @parameter0: android.content.SharedPreferences;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r3 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        $r4 = staticinvoke <android.preference.PreferenceManager: android.content.SharedPreferences getDefaultSharedPreferences(android.content.Context)>($r3);
+
+        $z0 = virtualinvoke r1.<java.lang.Object: boolean equals(java.lang.Object)>($r4);
+
+        if $z0 == 0 goto label1;
+
+        $z1 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>("sw_lap_num");
+
+        if $z1 != 0 goto label1;
+
+        $z2 = virtualinvoke r2.<java.lang.String: boolean startsWith(java.lang.String)>("sw_lap_time_");
+
+        if $z2 != 0 goto label1;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void readFromSharedPref(android.content.SharedPreferences)>(r1);
+
+        $z3 = interfaceinvoke r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("sw_update_circle", 1);
+
+        if $z3 == 0 goto label1;
+
+        $r5 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        virtualinvoke $r5.<com.android.deskclock.CircleTimerView: void readFromSharedPref(android.content.SharedPreferences,java.lang.String)>(r1, "sw");
+
+     label1:
+        return;
+    }
+
+    private void acquireWakeLock()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.os.PowerManager r1;
+        android.os.PowerManager$WakeLock $r2, $r3, $r6, $r7;
+        android.app.Activity $r4;
+        java.lang.Object $r5;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.os.PowerManager$WakeLock mWakeLock>;
+
+        if $r2 != null goto label1;
+
+        $r4 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        $r5 = virtualinvoke $r4.<android.app.Activity: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        r1 = (android.os.PowerManager) $r5;
+
+        $r6 = virtualinvoke r1.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(536870922, "StopwatchFragment");
+
+        r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.os.PowerManager$WakeLock mWakeLock> = $r6;
+
+        $r7 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r7.<android.os.PowerManager$WakeLock: void setReferenceCounted(boolean)>(0);
+
+     label1:
+        $r3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r3.<android.os.PowerManager$WakeLock: void acquire()>();
+
+        return;
+    }
+
+    private void releaseWakeLock()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.os.PowerManager$WakeLock $r1, $r2, $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.os.PowerManager$WakeLock mWakeLock>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.os.PowerManager$WakeLock mWakeLock>;
+
+        $z0 = virtualinvoke $r2.<android.os.PowerManager$WakeLock: boolean isHeld()>();
+
+        if $z0 == 0 goto label1;
+
+        $r3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r3.<android.os.PowerManager$WakeLock: void release()>();
+
+     label1:
+        return;
+    }
+
+    public void onFabClick(android.view.View)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.view.View r1;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        r1 := @parameter0: android.view.View;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void rightButtonAction()>();
+
+        return;
+    }
+
+    public void onLeftButtonClick(android.view.View)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.view.View r1;
+        long l0;
+        android.content.Context r2;
+        android.content.Intent r3, $r5;
+        android.app.Activity $r4;
+        int $i1, $i2;
+        java.lang.StringBuilder $r11, $r13, $r14, $r15;
+        java.lang.Object[] $r16;
+        java.lang.String $r17;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        r1 := @parameter0: android.view.View;
+
+        l0 = staticinvoke <com.android.deskclock.Utils: long getTimeNow()>();
+
+        $r4 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        r2 = virtualinvoke $r4.<android.app.Activity: android.content.Context getApplicationContext()>();
+
+        $r5 = new android.content.Intent;
+
+        specialinvoke $r5.<android.content.Intent: void <init>(android.content.Context,java.lang.Class)>(r2, class "com/android/deskclock/stopwatch/StopwatchService");
+
+        r3 = $r5;
+
+        virtualinvoke r3.<android.content.Intent: android.content.Intent putExtra(java.lang.String,long)>("message_time", l0);
+
+        virtualinvoke r3.<android.content.Intent: android.content.Intent putExtra(java.lang.String,boolean)>("show_notification", 0);
+
+        $i1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        lookupswitch($i1)
+        {
+            case 1: goto label1;
+            case 2: goto label2;
+            default: goto label3;
+        };
+
+     label1:
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void addLapTime(long)>(l0);
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void doLap()>();
+
+        virtualinvoke r3.<android.content.Intent: android.content.Intent setAction(java.lang.String)>("lap_stopwatch");
+
+        virtualinvoke r2.<android.content.Context: android.content.ComponentName startService(android.content.Intent)>(r3);
+
+        goto label4;
+
+     label2:
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void doReset()>();
+
+        virtualinvoke r3.<android.content.Intent: android.content.Intent setAction(java.lang.String)>("reset_stopwatch");
+
+        virtualinvoke r2.<android.content.Context: android.content.ComponentName startService(android.content.Intent)>(r3);
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void releaseWakeLock()>();
+
+        goto label4;
+
+     label3:
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Illegal state ");
+
+        $i2 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" while pressing the left stopwatch button");
+
+        $r17 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r16 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.deskclock.LogUtils: void i(java.lang.String,java.lang.Object[])>($r17, $r16);
+
+     label4:
+        return;
+    }
+
+    public void onRightButtonClick(android.view.View)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.view.View r1;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        r1 := @parameter0: android.view.View;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void shareResults()>();
+
+        return;
+    }
+
+    public void setFabAppearance()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        com.android.deskclock.DeskClock r1;
+        android.app.Activity $r2;
+        android.widget.ImageButton $r3, $r4, $r5, $r7, $r8, $r9;
+        int $i0, $i1;
+        java.lang.String $r6, $r10;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r2 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        r1 = (com.android.deskclock.DeskClock) $r2;
+
+        $r3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mFab>;
+
+        if $r3 == null goto label1;
+
+        $i0 = virtualinvoke r1.<com.android.deskclock.DeskClock: int getSelectedTab()>();
+
+        if $i0 == 3 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $i1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        if $i1 != 1 goto label3;
+
+        $r8 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mFab>;
+
+        virtualinvoke $r8.<android.widget.ImageButton: void setImageResource(int)>(2130837542);
+
+        $r9 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mFab>;
+
+        $r10 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: java.lang.String getString(int)>(2131558494);
+
+        virtualinvoke $r9.<android.widget.ImageButton: void setContentDescription(java.lang.CharSequence)>($r10);
+
+        goto label4;
+
+     label3:
+        $r4 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mFab>;
+
+        virtualinvoke $r4.<android.widget.ImageButton: void setImageResource(int)>(2130837543);
+
+        $r5 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mFab>;
+
+        $r6 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: java.lang.String getString(int)>(2131558493);
+
+        virtualinvoke $r5.<android.widget.ImageButton: void setContentDescription(java.lang.CharSequence)>($r6);
+
+     label4:
+        $r7 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mFab>;
+
+        virtualinvoke $r7.<android.widget.ImageButton: void setVisibility(int)>(0);
+
+        return;
+    }
+
+    public void setLeftRightButtonAppearance()
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        com.android.deskclock.DeskClock r1;
+        android.app.Activity $r2;
+        android.widget.ImageButton $r3, $r4, $r5, $r6, $r8, $r9, $r11, $r12, $r13, $r14, $r15, $r16, $r18, $r19, $r20, $r21, $r22, $r24, $r25;
+        int $i0, $i1;
+        java.lang.String $r7, $r10, $r17, $r23;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r2 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.app.Activity getActivity()>();
+
+        r1 = (com.android.deskclock.DeskClock) $r2;
+
+        $r3 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        if $r3 == null goto label1;
+
+        $r4 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mRightButton>;
+
+        if $r4 == null goto label1;
+
+        $i0 = virtualinvoke r1.<com.android.deskclock.DeskClock: int getSelectedTab()>();
+
+        if $i0 == 3 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r5 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mRightButton>;
+
+        virtualinvoke $r5.<android.widget.ImageButton: void setImageResource(int)>(2130837562);
+
+        $r6 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mRightButton>;
+
+        $r7 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: java.lang.String getString(int)>(2131558497);
+
+        virtualinvoke $r6.<android.widget.ImageButton: void setContentDescription(java.lang.CharSequence)>($r7);
+
+        $i1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: int mState>;
+
+        tableswitch($i1)
+        {
+            case 0: goto label3;
+            case 1: goto label4;
+            case 2: goto label7;
+            default: goto label8;
+        };
+
+     label3:
+        $r8 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        virtualinvoke $r8.<android.widget.ImageButton: void setImageResource(int)>(2130837550);
+
+        $r9 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        $r10 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: java.lang.String getString(int)>(2131558495);
+
+        virtualinvoke $r9.<android.widget.ImageButton: void setContentDescription(java.lang.CharSequence)>($r10);
+
+        $r11 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        virtualinvoke $r11.<android.widget.ImageButton: void setEnabled(boolean)>(0);
+
+        $r12 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        virtualinvoke $r12.<android.widget.ImageButton: void setVisibility(int)>(4);
+
+        $r13 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mRightButton>;
+
+        virtualinvoke $r13.<android.widget.ImageButton: void setVisibility(int)>(4);
+
+        goto label8;
+
+     label4:
+        $r21 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        virtualinvoke $r21.<android.widget.ImageButton: void setImageResource(int)>(2130837550);
+
+        $r20 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        $r23 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: java.lang.String getString(int)>(2131558495);
+
+        virtualinvoke $r20.<android.widget.ImageButton: void setContentDescription(java.lang.CharSequence)>($r23);
+
+        $r22 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        $z0 = specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: boolean reachedMaxLaps()>();
+
+        if $z0 != 0 goto label5;
+
+        $z1 = 1;
+
+        goto label6;
+
+     label5:
+        $z1 = 0;
+
+     label6:
+        virtualinvoke $r22.<android.widget.ImageButton: void setEnabled(boolean)>($z1);
+
+        $r24 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        virtualinvoke $r24.<android.widget.ImageButton: void setVisibility(int)>(0);
+
+        $r25 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mRightButton>;
+
+        virtualinvoke $r25.<android.widget.ImageButton: void setVisibility(int)>(4);
+
+        goto label8;
+
+     label7:
+        $r15 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        virtualinvoke $r15.<android.widget.ImageButton: void setImageResource(int)>(2130837560);
+
+        $r14 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        $r17 = virtualinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: java.lang.String getString(int)>(2131558496);
+
+        virtualinvoke $r14.<android.widget.ImageButton: void setContentDescription(java.lang.CharSequence)>($r17);
+
+        $r16 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        virtualinvoke $r16.<android.widget.ImageButton: void setEnabled(boolean)>(1);
+
+        $r19 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mLeftButton>;
+
+        virtualinvoke $r19.<android.widget.ImageButton: void setVisibility(int)>(0);
+
+        $r18 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ImageButton mRightButton>;
+
+        virtualinvoke $r18.<android.widget.ImageButton: void setVisibility(int)>(0);
+
+     label8:
+        return;
+    }
+
+    static android.widget.ListView access$000(com.android.deskclock.stopwatch.StopwatchFragment)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        android.widget.ListView $r1;
+
+        r0 := @parameter0: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: android.widget.ListView mLapsList>;
+
+        return $r1;
+    }
+
+    static void access$100(com.android.deskclock.stopwatch.StopwatchFragment)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+
+        r0 := @parameter0: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void showLaps()>();
+
+        return;
+    }
+
+    static com.android.deskclock.CircleTimerView access$300(com.android.deskclock.stopwatch.StopwatchFragment)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        com.android.deskclock.CircleTimerView $r1;
+
+        r0 := @parameter0: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.CircleTimerView mTime>;
+
+        return $r1;
+    }
+
+    static com.android.deskclock.timer.CountingTimerView access$400(com.android.deskclock.stopwatch.StopwatchFragment)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        com.android.deskclock.timer.CountingTimerView $r1;
+
+        r0 := @parameter0: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        $r1 = r0.<com.android.deskclock.stopwatch.StopwatchFragment: com.android.deskclock.timer.CountingTimerView mTimeText>;
+
+        return $r1;
+    }
+
+    static void access$500(com.android.deskclock.stopwatch.StopwatchFragment, long)
+    {
+        com.android.deskclock.stopwatch.StopwatchFragment r0;
+        long l0;
+
+        r0 := @parameter0: com.android.deskclock.stopwatch.StopwatchFragment;
+
+        l0 := @parameter1: long;
+
+        specialinvoke r0.<com.android.deskclock.stopwatch.StopwatchFragment: void updateCurrentLap(long)>(l0);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.deskclock.stopwatch.StopwatchFragment: int STOPWATCH_REFRESH_INTERVAL_MILLIS> = 25;
+
+        <com.android.deskclock.stopwatch.StopwatchFragment: java.lang.String TAG> = "StopwatchFragment";
+
+        <com.android.deskclock.stopwatch.StopwatchFragment: boolean DEBUG> = 0;
+
+        return;
+    }
+}

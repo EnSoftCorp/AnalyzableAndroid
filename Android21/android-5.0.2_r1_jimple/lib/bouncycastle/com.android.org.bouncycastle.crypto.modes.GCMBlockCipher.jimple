@@ -1,0 +1,1571 @@
+public class com.android.org.bouncycastle.crypto.modes.GCMBlockCipher extends java.lang.Object implements com.android.org.bouncycastle.crypto.modes.AEADBlockCipher
+{
+    private static final int BLOCK_SIZE;
+    private com.android.org.bouncycastle.crypto.BlockCipher cipher;
+    private com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier multiplier;
+    private com.android.org.bouncycastle.crypto.modes.gcm.GCMExponentiator exp;
+    private boolean forEncryption;
+    private int macSize;
+    private byte[] nonce;
+    private byte[] initialAssociatedText;
+    private byte[] H;
+    private byte[] J0;
+    private byte[] bufBlock;
+    private byte[] macBlock;
+    private byte[] S;
+    private byte[] S_at;
+    private byte[] S_atPre;
+    private byte[] counter;
+    private int bufOff;
+    private long totalLength;
+    private byte[] atBlock;
+    private int atBlockPos;
+    private long atLength;
+    private long atLengthPre;
+
+    public void <init>(com.android.org.bouncycastle.crypto.BlockCipher)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        com.android.org.bouncycastle.crypto.BlockCipher r1;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        r1 := @parameter0: com.android.org.bouncycastle.crypto.BlockCipher;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void <init>(com.android.org.bouncycastle.crypto.BlockCipher,com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier)>(r1, null);
+
+        return;
+    }
+
+    public void <init>(com.android.org.bouncycastle.crypto.BlockCipher, com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        com.android.org.bouncycastle.crypto.BlockCipher r1;
+        com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier r2;
+        int $i0;
+        com.android.org.bouncycastle.crypto.modes.gcm.Tables8kGCMMultiplier $r3;
+        java.lang.IllegalArgumentException $r4;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        r1 := @parameter0: com.android.org.bouncycastle.crypto.BlockCipher;
+
+        r2 := @parameter1: com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $i0 = interfaceinvoke r1.<com.android.org.bouncycastle.crypto.BlockCipher: int getBlockSize()>();
+
+        if $i0 == 16 goto label1;
+
+        $r4 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("cipher required with a block size of 16.");
+
+        throw $r4;
+
+     label1:
+        if r2 != null goto label2;
+
+        $r3 = new com.android.org.bouncycastle.crypto.modes.gcm.Tables8kGCMMultiplier;
+
+        specialinvoke $r3.<com.android.org.bouncycastle.crypto.modes.gcm.Tables8kGCMMultiplier: void <init>()>();
+
+        r2 = $r3;
+
+     label2:
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.BlockCipher cipher> = r1;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier multiplier> = r2;
+
+        return;
+    }
+
+    public com.android.org.bouncycastle.crypto.BlockCipher getUnderlyingCipher()
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        com.android.org.bouncycastle.crypto.BlockCipher $r1;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        $r1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.BlockCipher cipher>;
+
+        return $r1;
+    }
+
+    public java.lang.String getAlgorithmName()
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        java.lang.StringBuilder $r1, $r4, $r5;
+        com.android.org.bouncycastle.crypto.BlockCipher $r2;
+        java.lang.String $r3, $r6;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.BlockCipher cipher>;
+
+        $r3 = interfaceinvoke $r2.<com.android.org.bouncycastle.crypto.BlockCipher: java.lang.String getAlgorithmName()>();
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r3);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/GCM");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r6;
+    }
+
+    public void init(boolean, com.android.org.bouncycastle.crypto.CipherParameters) throws java.lang.IllegalArgumentException
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        boolean z0, $z1, $z2;
+        com.android.org.bouncycastle.crypto.CipherParameters r1, $r6;
+        com.android.org.bouncycastle.crypto.params.AEADParameters r2;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i8, $i9, $i11, $i12, $i13, i14;
+        com.android.org.bouncycastle.crypto.params.KeyParameter r3;
+        java.lang.IllegalArgumentException $r4, $r9, $r43;
+        byte[] $r5, $r7, $r8, $r10, $r11, $r12, $r13, $r14, $r15, $r16, $r17, $r18, $r19, $r20, $r21, $r22, $r23, $r24, $r25, $r26, $r27, $r28, $r29, $r30, $r31, $r32, $r34, $r36, $r38, $r39, r46;
+        long $l6, $l7;
+        com.android.org.bouncycastle.crypto.BlockCipher $r33, $r37;
+        com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier $r35;
+        java.lang.StringBuilder $r40, $r41, $r42;
+        java.lang.String $r44;
+        com.android.org.bouncycastle.crypto.params.ParametersWithIV r45;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        z0 := @parameter0: boolean;
+
+        r1 := @parameter1: com.android.org.bouncycastle.crypto.CipherParameters;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: boolean forEncryption> = z0;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] macBlock> = null;
+
+        $z1 = r1 instanceof com.android.org.bouncycastle.crypto.params.AEADParameters;
+
+        if $z1 == 0 goto label03;
+
+        r2 = (com.android.org.bouncycastle.crypto.params.AEADParameters) r1;
+
+        $r39 = virtualinvoke r2.<com.android.org.bouncycastle.crypto.params.AEADParameters: byte[] getNonce()>();
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] nonce> = $r39;
+
+        $r38 = virtualinvoke r2.<com.android.org.bouncycastle.crypto.params.AEADParameters: byte[] getAssociatedText()>();
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] initialAssociatedText> = $r38;
+
+        i0 = virtualinvoke r2.<com.android.org.bouncycastle.crypto.params.AEADParameters: int getMacSize()>();
+
+        if i0 < 96 goto label01;
+
+        if i0 > 128 goto label01;
+
+        $i13 = i0 % 8;
+
+        if $i13 == 0 goto label02;
+
+     label01:
+        $r43 = new java.lang.IllegalArgumentException;
+
+        $r42 = new java.lang.StringBuilder;
+
+        specialinvoke $r42.<java.lang.StringBuilder: void <init>()>();
+
+        $r41 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid value for MAC size: ");
+
+        $r40 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r44 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r43.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r44);
+
+        throw $r43;
+
+     label02:
+        $i12 = i0 / 8;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize> = $i12;
+
+        r3 = virtualinvoke r2.<com.android.org.bouncycastle.crypto.params.AEADParameters: com.android.org.bouncycastle.crypto.params.KeyParameter getKey()>();
+
+        goto label05;
+
+     label03:
+        $z2 = r1 instanceof com.android.org.bouncycastle.crypto.params.ParametersWithIV;
+
+        if $z2 == 0 goto label04;
+
+        r45 = (com.android.org.bouncycastle.crypto.params.ParametersWithIV) r1;
+
+        $r5 = virtualinvoke r45.<com.android.org.bouncycastle.crypto.params.ParametersWithIV: byte[] getIV()>();
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] nonce> = $r5;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] initialAssociatedText> = null;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize> = 16;
+
+        $r6 = virtualinvoke r45.<com.android.org.bouncycastle.crypto.params.ParametersWithIV: com.android.org.bouncycastle.crypto.CipherParameters getParameters()>();
+
+        r3 = (com.android.org.bouncycastle.crypto.params.KeyParameter) $r6;
+
+        goto label05;
+
+     label04:
+        $r4 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("invalid parameters passed to GCM");
+
+        throw $r4;
+
+     label05:
+        if z0 == 0 goto label06;
+
+        $i11 = 16;
+
+        goto label07;
+
+     label06:
+        $i1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        $i11 = 16 + $i1;
+
+     label07:
+        i14 = $i11;
+
+        $r7 = newarray (byte)[i14];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock> = $r7;
+
+        $r8 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] nonce>;
+
+        if $r8 == null goto label08;
+
+        $r10 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] nonce>;
+
+        $i2 = lengthof $r10;
+
+        if $i2 >= 1 goto label09;
+
+     label08:
+        $r9 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r9.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("IV must be at least 1 byte");
+
+        throw $r9;
+
+     label09:
+        if r3 == null goto label10;
+
+        $r33 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.BlockCipher cipher>;
+
+        interfaceinvoke $r33.<com.android.org.bouncycastle.crypto.BlockCipher: void init(boolean,com.android.org.bouncycastle.crypto.CipherParameters)>(1, r3);
+
+        $r34 = newarray (byte)[16];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] H> = $r34;
+
+        $r37 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.BlockCipher cipher>;
+
+        $r32 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] H>;
+
+        $r31 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] H>;
+
+        interfaceinvoke $r37.<com.android.org.bouncycastle.crypto.BlockCipher: int processBlock(byte[],int,byte[],int)>($r32, 0, $r31, 0);
+
+        $r35 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier multiplier>;
+
+        $r36 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] H>;
+
+        interfaceinvoke $r35.<com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier: void init(byte[])>($r36);
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.modes.gcm.GCMExponentiator exp> = null;
+
+     label10:
+        $r11 = newarray (byte)[16];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] J0> = $r11;
+
+        $r12 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] nonce>;
+
+        $i3 = lengthof $r12;
+
+        if $i3 != 12 goto label11;
+
+        $r28 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] nonce>;
+
+        $r30 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] J0>;
+
+        $r26 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] nonce>;
+
+        $i9 = lengthof $r26;
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>($r28, 0, $r30, 0, $i9);
+
+        $r29 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] J0>;
+
+        $r29[15] = 1;
+
+        goto label12;
+
+     label11:
+        $r14 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] J0>;
+
+        $r15 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] nonce>;
+
+        $r13 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] nonce>;
+
+        $i4 = lengthof $r13;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gHASH(byte[],byte[],int)>($r14, $r15, $i4);
+
+        r46 = newarray (byte)[16];
+
+        $r16 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] nonce>;
+
+        $i5 = lengthof $r16;
+
+        $l7 = (long) $i5;
+
+        $l6 = $l7 * 8L;
+
+        staticinvoke <com.android.org.bouncycastle.crypto.util.Pack: void longToBigEndian(long,byte[],int)>($l6, r46, 8);
+
+        $r18 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] J0>;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gHASHBlock(byte[],byte[])>($r18, r46);
+
+     label12:
+        $r17 = newarray (byte)[16];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S> = $r17;
+
+        $r20 = newarray (byte)[16];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_at> = $r20;
+
+        $r19 = newarray (byte)[16];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_atPre> = $r19;
+
+        $r23 = newarray (byte)[16];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] atBlock> = $r23;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos> = 0;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength> = 0L;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLengthPre> = 0L;
+
+        $r24 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] J0>;
+
+        $r21 = staticinvoke <com.android.org.bouncycastle.util.Arrays: byte[] clone(byte[])>($r24);
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] counter> = $r21;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff> = 0;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long totalLength> = 0L;
+
+        $r22 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] initialAssociatedText>;
+
+        if $r22 == null goto label13;
+
+        $r25 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] initialAssociatedText>;
+
+        $r27 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] initialAssociatedText>;
+
+        $i8 = lengthof $r27;
+
+        virtualinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void processAADBytes(byte[],int,int)>($r25, 0, $i8);
+
+     label13:
+        return;
+    }
+
+    public byte[] getMac()
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte[] $r1, $r2;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        $r1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] macBlock>;
+
+        $r2 = staticinvoke <com.android.org.bouncycastle.util.Arrays: byte[] clone(byte[])>($r1);
+
+        return $r2;
+    }
+
+    public int getOutputSize(int)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        boolean $z0;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        i0 := @parameter0: int;
+
+        $i2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff>;
+
+        i1 = i0 + $i2;
+
+        $z0 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: boolean forEncryption>;
+
+        if $z0 == 0 goto label1;
+
+        $i6 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        $i7 = i1 + $i6;
+
+        return $i7;
+
+     label1:
+        $i3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        if i1 >= $i3 goto label2;
+
+        $i5 = 0;
+
+        goto label3;
+
+     label2:
+        $i4 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        $i5 = i1 - $i4;
+
+     label3:
+        return $i5;
+    }
+
+    public int getUpdateOutputSize(int)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6;
+        boolean $z0;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        i0 := @parameter0: int;
+
+        $i2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff>;
+
+        i1 = i0 + $i2;
+
+        $z0 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: boolean forEncryption>;
+
+        if $z0 != 0 goto label2;
+
+        $i5 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        if i1 >= $i5 goto label1;
+
+        return 0;
+
+     label1:
+        $i6 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        i1 = i1 - $i6;
+
+     label2:
+        $i3 = i1 % 16;
+
+        $i4 = i1 - $i3;
+
+        return $i4;
+    }
+
+    public void processAADByte(byte)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte b0;
+        int $i1, $i2, $i3;
+        byte[] $r1, $r2, $r3;
+        long $l4, $l5;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        b0 := @parameter0: byte;
+
+        $r1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] atBlock>;
+
+        $i1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos>;
+
+        $r1[$i1] = b0;
+
+        $i2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos>;
+
+        $i3 = $i2 + 1;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos> = $i3;
+
+        if $i3 != 16 goto label1;
+
+        $r3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_at>;
+
+        $r2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] atBlock>;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gHASHBlock(byte[],byte[])>($r3, $r2);
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos> = 0;
+
+        $l4 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength>;
+
+        $l5 = $l4 + 16L;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength> = $l5;
+
+     label1:
+        return;
+    }
+
+    public void processAADBytes(byte[], int, int)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte[] r1, $r2, $r3, $r4;
+        int i0, i1, i2, $i3, $i5, $i6, $i7;
+        byte $b4;
+        long $l8, $l9;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 = 0;
+
+     label1:
+        if i2 >= i1 goto label3;
+
+        $r2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] atBlock>;
+
+        $i5 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos>;
+
+        $i3 = i0 + i2;
+
+        $b4 = r1[$i3];
+
+        $r2[$i5] = $b4;
+
+        $i6 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos>;
+
+        $i7 = $i6 + 1;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos> = $i7;
+
+        if $i7 != 16 goto label2;
+
+        $r4 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_at>;
+
+        $r3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] atBlock>;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gHASHBlock(byte[],byte[])>($r4, $r3);
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos> = 0;
+
+        $l8 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength>;
+
+        $l9 = $l8 + 16L;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength> = $l9;
+
+     label2:
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    private void initCipher()
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        long $l0, $l3, $l7, $l8, $l9, $l10;
+        byte $b1, $b4;
+        int $i2, $i5, $i6;
+        byte[] $r1, $r2, $r3, $r4, $r5, $r6;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        $l0 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength>;
+
+        $b1 = $l0 cmp 0L;
+
+        if $b1 <= 0 goto label1;
+
+        $r6 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_at>;
+
+        $r5 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_atPre>;
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>($r6, 0, $r5, 0, 16);
+
+        $l10 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength>;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLengthPre> = $l10;
+
+     label1:
+        $i2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos>;
+
+        if $i2 <= 0 goto label2;
+
+        $r4 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_atPre>;
+
+        $r3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] atBlock>;
+
+        $i5 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos>;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gHASHPartial(byte[],byte[],int,int)>($r4, $r3, 0, $i5);
+
+        $l8 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLengthPre>;
+
+        $i6 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos>;
+
+        $l7 = (long) $i6;
+
+        $l9 = $l8 + $l7;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLengthPre> = $l9;
+
+     label2:
+        $l3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLengthPre>;
+
+        $b4 = $l3 cmp 0L;
+
+        if $b4 <= 0 goto label3;
+
+        $r2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_atPre>;
+
+        $r1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S>;
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>($r2, 0, $r1, 0, 16);
+
+     label3:
+        return;
+    }
+
+    public int processByte(byte, byte[], int) throws com.android.org.bouncycastle.crypto.DataLengthException
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte b0;
+        byte[] r1, $r2, $r3;
+        int i1, $i2, $i3, $i4, $i5;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        b0 := @parameter0: byte;
+
+        r1 := @parameter1: byte[];
+
+        i1 := @parameter2: int;
+
+        $r2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock>;
+
+        $i2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff>;
+
+        $r2[$i2] = b0;
+
+        $i3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff>;
+
+        $i4 = $i3 + 1;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff> = $i4;
+
+        $r3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock>;
+
+        $i5 = lengthof $r3;
+
+        if $i4 != $i5 goto label1;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void outputBlock(byte[],int)>(r1, i1);
+
+        return 16;
+
+     label1:
+        return 0;
+    }
+
+    public int processBytes(byte[], int, int, byte[], int) throws com.android.org.bouncycastle.crypto.DataLengthException
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte[] r1, r2, $r3, $r4;
+        int i0, i1, i2, i3, i4, $i5, $i7, $i8, $i9, $i10, $i11;
+        byte $b6;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: byte[];
+
+        i2 := @parameter4: int;
+
+        i3 = 0;
+
+        i4 = 0;
+
+     label1:
+        if i4 >= i1 goto label3;
+
+        $r3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock>;
+
+        $i7 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff>;
+
+        $i5 = i0 + i4;
+
+        $b6 = r1[$i5];
+
+        $r3[$i7] = $b6;
+
+        $i8 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff>;
+
+        $i9 = $i8 + 1;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff> = $i9;
+
+        $r4 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock>;
+
+        $i10 = lengthof $r4;
+
+        if $i9 != $i10 goto label2;
+
+        $i11 = i2 + i3;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void outputBlock(byte[],int)>(r2, $i11);
+
+        i3 = i3 + 16;
+
+     label2:
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label3:
+        return i3;
+    }
+
+    private void outputBlock(byte[], int)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte[] r1, $r2, $r3, $r4;
+        int i0, $i3, $i4;
+        long $l1;
+        byte $b2;
+        boolean $z0;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        $l1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long totalLength>;
+
+        $b2 = $l1 cmp 0L;
+
+        if $b2 != 0 goto label1;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void initCipher()>();
+
+     label1:
+        $r2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock>;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gCTRBlock(byte[],byte[],int)>($r2, r1, i0);
+
+        $z0 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: boolean forEncryption>;
+
+        if $z0 == 0 goto label2;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff> = 0;
+
+        goto label3;
+
+     label2:
+        $r4 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock>;
+
+        $r3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock>;
+
+        $i3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>($r4, 16, $r3, 0, $i3);
+
+        $i4 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff> = $i4;
+
+     label3:
+        return;
+    }
+
+    public int doFinal(byte[], int) throws java.lang.IllegalStateException, com.android.org.bouncycastle.crypto.InvalidCipherTextException
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte[] r1, r2, r3, r4, r5, $r6, $r7, $r9, $r10, $r11, $r13, $r14, $r15, $r17, $r18, $r19, $r21, $r23, $r25, $r26, $r27, $r28;
+        int i0, i1, $i5, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i26, $i27, $i31, $i32, $i33, i34;
+        long l2, $l3, $l6, $l7, $l8, $l9, $l11, $l12, $l13, $l14, $l15, $l24, $l28, $l29, $l30;
+        byte $b4, $b10, $b25;
+        boolean $z0, $z1, $z2;
+        com.android.org.bouncycastle.crypto.BlockCipher $r8;
+        com.android.org.bouncycastle.crypto.InvalidCipherTextException $r12, $r29;
+        com.android.org.bouncycastle.crypto.modes.gcm.GCMExponentiator $r16, $r20, $r22;
+        com.android.org.bouncycastle.crypto.modes.gcm.Tables1kGCMExponentiator $r24;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        $l3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long totalLength>;
+
+        $b4 = $l3 cmp 0L;
+
+        if $b4 != 0 goto label01;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void initCipher()>();
+
+     label01:
+        i1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff>;
+
+        $z0 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: boolean forEncryption>;
+
+        if $z0 != 0 goto label03;
+
+        $i32 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        if i1 >= $i32 goto label02;
+
+        $r29 = new com.android.org.bouncycastle.crypto.InvalidCipherTextException;
+
+        specialinvoke $r29.<com.android.org.bouncycastle.crypto.InvalidCipherTextException: void <init>(java.lang.String)>("data too short");
+
+        throw $r29;
+
+     label02:
+        $i33 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        i1 = i1 - $i33;
+
+     label03:
+        if i1 <= 0 goto label04;
+
+        $r28 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock>;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gCTRPartial(byte[],int,int,byte[],int)>($r28, 0, i1, r1, i0);
+
+     label04:
+        $l7 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength>;
+
+        $i5 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos>;
+
+        $l6 = (long) $i5;
+
+        $l9 = $l7 + $l6;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength> = $l9;
+
+        $l11 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength>;
+
+        $l8 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLengthPre>;
+
+        $b10 = $l11 cmp $l8;
+
+        if $b10 <= 0 goto label08;
+
+        $i27 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos>;
+
+        if $i27 <= 0 goto label05;
+
+        $r25 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_at>;
+
+        $r26 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] atBlock>;
+
+        $i31 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos>;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gHASHPartial(byte[],byte[],int,int)>($r25, $r26, 0, $i31);
+
+     label05:
+        $l24 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLengthPre>;
+
+        $b25 = $l24 cmp 0L;
+
+        if $b25 <= 0 goto label06;
+
+        $r27 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_at>;
+
+        $r21 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_atPre>;
+
+        staticinvoke <com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void xor(byte[],byte[])>($r27, $r21);
+
+     label06:
+        $l30 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long totalLength>;
+
+        $l29 = $l30 * 8L;
+
+        $l28 = $l29 + 127L;
+
+        l2 = $l28 >>> 7;
+
+        r2 = newarray (byte)[16];
+
+        $r16 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.modes.gcm.GCMExponentiator exp>;
+
+        if $r16 != null goto label07;
+
+        $r24 = new com.android.org.bouncycastle.crypto.modes.gcm.Tables1kGCMExponentiator;
+
+        specialinvoke $r24.<com.android.org.bouncycastle.crypto.modes.gcm.Tables1kGCMExponentiator: void <init>()>();
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.modes.gcm.GCMExponentiator exp> = $r24;
+
+        $r22 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.modes.gcm.GCMExponentiator exp>;
+
+        $r23 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] H>;
+
+        interfaceinvoke $r22.<com.android.org.bouncycastle.crypto.modes.gcm.GCMExponentiator: void init(byte[])>($r23);
+
+     label07:
+        $r20 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.modes.gcm.GCMExponentiator exp>;
+
+        interfaceinvoke $r20.<com.android.org.bouncycastle.crypto.modes.gcm.GCMExponentiator: void exponentiateX(long,byte[])>(l2, r2);
+
+        $r19 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_at>;
+
+        staticinvoke <com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void multiply(byte[],byte[])>($r19, r2);
+
+        $r17 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S>;
+
+        $r18 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_at>;
+
+        staticinvoke <com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void xor(byte[],byte[])>($r17, $r18);
+
+     label08:
+        r3 = newarray (byte)[16];
+
+        $l13 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength>;
+
+        $l12 = $l13 * 8L;
+
+        staticinvoke <com.android.org.bouncycastle.crypto.util.Pack: void longToBigEndian(long,byte[],int)>($l12, r3, 0);
+
+        $l15 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long totalLength>;
+
+        $l14 = $l15 * 8L;
+
+        staticinvoke <com.android.org.bouncycastle.crypto.util.Pack: void longToBigEndian(long,byte[],int)>($l14, r3, 8);
+
+        $r7 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S>;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gHASHBlock(byte[],byte[])>($r7, r3);
+
+        r4 = newarray (byte)[16];
+
+        $r8 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.BlockCipher cipher>;
+
+        $r6 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] J0>;
+
+        interfaceinvoke $r8.<com.android.org.bouncycastle.crypto.BlockCipher: int processBlock(byte[],int,byte[],int)>($r6, 0, r4, 0);
+
+        $r9 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S>;
+
+        staticinvoke <com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void xor(byte[],byte[])>(r4, $r9);
+
+        i34 = i1;
+
+        $i17 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        $r10 = newarray (byte)[$i17];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] macBlock> = $r10;
+
+        $r11 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] macBlock>;
+
+        $i18 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>(r4, 0, $r11, 0, $i18);
+
+        $z1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: boolean forEncryption>;
+
+        if $z1 == 0 goto label09;
+
+        $r15 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] macBlock>;
+
+        $i22 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff>;
+
+        $i21 = i0 + $i22;
+
+        $i23 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>($r15, 0, r1, $i21, $i23);
+
+        $i26 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        i34 = i34 + $i26;
+
+        goto label10;
+
+     label09:
+        $i19 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        r5 = newarray (byte)[$i19];
+
+        $r13 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock>;
+
+        $i20 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int macSize>;
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>($r13, i1, r5, 0, $i20);
+
+        $r14 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] macBlock>;
+
+        $z2 = staticinvoke <com.android.org.bouncycastle.util.Arrays: boolean constantTimeAreEqual(byte[],byte[])>($r14, r5);
+
+        if $z2 != 0 goto label10;
+
+        $r12 = new com.android.org.bouncycastle.crypto.InvalidCipherTextException;
+
+        specialinvoke $r12.<com.android.org.bouncycastle.crypto.InvalidCipherTextException: void <init>(java.lang.String)>("mac check in GCM failed");
+
+        throw $r12;
+
+     label10:
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void reset(boolean)>(0);
+
+        return i34;
+    }
+
+    public void reset()
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void reset(boolean)>(1);
+
+        return;
+    }
+
+    private void reset(boolean)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        boolean z0;
+        com.android.org.bouncycastle.crypto.BlockCipher $r1;
+        byte[] $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r11, $r12;
+        int $i0;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.BlockCipher cipher>;
+
+        interfaceinvoke $r1.<com.android.org.bouncycastle.crypto.BlockCipher: void reset()>();
+
+        $r2 = newarray (byte)[16];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S> = $r2;
+
+        $r3 = newarray (byte)[16];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_at> = $r3;
+
+        $r4 = newarray (byte)[16];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S_atPre> = $r4;
+
+        $r5 = newarray (byte)[16];
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] atBlock> = $r5;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int atBlockPos> = 0;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLength> = 0L;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long atLengthPre> = 0L;
+
+        $r6 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] J0>;
+
+        $r7 = staticinvoke <com.android.org.bouncycastle.util.Arrays: byte[] clone(byte[])>($r6);
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] counter> = $r7;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int bufOff> = 0;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long totalLength> = 0L;
+
+        $r8 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock>;
+
+        if $r8 == null goto label1;
+
+        $r12 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] bufBlock>;
+
+        staticinvoke <com.android.org.bouncycastle.util.Arrays: void fill(byte[],byte)>($r12, 0);
+
+     label1:
+        if z0 == 0 goto label2;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] macBlock> = null;
+
+     label2:
+        $r9 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] initialAssociatedText>;
+
+        if $r9 == null goto label3;
+
+        $r11 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] initialAssociatedText>;
+
+        $r10 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] initialAssociatedText>;
+
+        $i0 = lengthof $r10;
+
+        virtualinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void processAADBytes(byte[],int,int)>($r11, 0, $i0);
+
+     label3:
+        return;
+    }
+
+    private void gCTRBlock(byte[], byte[], int)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte[] r1, r2, r3, $r4, $r5;
+        int i0;
+        boolean $z0;
+        long $l1, $l2;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        r1 := @parameter0: byte[];
+
+        r2 := @parameter1: byte[];
+
+        i0 := @parameter2: int;
+
+        r3 = specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] getNextCounterBlock()>();
+
+        staticinvoke <com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void xor(byte[],byte[])>(r3, r1);
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>(r3, 0, r2, i0, 16);
+
+        $r4 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S>;
+
+        $z0 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: boolean forEncryption>;
+
+        if $z0 == 0 goto label1;
+
+        $r5 = r3;
+
+        goto label2;
+
+     label1:
+        $r5 = r1;
+
+     label2:
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gHASHBlock(byte[],byte[])>($r4, $r5);
+
+        $l1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long totalLength>;
+
+        $l2 = $l1 + 16L;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long totalLength> = $l2;
+
+        return;
+    }
+
+    private void gCTRPartial(byte[], int, int, byte[], int)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte[] r1, r2, r3, $r4, $r5;
+        int i0, i1, i2;
+        boolean $z0;
+        long $l3, $l4, $l5;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: byte[];
+
+        i2 := @parameter4: int;
+
+        r3 = specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] getNextCounterBlock()>();
+
+        staticinvoke <com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void xor(byte[],byte[],int,int)>(r3, r1, i0, i1);
+
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>(r3, 0, r2, i2, i1);
+
+        $r4 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] S>;
+
+        $z0 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: boolean forEncryption>;
+
+        if $z0 == 0 goto label1;
+
+        $r5 = r3;
+
+        goto label2;
+
+     label1:
+        $r5 = r1;
+
+     label2:
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gHASHPartial(byte[],byte[],int,int)>($r4, $r5, 0, i1);
+
+        $l4 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long totalLength>;
+
+        $l3 = (long) i1;
+
+        $l5 = $l4 + $l3;
+
+        r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: long totalLength> = $l5;
+
+        return;
+    }
+
+    private void gHASH(byte[], byte[], int)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte[] r1, r2;
+        int i0, i1, i2, $i3;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        r1 := @parameter0: byte[];
+
+        r2 := @parameter1: byte[];
+
+        i0 := @parameter2: int;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $i3 = i0 - i1;
+
+        i2 = staticinvoke <java.lang.Math: int min(int,int)>($i3, 16);
+
+        specialinvoke r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void gHASHPartial(byte[],byte[],int,int)>(r1, r2, i1, i2);
+
+        i1 = i1 + 16;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void gHASHBlock(byte[], byte[])
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte[] r1, r2;
+        com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier $r3;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        r1 := @parameter0: byte[];
+
+        r2 := @parameter1: byte[];
+
+        staticinvoke <com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void xor(byte[],byte[])>(r1, r2);
+
+        $r3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier multiplier>;
+
+        interfaceinvoke $r3.<com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier: void multiplyH(byte[])>(r1);
+
+        return;
+    }
+
+    private void gHASHPartial(byte[], byte[], int, int)
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        byte[] r1, r2;
+        int i0, i1;
+        com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier $r3;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        r1 := @parameter0: byte[];
+
+        r2 := @parameter1: byte[];
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        staticinvoke <com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void xor(byte[],byte[],int,int)>(r1, r2, i0, i1);
+
+        $r3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier multiplier>;
+
+        interfaceinvoke $r3.<com.android.org.bouncycastle.crypto.modes.gcm.GCMMultiplier: void multiplyH(byte[])>(r1);
+
+        return;
+    }
+
+    private byte[] getNextCounterBlock()
+    {
+        com.android.org.bouncycastle.crypto.modes.GCMBlockCipher r0;
+        int i0, $i4, $i5;
+        byte b1, $b3;
+        byte[] $r1, $r3, $r4, r5;
+        com.android.org.bouncycastle.crypto.BlockCipher $r2;
+
+        r0 := @this: com.android.org.bouncycastle.crypto.modes.GCMBlockCipher;
+
+        i0 = 15;
+
+     label1:
+        if i0 < 12 goto label3;
+
+        $r3 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] counter>;
+
+        $b3 = $r3[i0];
+
+        $i4 = $b3 + 1;
+
+        $i5 = $i4 & 255;
+
+        b1 = (byte) $i5;
+
+        $r4 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] counter>;
+
+        $r4[i0] = b1;
+
+        if b1 == 0 goto label2;
+
+        goto label3;
+
+     label2:
+        i0 = i0 + -1;
+
+        goto label1;
+
+     label3:
+        r5 = newarray (byte)[16];
+
+        $r2 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: com.android.org.bouncycastle.crypto.BlockCipher cipher>;
+
+        $r1 = r0.<com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: byte[] counter>;
+
+        interfaceinvoke $r2.<com.android.org.bouncycastle.crypto.BlockCipher: int processBlock(byte[],int,byte[],int)>($r1, 0, r5, 0);
+
+        return r5;
+    }
+
+    private static void multiply(byte[], byte[])
+    {
+        byte[] r0, r1, r2, r3;
+        int i0, i2, $i3, $i4;
+        byte b1, $b5, $b6, $b7, $b8, $b9;
+        boolean z0, $z1;
+
+        r0 := @parameter0: byte[];
+
+        r1 := @parameter1: byte[];
+
+        r2 = staticinvoke <com.android.org.bouncycastle.util.Arrays: byte[] clone(byte[])>(r0);
+
+        r3 = newarray (byte)[16];
+
+        i0 = 0;
+
+     label1:
+        if i0 >= 16 goto label8;
+
+        b1 = r1[i0];
+
+        i2 = 7;
+
+     label2:
+        if i2 < 0 goto label7;
+
+        $i3 = 1 << i2;
+
+        $i4 = b1 & $i3;
+
+        if $i4 == 0 goto label3;
+
+        staticinvoke <com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void xor(byte[],byte[])>(r3, r2);
+
+     label3:
+        $b5 = r2[15];
+
+        $b6 = $b5 & 1;
+
+        if $b6 == 0 goto label4;
+
+        $z1 = 1;
+
+        goto label5;
+
+     label4:
+        $z1 = 0;
+
+     label5:
+        z0 = $z1;
+
+        staticinvoke <com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: void shiftRight(byte[])>(r2);
+
+        if z0 == 0 goto label6;
+
+        $b7 = r2[0];
+
+        $b8 = $b7 ^ -31;
+
+        $b9 = (byte) $b8;
+
+        r2[0] = $b9;
+
+     label6:
+        i2 = i2 + -1;
+
+        goto label2;
+
+     label7:
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label8:
+        staticinvoke <java.lang.System: void arraycopy(byte[],int,byte[],int,int)>(r3, 0, r0, 0, 16);
+
+        return;
+    }
+
+    private static void shiftRight(byte[])
+    {
+        byte[] r0;
+        int i0, i1, $i5;
+        short s2, $s4, $s7;
+        byte $b3, $b6;
+
+        r0 := @parameter0: byte[];
+
+        i0 = 0;
+
+        i1 = 0;
+
+     label1:
+        $b3 = r0[i0];
+
+        s2 = $b3 & 255;
+
+        $s4 = s2 >>> 1;
+
+        $i5 = $s4 | i1;
+
+        $b6 = (byte) $i5;
+
+        r0[i0] = $b6;
+
+        i0 = i0 + 1;
+
+        if i0 != 16 goto label2;
+
+        goto label3;
+
+     label2:
+        $s7 = s2 & 1;
+
+        i1 = $s7 << 7;
+
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    private static void xor(byte[], byte[])
+    {
+        byte[] r0, r1;
+        int i0;
+        byte $b1, $b2, $b3, $b4;
+
+        r0 := @parameter0: byte[];
+
+        r1 := @parameter1: byte[];
+
+        i0 = 15;
+
+     label1:
+        if i0 < 0 goto label2;
+
+        $b2 = r0[i0];
+
+        $b1 = r1[i0];
+
+        $b3 = $b2 ^ $b1;
+
+        $b4 = (byte) $b3;
+
+        r0[i0] = $b4;
+
+        i0 = i0 + -1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private static void xor(byte[], byte[], int, int)
+    {
+        byte[] r0, r1;
+        int i0, i1, $i2, $i3;
+        byte $b4, $b5, $b6, $b7;
+
+        r0 := @parameter0: byte[];
+
+        r1 := @parameter1: byte[];
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+     label1:
+        $i2 = i1;
+
+        i1 = i1 + -1;
+
+        if $i2 <= 0 goto label2;
+
+        $b5 = r0[i1];
+
+        $i3 = i0 + i1;
+
+        $b4 = r1[$i3];
+
+        $b6 = $b5 ^ $b4;
+
+        $b7 = (byte) $b6;
+
+        r0[i1] = $b7;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.org.bouncycastle.crypto.modes.GCMBlockCipher: int BLOCK_SIZE> = 16;
+
+        return;
+    }
+}

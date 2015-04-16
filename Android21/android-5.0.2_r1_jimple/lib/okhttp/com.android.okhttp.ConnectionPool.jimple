@@ -1,0 +1,748 @@
+public class com.android.okhttp.ConnectionPool extends java.lang.Object
+{
+    private static final int MAX_CONNECTIONS_TO_CLEANUP;
+    private static final long DEFAULT_KEEP_ALIVE_DURATION_MS;
+    private static final com.android.okhttp.ConnectionPool systemDefault;
+    private final int maxIdleConnections;
+    private final long keepAliveDurationNs;
+    private final java.util.LinkedList connections;
+    private final java.util.concurrent.ExecutorService executorService;
+    private final java.lang.Runnable connectionsCleanupRunnable;
+
+    public void <init>(int, long)
+    {
+        com.android.okhttp.ConnectionPool r0;
+        int i0;
+        long l1, $l2, $l3;
+        java.util.LinkedList $r1;
+        java.util.concurrent.ThreadPoolExecutor $r2;
+        java.util.concurrent.LinkedBlockingQueue $r3;
+        java.util.concurrent.TimeUnit $r4;
+        java.util.concurrent.ThreadFactory $r5;
+        com.android.okhttp.ConnectionPool$1 $r6;
+
+        r0 := @this: com.android.okhttp.ConnectionPool;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r1 = new java.util.LinkedList;
+
+        specialinvoke $r1.<java.util.LinkedList: void <init>()>();
+
+        r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections> = $r1;
+
+        $r2 = new java.util.concurrent.ThreadPoolExecutor;
+
+        $r4 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit SECONDS>;
+
+        $r3 = new java.util.concurrent.LinkedBlockingQueue;
+
+        specialinvoke $r3.<java.util.concurrent.LinkedBlockingQueue: void <init>()>();
+
+        $r5 = staticinvoke <com.android.okhttp.internal.Util: java.util.concurrent.ThreadFactory threadFactory(java.lang.String,boolean)>("OkHttp ConnectionPool", 1);
+
+        specialinvoke $r2.<java.util.concurrent.ThreadPoolExecutor: void <init>(int,int,long,java.util.concurrent.TimeUnit,java.util.concurrent.BlockingQueue,java.util.concurrent.ThreadFactory)>(0, 1, 60L, $r4, $r3, $r5);
+
+        r0.<com.android.okhttp.ConnectionPool: java.util.concurrent.ExecutorService executorService> = $r2;
+
+        $r6 = new com.android.okhttp.ConnectionPool$1;
+
+        specialinvoke $r6.<com.android.okhttp.ConnectionPool$1: void <init>(com.android.okhttp.ConnectionPool)>(r0);
+
+        r0.<com.android.okhttp.ConnectionPool: java.lang.Runnable connectionsCleanupRunnable> = $r6;
+
+        r0.<com.android.okhttp.ConnectionPool: int maxIdleConnections> = i0;
+
+        $l2 = l1 * 1000L;
+
+        $l3 = $l2 * 1000L;
+
+        r0.<com.android.okhttp.ConnectionPool: long keepAliveDurationNs> = $l3;
+
+        return;
+    }
+
+    java.util.List getConnections()
+    {
+        com.android.okhttp.ConnectionPool r0, r1;
+        java.lang.Throwable r2, $r6;
+        java.util.ArrayList $r4;
+        java.util.LinkedList $r5;
+
+        r0 := @this: com.android.okhttp.ConnectionPool;
+
+        specialinvoke r0.<com.android.okhttp.ConnectionPool: void waitForCleanupCallableToRun()>();
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = new java.util.ArrayList;
+
+        $r5 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>(java.util.Collection)>($r5);
+
+        exitmonitor r1;
+
+     label2:
+        return $r4;
+
+     label3:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private void waitForCleanupCallableToRun()
+    {
+        com.android.okhttp.ConnectionPool r0;
+        com.android.okhttp.ConnectionPool$2 $r2;
+        java.util.concurrent.ExecutorService $r3;
+        java.util.concurrent.Future $r4;
+        java.lang.Exception $r6;
+        java.lang.AssertionError $r7;
+
+        r0 := @this: com.android.okhttp.ConnectionPool;
+
+     label1:
+        $r3 = r0.<com.android.okhttp.ConnectionPool: java.util.concurrent.ExecutorService executorService>;
+
+        $r2 = new com.android.okhttp.ConnectionPool$2;
+
+        specialinvoke $r2.<com.android.okhttp.ConnectionPool$2: void <init>(com.android.okhttp.ConnectionPool)>(r0);
+
+        $r4 = interfaceinvoke $r3.<java.util.concurrent.ExecutorService: java.util.concurrent.Future submit(java.lang.Runnable)>($r2);
+
+        interfaceinvoke $r4.<java.util.concurrent.Future: java.lang.Object get()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r6 := @caughtexception;
+
+        $r7 = new java.lang.AssertionError;
+
+        specialinvoke $r7.<java.lang.AssertionError: void <init>()>();
+
+        throw $r7;
+
+     label4:
+        return;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public static com.android.okhttp.ConnectionPool getDefault()
+    {
+        com.android.okhttp.ConnectionPool $r0;
+
+        $r0 = <com.android.okhttp.ConnectionPool: com.android.okhttp.ConnectionPool systemDefault>;
+
+        return $r0;
+    }
+
+    public synchronized int getConnectionCount()
+    {
+        com.android.okhttp.ConnectionPool r0;
+        java.util.LinkedList $r1;
+        int $i0;
+
+        r0 := @this: com.android.okhttp.ConnectionPool;
+
+        $r1 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        $i0 = virtualinvoke $r1.<java.util.LinkedList: int size()>();
+
+        return $i0;
+    }
+
+    public synchronized int getSpdyConnectionCount()
+    {
+        com.android.okhttp.ConnectionPool r0;
+        int i0;
+        java.util.Iterator r1;
+        com.android.okhttp.Connection r2;
+        java.util.LinkedList $r3;
+        boolean $z0, $z1;
+        java.lang.Object $r4;
+
+        r0 := @this: com.android.okhttp.ConnectionPool;
+
+        i0 = 0;
+
+        $r3 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        r1 = virtualinvoke $r3.<java.util.LinkedList: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.okhttp.Connection) $r4;
+
+        $z1 = virtualinvoke r2.<com.android.okhttp.Connection: boolean isSpdy()>();
+
+        if $z1 == 0 goto label2;
+
+        i0 = i0 + 1;
+
+     label2:
+        goto label1;
+
+     label3:
+        return i0;
+    }
+
+    public synchronized int getHttpConnectionCount()
+    {
+        com.android.okhttp.ConnectionPool r0;
+        int i0;
+        java.util.Iterator r1;
+        com.android.okhttp.Connection r2;
+        java.util.LinkedList $r3;
+        boolean $z0, $z1;
+        java.lang.Object $r4;
+
+        r0 := @this: com.android.okhttp.ConnectionPool;
+
+        i0 = 0;
+
+        $r3 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        r1 = virtualinvoke $r3.<java.util.LinkedList: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.okhttp.Connection) $r4;
+
+        $z1 = virtualinvoke r2.<com.android.okhttp.Connection: boolean isSpdy()>();
+
+        if $z1 != 0 goto label2;
+
+        i0 = i0 + 1;
+
+     label2:
+        goto label1;
+
+     label3:
+        return i0;
+    }
+
+    public synchronized com.android.okhttp.Connection get(com.android.okhttp.Address)
+    {
+        com.android.okhttp.ConnectionPool r0;
+        com.android.okhttp.Address r1, $r12;
+        com.android.okhttp.Connection r2, r4;
+        java.util.ListIterator r3;
+        java.net.SocketException r5, $r17;
+        java.util.LinkedList $r6, $r7, $r10;
+        int $i0;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        java.lang.Runnable $r8;
+        java.util.concurrent.ExecutorService $r9;
+        java.lang.Object $r11;
+        com.android.okhttp.Route $r13;
+        long $l1, $l2, $l3, $l4;
+        byte $b5;
+        java.net.Socket $r14;
+        com.android.okhttp.internal.Platform $r15, $r16;
+        java.lang.StringBuilder $r18, $r19, $r20;
+        java.lang.String $r21;
+
+        r0 := @this: com.android.okhttp.ConnectionPool;
+
+        r1 := @parameter0: com.android.okhttp.Address;
+
+        r2 = null;
+
+        $r7 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        $r6 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        $i0 = virtualinvoke $r6.<java.util.LinkedList: int size()>();
+
+        r3 = virtualinvoke $r7.<java.util.LinkedList: java.util.ListIterator listIterator(int)>($i0);
+
+     label1:
+        $z0 = interfaceinvoke r3.<java.util.ListIterator: boolean hasPrevious()>();
+
+        if $z0 == 0 goto label7;
+
+        $r11 = interfaceinvoke r3.<java.util.ListIterator: java.lang.Object previous()>();
+
+        r4 = (com.android.okhttp.Connection) $r11;
+
+        $r13 = virtualinvoke r4.<com.android.okhttp.Connection: com.android.okhttp.Route getRoute()>();
+
+        $r12 = virtualinvoke $r13.<com.android.okhttp.Route: com.android.okhttp.Address getAddress()>();
+
+        $z3 = virtualinvoke $r12.<com.android.okhttp.Address: boolean equals(java.lang.Object)>(r1);
+
+        if $z3 == 0 goto label1;
+
+        $z2 = virtualinvoke r4.<com.android.okhttp.Connection: boolean isAlive()>();
+
+        if $z2 == 0 goto label1;
+
+        $l2 = staticinvoke <java.lang.System: long nanoTime()>();
+
+        $l1 = virtualinvoke r4.<com.android.okhttp.Connection: long getIdleStartTimeNs()>();
+
+        $l3 = $l2 - $l1;
+
+        $l4 = r0.<com.android.okhttp.ConnectionPool: long keepAliveDurationNs>;
+
+        $b5 = $l3 cmp $l4;
+
+        if $b5 < 0 goto label2;
+
+        goto label1;
+
+     label2:
+        interfaceinvoke r3.<java.util.ListIterator: void remove()>();
+
+        $z4 = virtualinvoke r4.<com.android.okhttp.Connection: boolean isSpdy()>();
+
+        if $z4 != 0 goto label6;
+
+     label3:
+        $r15 = staticinvoke <com.android.okhttp.internal.Platform: com.android.okhttp.internal.Platform get()>();
+
+        $r14 = virtualinvoke r4.<com.android.okhttp.Connection: java.net.Socket getSocket()>();
+
+        virtualinvoke $r15.<com.android.okhttp.internal.Platform: void tagSocket(java.net.Socket)>($r14);
+
+     label4:
+        goto label6;
+
+     label5:
+        $r17 := @caughtexception;
+
+        r5 = $r17;
+
+        staticinvoke <com.android.okhttp.internal.Util: void closeQuietly(java.io.Closeable)>(r4);
+
+        $r16 = staticinvoke <com.android.okhttp.internal.Platform: com.android.okhttp.internal.Platform get()>();
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to tagSocket(): ");
+
+        $r20 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r5);
+
+        $r21 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r16.<com.android.okhttp.internal.Platform: void logW(java.lang.String)>($r21);
+
+        goto label1;
+
+     label6:
+        r2 = r4;
+
+        goto label7;
+
+     label7:
+        if r2 == null goto label8;
+
+        $z1 = virtualinvoke r2.<com.android.okhttp.Connection: boolean isSpdy()>();
+
+        if $z1 == 0 goto label8;
+
+        $r10 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        virtualinvoke $r10.<java.util.LinkedList: void addFirst(java.lang.Object)>(r2);
+
+     label8:
+        $r9 = r0.<com.android.okhttp.ConnectionPool: java.util.concurrent.ExecutorService executorService>;
+
+        $r8 = r0.<com.android.okhttp.ConnectionPool: java.lang.Runnable connectionsCleanupRunnable>;
+
+        interfaceinvoke $r9.<java.util.concurrent.ExecutorService: void execute(java.lang.Runnable)>($r8);
+
+        return r2;
+
+        catch java.net.SocketException from label3 to label4 with label5;
+    }
+
+    public void recycle(com.android.okhttp.Connection)
+    {
+        com.android.okhttp.ConnectionPool r0, r17;
+        com.android.okhttp.Connection r1;
+        java.net.SocketException r2, $r12;
+        java.lang.Throwable r3, $r10;
+        boolean $z0, $z1, $z2;
+        com.android.okhttp.internal.Platform $r4, $r11;
+        java.net.Socket $r5;
+        java.util.LinkedList $r7;
+        java.lang.Runnable $r8;
+        java.util.concurrent.ExecutorService $r9;
+        java.lang.StringBuilder $r13, $r14, $r16;
+        java.lang.String $r15;
+
+        r0 := @this: com.android.okhttp.ConnectionPool;
+
+        r1 := @parameter0: com.android.okhttp.Connection;
+
+        $z0 = virtualinvoke r1.<com.android.okhttp.Connection: boolean isSpdy()>();
+
+        if $z0 == 0 goto label01;
+
+        return;
+
+     label01:
+        $z1 = virtualinvoke r1.<com.android.okhttp.Connection: boolean clearOwner()>();
+
+        if $z1 != 0 goto label02;
+
+        return;
+
+     label02:
+        $z2 = virtualinvoke r1.<com.android.okhttp.Connection: boolean isAlive()>();
+
+        if $z2 != 0 goto label03;
+
+        staticinvoke <com.android.okhttp.internal.Util: void closeQuietly(java.io.Closeable)>(r1);
+
+        return;
+
+     label03:
+        $r4 = staticinvoke <com.android.okhttp.internal.Platform: com.android.okhttp.internal.Platform get()>();
+
+        $r5 = virtualinvoke r1.<com.android.okhttp.Connection: java.net.Socket getSocket()>();
+
+        virtualinvoke $r4.<com.android.okhttp.internal.Platform: void untagSocket(java.net.Socket)>($r5);
+
+     label04:
+        goto label06;
+
+     label05:
+        $r12 := @caughtexception;
+
+        r2 = $r12;
+
+        $r11 = staticinvoke <com.android.okhttp.internal.Platform: com.android.okhttp.internal.Platform get()>();
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to untagSocket(): ");
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r11.<com.android.okhttp.internal.Platform: void logW(java.lang.String)>($r15);
+
+        staticinvoke <com.android.okhttp.internal.Util: void closeQuietly(java.io.Closeable)>(r1);
+
+        return;
+
+     label06:
+        r17 = r0;
+
+        entermonitor r0;
+
+     label07:
+        $r7 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        virtualinvoke $r7.<java.util.LinkedList: void addFirst(java.lang.Object)>(r1);
+
+        virtualinvoke r1.<com.android.okhttp.Connection: void incrementRecycleCount()>();
+
+        virtualinvoke r1.<com.android.okhttp.Connection: void resetIdleStartTime()>();
+
+        exitmonitor r17;
+
+     label08:
+        goto label11;
+
+     label09:
+        $r10 := @caughtexception;
+
+        r3 = $r10;
+
+        exitmonitor r17;
+
+     label10:
+        throw r3;
+
+     label11:
+        $r9 = r0.<com.android.okhttp.ConnectionPool: java.util.concurrent.ExecutorService executorService>;
+
+        $r8 = r0.<com.android.okhttp.ConnectionPool: java.lang.Runnable connectionsCleanupRunnable>;
+
+        interfaceinvoke $r9.<java.util.concurrent.ExecutorService: void execute(java.lang.Runnable)>($r8);
+
+        return;
+
+        catch java.net.SocketException from label03 to label04 with label05;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    public void share(com.android.okhttp.Connection)
+    {
+        com.android.okhttp.ConnectionPool r0, r2;
+        com.android.okhttp.Connection r1;
+        java.lang.Throwable r3, $r9;
+        boolean $z0, $z1;
+        java.lang.Runnable $r4;
+        java.util.concurrent.ExecutorService $r5;
+        java.util.LinkedList $r7;
+        java.lang.IllegalArgumentException $r8;
+
+        r0 := @this: com.android.okhttp.ConnectionPool;
+
+        r1 := @parameter0: com.android.okhttp.Connection;
+
+        $z0 = virtualinvoke r1.<com.android.okhttp.Connection: boolean isSpdy()>();
+
+        if $z0 != 0 goto label1;
+
+        $r8 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r8.<java.lang.IllegalArgumentException: void <init>()>();
+
+        throw $r8;
+
+     label1:
+        $r5 = r0.<com.android.okhttp.ConnectionPool: java.util.concurrent.ExecutorService executorService>;
+
+        $r4 = r0.<com.android.okhttp.ConnectionPool: java.lang.Runnable connectionsCleanupRunnable>;
+
+        interfaceinvoke $r5.<java.util.concurrent.ExecutorService: void execute(java.lang.Runnable)>($r4);
+
+        $z1 = virtualinvoke r1.<com.android.okhttp.Connection: boolean isAlive()>();
+
+        if $z1 == 0 goto label6;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label2:
+        $r7 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        virtualinvoke $r7.<java.util.LinkedList: void addFirst(java.lang.Object)>(r1);
+
+        exitmonitor r2;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+        exitmonitor r2;
+
+     label5:
+        throw r3;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public void evictAll()
+    {
+        com.android.okhttp.ConnectionPool r0, r1;
+        java.util.ArrayList r2, $r5;
+        java.lang.Throwable r3, $r10;
+        java.util.LinkedList $r6, $r7;
+        java.lang.Object $r8;
+        java.io.Closeable $r9;
+        int i0, i1;
+
+        r0 := @this: com.android.okhttp.ConnectionPool;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r5 = new java.util.ArrayList;
+
+        $r6 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>(java.util.Collection)>($r6);
+
+        r2 = $r5;
+
+        $r7 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        virtualinvoke $r7.<java.util.LinkedList: void clear()>();
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r10 := @caughtexception;
+
+        r3 = $r10;
+
+        exitmonitor r1;
+
+     label4:
+        throw r3;
+
+     label5:
+        i0 = 0;
+
+        i1 = interfaceinvoke r2.<java.util.List: int size()>();
+
+     label6:
+        if i0 >= i1 goto label7;
+
+        $r8 = interfaceinvoke r2.<java.util.List: java.lang.Object get(int)>(i0);
+
+        $r9 = (java.io.Closeable) $r8;
+
+        staticinvoke <com.android.okhttp.internal.Util: void closeQuietly(java.io.Closeable)>($r9);
+
+        i0 = i0 + 1;
+
+        goto label6;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    static java.util.LinkedList access$000(com.android.okhttp.ConnectionPool)
+    {
+        com.android.okhttp.ConnectionPool r0;
+        java.util.LinkedList $r1;
+
+        r0 := @parameter0: com.android.okhttp.ConnectionPool;
+
+        $r1 = r0.<com.android.okhttp.ConnectionPool: java.util.LinkedList connections>;
+
+        return $r1;
+    }
+
+    static long access$100(com.android.okhttp.ConnectionPool)
+    {
+        com.android.okhttp.ConnectionPool r0;
+        long $l0;
+
+        r0 := @parameter0: com.android.okhttp.ConnectionPool;
+
+        $l0 = r0.<com.android.okhttp.ConnectionPool: long keepAliveDurationNs>;
+
+        return $l0;
+    }
+
+    static int access$200(com.android.okhttp.ConnectionPool)
+    {
+        com.android.okhttp.ConnectionPool r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.okhttp.ConnectionPool;
+
+        $i0 = r0.<com.android.okhttp.ConnectionPool: int maxIdleConnections>;
+
+        return $i0;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.String r0, r1, r2;
+        long l0, $l2;
+        com.android.okhttp.ConnectionPool $r3, $r4, $r5;
+        int $i1;
+        boolean $z0;
+
+        <com.android.okhttp.ConnectionPool: long DEFAULT_KEEP_ALIVE_DURATION_MS> = 300000L;
+
+        <com.android.okhttp.ConnectionPool: int MAX_CONNECTIONS_TO_CLEANUP> = 2;
+
+        r0 = staticinvoke <java.lang.System: java.lang.String getProperty(java.lang.String)>("http.keepAlive");
+
+        r1 = staticinvoke <java.lang.System: java.lang.String getProperty(java.lang.String)>("http.keepAliveDuration");
+
+        r2 = staticinvoke <java.lang.System: java.lang.String getProperty(java.lang.String)>("http.maxConnections");
+
+        if r1 == null goto label1;
+
+        $l2 = staticinvoke <java.lang.Long: long parseLong(java.lang.String)>(r1);
+
+        goto label2;
+
+     label1:
+        $l2 = 300000L;
+
+     label2:
+        l0 = $l2;
+
+        if r0 == null goto label3;
+
+        $z0 = staticinvoke <java.lang.Boolean: boolean parseBoolean(java.lang.String)>(r0);
+
+        if $z0 != 0 goto label3;
+
+        $r5 = new com.android.okhttp.ConnectionPool;
+
+        specialinvoke $r5.<com.android.okhttp.ConnectionPool: void <init>(int,long)>(0, l0);
+
+        <com.android.okhttp.ConnectionPool: com.android.okhttp.ConnectionPool systemDefault> = $r5;
+
+        goto label5;
+
+     label3:
+        if r2 == null goto label4;
+
+        $r4 = new com.android.okhttp.ConnectionPool;
+
+        $i1 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r2);
+
+        specialinvoke $r4.<com.android.okhttp.ConnectionPool: void <init>(int,long)>($i1, l0);
+
+        <com.android.okhttp.ConnectionPool: com.android.okhttp.ConnectionPool systemDefault> = $r4;
+
+        goto label5;
+
+     label4:
+        $r3 = new com.android.okhttp.ConnectionPool;
+
+        specialinvoke $r3.<com.android.okhttp.ConnectionPool: void <init>(int,long)>(5, l0);
+
+        <com.android.okhttp.ConnectionPool: com.android.okhttp.ConnectionPool systemDefault> = $r3;
+
+     label5:
+        return;
+    }
+}

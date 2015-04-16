@@ -1,0 +1,2334 @@
+public class com.android.gallery3d.ui.TileImageView extends com.android.gallery3d.ui.GLView
+{
+    public static final int SIZE_UNKNOWN;
+    private static final java.lang.String TAG;
+    private static final int UPLOAD_LIMIT;
+    private static int sTileSize;
+    private static final int STATE_ACTIVATED;
+    private static final int STATE_IN_QUEUE;
+    private static final int STATE_DECODING;
+    private static final int STATE_DECODED;
+    private static final int STATE_DECODE_FAIL;
+    private static final int STATE_RECYCLING;
+    private static final int STATE_RECYCLED;
+    private com.android.gallery3d.ui.TileImageView$TileSource mModel;
+    private com.android.gallery3d.ui.ScreenNail mScreenNail;
+    protected int mLevelCount;
+    private int mLevel;
+    private int mOffsetX;
+    private int mOffsetY;
+    private int mUploadQuota;
+    private boolean mRenderComplete;
+    private final android.graphics.RectF mSourceRect;
+    private final android.graphics.RectF mTargetRect;
+    private final android.support.v4.util.LongSparseArray mActiveTiles;
+    private final com.android.gallery3d.ui.TileImageView$TileQueue mRecycledQueue;
+    private final com.android.gallery3d.ui.TileImageView$TileQueue mUploadQueue;
+    private final com.android.gallery3d.ui.TileImageView$TileQueue mDecodeQueue;
+    protected int mImageWidth;
+    protected int mImageHeight;
+    protected int mCenterX;
+    protected int mCenterY;
+    protected float mScale;
+    protected int mRotation;
+    private final android.graphics.Rect mTileRange;
+    private final android.graphics.Rect[] mActiveRange;
+    private final com.android.gallery3d.ui.TileImageView$TileUploader mTileUploader;
+    private boolean mIsTextureFreed;
+    private com.android.gallery3d.util.Future mTileDecoder;
+    private final com.android.gallery3d.util.ThreadPool mThreadPool;
+    private boolean mBackgroundTileUploaded;
+
+    public static boolean isHighResolution(android.content.Context)
+    {
+        android.content.Context r0;
+        android.util.DisplayMetrics r1, $r3;
+        android.view.WindowManager r2;
+        java.lang.Object $r4;
+        android.view.Display $r5;
+        int $i0, $i1;
+        boolean $z0;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r3 = new android.util.DisplayMetrics;
+
+        specialinvoke $r3.<android.util.DisplayMetrics: void <init>()>();
+
+        r1 = $r3;
+
+        $r4 = virtualinvoke r0.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("window");
+
+        r2 = (android.view.WindowManager) $r4;
+
+        $r5 = interfaceinvoke r2.<android.view.WindowManager: android.view.Display getDefaultDisplay()>();
+
+        virtualinvoke $r5.<android.view.Display: void getMetrics(android.util.DisplayMetrics)>(r1);
+
+        $i0 = r1.<android.util.DisplayMetrics: int heightPixels>;
+
+        if $i0 > 2048 goto label1;
+
+        $i1 = r1.<android.util.DisplayMetrics: int widthPixels>;
+
+        if $i1 <= 2048 goto label2;
+
+     label1:
+        $z0 = 1;
+
+        goto label3;
+
+     label2:
+        $z0 = 0;
+
+     label3:
+        return $z0;
+    }
+
+    public void <init>(com.android.gallery3d.app.GalleryContext)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.app.GalleryContext r1;
+        android.graphics.RectF $r2, $r3;
+        android.support.v4.util.LongSparseArray $r4;
+        com.android.gallery3d.ui.TileImageView$TileQueue $r5, $r6, $r7;
+        android.graphics.Rect $r8, $r10, $r11;
+        android.graphics.Rect[] $r9;
+        com.android.gallery3d.ui.TileImageView$TileUploader $r12;
+        com.android.gallery3d.util.ThreadPool $r13, $r14;
+        com.android.gallery3d.ui.TileImageView$TileDecoder $r15;
+        int $i0;
+        com.android.gallery3d.util.Future $r16;
+        boolean $z0;
+        android.content.Context $r17;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: com.android.gallery3d.app.GalleryContext;
+
+        specialinvoke r0.<com.android.gallery3d.ui.GLView: void <init>()>();
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mLevel> = 0;
+
+        $r2 = new android.graphics.RectF;
+
+        specialinvoke $r2.<android.graphics.RectF: void <init>()>();
+
+        r0.<com.android.gallery3d.ui.TileImageView: android.graphics.RectF mSourceRect> = $r2;
+
+        $r3 = new android.graphics.RectF;
+
+        specialinvoke $r3.<android.graphics.RectF: void <init>()>();
+
+        r0.<com.android.gallery3d.ui.TileImageView: android.graphics.RectF mTargetRect> = $r3;
+
+        $r4 = new android.support.v4.util.LongSparseArray;
+
+        specialinvoke $r4.<android.support.v4.util.LongSparseArray: void <init>()>();
+
+        r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles> = $r4;
+
+        $r5 = new com.android.gallery3d.ui.TileImageView$TileQueue;
+
+        specialinvoke $r5.<com.android.gallery3d.ui.TileImageView$TileQueue: void <init>(com.android.gallery3d.ui.TileImageView$1)>(null);
+
+        r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mRecycledQueue> = $r5;
+
+        $r6 = new com.android.gallery3d.ui.TileImageView$TileQueue;
+
+        specialinvoke $r6.<com.android.gallery3d.ui.TileImageView$TileQueue: void <init>(com.android.gallery3d.ui.TileImageView$1)>(null);
+
+        r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mUploadQueue> = $r6;
+
+        $r7 = new com.android.gallery3d.ui.TileImageView$TileQueue;
+
+        specialinvoke $r7.<com.android.gallery3d.ui.TileImageView$TileQueue: void <init>(com.android.gallery3d.ui.TileImageView$1)>(null);
+
+        r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mDecodeQueue> = $r7;
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mImageWidth> = -1;
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mImageHeight> = -1;
+
+        $r8 = new android.graphics.Rect;
+
+        specialinvoke $r8.<android.graphics.Rect: void <init>()>();
+
+        r0.<com.android.gallery3d.ui.TileImageView: android.graphics.Rect mTileRange> = $r8;
+
+        $r9 = newarray (android.graphics.Rect)[2];
+
+        $r10 = new android.graphics.Rect;
+
+        specialinvoke $r10.<android.graphics.Rect: void <init>()>();
+
+        $r9[0] = $r10;
+
+        $r11 = new android.graphics.Rect;
+
+        specialinvoke $r11.<android.graphics.Rect: void <init>()>();
+
+        $r9[1] = $r11;
+
+        r0.<com.android.gallery3d.ui.TileImageView: android.graphics.Rect[] mActiveRange> = $r9;
+
+        $r12 = new com.android.gallery3d.ui.TileImageView$TileUploader;
+
+        specialinvoke $r12.<com.android.gallery3d.ui.TileImageView$TileUploader: void <init>(com.android.gallery3d.ui.TileImageView,com.android.gallery3d.ui.TileImageView$1)>(r0, null);
+
+        r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileUploader mTileUploader> = $r12;
+
+        $r13 = interfaceinvoke r1.<com.android.gallery3d.app.GalleryContext: com.android.gallery3d.util.ThreadPool getThreadPool()>();
+
+        r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.util.ThreadPool mThreadPool> = $r13;
+
+        $r14 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.util.ThreadPool mThreadPool>;
+
+        $r15 = new com.android.gallery3d.ui.TileImageView$TileDecoder;
+
+        specialinvoke $r15.<com.android.gallery3d.ui.TileImageView$TileDecoder: void <init>(com.android.gallery3d.ui.TileImageView,com.android.gallery3d.ui.TileImageView$1)>(r0, null);
+
+        $r16 = virtualinvoke $r14.<com.android.gallery3d.util.ThreadPool: com.android.gallery3d.util.Future submit(com.android.gallery3d.util.ThreadPool$Job)>($r15);
+
+        r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.util.Future mTileDecoder> = $r16;
+
+        $i0 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        if $i0 != 0 goto label2;
+
+        $r17 = interfaceinvoke r1.<com.android.gallery3d.app.GalleryContext: android.content.Context getAndroidContext()>();
+
+        $z0 = staticinvoke <com.android.gallery3d.ui.TileImageView: boolean isHighResolution(android.content.Context)>($r17);
+
+        if $z0 == 0 goto label1;
+
+        <com.android.gallery3d.ui.TileImageView: int sTileSize> = 512;
+
+        goto label2;
+
+     label1:
+        <com.android.gallery3d.ui.TileImageView: int sTileSize> = 256;
+
+     label2:
+        return;
+    }
+
+    public void setModel(com.android.gallery3d.ui.TileImageView$TileSource)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.ui.TileImageView$TileSource r1;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: com.android.gallery3d.ui.TileImageView$TileSource;
+
+        r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileSource mModel> = r1;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void notifyModelInvalidated()>();
+
+     label1:
+        return;
+    }
+
+    public void setScreenNail(com.android.gallery3d.ui.ScreenNail)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.ui.ScreenNail r1;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: com.android.gallery3d.ui.ScreenNail;
+
+        r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail> = r1;
+
+        return;
+    }
+
+    public void notifyModelInvalidated()
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.ui.TileImageView$TileSource $r1, $r2, $r4, $r5, $r6;
+        com.android.gallery3d.ui.ScreenNail $r3;
+        int $i0, $i1, $i2, $i3, $i4, $i5;
+        float $f0;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void invalidateTiles()>();
+
+        $r1 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileSource mModel>;
+
+        if $r1 != null goto label1;
+
+        r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail> = null;
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mImageWidth> = 0;
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mImageHeight> = 0;
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mLevelCount> = 0;
+
+        goto label2;
+
+     label1:
+        $r2 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileSource mModel>;
+
+        $r3 = interfaceinvoke $r2.<com.android.gallery3d.ui.TileImageView$TileSource: com.android.gallery3d.ui.ScreenNail getScreenNail()>();
+
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void setScreenNail(com.android.gallery3d.ui.ScreenNail)>($r3);
+
+        $r4 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileSource mModel>;
+
+        $i0 = interfaceinvoke $r4.<com.android.gallery3d.ui.TileImageView$TileSource: int getImageWidth()>();
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mImageWidth> = $i0;
+
+        $r5 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileSource mModel>;
+
+        $i1 = interfaceinvoke $r5.<com.android.gallery3d.ui.TileImageView$TileSource: int getImageHeight()>();
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mImageHeight> = $i1;
+
+        $r6 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileSource mModel>;
+
+        $i2 = interfaceinvoke $r6.<com.android.gallery3d.ui.TileImageView$TileSource: int getLevelCount()>();
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mLevelCount> = $i2;
+
+     label2:
+        $i5 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterX>;
+
+        $i4 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterY>;
+
+        $f0 = r0.<com.android.gallery3d.ui.TileImageView: float mScale>;
+
+        $i3 = r0.<com.android.gallery3d.ui.TileImageView: int mRotation>;
+
+        specialinvoke r0.<com.android.gallery3d.ui.TileImageView: void layoutTiles(int,int,float,int)>($i5, $i4, $f0, $i3);
+
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void invalidate()>();
+
+        return;
+    }
+
+    protected void onLayout(boolean, int, int, int, int)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        boolean z0;
+        int i0, i1, i2, i3, $i4, $i5, $i6;
+        float $f0;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        z0 := @parameter0: boolean;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        i3 := @parameter4: int;
+
+        specialinvoke r0.<com.android.gallery3d.ui.GLView: void onLayout(boolean,int,int,int,int)>(z0, i0, i1, i2, i3);
+
+        if z0 == 0 goto label1;
+
+        $i6 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterX>;
+
+        $i5 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterY>;
+
+        $f0 = r0.<com.android.gallery3d.ui.TileImageView: float mScale>;
+
+        $i4 = r0.<com.android.gallery3d.ui.TileImageView: int mRotation>;
+
+        specialinvoke r0.<com.android.gallery3d.ui.TileImageView: void layoutTiles(int,int,float,int)>($i6, $i5, $f0, $i4);
+
+     label1:
+        return;
+    }
+
+    private void layoutTiles(int, int, float, int)
+    {
+        com.android.gallery3d.ui.TileImageView r0, r15;
+        int i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i25, $i26, $i27, $i28, $i29, $i30, $i31, $i32, $i33, $i34, $i35, $i36, $i37, $i38, $i40, $i41, $i42, $i43, i44, i45, i46, i47, i48, i49;
+        float f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20, $f21, $f22, $f23;
+        android.graphics.Rect r1, $r11, $r12, r16;
+        com.android.gallery3d.ui.TileImageView$Tile r2;
+        java.lang.Throwable r3, $r13;
+        android.support.v4.util.LongSparseArray $r5, $r8, $r9;
+        com.android.gallery3d.ui.TileImageView$TileQueue $r6, $r7;
+        java.lang.Object $r10;
+        boolean $z0;
+        byte $b39;
+        android.graphics.Rect[] r14;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        f0 := @parameter2: float;
+
+        i2 := @parameter3: int;
+
+        i3 = virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: int getWidth()>();
+
+        i4 = virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: int getHeight()>();
+
+        $f1 = 1.0F / f0;
+
+        $i13 = staticinvoke <com.android.gallery3d.common.Utils: int floorLog2(float)>($f1);
+
+        $i12 = r0.<com.android.gallery3d.ui.TileImageView: int mLevelCount>;
+
+        $i15 = staticinvoke <com.android.gallery3d.common.Utils: int clamp(int,int,int)>($i13, 0, $i12);
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mLevel> = $i15;
+
+        $i17 = r0.<com.android.gallery3d.ui.TileImageView: int mLevel>;
+
+        $i14 = r0.<com.android.gallery3d.ui.TileImageView: int mLevelCount>;
+
+        if $i17 == $i14 goto label03;
+
+        r1 = r0.<com.android.gallery3d.ui.TileImageView: android.graphics.Rect mTileRange>;
+
+        $i33 = r0.<com.android.gallery3d.ui.TileImageView: int mLevel>;
+
+        specialinvoke r0.<com.android.gallery3d.ui.TileImageView: void getRange(android.graphics.Rect,int,int,int,float,int)>(r1, i0, i1, $i33, f0, i2);
+
+        $f15 = (float) i3;
+
+        $f14 = $f15 / 2.0F;
+
+        $i34 = r1.<android.graphics.Rect: int left>;
+
+        $i32 = $i34 - i0;
+
+        $f12 = (float) $i32;
+
+        $f13 = $f12 * f0;
+
+        $f19 = $f14 + $f13;
+
+        $i36 = staticinvoke <java.lang.Math: int round(float)>($f19);
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mOffsetX> = $i36;
+
+        $f20 = (float) i4;
+
+        $f18 = $f20 / 2.0F;
+
+        $i37 = r1.<android.graphics.Rect: int top>;
+
+        $i35 = $i37 - i1;
+
+        $f16 = (float) $i35;
+
+        $f17 = $f16 * f0;
+
+        $f23 = $f18 + $f17;
+
+        $i40 = staticinvoke <java.lang.Math: int round(float)>($f23);
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mOffsetY> = $i40;
+
+        $i42 = r0.<com.android.gallery3d.ui.TileImageView: int mLevel>;
+
+        $i41 = 1 << $i42;
+
+        $f22 = (float) $i41;
+
+        $f21 = f0 * $f22;
+
+        $b39 = $f21 cmpl 0.75F;
+
+        if $b39 <= 0 goto label01;
+
+        $i38 = r0.<com.android.gallery3d.ui.TileImageView: int mLevel>;
+
+        $i43 = $i38 - 1;
+
+        goto label02;
+
+     label01:
+        $i43 = r0.<com.android.gallery3d.ui.TileImageView: int mLevel>;
+
+     label02:
+        i5 = $i43;
+
+        goto label04;
+
+     label03:
+        $i16 = r0.<com.android.gallery3d.ui.TileImageView: int mLevel>;
+
+        i5 = $i16 - 2;
+
+        $f3 = (float) i3;
+
+        $f4 = $f3 / 2.0F;
+
+        $f2 = (float) i0;
+
+        $f5 = $f2 * f0;
+
+        $f6 = $f4 - $f5;
+
+        $i18 = staticinvoke <java.lang.Math: int round(float)>($f6);
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mOffsetX> = $i18;
+
+        $f9 = (float) i4;
+
+        $f8 = $f9 / 2.0F;
+
+        $f10 = (float) i1;
+
+        $f7 = $f10 * f0;
+
+        $f11 = $f8 - $f7;
+
+        $i21 = staticinvoke <java.lang.Math: int round(float)>($f11);
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mOffsetY> = $i21;
+
+     label04:
+        $i19 = r0.<com.android.gallery3d.ui.TileImageView: int mLevelCount>;
+
+        $i20 = $i19 - 2;
+
+        $i23 = staticinvoke <java.lang.Math: int min(int,int)>(i5, $i20);
+
+        i44 = staticinvoke <java.lang.Math: int max(int,int)>(0, $i23);
+
+        $i25 = i44 + 2;
+
+        $i22 = r0.<com.android.gallery3d.ui.TileImageView: int mLevelCount>;
+
+        i6 = staticinvoke <java.lang.Math: int min(int,int)>($i25, $i22);
+
+        r14 = r0.<com.android.gallery3d.ui.TileImageView: android.graphics.Rect[] mActiveRange>;
+
+        i7 = i44;
+
+     label05:
+        if i7 >= i6 goto label06;
+
+        $i30 = i7 - i44;
+
+        $r12 = r14[$i30];
+
+        specialinvoke r0.<com.android.gallery3d.ui.TileImageView: void getRange(android.graphics.Rect,int,int,int,int)>($r12, i0, i1, i7, i2);
+
+        i7 = i7 + 1;
+
+        goto label05;
+
+     label06:
+        $i24 = i2 % 90;
+
+        if $i24 == 0 goto label07;
+
+        return;
+
+     label07:
+        r15 = r0;
+
+        entermonitor r0;
+
+     label08:
+        $r7 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mDecodeQueue>;
+
+        virtualinvoke $r7.<com.android.gallery3d.ui.TileImageView$TileQueue: void clean()>();
+
+        $r6 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mUploadQueue>;
+
+        virtualinvoke $r6.<com.android.gallery3d.ui.TileImageView$TileQueue: void clean()>();
+
+        r0.<com.android.gallery3d.ui.TileImageView: boolean mBackgroundTileUploaded> = 0;
+
+        $r5 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        i8 = virtualinvoke $r5.<android.support.v4.util.LongSparseArray: int size()>();
+
+        i9 = 0;
+
+     label09:
+        if i9 >= i8 goto label12;
+
+        $r8 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        $r10 = virtualinvoke $r8.<android.support.v4.util.LongSparseArray: java.lang.Object valueAt(int)>(i9);
+
+        r2 = (com.android.gallery3d.ui.TileImageView$Tile) $r10;
+
+        i10 = r2.<com.android.gallery3d.ui.TileImageView$Tile: int mTileLevel>;
+
+        if i10 < i44 goto label10;
+
+        if i10 >= i6 goto label10;
+
+        $i29 = i10 - i44;
+
+        $r11 = r14[$i29];
+
+        $i31 = r2.<com.android.gallery3d.ui.TileImageView$Tile: int mX>;
+
+        $i28 = r2.<com.android.gallery3d.ui.TileImageView$Tile: int mY>;
+
+        $z0 = virtualinvoke $r11.<android.graphics.Rect: boolean contains(int,int)>($i31, $i28);
+
+        if $z0 != 0 goto label11;
+
+     label10:
+        $r9 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        virtualinvoke $r9.<android.support.v4.util.LongSparseArray: void removeAt(int)>(i9);
+
+        i9 = i9 + -1;
+
+        i8 = i8 + -1;
+
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void recycleTile(com.android.gallery3d.ui.TileImageView$Tile)>(r2);
+
+     label11:
+        i9 = i9 + 1;
+
+        goto label09;
+
+     label12:
+        exitmonitor r15;
+
+     label13:
+        goto label16;
+
+     label14:
+        $r13 := @caughtexception;
+
+        r3 = $r13;
+
+        exitmonitor r15;
+
+     label15:
+        throw r3;
+
+     label16:
+        i45 = i44;
+
+     label17:
+        if i45 >= i6 goto label22;
+
+        $i27 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        i46 = $i27 << i45;
+
+        $i26 = i45 - i44;
+
+        r16 = r14[$i26];
+
+        i47 = r16.<android.graphics.Rect: int top>;
+
+        i48 = r16.<android.graphics.Rect: int bottom>;
+
+     label18:
+        if i47 >= i48 goto label21;
+
+        i49 = r16.<android.graphics.Rect: int left>;
+
+        i11 = r16.<android.graphics.Rect: int right>;
+
+     label19:
+        if i49 >= i11 goto label20;
+
+        specialinvoke r0.<com.android.gallery3d.ui.TileImageView: void activateTile(int,int,int)>(i49, i47, i45);
+
+        i49 = i49 + i46;
+
+        goto label19;
+
+     label20:
+        i47 = i47 + i46;
+
+        goto label18;
+
+     label21:
+        i45 = i45 + 1;
+
+        goto label17;
+
+     label22:
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void invalidate()>();
+
+        return;
+
+        catch java.lang.Throwable from label08 to label13 with label14;
+        catch java.lang.Throwable from label14 to label15 with label14;
+    }
+
+    protected synchronized void invalidateTiles()
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        int i0, i1;
+        com.android.gallery3d.ui.TileImageView$Tile r1;
+        com.android.gallery3d.ui.TileImageView$TileQueue $r2, $r3;
+        android.support.v4.util.LongSparseArray $r4, $r5, $r6;
+        java.lang.Object $r7;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        $r2 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mDecodeQueue>;
+
+        virtualinvoke $r2.<com.android.gallery3d.ui.TileImageView$TileQueue: void clean()>();
+
+        $r3 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mUploadQueue>;
+
+        virtualinvoke $r3.<com.android.gallery3d.ui.TileImageView$TileQueue: void clean()>();
+
+        $r4 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        i0 = virtualinvoke $r4.<android.support.v4.util.LongSparseArray: int size()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $r6 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        $r7 = virtualinvoke $r6.<android.support.v4.util.LongSparseArray: java.lang.Object valueAt(int)>(i1);
+
+        r1 = (com.android.gallery3d.ui.TileImageView$Tile) $r7;
+
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void recycleTile(com.android.gallery3d.ui.TileImageView$Tile)>(r1);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        $r5 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        virtualinvoke $r5.<android.support.v4.util.LongSparseArray: void clear()>();
+
+        return;
+    }
+
+    private void getRange(android.graphics.Rect, int, int, int, int)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        android.graphics.Rect r1;
+        int i0, i1, i2, i3, $i4, $i5;
+        float $f0, $f1;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: android.graphics.Rect;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        i3 := @parameter4: int;
+
+        $i4 = i2 + 1;
+
+        $i5 = 1 << $i4;
+
+        $f0 = (float) $i5;
+
+        $f1 = 1.0F / $f0;
+
+        specialinvoke r0.<com.android.gallery3d.ui.TileImageView: void getRange(android.graphics.Rect,int,int,int,float,int)>(r1, i0, i1, i2, $f1, i3);
+
+        return;
+    }
+
+    private void getRange(android.graphics.Rect, int, int, int, float, int)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        android.graphics.Rect r1;
+        int i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, i21, i22, i23, i24;
+        float f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20, $f21, $f22;
+        double d0, d1, d2, d3, d4, $d5, $d6, $d7, $d8, $d9, $d10, $d11, $d12, $d13, $d14, $d15, $d16, $d17, $d18, $d19, $d20, $d21, $d22, $d23, $d24, $d25;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: android.graphics.Rect;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        f0 := @parameter4: float;
+
+        i3 := @parameter5: int;
+
+        $i11 = neg i3;
+
+        $d5 = (double) $i11;
+
+        d0 = staticinvoke <java.lang.Math: double toRadians(double)>($d5);
+
+        $i12 = virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: int getWidth()>();
+
+        d1 = (double) $i12;
+
+        $i13 = virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: int getHeight()>();
+
+        d2 = (double) $i13;
+
+        d3 = staticinvoke <java.lang.Math: double cos(double)>(d0);
+
+        d4 = staticinvoke <java.lang.Math: double sin(double)>(d0);
+
+        $d9 = d3 * d1;
+
+        $d6 = d4 * d2;
+
+        $d10 = $d9 - $d6;
+
+        $d7 = staticinvoke <java.lang.Math: double abs(double)>($d10);
+
+        $d13 = d3 * d1;
+
+        $d8 = d4 * d2;
+
+        $d14 = $d13 + $d8;
+
+        $d11 = staticinvoke <java.lang.Math: double abs(double)>($d14);
+
+        $d12 = staticinvoke <java.lang.Math: double max(double,double)>($d7, $d11);
+
+        $d17 = staticinvoke <java.lang.Math: double ceil(double)>($d12);
+
+        i4 = (int) $d17;
+
+        $d15 = d4 * d1;
+
+        $d18 = d3 * d2;
+
+        $d16 = $d15 + $d18;
+
+        $d21 = staticinvoke <java.lang.Math: double abs(double)>($d16);
+
+        $d19 = d4 * d1;
+
+        $d22 = d3 * d2;
+
+        $d20 = $d19 - $d22;
+
+        $d25 = staticinvoke <java.lang.Math: double abs(double)>($d20);
+
+        $d24 = staticinvoke <java.lang.Math: double max(double,double)>($d21, $d25);
+
+        $d23 = staticinvoke <java.lang.Math: double ceil(double)>($d24);
+
+        i6 = (int) $d23;
+
+        $f3 = (float) i0;
+
+        $f5 = (float) i4;
+
+        $f1 = 2.0F * f0;
+
+        $f4 = $f5 / $f1;
+
+        $f2 = $f3 - $f4;
+
+        $f9 = staticinvoke <android.util.FloatMath: float floor(float)>($f2);
+
+        i5 = (int) $f9;
+
+        $f13 = (float) i1;
+
+        $f7 = (float) i6;
+
+        $f8 = 2.0F * f0;
+
+        $f6 = $f7 / $f8;
+
+        $f12 = $f13 - $f6;
+
+        $f11 = staticinvoke <android.util.FloatMath: float floor(float)>($f12);
+
+        i8 = (int) $f11;
+
+        $f19 = (float) i5;
+
+        $f10 = (float) i4;
+
+        $f18 = $f10 / f0;
+
+        $f20 = $f19 + $f18;
+
+        $f21 = staticinvoke <android.util.FloatMath: float ceil(float)>($f20);
+
+        i7 = (int) $f21;
+
+        $f16 = (float) i8;
+
+        $f14 = (float) i6;
+
+        $f15 = $f14 / f0;
+
+        $f17 = $f16 + $f15;
+
+        $f22 = staticinvoke <android.util.FloatMath: float ceil(float)>($f17);
+
+        i10 = (int) $f22;
+
+        $i16 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        i9 = $i16 << i2;
+
+        $i17 = i5 / i9;
+
+        $i18 = i9 * $i17;
+
+        i21 = staticinvoke <java.lang.Math: int max(int,int)>(0, $i18);
+
+        $i14 = i8 / i9;
+
+        $i15 = i9 * $i14;
+
+        i22 = staticinvoke <java.lang.Math: int max(int,int)>(0, $i15);
+
+        $i19 = r0.<com.android.gallery3d.ui.TileImageView: int mImageWidth>;
+
+        i23 = staticinvoke <java.lang.Math: int min(int,int)>($i19, i7);
+
+        $i20 = r0.<com.android.gallery3d.ui.TileImageView: int mImageHeight>;
+
+        i24 = staticinvoke <java.lang.Math: int min(int,int)>($i20, i10);
+
+        virtualinvoke r1.<android.graphics.Rect: void set(int,int,int,int)>(i21, i22, i23, i24);
+
+        return;
+    }
+
+    public void getImageCenter(android.graphics.Point)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        android.graphics.Point r1;
+        int i0, i1, i2, i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19;
+        float $f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: android.graphics.Point;
+
+        i0 = virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: int getWidth()>();
+
+        i1 = virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: int getHeight()>();
+
+        $i4 = r0.<com.android.gallery3d.ui.TileImageView: int mRotation>;
+
+        $i5 = $i4 % 180;
+
+        if $i5 != 0 goto label1;
+
+        $i15 = r0.<com.android.gallery3d.ui.TileImageView: int mImageWidth>;
+
+        $i18 = $i15 / 2;
+
+        $i14 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterX>;
+
+        i2 = $i18 - $i14;
+
+        $i19 = r0.<com.android.gallery3d.ui.TileImageView: int mImageHeight>;
+
+        $i17 = $i19 / 2;
+
+        $i16 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterY>;
+
+        i3 = $i17 - $i16;
+
+        goto label2;
+
+     label1:
+        $i6 = r0.<com.android.gallery3d.ui.TileImageView: int mImageHeight>;
+
+        $i8 = $i6 / 2;
+
+        $i7 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterY>;
+
+        i2 = $i8 - $i7;
+
+        $i9 = r0.<com.android.gallery3d.ui.TileImageView: int mImageWidth>;
+
+        $i11 = $i9 / 2;
+
+        $i10 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterX>;
+
+        i3 = $i11 - $i10;
+
+     label2:
+        $f1 = (float) i0;
+
+        $f5 = $f1 / 2.0F;
+
+        $f3 = (float) i2;
+
+        $f0 = r0.<com.android.gallery3d.ui.TileImageView: float mScale>;
+
+        $f2 = $f3 * $f0;
+
+        $f4 = $f5 + $f2;
+
+        $i12 = staticinvoke <java.lang.Math: int round(float)>($f4);
+
+        r1.<android.graphics.Point: int x> = $i12;
+
+        $f6 = (float) i1;
+
+        $f9 = $f6 / 2.0F;
+
+        $f7 = (float) i3;
+
+        $f8 = r0.<com.android.gallery3d.ui.TileImageView: float mScale>;
+
+        $f10 = $f7 * $f8;
+
+        $f11 = $f9 + $f10;
+
+        $i13 = staticinvoke <java.lang.Math: int round(float)>($f11);
+
+        r1.<android.graphics.Point: int y> = $i13;
+
+        return;
+    }
+
+    public boolean setPosition(int, int, float, int)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        int i0, i1, i2, $i3, $i4, $i6;
+        float f0, $f1;
+        byte $b5;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        f0 := @parameter2: float;
+
+        i2 := @parameter3: int;
+
+        $i3 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterX>;
+
+        if $i3 != i0 goto label1;
+
+        $i4 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterY>;
+
+        if $i4 != i1 goto label1;
+
+        $f1 = r0.<com.android.gallery3d.ui.TileImageView: float mScale>;
+
+        $b5 = $f1 cmpl f0;
+
+        if $b5 != 0 goto label1;
+
+        $i6 = r0.<com.android.gallery3d.ui.TileImageView: int mRotation>;
+
+        if $i6 != i2 goto label1;
+
+        return 0;
+
+     label1:
+        r0.<com.android.gallery3d.ui.TileImageView: int mCenterX> = i0;
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mCenterY> = i1;
+
+        r0.<com.android.gallery3d.ui.TileImageView: float mScale> = f0;
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mRotation> = i2;
+
+        specialinvoke r0.<com.android.gallery3d.ui.TileImageView: void layoutTiles(int,int,float,int)>(i0, i1, f0, i2);
+
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void invalidate()>();
+
+        return 1;
+    }
+
+    public void freeTextures()
+    {
+        com.android.gallery3d.ui.TileImageView r0, r18;
+        int i0, i1;
+        com.android.gallery3d.ui.TileImageView$Tile r1, r19;
+        java.lang.Throwable r2, $r16;
+        com.android.gallery3d.util.Future $r3, $r14, $r15;
+        android.support.v4.util.LongSparseArray $r4, $r5, $r13;
+        android.graphics.Rect $r6;
+        com.android.gallery3d.ui.TileImageView$TileQueue $r8, $r9, $r10, $r11;
+        java.lang.Object $r12;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r0.<com.android.gallery3d.ui.TileImageView: boolean mIsTextureFreed> = 1;
+
+        $r3 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.util.Future mTileDecoder>;
+
+        if $r3 == null goto label01;
+
+        $r15 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.util.Future mTileDecoder>;
+
+        interfaceinvoke $r15.<com.android.gallery3d.util.Future: void cancel()>();
+
+        $r14 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.util.Future mTileDecoder>;
+
+        interfaceinvoke $r14.<com.android.gallery3d.util.Future: java.lang.Object get()>();
+
+        r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.util.Future mTileDecoder> = null;
+
+     label01:
+        $r4 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        i0 = virtualinvoke $r4.<android.support.v4.util.LongSparseArray: int size()>();
+
+        i1 = 0;
+
+     label02:
+        if i1 >= i0 goto label03;
+
+        $r13 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        $r12 = virtualinvoke $r13.<android.support.v4.util.LongSparseArray: java.lang.Object valueAt(int)>(i1);
+
+        r1 = (com.android.gallery3d.ui.TileImageView$Tile) $r12;
+
+        virtualinvoke r1.<com.android.gallery3d.ui.TileImageView$Tile: void recycle()>();
+
+        i1 = i1 + 1;
+
+        goto label02;
+
+     label03:
+        $r5 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        virtualinvoke $r5.<android.support.v4.util.LongSparseArray: void clear()>();
+
+        $r6 = r0.<com.android.gallery3d.ui.TileImageView: android.graphics.Rect mTileRange>;
+
+        virtualinvoke $r6.<android.graphics.Rect: void set(int,int,int,int)>(0, 0, 0, 0);
+
+        r18 = r0;
+
+        entermonitor r0;
+
+     label04:
+        $r8 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mUploadQueue>;
+
+        virtualinvoke $r8.<com.android.gallery3d.ui.TileImageView$TileQueue: void clean()>();
+
+        $r9 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mDecodeQueue>;
+
+        virtualinvoke $r9.<com.android.gallery3d.ui.TileImageView$TileQueue: void clean()>();
+
+        $r10 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mRecycledQueue>;
+
+        r19 = virtualinvoke $r10.<com.android.gallery3d.ui.TileImageView$TileQueue: com.android.gallery3d.ui.TileImageView$Tile pop()>();
+
+     label05:
+        if r19 == null goto label06;
+
+        virtualinvoke r19.<com.android.gallery3d.ui.TileImageView$Tile: void recycle()>();
+
+        $r11 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mRecycledQueue>;
+
+        r19 = virtualinvoke $r11.<com.android.gallery3d.ui.TileImageView$TileQueue: com.android.gallery3d.ui.TileImageView$Tile pop()>();
+
+        goto label05;
+
+     label06:
+        exitmonitor r18;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r16 := @caughtexception;
+
+        r2 = $r16;
+
+        exitmonitor r18;
+
+     label09:
+        throw r2;
+
+     label10:
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void setScreenNail(com.android.gallery3d.ui.ScreenNail)>(null);
+
+        return;
+
+        catch java.lang.Throwable from label04 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+    }
+
+    public void prepareTextures()
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.util.Future $r1, $r7;
+        boolean $z0;
+        int $i0, $i1, $i2;
+        float $f0;
+        com.android.gallery3d.ui.TileImageView$TileSource $r2, $r3;
+        com.android.gallery3d.ui.ScreenNail $r4;
+        com.android.gallery3d.ui.TileImageView$TileDecoder $r5;
+        com.android.gallery3d.util.ThreadPool $r6;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        $r1 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.util.Future mTileDecoder>;
+
+        if $r1 != null goto label1;
+
+        $r6 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.util.ThreadPool mThreadPool>;
+
+        $r5 = new com.android.gallery3d.ui.TileImageView$TileDecoder;
+
+        specialinvoke $r5.<com.android.gallery3d.ui.TileImageView$TileDecoder: void <init>(com.android.gallery3d.ui.TileImageView,com.android.gallery3d.ui.TileImageView$1)>(r0, null);
+
+        $r7 = virtualinvoke $r6.<com.android.gallery3d.util.ThreadPool: com.android.gallery3d.util.Future submit(com.android.gallery3d.util.ThreadPool$Job)>($r5);
+
+        r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.util.Future mTileDecoder> = $r7;
+
+     label1:
+        $z0 = r0.<com.android.gallery3d.ui.TileImageView: boolean mIsTextureFreed>;
+
+        if $z0 == 0 goto label4;
+
+        $i2 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterX>;
+
+        $i1 = r0.<com.android.gallery3d.ui.TileImageView: int mCenterY>;
+
+        $f0 = r0.<com.android.gallery3d.ui.TileImageView: float mScale>;
+
+        $i0 = r0.<com.android.gallery3d.ui.TileImageView: int mRotation>;
+
+        specialinvoke r0.<com.android.gallery3d.ui.TileImageView: void layoutTiles(int,int,float,int)>($i2, $i1, $f0, $i0);
+
+        r0.<com.android.gallery3d.ui.TileImageView: boolean mIsTextureFreed> = 0;
+
+        $r2 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileSource mModel>;
+
+        if $r2 != null goto label2;
+
+        $r4 = null;
+
+        goto label3;
+
+     label2:
+        $r3 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileSource mModel>;
+
+        $r4 = interfaceinvoke $r3.<com.android.gallery3d.ui.TileImageView$TileSource: com.android.gallery3d.ui.ScreenNail getScreenNail()>();
+
+     label3:
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void setScreenNail(com.android.gallery3d.ui.ScreenNail)>($r4);
+
+     label4:
+        return;
+    }
+
+    protected void render(com.android.gallery3d.glrenderer.GLCanvas)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.glrenderer.GLCanvas r1;
+        int i0, i1, i3, i4, i5, i6, i7, i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, i25;
+        byte b2;
+        android.graphics.Rect r2;
+        float f0, f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20, f21;
+        java.lang.Throwable r3, $r8;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.gallery3d.ui.ScreenNail $r4, $r5, $r6, $r7;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: com.android.gallery3d.glrenderer.GLCanvas;
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mUploadQuota> = 1;
+
+        r0.<com.android.gallery3d.ui.TileImageView: boolean mRenderComplete> = 1;
+
+        i0 = r0.<com.android.gallery3d.ui.TileImageView: int mLevel>;
+
+        i1 = r0.<com.android.gallery3d.ui.TileImageView: int mRotation>;
+
+        b2 = 0;
+
+        if i1 == 0 goto label01;
+
+        b2 = b2 | 2;
+
+     label01:
+        if b2 == 0 goto label02;
+
+        interfaceinvoke r1.<com.android.gallery3d.glrenderer.GLCanvas: void save(int)>(b2);
+
+        if i1 == 0 goto label02;
+
+        $i22 = virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: int getWidth()>();
+
+        i3 = $i22 / 2;
+
+        $i21 = virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: int getHeight()>();
+
+        i4 = $i21 / 2;
+
+        $f18 = (float) i3;
+
+        $f16 = (float) i4;
+
+        interfaceinvoke r1.<com.android.gallery3d.glrenderer.GLCanvas: void translate(float,float)>($f18, $f16);
+
+        $f17 = (float) i1;
+
+        interfaceinvoke r1.<com.android.gallery3d.glrenderer.GLCanvas: void rotate(float,float,float,float)>($f17, 0.0F, 0.0F, 1.0F);
+
+        $i24 = neg i3;
+
+        $f19 = (float) $i24;
+
+        $i23 = neg i4;
+
+        $f20 = (float) $i23;
+
+        interfaceinvoke r1.<com.android.gallery3d.glrenderer.GLCanvas: void translate(float,float)>($f19, $f20);
+
+     label02:
+        $i9 = r0.<com.android.gallery3d.ui.TileImageView: int mLevelCount>;
+
+        if i0 == $i9 goto label08;
+
+        $z3 = specialinvoke r0.<com.android.gallery3d.ui.TileImageView: boolean isScreenNailAnimating()>();
+
+        if $z3 != 0 goto label08;
+
+        $r6 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail>;
+
+        if $r6 == null goto label03;
+
+        $r7 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail>;
+
+        interfaceinvoke $r7.<com.android.gallery3d.ui.ScreenNail: void noDraw()>();
+
+     label03:
+        $i16 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        i25 = $i16 << i0;
+
+        $f9 = (float) i25;
+
+        $f8 = r0.<com.android.gallery3d.ui.TileImageView: float mScale>;
+
+        f21 = $f9 * $f8;
+
+        r2 = r0.<com.android.gallery3d.ui.TileImageView: android.graphics.Rect mTileRange>;
+
+        i5 = r2.<android.graphics.Rect: int top>;
+
+        i6 = 0;
+
+     label04:
+        $i17 = r2.<android.graphics.Rect: int bottom>;
+
+        if i5 >= $i17 goto label07;
+
+        $i18 = r0.<com.android.gallery3d.ui.TileImageView: int mOffsetY>;
+
+        $f10 = (float) $i18;
+
+        $f11 = (float) i6;
+
+        $f12 = $f11 * f21;
+
+        f0 = $f10 + $f12;
+
+        i7 = r2.<android.graphics.Rect: int left>;
+
+        i8 = 0;
+
+     label05:
+        $i19 = r2.<android.graphics.Rect: int right>;
+
+        if i7 >= $i19 goto label06;
+
+        $i20 = r0.<com.android.gallery3d.ui.TileImageView: int mOffsetX>;
+
+        $f14 = (float) $i20;
+
+        $f15 = (float) i8;
+
+        $f13 = $f15 * f21;
+
+        f1 = $f14 + $f13;
+
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void drawTile(com.android.gallery3d.glrenderer.GLCanvas,int,int,int,float,float,float)>(r1, i7, i5, i0, f1, f0, f21);
+
+        i7 = i7 + i25;
+
+        i8 = i8 + 1;
+
+        goto label05;
+
+     label06:
+        i5 = i5 + i25;
+
+        i6 = i6 + 1;
+
+        goto label04;
+
+     label07:
+        goto label09;
+
+     label08:
+        $r4 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail>;
+
+        if $r4 == null goto label09;
+
+        $r5 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail>;
+
+        $i12 = r0.<com.android.gallery3d.ui.TileImageView: int mOffsetX>;
+
+        $i11 = r0.<com.android.gallery3d.ui.TileImageView: int mOffsetY>;
+
+        $i10 = r0.<com.android.gallery3d.ui.TileImageView: int mImageWidth>;
+
+        $f2 = (float) $i10;
+
+        $f3 = r0.<com.android.gallery3d.ui.TileImageView: float mScale>;
+
+        $f4 = $f2 * $f3;
+
+        $i14 = staticinvoke <java.lang.Math: int round(float)>($f4);
+
+        $i13 = r0.<com.android.gallery3d.ui.TileImageView: int mImageHeight>;
+
+        $f5 = (float) $i13;
+
+        $f6 = r0.<com.android.gallery3d.ui.TileImageView: float mScale>;
+
+        $f7 = $f5 * $f6;
+
+        $i15 = staticinvoke <java.lang.Math: int round(float)>($f7);
+
+        interfaceinvoke $r5.<com.android.gallery3d.ui.ScreenNail: void draw(com.android.gallery3d.glrenderer.GLCanvas,int,int,int,int)>(r1, $i12, $i11, $i14, $i15);
+
+        $z2 = specialinvoke r0.<com.android.gallery3d.ui.TileImageView: boolean isScreenNailAnimating()>();
+
+        if $z2 == 0 goto label09;
+
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void invalidate()>();
+
+     label09:
+        if b2 == 0 goto label13;
+
+        interfaceinvoke r1.<com.android.gallery3d.glrenderer.GLCanvas: void restore()>();
+
+        goto label13;
+
+     label10:
+        $r8 := @caughtexception;
+
+        r3 = $r8;
+
+     label11:
+        if b2 == 0 goto label12;
+
+        interfaceinvoke r1.<com.android.gallery3d.glrenderer.GLCanvas: void restore()>();
+
+     label12:
+        throw r3;
+
+     label13:
+        $z0 = r0.<com.android.gallery3d.ui.TileImageView: boolean mRenderComplete>;
+
+        if $z0 == 0 goto label14;
+
+        $z1 = r0.<com.android.gallery3d.ui.TileImageView: boolean mBackgroundTileUploaded>;
+
+        if $z1 != 0 goto label15;
+
+        specialinvoke r0.<com.android.gallery3d.ui.TileImageView: void uploadBackgroundTiles(com.android.gallery3d.glrenderer.GLCanvas)>(r1);
+
+        goto label15;
+
+     label14:
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void invalidate()>();
+
+     label15:
+        return;
+
+        catch java.lang.Throwable from label02 to label09 with label10;
+        catch java.lang.Throwable from label10 to label11 with label10;
+    }
+
+    private boolean isScreenNailAnimating()
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.ui.ScreenNail $r1, $r2;
+        boolean $z0, $z1, $z2;
+        com.android.gallery3d.ui.TiledScreenNail $r3;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        $r1 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail>;
+
+        $z0 = $r1 instanceof com.android.gallery3d.ui.TiledScreenNail;
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail>;
+
+        $r3 = (com.android.gallery3d.ui.TiledScreenNail) $r2;
+
+        $z1 = virtualinvoke $r3.<com.android.gallery3d.ui.TiledScreenNail: boolean isAnimating()>();
+
+        if $z1 == 0 goto label1;
+
+        $z2 = 1;
+
+        goto label2;
+
+     label1:
+        $z2 = 0;
+
+     label2:
+        return $z2;
+    }
+
+    private void uploadBackgroundTiles(com.android.gallery3d.glrenderer.GLCanvas)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.glrenderer.GLCanvas r1;
+        int i0, i1;
+        com.android.gallery3d.ui.TileImageView$Tile r2;
+        android.support.v4.util.LongSparseArray $r3, $r4;
+        java.lang.Object $r5;
+        boolean $z0;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: com.android.gallery3d.glrenderer.GLCanvas;
+
+        r0.<com.android.gallery3d.ui.TileImageView: boolean mBackgroundTileUploaded> = 1;
+
+        $r3 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        i0 = virtualinvoke $r3.<android.support.v4.util.LongSparseArray: int size()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label3;
+
+        $r4 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        $r5 = virtualinvoke $r4.<android.support.v4.util.LongSparseArray: java.lang.Object valueAt(int)>(i1);
+
+        r2 = (com.android.gallery3d.ui.TileImageView$Tile) $r5;
+
+        $z0 = virtualinvoke r2.<com.android.gallery3d.ui.TileImageView$Tile: boolean isContentValid()>();
+
+        if $z0 != 0 goto label2;
+
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void queueForDecode(com.android.gallery3d.ui.TileImageView$Tile)>(r2);
+
+     label2:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    void queueForUpload(com.android.gallery3d.ui.TileImageView$Tile)
+    {
+        com.android.gallery3d.ui.TileImageView r0, r2;
+        com.android.gallery3d.ui.TileImageView$Tile r1;
+        java.lang.Throwable r3, $r10;
+        com.android.gallery3d.ui.TileImageView$TileQueue $r5;
+        com.android.gallery3d.ui.TileImageView$TileUploader $r6, $r9;
+        java.util.concurrent.atomic.AtomicBoolean $r7;
+        boolean $z1;
+        com.android.gallery3d.ui.GLRoot $r8;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: com.android.gallery3d.ui.TileImageView$Tile;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r5 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mUploadQueue>;
+
+        virtualinvoke $r5.<com.android.gallery3d.ui.TileImageView$TileQueue: boolean push(com.android.gallery3d.ui.TileImageView$Tile)>(r1);
+
+        exitmonitor r2;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r10 := @caughtexception;
+
+        r3 = $r10;
+
+        exitmonitor r2;
+
+     label4:
+        throw r3;
+
+     label5:
+        $r6 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileUploader mTileUploader>;
+
+        $r7 = $r6.<com.android.gallery3d.ui.TileImageView$TileUploader: java.util.concurrent.atomic.AtomicBoolean mActive>;
+
+        $z1 = virtualinvoke $r7.<java.util.concurrent.atomic.AtomicBoolean: boolean compareAndSet(boolean,boolean)>(0, 1);
+
+        if $z1 == 0 goto label6;
+
+        $r8 = virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.GLRoot getGLRoot()>();
+
+        $r9 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileUploader mTileUploader>;
+
+        interfaceinvoke $r8.<com.android.gallery3d.ui.GLRoot: void addOnGLIdleListener(com.android.gallery3d.ui.GLRoot$OnGLIdleListener)>($r9);
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    synchronized void queueForDecode(com.android.gallery3d.ui.TileImageView$Tile)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.ui.TileImageView$Tile r1;
+        int $i0;
+        com.android.gallery3d.ui.TileImageView$TileQueue $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: com.android.gallery3d.ui.TileImageView$Tile;
+
+        $i0 = r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState>;
+
+        if $i0 != 1 goto label1;
+
+        r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState> = 2;
+
+        $r2 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mDecodeQueue>;
+
+        $z0 = virtualinvoke $r2.<com.android.gallery3d.ui.TileImageView$TileQueue: boolean push(com.android.gallery3d.ui.TileImageView$Tile)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r0.<java.lang.Object: void notifyAll()>();
+
+     label1:
+        return;
+    }
+
+    boolean decodeTile(com.android.gallery3d.ui.TileImageView$Tile)
+    {
+        com.android.gallery3d.ui.TileImageView r0, r2, r13;
+        com.android.gallery3d.ui.TileImageView$Tile r1;
+        java.lang.Throwable r3, r4, $r11, $r12;
+        int $i0, $i1;
+        byte $b2;
+        android.graphics.Bitmap $r7, $r10;
+        com.android.gallery3d.ui.TileImageView$TileQueue $r8;
+        com.android.photos.data.GalleryBitmapPool $r9;
+        boolean z2;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: com.android.gallery3d.ui.TileImageView$Tile;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label01:
+        $i0 = r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState>;
+
+        if $i0 == 2 goto label03;
+
+        exitmonitor r2;
+
+     label02:
+        return 0;
+
+     label03:
+        r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState> = 4;
+
+        exitmonitor r2;
+
+     label04:
+        goto label07;
+
+     label05:
+        $r11 := @caughtexception;
+
+        r3 = $r11;
+
+        exitmonitor r2;
+
+     label06:
+        throw r3;
+
+     label07:
+        z2 = virtualinvoke r1.<com.android.gallery3d.ui.TileImageView$Tile: boolean decode()>();
+
+        r13 = r0;
+
+        entermonitor r0;
+
+     label08:
+        $i1 = r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState>;
+
+        if $i1 != 32 goto label11;
+
+        r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState> = 64;
+
+        $r7 = r1.<com.android.gallery3d.ui.TileImageView$Tile: android.graphics.Bitmap mDecodedTile>;
+
+        if $r7 == null goto label09;
+
+        $r9 = staticinvoke <com.android.photos.data.GalleryBitmapPool: com.android.photos.data.GalleryBitmapPool getInstance()>();
+
+        $r10 = r1.<com.android.gallery3d.ui.TileImageView$Tile: android.graphics.Bitmap mDecodedTile>;
+
+        virtualinvoke $r9.<com.android.photos.data.GalleryBitmapPool: boolean put(android.graphics.Bitmap)>($r10);
+
+        r1.<com.android.gallery3d.ui.TileImageView$Tile: android.graphics.Bitmap mDecodedTile> = null;
+
+     label09:
+        $r8 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mRecycledQueue>;
+
+        virtualinvoke $r8.<com.android.gallery3d.ui.TileImageView$TileQueue: boolean push(com.android.gallery3d.ui.TileImageView$Tile)>(r1);
+
+        exitmonitor r13;
+
+     label10:
+        return 0;
+
+     label11:
+        if z2 == 0 goto label12;
+
+        $b2 = 8;
+
+        goto label13;
+
+     label12:
+        $b2 = 16;
+
+     label13:
+        r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState> = $b2;
+
+        exitmonitor r13;
+
+     label14:
+        return z2;
+
+     label15:
+        $r12 := @caughtexception;
+
+        r4 = $r12;
+
+        exitmonitor r13;
+
+     label16:
+        throw r4;
+
+        catch java.lang.Throwable from label01 to label02 with label05;
+        catch java.lang.Throwable from label03 to label04 with label05;
+        catch java.lang.Throwable from label05 to label06 with label05;
+        catch java.lang.Throwable from label08 to label10 with label15;
+        catch java.lang.Throwable from label11 to label14 with label15;
+        catch java.lang.Throwable from label15 to label16 with label15;
+    }
+
+    private synchronized com.android.gallery3d.ui.TileImageView$Tile obtainTile(int, int, int)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        int i0, i1, i2;
+        com.android.gallery3d.ui.TileImageView$Tile r1, $r3;
+        com.android.gallery3d.ui.TileImageView$TileQueue $r2;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        $r2 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mRecycledQueue>;
+
+        r1 = virtualinvoke $r2.<com.android.gallery3d.ui.TileImageView$TileQueue: com.android.gallery3d.ui.TileImageView$Tile pop()>();
+
+        if r1 == null goto label1;
+
+        r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState> = 1;
+
+        virtualinvoke r1.<com.android.gallery3d.ui.TileImageView$Tile: void update(int,int,int)>(i0, i1, i2);
+
+        return r1;
+
+     label1:
+        $r3 = new com.android.gallery3d.ui.TileImageView$Tile;
+
+        specialinvoke $r3.<com.android.gallery3d.ui.TileImageView$Tile: void <init>(com.android.gallery3d.ui.TileImageView,int,int,int)>(r0, i0, i1, i2);
+
+        return $r3;
+    }
+
+    synchronized void recycleTile(com.android.gallery3d.ui.TileImageView$Tile)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.ui.TileImageView$Tile r1;
+        int $i0;
+        android.graphics.Bitmap $r2, $r5;
+        com.android.gallery3d.ui.TileImageView$TileQueue $r3;
+        com.android.photos.data.GalleryBitmapPool $r4;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: com.android.gallery3d.ui.TileImageView$Tile;
+
+        $i0 = r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState>;
+
+        if $i0 != 4 goto label1;
+
+        r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState> = 32;
+
+        return;
+
+     label1:
+        r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState> = 64;
+
+        $r2 = r1.<com.android.gallery3d.ui.TileImageView$Tile: android.graphics.Bitmap mDecodedTile>;
+
+        if $r2 == null goto label2;
+
+        $r4 = staticinvoke <com.android.photos.data.GalleryBitmapPool: com.android.photos.data.GalleryBitmapPool getInstance()>();
+
+        $r5 = r1.<com.android.gallery3d.ui.TileImageView$Tile: android.graphics.Bitmap mDecodedTile>;
+
+        virtualinvoke $r4.<com.android.photos.data.GalleryBitmapPool: boolean put(android.graphics.Bitmap)>($r5);
+
+        r1.<com.android.gallery3d.ui.TileImageView$Tile: android.graphics.Bitmap mDecodedTile> = null;
+
+     label2:
+        $r3 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mRecycledQueue>;
+
+        virtualinvoke $r3.<com.android.gallery3d.ui.TileImageView$TileQueue: boolean push(com.android.gallery3d.ui.TileImageView$Tile)>(r1);
+
+        return;
+    }
+
+    private void activateTile(int, int, int)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        int i0, i1, i2, $i4;
+        long l3;
+        com.android.gallery3d.ui.TileImageView$Tile r1, r5;
+        android.support.v4.util.LongSparseArray $r2, $r4;
+        java.lang.Object $r3;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        l3 = staticinvoke <com.android.gallery3d.ui.TileImageView: long makeTileKey(int,int,int)>(i0, i1, i2);
+
+        $r2 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        $r3 = virtualinvoke $r2.<android.support.v4.util.LongSparseArray: java.lang.Object get(long)>(l3);
+
+        r1 = (com.android.gallery3d.ui.TileImageView$Tile) $r3;
+
+        if r1 == null goto label2;
+
+        $i4 = r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState>;
+
+        if $i4 != 2 goto label1;
+
+        r1.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState> = 1;
+
+     label1:
+        return;
+
+     label2:
+        r5 = specialinvoke r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$Tile obtainTile(int,int,int)>(i0, i1, i2);
+
+        $r4 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        virtualinvoke $r4.<android.support.v4.util.LongSparseArray: void put(long,java.lang.Object)>(l3, r5);
+
+        return;
+    }
+
+    private com.android.gallery3d.ui.TileImageView$Tile getTile(int, int, int)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        int i0, i1, i2;
+        android.support.v4.util.LongSparseArray $r1;
+        long $l3;
+        java.lang.Object $r2;
+        com.android.gallery3d.ui.TileImageView$Tile $r3;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        $r1 = r0.<com.android.gallery3d.ui.TileImageView: android.support.v4.util.LongSparseArray mActiveTiles>;
+
+        $l3 = staticinvoke <com.android.gallery3d.ui.TileImageView: long makeTileKey(int,int,int)>(i0, i1, i2);
+
+        $r2 = virtualinvoke $r1.<android.support.v4.util.LongSparseArray: java.lang.Object get(long)>($l3);
+
+        $r3 = (com.android.gallery3d.ui.TileImageView$Tile) $r2;
+
+        return $r3;
+    }
+
+    private static long makeTileKey(int, int, int)
+    {
+        int i0, i1, i2;
+        long l3, $l4, $l5, $l6, $l7, l8, l9;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        l3 = (long) i0;
+
+        $l5 = l3 << 16;
+
+        $l4 = (long) i1;
+
+        l8 = $l5 | $l4;
+
+        $l7 = l8 << 16;
+
+        $l6 = (long) i2;
+
+        l9 = $l7 | $l6;
+
+        return l9;
+    }
+
+    public void drawTile(com.android.gallery3d.glrenderer.GLCanvas, int, int, int, float, float, float)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.glrenderer.GLCanvas r1;
+        int i0, i1, i2, i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17;
+        float f0, f1, f2, f3, f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20;
+        android.graphics.RectF r2, r3;
+        com.android.gallery3d.ui.TileImageView$Tile r4;
+        com.android.gallery3d.ui.ScreenNail $r5, $r6, $r7, $r8;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.gallery3d.ui.TileImageView;
+
+        r1 := @parameter0: com.android.gallery3d.glrenderer.GLCanvas;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        f0 := @parameter4: float;
+
+        f1 := @parameter5: float;
+
+        f2 := @parameter6: float;
+
+        r2 = r0.<com.android.gallery3d.ui.TileImageView: android.graphics.RectF mSourceRect>;
+
+        r3 = r0.<com.android.gallery3d.ui.TileImageView: android.graphics.RectF mTargetRect>;
+
+        $f6 = f0 + f2;
+
+        $f5 = f1 + f2;
+
+        virtualinvoke r3.<android.graphics.RectF: void set(float,float,float,float)>(f0, f1, $f6, $f5);
+
+        $i5 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        $f7 = (float) $i5;
+
+        $i4 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        $f8 = (float) $i4;
+
+        virtualinvoke r2.<android.graphics.RectF: void set(float,float,float,float)>(0.0F, 0.0F, $f7, $f8);
+
+        r4 = specialinvoke r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$Tile getTile(int,int,int)>(i0, i1, i2);
+
+        if r4 == null goto label4;
+
+        $z0 = virtualinvoke r4.<com.android.gallery3d.ui.TileImageView$Tile: boolean isContentValid()>();
+
+        if $z0 != 0 goto label3;
+
+        $i13 = r4.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState>;
+
+        if $i13 != 8 goto label2;
+
+        $i17 = r0.<com.android.gallery3d.ui.TileImageView: int mUploadQuota>;
+
+        if $i17 <= 0 goto label1;
+
+        $i16 = r0.<com.android.gallery3d.ui.TileImageView: int mUploadQuota>;
+
+        $i15 = $i16 - 1;
+
+        r0.<com.android.gallery3d.ui.TileImageView: int mUploadQuota> = $i15;
+
+        virtualinvoke r4.<com.android.gallery3d.ui.TileImageView$Tile: void updateContent(com.android.gallery3d.glrenderer.GLCanvas)>(r1);
+
+        goto label3;
+
+     label1:
+        r0.<com.android.gallery3d.ui.TileImageView: boolean mRenderComplete> = 0;
+
+        goto label3;
+
+     label2:
+        $i14 = r4.<com.android.gallery3d.ui.TileImageView$Tile: int mTileState>;
+
+        if $i14 == 16 goto label3;
+
+        r0.<com.android.gallery3d.ui.TileImageView: boolean mRenderComplete> = 0;
+
+        virtualinvoke r0.<com.android.gallery3d.ui.TileImageView: void queueForDecode(com.android.gallery3d.ui.TileImageView$Tile)>(r4);
+
+     label3:
+        $z1 = staticinvoke <com.android.gallery3d.ui.TileImageView: boolean drawTile(com.android.gallery3d.ui.TileImageView$Tile,com.android.gallery3d.glrenderer.GLCanvas,android.graphics.RectF,android.graphics.RectF)>(r4, r1, r2, r3);
+
+        if $z1 == 0 goto label4;
+
+        return;
+
+     label4:
+        $r5 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail>;
+
+        if $r5 == null goto label5;
+
+        $i6 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        i3 = $i6 << i2;
+
+        $r6 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail>;
+
+        $i8 = interfaceinvoke $r6.<com.android.gallery3d.ui.ScreenNail: int getWidth()>();
+
+        $f9 = (float) $i8;
+
+        $i7 = r0.<com.android.gallery3d.ui.TileImageView: int mImageWidth>;
+
+        $f10 = (float) $i7;
+
+        f3 = $f9 / $f10;
+
+        $r7 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail>;
+
+        $i9 = interfaceinvoke $r7.<com.android.gallery3d.ui.ScreenNail: int getHeight()>();
+
+        $f13 = (float) $i9;
+
+        $i10 = r0.<com.android.gallery3d.ui.TileImageView: int mImageHeight>;
+
+        $f11 = (float) $i10;
+
+        f4 = $f13 / $f11;
+
+        $f14 = (float) i0;
+
+        $f18 = $f14 * f3;
+
+        $f12 = (float) i1;
+
+        $f20 = $f12 * f4;
+
+        $i11 = i0 + i3;
+
+        $f17 = (float) $i11;
+
+        $f19 = $f17 * f3;
+
+        $i12 = i1 + i3;
+
+        $f15 = (float) $i12;
+
+        $f16 = $f15 * f4;
+
+        virtualinvoke r2.<android.graphics.RectF: void set(float,float,float,float)>($f18, $f20, $f19, $f16);
+
+        $r8 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.ScreenNail mScreenNail>;
+
+        interfaceinvoke $r8.<com.android.gallery3d.ui.ScreenNail: void draw(com.android.gallery3d.glrenderer.GLCanvas,android.graphics.RectF,android.graphics.RectF)>(r1, r2, r3);
+
+     label5:
+        return;
+    }
+
+    static boolean drawTile(com.android.gallery3d.ui.TileImageView$Tile, com.android.gallery3d.glrenderer.GLCanvas, android.graphics.RectF, android.graphics.RectF)
+    {
+        com.android.gallery3d.ui.TileImageView$Tile r0, r4;
+        com.android.gallery3d.glrenderer.GLCanvas r1;
+        android.graphics.RectF r2, r3;
+        boolean $z0;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        float $f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20, $f21, $f22, $f23;
+
+        r0 := @parameter0: com.android.gallery3d.ui.TileImageView$Tile;
+
+        r1 := @parameter1: com.android.gallery3d.glrenderer.GLCanvas;
+
+        r2 := @parameter2: android.graphics.RectF;
+
+        r3 := @parameter3: android.graphics.RectF;
+
+     label1:
+        $z0 = virtualinvoke r0.<com.android.gallery3d.ui.TileImageView$Tile: boolean isContentValid()>();
+
+        if $z0 == 0 goto label2;
+
+        interfaceinvoke r1.<com.android.gallery3d.glrenderer.GLCanvas: void drawTexture(com.android.gallery3d.glrenderer.BasicTexture,android.graphics.RectF,android.graphics.RectF)>(r0, r2, r3);
+
+        return 1;
+
+     label2:
+        r4 = virtualinvoke r0.<com.android.gallery3d.ui.TileImageView$Tile: com.android.gallery3d.ui.TileImageView$Tile getParentTile()>();
+
+        if r4 != null goto label3;
+
+        return 0;
+
+     label3:
+        $i1 = r0.<com.android.gallery3d.ui.TileImageView$Tile: int mX>;
+
+        $i0 = r4.<com.android.gallery3d.ui.TileImageView$Tile: int mX>;
+
+        if $i1 != $i0 goto label4;
+
+        $f18 = r2.<android.graphics.RectF: float left>;
+
+        $f22 = $f18 / 2.0F;
+
+        r2.<android.graphics.RectF: float left> = $f22;
+
+        $f23 = r2.<android.graphics.RectF: float right>;
+
+        $f21 = $f23 / 2.0F;
+
+        r2.<android.graphics.RectF: float right> = $f21;
+
+        goto label5;
+
+     label4:
+        $i2 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        $f1 = (float) $i2;
+
+        $f0 = r2.<android.graphics.RectF: float left>;
+
+        $f2 = $f1 + $f0;
+
+        $f3 = $f2 / 2.0F;
+
+        r2.<android.graphics.RectF: float left> = $f3;
+
+        $i3 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        $f6 = (float) $i3;
+
+        $f4 = r2.<android.graphics.RectF: float right>;
+
+        $f5 = $f6 + $f4;
+
+        $f7 = $f5 / 2.0F;
+
+        r2.<android.graphics.RectF: float right> = $f7;
+
+     label5:
+        $i6 = r0.<com.android.gallery3d.ui.TileImageView$Tile: int mY>;
+
+        $i4 = r4.<com.android.gallery3d.ui.TileImageView$Tile: int mY>;
+
+        if $i6 != $i4 goto label6;
+
+        $f15 = r2.<android.graphics.RectF: float top>;
+
+        $f19 = $f15 / 2.0F;
+
+        r2.<android.graphics.RectF: float top> = $f19;
+
+        $f20 = r2.<android.graphics.RectF: float bottom>;
+
+        $f17 = $f20 / 2.0F;
+
+        r2.<android.graphics.RectF: float bottom> = $f17;
+
+        goto label7;
+
+     label6:
+        $i5 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        $f8 = (float) $i5;
+
+        $f9 = r2.<android.graphics.RectF: float top>;
+
+        $f11 = $f8 + $f9;
+
+        $f10 = $f11 / 2.0F;
+
+        r2.<android.graphics.RectF: float top> = $f10;
+
+        $i7 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        $f14 = (float) $i7;
+
+        $f12 = r2.<android.graphics.RectF: float bottom>;
+
+        $f13 = $f14 + $f12;
+
+        $f16 = $f13 / 2.0F;
+
+        r2.<android.graphics.RectF: float bottom> = $f16;
+
+     label7:
+        r0 = r4;
+
+        goto label1;
+    }
+
+    static com.android.gallery3d.ui.TileImageView$TileQueue access$300(com.android.gallery3d.ui.TileImageView)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.ui.TileImageView$TileQueue $r1;
+
+        r0 := @parameter0: com.android.gallery3d.ui.TileImageView;
+
+        $r1 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mUploadQueue>;
+
+        return $r1;
+    }
+
+    static int access$400()
+    {
+        int $i0;
+
+        $i0 = <com.android.gallery3d.ui.TileImageView: int sTileSize>;
+
+        return $i0;
+    }
+
+    static com.android.gallery3d.ui.TileImageView$TileSource access$500(com.android.gallery3d.ui.TileImageView)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.ui.TileImageView$TileSource $r1;
+
+        r0 := @parameter0: com.android.gallery3d.ui.TileImageView;
+
+        $r1 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileSource mModel>;
+
+        return $r1;
+    }
+
+    static com.android.gallery3d.ui.TileImageView$Tile access$600(com.android.gallery3d.ui.TileImageView, int, int, int)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        int i0, i1, i2;
+        com.android.gallery3d.ui.TileImageView$Tile $r1;
+
+        r0 := @parameter0: com.android.gallery3d.ui.TileImageView;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        $r1 = specialinvoke r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$Tile getTile(int,int,int)>(i0, i1, i2);
+
+        return $r1;
+    }
+
+    static int access$700(com.android.gallery3d.ui.TileImageView)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.gallery3d.ui.TileImageView;
+
+        $i0 = r0.<com.android.gallery3d.ui.TileImageView: int mLevel>;
+
+        return $i0;
+    }
+
+    static com.android.gallery3d.ui.TileImageView$TileQueue access$800(com.android.gallery3d.ui.TileImageView)
+    {
+        com.android.gallery3d.ui.TileImageView r0;
+        com.android.gallery3d.ui.TileImageView$TileQueue $r1;
+
+        r0 := @parameter0: com.android.gallery3d.ui.TileImageView;
+
+        $r1 = r0.<com.android.gallery3d.ui.TileImageView: com.android.gallery3d.ui.TileImageView$TileQueue mDecodeQueue>;
+
+        return $r1;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.gallery3d.ui.TileImageView: int STATE_RECYCLED> = 64;
+
+        <com.android.gallery3d.ui.TileImageView: int STATE_RECYCLING> = 32;
+
+        <com.android.gallery3d.ui.TileImageView: int STATE_DECODE_FAIL> = 16;
+
+        <com.android.gallery3d.ui.TileImageView: int STATE_DECODED> = 8;
+
+        <com.android.gallery3d.ui.TileImageView: int STATE_DECODING> = 4;
+
+        <com.android.gallery3d.ui.TileImageView: int STATE_IN_QUEUE> = 2;
+
+        <com.android.gallery3d.ui.TileImageView: int STATE_ACTIVATED> = 1;
+
+        <com.android.gallery3d.ui.TileImageView: int UPLOAD_LIMIT> = 1;
+
+        <com.android.gallery3d.ui.TileImageView: java.lang.String TAG> = "TileImageView";
+
+        <com.android.gallery3d.ui.TileImageView: int SIZE_UNKNOWN> = -1;
+
+        return;
+    }
+}

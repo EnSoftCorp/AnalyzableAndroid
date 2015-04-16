@@ -1,0 +1,612 @@
+public abstract class org.apache.http.impl.conn.AbstractClientConnAdapter extends java.lang.Object implements org.apache.http.conn.ManagedClientConnection
+{
+    private final java.lang.Thread executionThread;
+    private volatile org.apache.http.conn.ClientConnectionManager connManager;
+    private volatile org.apache.http.conn.OperatedClientConnection wrappedConnection;
+    private volatile boolean markedReusable;
+    private volatile boolean aborted;
+    private volatile long duration;
+
+    protected void <init>(org.apache.http.conn.ClientConnectionManager, org.apache.http.conn.OperatedClientConnection)
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.ClientConnectionManager r1;
+        org.apache.http.conn.OperatedClientConnection r2;
+        java.lang.Thread $r3;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 := @parameter0: org.apache.http.conn.ClientConnectionManager;
+
+        r2 := @parameter1: org.apache.http.conn.OperatedClientConnection;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r3 = staticinvoke <java.lang.Thread: java.lang.Thread currentThread()>();
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: java.lang.Thread executionThread> = $r3;
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.ClientConnectionManager connManager> = r1;
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection wrappedConnection> = r2;
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: boolean markedReusable> = 0;
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: boolean aborted> = 0;
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: long duration> = 9223372036854775807L;
+
+        return;
+    }
+
+    protected void detach()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection wrappedConnection> = null;
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.ClientConnectionManager connManager> = null;
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: long duration> = 9223372036854775807L;
+
+        return;
+    }
+
+    protected org.apache.http.conn.OperatedClientConnection getWrappedConnection()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection $r1;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        $r1 = r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection wrappedConnection>;
+
+        return $r1;
+    }
+
+    protected org.apache.http.conn.ClientConnectionManager getManager()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.ClientConnectionManager $r1;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        $r1 = r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.ClientConnectionManager connManager>;
+
+        return $r1;
+    }
+
+    protected final void assertNotAborted() throws java.io.InterruptedIOException
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        boolean $z0;
+        java.io.InterruptedIOException $r1;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        $z0 = r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: boolean aborted>;
+
+        if $z0 == 0 goto label1;
+
+        $r1 = new java.io.InterruptedIOException;
+
+        specialinvoke $r1.<java.io.InterruptedIOException: void <init>(java.lang.String)>("Connection has been shut down.");
+
+        throw $r1;
+
+     label1:
+        return;
+    }
+
+    protected final void assertValid(org.apache.http.conn.OperatedClientConnection)
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        java.lang.IllegalStateException $r2;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 := @parameter0: org.apache.http.conn.OperatedClientConnection;
+
+        if r1 != null goto label1;
+
+        $r2 = new java.lang.IllegalStateException;
+
+        specialinvoke $r2.<java.lang.IllegalStateException: void <init>(java.lang.String)>("No wrapped connection.");
+
+        throw $r2;
+
+     label1:
+        return;
+    }
+
+    public boolean isOpen()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        boolean $z0;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        if r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        $z0 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: boolean isOpen()>();
+
+        return $z0;
+    }
+
+    public boolean isStale()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        boolean $z0, $z1;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        $z0 = r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: boolean aborted>;
+
+        if $z0 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        if r1 != null goto label2;
+
+        return 1;
+
+     label2:
+        $z1 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: boolean isStale()>();
+
+        return $z1;
+    }
+
+    public void setSocketTimeout(int)
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        int i0;
+        org.apache.http.conn.OperatedClientConnection r1;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        i0 := @parameter0: int;
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: void setSocketTimeout(int)>(i0);
+
+        return;
+    }
+
+    public int getSocketTimeout()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        int $i0;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        $i0 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: int getSocketTimeout()>();
+
+        return $i0;
+    }
+
+    public org.apache.http.HttpConnectionMetrics getMetrics()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        org.apache.http.HttpConnectionMetrics $r2;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        $r2 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: org.apache.http.HttpConnectionMetrics getMetrics()>();
+
+        return $r2;
+    }
+
+    public void flush() throws java.io.IOException
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertNotAborted()>();
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: void flush()>();
+
+        return;
+    }
+
+    public boolean isResponseAvailable(int) throws java.io.IOException
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        int i0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        boolean $z0;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        i0 := @parameter0: int;
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertNotAborted()>();
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        $z0 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: boolean isResponseAvailable(int)>(i0);
+
+        return $z0;
+    }
+
+    public void receiveResponseEntity(org.apache.http.HttpResponse) throws org.apache.http.HttpException, java.io.IOException
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.HttpResponse r1;
+        org.apache.http.conn.OperatedClientConnection r2;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 := @parameter0: org.apache.http.HttpResponse;
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertNotAborted()>();
+
+        r2 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r2);
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void unmarkReusable()>();
+
+        interfaceinvoke r2.<org.apache.http.conn.OperatedClientConnection: void receiveResponseEntity(org.apache.http.HttpResponse)>(r1);
+
+        return;
+    }
+
+    public org.apache.http.HttpResponse receiveResponseHeader() throws org.apache.http.HttpException, java.io.IOException
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        org.apache.http.HttpResponse $r2;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertNotAborted()>();
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void unmarkReusable()>();
+
+        $r2 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: org.apache.http.HttpResponse receiveResponseHeader()>();
+
+        return $r2;
+    }
+
+    public void sendRequestEntity(org.apache.http.HttpEntityEnclosingRequest) throws org.apache.http.HttpException, java.io.IOException
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.HttpEntityEnclosingRequest r1;
+        org.apache.http.conn.OperatedClientConnection r2;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 := @parameter0: org.apache.http.HttpEntityEnclosingRequest;
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertNotAborted()>();
+
+        r2 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r2);
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void unmarkReusable()>();
+
+        interfaceinvoke r2.<org.apache.http.conn.OperatedClientConnection: void sendRequestEntity(org.apache.http.HttpEntityEnclosingRequest)>(r1);
+
+        return;
+    }
+
+    public void sendRequestHeader(org.apache.http.HttpRequest) throws org.apache.http.HttpException, java.io.IOException
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.HttpRequest r1;
+        org.apache.http.conn.OperatedClientConnection r2;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 := @parameter0: org.apache.http.HttpRequest;
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertNotAborted()>();
+
+        r2 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r2);
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void unmarkReusable()>();
+
+        interfaceinvoke r2.<org.apache.http.conn.OperatedClientConnection: void sendRequestHeader(org.apache.http.HttpRequest)>(r1);
+
+        return;
+    }
+
+    public java.net.InetAddress getLocalAddress()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        java.net.InetAddress $r2;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        $r2 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: java.net.InetAddress getLocalAddress()>();
+
+        return $r2;
+    }
+
+    public int getLocalPort()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        int $i0;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        $i0 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: int getLocalPort()>();
+
+        return $i0;
+    }
+
+    public java.net.InetAddress getRemoteAddress()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        java.net.InetAddress $r2;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        $r2 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: java.net.InetAddress getRemoteAddress()>();
+
+        return $r2;
+    }
+
+    public int getRemotePort()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        int $i0;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        $i0 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: int getRemotePort()>();
+
+        return $i0;
+    }
+
+    public boolean isSecure()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        boolean $z0;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        $z0 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: boolean isSecure()>();
+
+        return $z0;
+    }
+
+    public javax.net.ssl.SSLSession getSSLSession()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.OperatedClientConnection r1;
+        javax.net.ssl.SSLSession r2;
+        java.net.Socket r3;
+        boolean $z0, $z1;
+        javax.net.ssl.SSLSocket $r4;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r1 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.OperatedClientConnection getWrappedConnection()>();
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void assertValid(org.apache.http.conn.OperatedClientConnection)>(r1);
+
+        $z0 = virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: boolean isOpen()>();
+
+        if $z0 != 0 goto label1;
+
+        return null;
+
+     label1:
+        r2 = null;
+
+        r3 = interfaceinvoke r1.<org.apache.http.conn.OperatedClientConnection: java.net.Socket getSocket()>();
+
+        $z1 = r3 instanceof javax.net.ssl.SSLSocket;
+
+        if $z1 == 0 goto label2;
+
+        $r4 = (javax.net.ssl.SSLSocket) r3;
+
+        r2 = virtualinvoke $r4.<javax.net.ssl.SSLSocket: javax.net.ssl.SSLSession getSession()>();
+
+     label2:
+        return r2;
+    }
+
+    public void markReusable()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: boolean markedReusable> = 1;
+
+        return;
+    }
+
+    public void unmarkReusable()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: boolean markedReusable> = 0;
+
+        return;
+    }
+
+    public boolean isMarkedReusable()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        boolean $z0;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        $z0 = r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: boolean markedReusable>;
+
+        return $z0;
+    }
+
+    public void setIdleDuration(long, java.util.concurrent.TimeUnit)
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        long l0, $l2;
+        java.util.concurrent.TimeUnit r1;
+        byte $b1;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        l0 := @parameter0: long;
+
+        r1 := @parameter1: java.util.concurrent.TimeUnit;
+
+        $b1 = l0 cmp 0L;
+
+        if $b1 <= 0 goto label1;
+
+        $l2 = virtualinvoke r1.<java.util.concurrent.TimeUnit: long toMillis(long)>(l0);
+
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: long duration> = $l2;
+
+        goto label2;
+
+     label1:
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: long duration> = -1L;
+
+     label2:
+        return;
+    }
+
+    public void releaseConnection()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        org.apache.http.conn.ClientConnectionManager $r1, $r3;
+        java.util.concurrent.TimeUnit $r2;
+        long $l0;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        $r1 = r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.ClientConnectionManager connManager>;
+
+        if $r1 == null goto label1;
+
+        $r3 = r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: org.apache.http.conn.ClientConnectionManager connManager>;
+
+        $l0 = r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: long duration>;
+
+        $r2 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit MILLISECONDS>;
+
+        interfaceinvoke $r3.<org.apache.http.conn.ClientConnectionManager: void releaseConnection(org.apache.http.conn.ManagedClientConnection,long,java.util.concurrent.TimeUnit)>(r0, $l0, $r2);
+
+     label1:
+        return;
+    }
+
+    public void abortConnection()
+    {
+        org.apache.http.impl.conn.AbstractClientConnAdapter r0;
+        boolean $z0, $z1;
+        java.lang.Thread $r2, $r3;
+        java.io.IOException $r4;
+
+        r0 := @this: org.apache.http.impl.conn.AbstractClientConnAdapter;
+
+        $z0 = r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: boolean aborted>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: boolean aborted> = 1;
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void unmarkReusable()>();
+
+     label2:
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void shutdown()>();
+
+     label3:
+        goto label5;
+
+     label4:
+        $r4 := @caughtexception;
+
+     label5:
+        $r2 = r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: java.lang.Thread executionThread>;
+
+        $r3 = staticinvoke <java.lang.Thread: java.lang.Thread currentThread()>();
+
+        $z1 = virtualinvoke $r2.<java.lang.Object: boolean equals(java.lang.Object)>($r3);
+
+        if $z1 == 0 goto label6;
+
+        virtualinvoke r0.<org.apache.http.impl.conn.AbstractClientConnAdapter: void releaseConnection()>();
+
+     label6:
+        return;
+
+        catch java.io.IOException from label2 to label3 with label4;
+    }
+}

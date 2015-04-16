@@ -1,0 +1,960 @@
+public class com.android.bluetooth.opp.BluetoothOppManager extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private static final boolean V;
+    private static com.android.bluetooth.opp.BluetoothOppManager INSTANCE;
+    private static java.lang.Object INSTANCE_LOCK;
+    private boolean mInitialized;
+    private android.content.Context mContext;
+    private android.bluetooth.BluetoothAdapter mAdapter;
+    private java.lang.String mMimeTypeOfSendingFile;
+    private java.lang.String mUriOfSendingFile;
+    private java.lang.String mMimeTypeOfSendingFiles;
+    private java.util.ArrayList mUrisOfSendingFiles;
+    private boolean mIsHandoverInitiated;
+    private static final java.lang.String OPP_PREFERENCE_FILE;
+    private static final java.lang.String SENDING_FLAG;
+    private static final java.lang.String MIME_TYPE;
+    private static final java.lang.String FILE_URI;
+    private static final java.lang.String MIME_TYPE_MULTIPLE;
+    private static final java.lang.String FILE_URIS;
+    private static final java.lang.String MULTIPLE_FLAG;
+    private static final java.lang.String ARRAYLIST_ITEM_SEPERATOR;
+    private static final int ALLOWED_INSERT_SHARE_THREAD_NUMBER;
+    public boolean mSendingFlag;
+    public boolean mMultipleFlag;
+    private int mfileNumInBatch;
+    private int mInsertShareThreadNum;
+    private java.util.List mWhitelist;
+    private static final int WHITELIST_DURATION_MS;
+
+    public void <init>()
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        java.util.ArrayList $r1;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: int mInsertShareThreadNum> = 0;
+
+        $r1 = new java.util.ArrayList;
+
+        specialinvoke $r1.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.List mWhitelist> = $r1;
+
+        return;
+    }
+
+    public static com.android.bluetooth.opp.BluetoothOppManager getInstance(android.content.Context)
+    {
+        android.content.Context r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r8;
+        com.android.bluetooth.opp.BluetoothOppManager $r4, $r5, $r6, $r7;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r3 = <com.android.bluetooth.opp.BluetoothOppManager: java.lang.Object INSTANCE_LOCK>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $r4 = <com.android.bluetooth.opp.BluetoothOppManager: com.android.bluetooth.opp.BluetoothOppManager INSTANCE>;
+
+        if $r4 != null goto label2;
+
+        $r7 = new com.android.bluetooth.opp.BluetoothOppManager;
+
+        specialinvoke $r7.<com.android.bluetooth.opp.BluetoothOppManager: void <init>()>();
+
+        <com.android.bluetooth.opp.BluetoothOppManager: com.android.bluetooth.opp.BluetoothOppManager INSTANCE> = $r7;
+
+     label2:
+        $r5 = <com.android.bluetooth.opp.BluetoothOppManager: com.android.bluetooth.opp.BluetoothOppManager INSTANCE>;
+
+        specialinvoke $r5.<com.android.bluetooth.opp.BluetoothOppManager: boolean init(android.content.Context)>(r0);
+
+        $r6 = <com.android.bluetooth.opp.BluetoothOppManager: com.android.bluetooth.opp.BluetoothOppManager INSTANCE>;
+
+        exitmonitor r1;
+
+     label3:
+        return $r6;
+
+     label4:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    private boolean init(android.content.Context)
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        android.content.Context r1;
+        boolean $z0;
+        android.bluetooth.BluetoothAdapter $r2, $r3;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        r1 := @parameter0: android.content.Context;
+
+        $z0 = r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mInitialized>;
+
+        if $z0 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mInitialized> = 1;
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext> = r1;
+
+        $r2 = staticinvoke <android.bluetooth.BluetoothAdapter: android.bluetooth.BluetoothAdapter getDefaultAdapter()>();
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: android.bluetooth.BluetoothAdapter mAdapter> = $r2;
+
+        $r3 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.bluetooth.BluetoothAdapter mAdapter>;
+
+        if $r3 != null goto label2;
+
+     label2:
+        specialinvoke r0.<com.android.bluetooth.opp.BluetoothOppManager: void restoreApplicationData()>();
+
+        return 1;
+    }
+
+    private void cleanupWhitelist()
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        long l0, $l1, $l2;
+        java.util.Iterator r1;
+        android.util.Pair r2;
+        java.util.List $r3;
+        boolean $z0;
+        java.lang.Object $r4, $r5;
+        java.lang.Long $r6;
+        byte $b3;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $r3 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.List mWhitelist>;
+
+        r1 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (android.util.Pair) $r4;
+
+        $r5 = r2.<android.util.Pair: java.lang.Object second>;
+
+        $r6 = (java.lang.Long) $r5;
+
+        $l1 = virtualinvoke $r6.<java.lang.Long: long longValue()>();
+
+        $l2 = l0 - $l1;
+
+        $b3 = $l2 cmp 15000L;
+
+        if $b3 <= 0 goto label2;
+
+        interfaceinvoke r1.<java.util.Iterator: void remove()>();
+
+     label2:
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    public synchronized void addToWhitelist(java.lang.String)
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        java.lang.String r1, $r10;
+        java.util.Iterator r2;
+        android.util.Pair r3, $r5;
+        java.util.List $r4, $r6;
+        boolean $z0, $z2;
+        long $l0;
+        java.lang.Long $r7;
+        java.lang.Object $r8, $r9;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        r1 := @parameter0: java.lang.String;
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        $r4 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.List mWhitelist>;
+
+        r2 = interfaceinvoke $r4.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r8 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (android.util.Pair) $r8;
+
+        $r9 = r3.<android.util.Pair: java.lang.Object first>;
+
+        $r10 = (java.lang.String) $r9;
+
+        $z2 = virtualinvoke $r10.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z2 == 0 goto label3;
+
+        interfaceinvoke r2.<java.util.Iterator: void remove()>();
+
+     label3:
+        goto label2;
+
+     label4:
+        $r6 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.List mWhitelist>;
+
+        $r5 = new android.util.Pair;
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $r7 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l0);
+
+        specialinvoke $r5.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>(r1, $r7);
+
+        interfaceinvoke $r6.<java.util.List: boolean add(java.lang.Object)>($r5);
+
+        return;
+    }
+
+    public synchronized boolean isWhitelisted(java.lang.String)
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        java.lang.String r1, $r7;
+        java.util.Iterator r2;
+        android.util.Pair r3;
+        java.util.List $r4;
+        boolean $z0, $z1;
+        java.lang.Object $r5, $r6;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<com.android.bluetooth.opp.BluetoothOppManager: void cleanupWhitelist()>();
+
+        $r4 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.List mWhitelist>;
+
+        r2 = interfaceinvoke $r4.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r5 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (android.util.Pair) $r5;
+
+        $r6 = r3.<android.util.Pair: java.lang.Object first>;
+
+        $r7 = (java.lang.String) $r6;
+
+        $z1 = virtualinvoke $r7.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z1 == 0 goto label2;
+
+        return 1;
+
+     label2:
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    private void restoreApplicationData()
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        android.content.SharedPreferences r1, $r10;
+        java.lang.String r2, $r5, $r6, $r7, $r14;
+        java.lang.String[] r3;
+        int i0, $i1;
+        android.content.Context $r4, $r9;
+        boolean $z0, $z1;
+        java.util.ArrayList $r8, $r13;
+        android.content.SharedPreferences$Editor $r11, $r12;
+        android.net.Uri $r15;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        $r4 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        r1 = virtualinvoke $r4.<android.content.Context: android.content.SharedPreferences getSharedPreferences(java.lang.String,int)>("OPPMGR", 0);
+
+        $z0 = interfaceinvoke r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("SENDINGFLAG", 0);
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mSendingFlag> = $z0;
+
+        $r5 = interfaceinvoke r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("MIMETYPE", null);
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mMimeTypeOfSendingFile> = $r5;
+
+        $r6 = interfaceinvoke r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("FILE_URI", null);
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mUriOfSendingFile> = $r6;
+
+        $r7 = interfaceinvoke r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("MIMETYPE_MULTIPLE", null);
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mMimeTypeOfSendingFiles> = $r7;
+
+        $z1 = interfaceinvoke r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("MULTIPLE_FLAG", 0);
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mMultipleFlag> = $z1;
+
+        r2 = interfaceinvoke r1.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("FILE_URIS", null);
+
+        $r8 = new java.util.ArrayList;
+
+        specialinvoke $r8.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.ArrayList mUrisOfSendingFiles> = $r8;
+
+        if r2 == null goto label2;
+
+        r3 = virtualinvoke r2.<java.lang.String: java.lang.String[] split(java.lang.String)>(";");
+
+        i0 = 0;
+
+     label1:
+        $i1 = lengthof r3;
+
+        if i0 >= $i1 goto label2;
+
+        $r13 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.ArrayList mUrisOfSendingFiles>;
+
+        $r14 = r3[i0];
+
+        $r15 = staticinvoke <android.net.Uri: android.net.Uri parse(java.lang.String)>($r14);
+
+        virtualinvoke $r13.<java.util.ArrayList: boolean add(java.lang.Object)>($r15);
+
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label2:
+        $r9 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        $r10 = virtualinvoke $r9.<android.content.Context: android.content.SharedPreferences getSharedPreferences(java.lang.String,int)>("OPPMGR", 0);
+
+        $r12 = interfaceinvoke $r10.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        $r11 = interfaceinvoke $r12.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor clear()>();
+
+        interfaceinvoke $r11.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    private void storeApplicationData()
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        android.content.SharedPreferences$Editor r1;
+        java.lang.StringBuilder r2, $r17;
+        int i0, i1;
+        android.net.Uri r3;
+        android.content.Context $r4;
+        android.content.SharedPreferences $r5;
+        boolean $z0, $z1, $z2;
+        java.lang.String $r8, $r11, $r15, r25;
+        java.util.ArrayList $r16, $r20;
+        java.lang.Object $r23;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        $r4 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: android.content.SharedPreferences getSharedPreferences(java.lang.String,int)>("OPPMGR", 0);
+
+        r1 = interfaceinvoke $r5.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        $z0 = r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mSendingFlag>;
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putBoolean(java.lang.String,boolean)>("SENDINGFLAG", $z0);
+
+        $z1 = r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mMultipleFlag>;
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putBoolean(java.lang.String,boolean)>("MULTIPLE_FLAG", $z1);
+
+        $z2 = r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mMultipleFlag>;
+
+        if $z2 == 0 goto label3;
+
+        $r15 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mMimeTypeOfSendingFiles>;
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putString(java.lang.String,java.lang.String)>("MIMETYPE_MULTIPLE", $r15);
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        r2 = $r17;
+
+        i0 = 0;
+
+        $r16 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.ArrayList mUrisOfSendingFiles>;
+
+        i1 = virtualinvoke $r16.<java.util.ArrayList: int size()>();
+
+     label1:
+        if i0 >= i1 goto label2;
+
+        $r20 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.ArrayList mUrisOfSendingFiles>;
+
+        $r23 = virtualinvoke $r20.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        r3 = (android.net.Uri) $r23;
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(";");
+
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label2:
+        r25 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putString(java.lang.String,java.lang.String)>("FILE_URIS", r25);
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor remove(java.lang.String)>("MIMETYPE");
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor remove(java.lang.String)>("FILE_URI");
+
+        goto label4;
+
+     label3:
+        $r8 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mMimeTypeOfSendingFile>;
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putString(java.lang.String,java.lang.String)>("MIMETYPE", $r8);
+
+        $r11 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mUriOfSendingFile>;
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putString(java.lang.String,java.lang.String)>("FILE_URI", $r11);
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor remove(java.lang.String)>("MIMETYPE_MULTIPLE");
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor remove(java.lang.String)>("FILE_URIS");
+
+     label4:
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    public void saveSendingFileInfo(java.lang.String, java.lang.String, boolean)
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0, r3;
+        java.lang.String r1, r2, $r9;
+        boolean z0;
+        android.net.Uri r4, r11;
+        com.android.bluetooth.opp.BluetoothOppSendFileInfo r5;
+        java.lang.Throwable r6, $r10;
+        android.content.Context $r8;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        r3 = r0;
+
+        entermonitor r0;
+
+     label1:
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mMultipleFlag> = 0;
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mMimeTypeOfSendingFile> = r1;
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mIsHandoverInitiated> = z0;
+
+        r4 = staticinvoke <android.net.Uri: android.net.Uri parse(java.lang.String)>(r2);
+
+        $r8 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        r5 = staticinvoke <com.android.bluetooth.opp.BluetoothOppSendFileInfo: com.android.bluetooth.opp.BluetoothOppSendFileInfo generateFileInfo(android.content.Context,android.net.Uri,java.lang.String)>($r8, r4, r1);
+
+        r11 = staticinvoke <com.android.bluetooth.opp.BluetoothOppUtility: android.net.Uri generateUri(android.net.Uri,com.android.bluetooth.opp.BluetoothOppSendFileInfo)>(r4, r5);
+
+        staticinvoke <com.android.bluetooth.opp.BluetoothOppUtility: void putSendFileInfo(android.net.Uri,com.android.bluetooth.opp.BluetoothOppSendFileInfo)>(r11, r5);
+
+        $r9 = virtualinvoke r11.<android.net.Uri: java.lang.String toString()>();
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mUriOfSendingFile> = $r9;
+
+        specialinvoke r0.<com.android.bluetooth.opp.BluetoothOppManager: void storeApplicationData()>();
+
+        exitmonitor r3;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r10 := @caughtexception;
+
+        r6 = $r10;
+
+        exitmonitor r3;
+
+     label4:
+        throw r6;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public void saveSendingFileInfo(java.lang.String, java.util.ArrayList, boolean)
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0, r3;
+        java.lang.String r1;
+        java.util.ArrayList r2, $r9, $r12;
+        boolean z0, $z1;
+        java.util.Iterator r4;
+        android.net.Uri r5, r14;
+        com.android.bluetooth.opp.BluetoothOppSendFileInfo r6;
+        java.lang.Throwable r7, $r13;
+        java.lang.Object $r10;
+        android.content.Context $r11;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.util.ArrayList;
+
+        z0 := @parameter2: boolean;
+
+        r3 = r0;
+
+        entermonitor r0;
+
+     label1:
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mMultipleFlag> = 1;
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mMimeTypeOfSendingFiles> = r1;
+
+        $r9 = new java.util.ArrayList;
+
+        specialinvoke $r9.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.ArrayList mUrisOfSendingFiles> = $r9;
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mIsHandoverInitiated> = z0;
+
+        r4 = virtualinvoke r2.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label2:
+        $z1 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label3;
+
+        $r10 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (android.net.Uri) $r10;
+
+        $r11 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        r6 = staticinvoke <com.android.bluetooth.opp.BluetoothOppSendFileInfo: com.android.bluetooth.opp.BluetoothOppSendFileInfo generateFileInfo(android.content.Context,android.net.Uri,java.lang.String)>($r11, r5, r1);
+
+        r14 = staticinvoke <com.android.bluetooth.opp.BluetoothOppUtility: android.net.Uri generateUri(android.net.Uri,com.android.bluetooth.opp.BluetoothOppSendFileInfo)>(r5, r6);
+
+        $r12 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.ArrayList mUrisOfSendingFiles>;
+
+        virtualinvoke $r12.<java.util.ArrayList: boolean add(java.lang.Object)>(r14);
+
+        staticinvoke <com.android.bluetooth.opp.BluetoothOppUtility: void putSendFileInfo(android.net.Uri,com.android.bluetooth.opp.BluetoothOppSendFileInfo)>(r14, r6);
+
+        goto label2;
+
+     label3:
+        specialinvoke r0.<com.android.bluetooth.opp.BluetoothOppManager: void storeApplicationData()>();
+
+        exitmonitor r3;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r13 := @caughtexception;
+
+        r7 = $r13;
+
+        exitmonitor r3;
+
+     label6:
+        throw r7;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public boolean isEnabled()
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        android.bluetooth.BluetoothAdapter $r1, $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        $r1 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.bluetooth.BluetoothAdapter mAdapter>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.bluetooth.BluetoothAdapter mAdapter>;
+
+        $z0 = virtualinvoke $r2.<android.bluetooth.BluetoothAdapter: boolean isEnabled()>();
+
+        return $z0;
+
+     label1:
+        return 0;
+    }
+
+    public void enableBluetooth()
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        android.bluetooth.BluetoothAdapter $r1, $r2;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        $r1 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.bluetooth.BluetoothAdapter mAdapter>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.bluetooth.BluetoothAdapter mAdapter>;
+
+        virtualinvoke $r2.<android.bluetooth.BluetoothAdapter: boolean enable()>();
+
+     label1:
+        return;
+    }
+
+    public void disableBluetooth()
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        android.bluetooth.BluetoothAdapter $r1, $r2;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        $r1 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.bluetooth.BluetoothAdapter mAdapter>;
+
+        if $r1 == null goto label1;
+
+        $r2 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.bluetooth.BluetoothAdapter mAdapter>;
+
+        virtualinvoke $r2.<android.bluetooth.BluetoothAdapter: boolean disable()>();
+
+     label1:
+        return;
+    }
+
+    public java.lang.String getDeviceName(android.bluetooth.BluetoothDevice)
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        android.bluetooth.BluetoothDevice r1;
+        java.lang.String r2;
+        android.content.Context $r3, $r5;
+        com.android.bluetooth.opp.BluetoothOppPreference $r4;
+        android.bluetooth.BluetoothAdapter $r6;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        r1 := @parameter0: android.bluetooth.BluetoothDevice;
+
+        $r3 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        $r4 = staticinvoke <com.android.bluetooth.opp.BluetoothOppPreference: com.android.bluetooth.opp.BluetoothOppPreference getInstance(android.content.Context)>($r3);
+
+        r2 = virtualinvoke $r4.<com.android.bluetooth.opp.BluetoothOppPreference: java.lang.String getName(android.bluetooth.BluetoothDevice)>(r1);
+
+        if r2 != null goto label1;
+
+        $r6 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.bluetooth.BluetoothAdapter mAdapter>;
+
+        if $r6 == null goto label1;
+
+        r2 = virtualinvoke r1.<android.bluetooth.BluetoothDevice: java.lang.String getName()>();
+
+     label1:
+        if r2 != null goto label2;
+
+        $r5 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        r2 = virtualinvoke $r5.<android.content.Context: java.lang.String getString(int)>(2131034117);
+
+     label2:
+        return r2;
+    }
+
+    public int getBatchSize()
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0, r1;
+        java.lang.Throwable r2, $r4;
+        int $i0;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $i0 = r0.<com.android.bluetooth.opp.BluetoothOppManager: int mfileNumInBatch>;
+
+        exitmonitor r1;
+
+     label2:
+        return $i0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public void startTransfer(android.bluetooth.BluetoothDevice)
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0, r3;
+        android.bluetooth.BluetoothDevice r1;
+        com.android.bluetooth.opp.BluetoothOppManager$InsertShareInfoThread r2, $r7;
+        android.content.Intent r4, $r14;
+        java.lang.Throwable r5, $r23;
+        int $i0, $i2;
+        boolean $z0, $z1, $z2;
+        java.util.ArrayList $r8, $r12;
+        java.lang.String $r9, $r10, $r11, $r17, $r20;
+        android.content.Context $r13, $r15, $r18, $r21;
+
+        r0 := @this: com.android.bluetooth.opp.BluetoothOppManager;
+
+        r1 := @parameter0: android.bluetooth.BluetoothDevice;
+
+        r3 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $i0 = r0.<com.android.bluetooth.opp.BluetoothOppManager: int mInsertShareThreadNum>;
+
+        if $i0 <= 3 goto label3;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("BluetoothOppManager", "Too many shares user triggered concurrently!");
+
+        $r14 = new android.content.Intent;
+
+        $r13 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        specialinvoke $r14.<android.content.Intent: void <init>(android.content.Context,java.lang.Class)>($r13, class "com/android/bluetooth/opp/BluetoothOppBtErrorActivity");
+
+        r4 = $r14;
+
+        virtualinvoke r4.<android.content.Intent: android.content.Intent setFlags(int)>(268435456);
+
+        $r15 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        $r17 = virtualinvoke $r15.<android.content.Context: java.lang.String getString(int)>(2131034173);
+
+        virtualinvoke r4.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("title", $r17);
+
+        $r18 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        $r20 = virtualinvoke $r18.<android.content.Context: java.lang.String getString(int)>(2131034183);
+
+        virtualinvoke r4.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("content", $r20);
+
+        $r21 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        virtualinvoke $r21.<android.content.Context: void startActivity(android.content.Intent)>(r4);
+
+        exitmonitor r3;
+
+     label2:
+        return;
+
+     label3:
+        $r7 = new com.android.bluetooth.opp.BluetoothOppManager$InsertShareInfoThread;
+
+        $z1 = r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mMultipleFlag>;
+
+        $r11 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mMimeTypeOfSendingFile>;
+
+        $r10 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mUriOfSendingFile>;
+
+        $r9 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.lang.String mMimeTypeOfSendingFiles>;
+
+        $r8 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.ArrayList mUrisOfSendingFiles>;
+
+        $z0 = r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mIsHandoverInitiated>;
+
+        specialinvoke $r7.<com.android.bluetooth.opp.BluetoothOppManager$InsertShareInfoThread: void <init>(com.android.bluetooth.opp.BluetoothOppManager,android.bluetooth.BluetoothDevice,boolean,java.lang.String,java.lang.String,java.lang.String,java.util.ArrayList,boolean)>(r0, r1, $z1, $r11, $r10, $r9, $r8, $z0);
+
+        r2 = $r7;
+
+        $z2 = r0.<com.android.bluetooth.opp.BluetoothOppManager: boolean mMultipleFlag>;
+
+        if $z2 == 0 goto label4;
+
+        $r12 = r0.<com.android.bluetooth.opp.BluetoothOppManager: java.util.ArrayList mUrisOfSendingFiles>;
+
+        $i2 = virtualinvoke $r12.<java.util.ArrayList: int size()>();
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: int mfileNumInBatch> = $i2;
+
+     label4:
+        exitmonitor r3;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r23 := @caughtexception;
+
+        r5 = $r23;
+
+        exitmonitor r3;
+
+     label7:
+        throw r5;
+
+     label8:
+        virtualinvoke r2.<com.android.bluetooth.opp.BluetoothOppManager$InsertShareInfoThread: void start()>();
+
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    static int access$008(com.android.bluetooth.opp.BluetoothOppManager)
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        int $i0, $i1;
+
+        r0 := @parameter0: com.android.bluetooth.opp.BluetoothOppManager;
+
+        $i0 = r0.<com.android.bluetooth.opp.BluetoothOppManager: int mInsertShareThreadNum>;
+
+        $i1 = $i0 + 1;
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: int mInsertShareThreadNum> = $i1;
+
+        return $i0;
+    }
+
+    static int access$010(com.android.bluetooth.opp.BluetoothOppManager)
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        int $i0, $i1;
+
+        r0 := @parameter0: com.android.bluetooth.opp.BluetoothOppManager;
+
+        $i0 = r0.<com.android.bluetooth.opp.BluetoothOppManager: int mInsertShareThreadNum>;
+
+        $i1 = $i0 - 1;
+
+        r0.<com.android.bluetooth.opp.BluetoothOppManager: int mInsertShareThreadNum> = $i1;
+
+        return $i0;
+    }
+
+    static android.content.Context access$100(com.android.bluetooth.opp.BluetoothOppManager)
+    {
+        com.android.bluetooth.opp.BluetoothOppManager r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.bluetooth.opp.BluetoothOppManager;
+
+        $r1 = r0.<com.android.bluetooth.opp.BluetoothOppManager: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.Object $r0;
+
+        <com.android.bluetooth.opp.BluetoothOppManager: int WHITELIST_DURATION_MS> = 15000;
+
+        <com.android.bluetooth.opp.BluetoothOppManager: int ALLOWED_INSERT_SHARE_THREAD_NUMBER> = 3;
+
+        <com.android.bluetooth.opp.BluetoothOppManager: java.lang.String ARRAYLIST_ITEM_SEPERATOR> = ";";
+
+        <com.android.bluetooth.opp.BluetoothOppManager: java.lang.String MULTIPLE_FLAG> = "MULTIPLE_FLAG";
+
+        <com.android.bluetooth.opp.BluetoothOppManager: java.lang.String FILE_URIS> = "FILE_URIS";
+
+        <com.android.bluetooth.opp.BluetoothOppManager: java.lang.String MIME_TYPE_MULTIPLE> = "MIMETYPE_MULTIPLE";
+
+        <com.android.bluetooth.opp.BluetoothOppManager: java.lang.String FILE_URI> = "FILE_URI";
+
+        <com.android.bluetooth.opp.BluetoothOppManager: java.lang.String MIME_TYPE> = "MIMETYPE";
+
+        <com.android.bluetooth.opp.BluetoothOppManager: java.lang.String SENDING_FLAG> = "SENDINGFLAG";
+
+        <com.android.bluetooth.opp.BluetoothOppManager: java.lang.String OPP_PREFERENCE_FILE> = "OPPMGR";
+
+        <com.android.bluetooth.opp.BluetoothOppManager: boolean V> = 0;
+
+        <com.android.bluetooth.opp.BluetoothOppManager: java.lang.String TAG> = "BluetoothOppManager";
+
+        $r0 = new java.lang.Object;
+
+        specialinvoke $r0.<java.lang.Object: void <init>()>();
+
+        <com.android.bluetooth.opp.BluetoothOppManager: java.lang.Object INSTANCE_LOCK> = $r0;
+
+        return;
+    }
+}

@@ -1,0 +1,1637 @@
+public class com.android.internal.telephony.SmsUsageMonitor extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private static final boolean DBG;
+    private static final boolean VDBG;
+    private static final java.lang.String SHORT_CODE_PATH;
+    private static final int DEFAULT_SMS_CHECK_PERIOD;
+    private static final int DEFAULT_SMS_MAX_COUNT;
+    static final int CATEGORY_NOT_SHORT_CODE;
+    static final int CATEGORY_FREE_SHORT_CODE;
+    static final int CATEGORY_STANDARD_SHORT_CODE;
+    static final int CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE;
+    static final int CATEGORY_PREMIUM_SHORT_CODE;
+    public static final int PREMIUM_SMS_PERMISSION_UNKNOWN;
+    public static final int PREMIUM_SMS_PERMISSION_ASK_USER;
+    public static final int PREMIUM_SMS_PERMISSION_NEVER_ALLOW;
+    public static final int PREMIUM_SMS_PERMISSION_ALWAYS_ALLOW;
+    private final int mCheckPeriod;
+    private final int mMaxAllowed;
+    private final java.util.HashMap mSmsStamp;
+    private final android.content.Context mContext;
+    private java.lang.String mCurrentCountry;
+    private com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher mCurrentPatternMatcher;
+    private final java.util.concurrent.atomic.AtomicBoolean mCheckEnabled;
+    private final com.android.internal.telephony.SmsUsageMonitor$SettingsObserverHandler mSettingsObserverHandler;
+    private final java.io.File mPatternFile;
+    private long mPatternFileLastModified;
+    private static final java.lang.String SMS_POLICY_FILE_DIRECTORY;
+    private static final java.lang.String SMS_POLICY_FILE_NAME;
+    private static final java.lang.String TAG_SHORTCODES;
+    private static final java.lang.String TAG_SHORTCODE;
+    private static final java.lang.String ATTR_COUNTRY;
+    private static final java.lang.String ATTR_PATTERN;
+    private static final java.lang.String ATTR_PREMIUM;
+    private static final java.lang.String ATTR_FREE;
+    private static final java.lang.String ATTR_STANDARD;
+    private android.util.AtomicFile mPolicyFile;
+    private final java.util.HashMap mPremiumSmsPolicy;
+    private static final java.lang.String TAG_SMS_POLICY_BODY;
+    private static final java.lang.String TAG_PACKAGE;
+    private static final java.lang.String ATTR_PACKAGE_NAME;
+    private static final java.lang.String ATTR_PACKAGE_SMS_POLICY;
+
+    public static int mergeShortCodeCategories(int, int)
+    {
+        int i0, i1;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        if i0 <= i1 goto label1;
+
+        return i0;
+
+     label1:
+        return i1;
+    }
+
+    public void <init>(android.content.Context)
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        android.content.Context r1, $r9;
+        android.content.ContentResolver r2;
+        java.util.HashMap $r3, $r6;
+        java.util.concurrent.atomic.AtomicBoolean $r4, $r8;
+        java.io.File $r5;
+        int $i0, $i1;
+        com.android.internal.telephony.SmsUsageMonitor$SettingsObserverHandler $r7;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r3 = new java.util.HashMap;
+
+        specialinvoke $r3.<java.util.HashMap: void <init>()>();
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mSmsStamp> = $r3;
+
+        $r4 = new java.util.concurrent.atomic.AtomicBoolean;
+
+        specialinvoke $r4.<java.util.concurrent.atomic.AtomicBoolean: void <init>(boolean)>(1);
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.concurrent.atomic.AtomicBoolean mCheckEnabled> = $r4;
+
+        $r5 = new java.io.File;
+
+        specialinvoke $r5.<java.io.File: void <init>(java.lang.String)>("/data/misc/sms/codes");
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: java.io.File mPatternFile> = $r5;
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: long mPatternFileLastModified> = 0L;
+
+        $r6 = new java.util.HashMap;
+
+        specialinvoke $r6.<java.util.HashMap: void <init>()>();
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mPremiumSmsPolicy> = $r6;
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: android.content.Context mContext> = r1;
+
+        r2 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i0 = staticinvoke <android.provider.Settings$Global: int getInt(android.content.ContentResolver,java.lang.String,int)>(r2, "sms_outgoing_check_max_count", 30);
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: int mMaxAllowed> = $i0;
+
+        $i1 = staticinvoke <android.provider.Settings$Global: int getInt(android.content.ContentResolver,java.lang.String,int)>(r2, "sms_outgoing_check_interval_ms", 60000);
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: int mCheckPeriod> = $i1;
+
+        $r7 = new com.android.internal.telephony.SmsUsageMonitor$SettingsObserverHandler;
+
+        $r9 = r0.<com.android.internal.telephony.SmsUsageMonitor: android.content.Context mContext>;
+
+        $r8 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.concurrent.atomic.AtomicBoolean mCheckEnabled>;
+
+        specialinvoke $r7.<com.android.internal.telephony.SmsUsageMonitor$SettingsObserverHandler: void <init>(android.content.Context,java.util.concurrent.atomic.AtomicBoolean)>($r9, $r8);
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: com.android.internal.telephony.SmsUsageMonitor$SettingsObserverHandler mSettingsObserverHandler> = $r7;
+
+        specialinvoke r0.<com.android.internal.telephony.SmsUsageMonitor: void loadPremiumSmsPolicyDb()>();
+
+        return;
+    }
+
+    private com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher getPatternMatcherFromFile(java.lang.String)
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        java.lang.String r1;
+        java.io.FileReader r2, $r5;
+        com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher r3;
+        java.lang.Throwable r4, $r17;
+        java.io.File $r6, $r7, $r11, $r13, $r16;
+        long $l0, $l1, $l2, $l3;
+        java.io.IOException $r8, $r9, $r14, $r15;
+        java.io.FileNotFoundException $r10;
+        org.xmlpull.v1.XmlPullParserException $r12, r19;
+        org.xmlpull.v1.XmlPullParser r18;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = null;
+
+     label01:
+        $r5 = new java.io.FileReader;
+
+        $r6 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.io.File mPatternFile>;
+
+        specialinvoke $r5.<java.io.FileReader: void <init>(java.io.File)>($r6);
+
+        r2 = $r5;
+
+        r18 = staticinvoke <android.util.Xml: org.xmlpull.v1.XmlPullParser newPullParser()>();
+
+        interfaceinvoke r18.<org.xmlpull.v1.XmlPullParser: void setInput(java.io.Reader)>(r2);
+
+        r3 = specialinvoke r0.<com.android.internal.telephony.SmsUsageMonitor: com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher getPatternMatcherFromXmlParser(org.xmlpull.v1.XmlPullParser,java.lang.String)>(r18, r1);
+
+     label02:
+        $r7 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.io.File mPatternFile>;
+
+        $l0 = virtualinvoke $r7.<java.io.File: long lastModified()>();
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: long mPatternFileLastModified> = $l0;
+
+        if r2 == null goto label06;
+
+     label03:
+        virtualinvoke r2.<java.io.FileReader: void close()>();
+
+     label04:
+        goto label06;
+
+     label05:
+        $r14 := @caughtexception;
+
+     label06:
+        return r3;
+
+     label07:
+        $r10 := @caughtexception;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsUsageMonitor", "Short Code Pattern File not found");
+
+     label08:
+        $r11 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.io.File mPatternFile>;
+
+        $l1 = virtualinvoke $r11.<java.io.File: long lastModified()>();
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: long mPatternFileLastModified> = $l1;
+
+        if r2 == null goto label23;
+
+     label09:
+        virtualinvoke r2.<java.io.FileReader: void close()>();
+
+     label10:
+        goto label23;
+
+     label11:
+        $r8 := @caughtexception;
+
+        goto label23;
+
+     label12:
+        $r12 := @caughtexception;
+
+        r19 = $r12;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("SmsUsageMonitor", "XML parser exception reading short code pattern file", r19);
+
+     label13:
+        $r13 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.io.File mPatternFile>;
+
+        $l2 = virtualinvoke $r13.<java.io.File: long lastModified()>();
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: long mPatternFileLastModified> = $l2;
+
+        if r2 == null goto label23;
+
+     label14:
+        virtualinvoke r2.<java.io.FileReader: void close()>();
+
+     label15:
+        goto label23;
+
+     label16:
+        $r15 := @caughtexception;
+
+        goto label23;
+
+     label17:
+        $r17 := @caughtexception;
+
+        r4 = $r17;
+
+     label18:
+        $r16 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.io.File mPatternFile>;
+
+        $l3 = virtualinvoke $r16.<java.io.File: long lastModified()>();
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: long mPatternFileLastModified> = $l3;
+
+        if r2 == null goto label22;
+
+     label19:
+        virtualinvoke r2.<java.io.FileReader: void close()>();
+
+     label20:
+        goto label22;
+
+     label21:
+        $r9 := @caughtexception;
+
+     label22:
+        throw r4;
+
+     label23:
+        return null;
+
+        catch java.io.IOException from label03 to label04 with label05;
+        catch java.io.FileNotFoundException from label01 to label02 with label07;
+        catch java.io.IOException from label09 to label10 with label11;
+        catch org.xmlpull.v1.XmlPullParserException from label01 to label02 with label12;
+        catch java.io.IOException from label14 to label15 with label16;
+        catch java.lang.Throwable from label01 to label02 with label17;
+        catch java.lang.Throwable from label07 to label08 with label17;
+        catch java.lang.Throwable from label12 to label13 with label17;
+        catch java.io.IOException from label19 to label20 with label21;
+        catch java.lang.Throwable from label17 to label18 with label17;
+    }
+
+    private com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher getPatternMatcherFromResource(java.lang.String)
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        java.lang.String r1;
+        int i0;
+        android.content.res.XmlResourceParser r2;
+        com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher r3;
+        java.lang.Throwable r4, $r7;
+        android.content.Context $r5;
+        android.content.res.Resources $r6;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 = 17891345;
+
+        r2 = null;
+
+     label1:
+        $r5 = r0.<com.android.internal.telephony.SmsUsageMonitor: android.content.Context mContext>;
+
+        $r6 = virtualinvoke $r5.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r2 = virtualinvoke $r6.<android.content.res.Resources: android.content.res.XmlResourceParser getXml(int)>(i0);
+
+        r3 = specialinvoke r0.<com.android.internal.telephony.SmsUsageMonitor: com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher getPatternMatcherFromXmlParser(org.xmlpull.v1.XmlPullParser,java.lang.String)>(r2, r1);
+
+     label2:
+        if r2 == null goto label3;
+
+        interfaceinvoke r2.<android.content.res.XmlResourceParser: void close()>();
+
+     label3:
+        return r3;
+
+     label4:
+        $r7 := @caughtexception;
+
+        r4 = $r7;
+
+     label5:
+        if r2 == null goto label6;
+
+        interfaceinvoke r2.<android.content.res.XmlResourceParser: void close()>();
+
+     label6:
+        throw r4;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    private com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher getPatternMatcherFromXmlParser(org.xmlpull.v1.XmlPullParser, java.lang.String)
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        org.xmlpull.v1.XmlPullParser r1;
+        java.lang.String r2, r3, r4, r5, r6, r7, r8, $r12;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r9, $r10, $r11;
+        com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher $r13;
+        org.xmlpull.v1.XmlPullParserException $r14, r16;
+        java.io.IOException $r15, r17;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        r1 := @parameter0: org.xmlpull.v1.XmlPullParser;
+
+        r2 := @parameter1: java.lang.String;
+
+     label01:
+        staticinvoke <com.android.internal.util.XmlUtils: void beginDocument(org.xmlpull.v1.XmlPullParser,java.lang.String)>(r1, "shortcodes");
+
+     label02:
+        staticinvoke <com.android.internal.util.XmlUtils: void nextElement(org.xmlpull.v1.XmlPullParser)>(r1);
+
+        r3 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: java.lang.String getName()>();
+
+        if r3 != null goto label03;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsUsageMonitor", "Parsing pattern data found null");
+
+        goto label08;
+
+     label03:
+        $z0 = virtualinvoke r3.<java.lang.String: boolean equals(java.lang.Object)>("shortcode");
+
+        if $z0 == 0 goto label06;
+
+        r4 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: java.lang.String getAttributeValue(java.lang.String,java.lang.String)>(null, "country");
+
+        $z1 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>(r4);
+
+        if $z1 == 0 goto label05;
+
+        r5 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: java.lang.String getAttributeValue(java.lang.String,java.lang.String)>(null, "pattern");
+
+        r6 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: java.lang.String getAttributeValue(java.lang.String,java.lang.String)>(null, "premium");
+
+        r7 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: java.lang.String getAttributeValue(java.lang.String,java.lang.String)>(null, "free");
+
+        r8 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: java.lang.String getAttributeValue(java.lang.String,java.lang.String)>(null, "standard");
+
+        $r13 = new com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher;
+
+        specialinvoke $r13.<com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher: void <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String)>(r5, r6, r7, r8);
+
+     label04:
+        return $r13;
+
+     label05:
+        goto label07;
+
+     label06:
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error: skipping unknown XML tag ");
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsUsageMonitor", $r12);
+
+     label07:
+        goto label02;
+
+     label08:
+        goto label11;
+
+     label09:
+        $r14 := @caughtexception;
+
+        r16 = $r14;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("SmsUsageMonitor", "XML parser exception reading short code patterns", r16);
+
+        goto label11;
+
+     label10:
+        $r15 := @caughtexception;
+
+        r17 = $r15;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("SmsUsageMonitor", "I/O exception reading short code patterns", r17);
+
+     label11:
+        return null;
+
+        catch org.xmlpull.v1.XmlPullParserException from label01 to label04 with label09;
+        catch org.xmlpull.v1.XmlPullParserException from label05 to label08 with label09;
+        catch java.io.IOException from label01 to label04 with label10;
+        catch java.io.IOException from label05 to label08 with label10;
+    }
+
+    void dispose()
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        java.util.HashMap $r1;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        $r1 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mSmsStamp>;
+
+        virtualinvoke $r1.<java.util.HashMap: void clear()>();
+
+        return;
+    }
+
+    public boolean check(java.lang.String, int)
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        java.lang.String r1;
+        int i0;
+        java.util.HashMap r2, $r5, $r6, $r9;
+        java.util.ArrayList r3, $r8;
+        java.lang.Throwable r4, $r11;
+        java.lang.Object $r7;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        $r5 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mSmsStamp>;
+
+        r2 = $r5;
+
+        entermonitor $r5;
+
+     label1:
+        specialinvoke r0.<com.android.internal.telephony.SmsUsageMonitor: void removeExpiredTimestamps()>();
+
+        $r6 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mSmsStamp>;
+
+        $r7 = virtualinvoke $r6.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r3 = (java.util.ArrayList) $r7;
+
+        if r3 != null goto label2;
+
+        $r8 = new java.util.ArrayList;
+
+        specialinvoke $r8.<java.util.ArrayList: void <init>()>();
+
+        r3 = $r8;
+
+        $r9 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mSmsStamp>;
+
+        virtualinvoke $r9.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, r3);
+
+     label2:
+        $z0 = specialinvoke r0.<com.android.internal.telephony.SmsUsageMonitor: boolean isUnderLimit(java.util.ArrayList,int)>(r3, i0);
+
+        exitmonitor r2;
+
+     label3:
+        return $z0;
+
+     label4:
+        $r11 := @caughtexception;
+
+        r4 = $r11;
+
+        exitmonitor r2;
+
+     label5:
+        throw r4;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public int checkDestination(java.lang.String, java.lang.String)
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        java.lang.String r1, r2, $r12, $r14, $r18;
+        com.android.internal.telephony.SmsUsageMonitor$SettingsObserverHandler r3, $r5;
+        java.lang.Throwable r4, $r20;
+        boolean $z0, $z1, $z2, $z3;
+        java.util.concurrent.atomic.AtomicBoolean $r6;
+        com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher $r7, $r13, $r16, $r17;
+        java.lang.StringBuilder $r8, $r9, $r10, $r11;
+        int $i0, $i2;
+        java.io.File $r15, $r19;
+        long $l3, $l4;
+        byte $b5;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r5 = r0.<com.android.internal.telephony.SmsUsageMonitor: com.android.internal.telephony.SmsUsageMonitor$SettingsObserverHandler mSettingsObserverHandler>;
+
+        r3 = $r5;
+
+        entermonitor $r5;
+
+     label01:
+        $z0 = staticinvoke <android.telephony.PhoneNumberUtils: boolean isEmergencyNumber(java.lang.String,java.lang.String)>(r1, r2);
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r3;
+
+     label02:
+        return 0;
+
+     label03:
+        $r6 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.concurrent.atomic.AtomicBoolean mCheckEnabled>;
+
+        $z1 = virtualinvoke $r6.<java.util.concurrent.atomic.AtomicBoolean: boolean get()>();
+
+        if $z1 != 0 goto label05;
+
+        exitmonitor r3;
+
+     label04:
+        return 0;
+
+     label05:
+        if r2 == null goto label09;
+
+        $r14 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.lang.String mCurrentCountry>;
+
+        if $r14 == null goto label06;
+
+        $r18 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.lang.String mCurrentCountry>;
+
+        $z3 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>($r18);
+
+        if $z3 == 0 goto label06;
+
+        $r19 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.io.File mPatternFile>;
+
+        $l3 = virtualinvoke $r19.<java.io.File: long lastModified()>();
+
+        $l4 = r0.<com.android.internal.telephony.SmsUsageMonitor: long mPatternFileLastModified>;
+
+        $b5 = $l3 cmp $l4;
+
+        if $b5 == 0 goto label09;
+
+     label06:
+        $r15 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.io.File mPatternFile>;
+
+        $z2 = virtualinvoke $r15.<java.io.File: boolean exists()>();
+
+        if $z2 == 0 goto label07;
+
+        $r16 = specialinvoke r0.<com.android.internal.telephony.SmsUsageMonitor: com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher getPatternMatcherFromFile(java.lang.String)>(r2);
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher mCurrentPatternMatcher> = $r16;
+
+        goto label08;
+
+     label07:
+        $r17 = specialinvoke r0.<com.android.internal.telephony.SmsUsageMonitor: com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher getPatternMatcherFromResource(java.lang.String)>(r2);
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher mCurrentPatternMatcher> = $r17;
+
+     label08:
+        r0.<com.android.internal.telephony.SmsUsageMonitor: java.lang.String mCurrentCountry> = r2;
+
+     label09:
+        $r7 = r0.<com.android.internal.telephony.SmsUsageMonitor: com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher mCurrentPatternMatcher>;
+
+        if $r7 == null goto label11;
+
+        $r13 = r0.<com.android.internal.telephony.SmsUsageMonitor: com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher mCurrentPatternMatcher>;
+
+        $i2 = virtualinvoke $r13.<com.android.internal.telephony.SmsUsageMonitor$ShortCodePatternMatcher: int getNumberCategory(java.lang.String)>(r1);
+
+        exitmonitor r3;
+
+     label10:
+        return $i2;
+
+     label11:
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("No patterns for \"");
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\": using generic short code rule");
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsUsageMonitor", $r12);
+
+        $i0 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i0 > 5 goto label13;
+
+        exitmonitor r3;
+
+     label12:
+        return 3;
+
+     label13:
+        exitmonitor r3;
+
+     label14:
+        return 0;
+
+     label15:
+        $r20 := @caughtexception;
+
+        r4 = $r20;
+
+        exitmonitor r3;
+
+     label16:
+        throw r4;
+
+        catch java.lang.Throwable from label01 to label02 with label15;
+        catch java.lang.Throwable from label03 to label04 with label15;
+        catch java.lang.Throwable from label05 to label10 with label15;
+        catch java.lang.Throwable from label11 to label12 with label15;
+        catch java.lang.Throwable from label13 to label14 with label15;
+        catch java.lang.Throwable from label15 to label16 with label15;
+    }
+
+    private void loadPremiumSmsPolicyDb()
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        java.util.HashMap r1, $r12, $r18, $r25;
+        java.io.File r2, $r14, $r15;
+        java.io.FileInputStream r3;
+        org.xmlpull.v1.XmlPullParser r4;
+        java.lang.String r5, r6, r7, $r22, $r35;
+        java.lang.Throwable r9, r11, $r38, $r41;
+        android.util.AtomicFile $r13, $r16, $r17;
+        boolean $z0;
+        java.lang.StringBuilder $r19, $r20, $r21, $r31, $r33, $r36;
+        java.lang.Integer $r23;
+        int $i1;
+        org.xmlpull.v1.XmlPullParserException $r26, r50;
+        java.io.IOException $r27, $r28, $r29, $r30, $r39, $r40, $r42, r46;
+        java.lang.NumberFormatException $r32, $r34, r48;
+        java.io.FileNotFoundException $r37;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        $r12 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mPremiumSmsPolicy>;
+
+        r1 = $r12;
+
+        entermonitor $r12;
+
+     label01:
+        $r13 = r0.<com.android.internal.telephony.SmsUsageMonitor: android.util.AtomicFile mPolicyFile>;
+
+        if $r13 != null goto label42;
+
+        $r14 = new java.io.File;
+
+        specialinvoke $r14.<java.io.File: void <init>(java.lang.String)>("/data/misc/sms");
+
+        r2 = $r14;
+
+        $r16 = new android.util.AtomicFile;
+
+        $r15 = new java.io.File;
+
+        specialinvoke $r15.<java.io.File: void <init>(java.io.File,java.lang.String)>(r2, "premium_sms_policy.xml");
+
+        specialinvoke $r16.<android.util.AtomicFile: void <init>(java.io.File)>($r15);
+
+        r0.<com.android.internal.telephony.SmsUsageMonitor: android.util.AtomicFile mPolicyFile> = $r16;
+
+        $r18 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mPremiumSmsPolicy>;
+
+        virtualinvoke $r18.<java.util.HashMap: void clear()>();
+
+        r3 = null;
+
+     label02:
+        $r17 = r0.<com.android.internal.telephony.SmsUsageMonitor: android.util.AtomicFile mPolicyFile>;
+
+        r3 = virtualinvoke $r17.<android.util.AtomicFile: java.io.FileInputStream openRead()>();
+
+        r4 = staticinvoke <android.util.Xml: org.xmlpull.v1.XmlPullParser newPullParser()>();
+
+        interfaceinvoke r4.<org.xmlpull.v1.XmlPullParser: void setInput(java.io.InputStream,java.lang.String)>(r3, null);
+
+        staticinvoke <com.android.internal.util.XmlUtils: void beginDocument(org.xmlpull.v1.XmlPullParser,java.lang.String)>(r4, "premium-sms-policy");
+
+     label03:
+        staticinvoke <com.android.internal.util.XmlUtils: void nextElement(org.xmlpull.v1.XmlPullParser)>(r4);
+
+        r5 = interfaceinvoke r4.<org.xmlpull.v1.XmlPullParser: java.lang.String getName()>();
+
+        if r5 != null goto label04;
+
+        goto label12;
+
+     label04:
+        $z0 = virtualinvoke r5.<java.lang.String: boolean equals(java.lang.Object)>("package");
+
+        if $z0 == 0 goto label10;
+
+        r6 = interfaceinvoke r4.<org.xmlpull.v1.XmlPullParser: java.lang.String getAttributeValue(java.lang.String,java.lang.String)>(null, "name");
+
+        r7 = interfaceinvoke r4.<org.xmlpull.v1.XmlPullParser: java.lang.String getAttributeValue(java.lang.String,java.lang.String)>(null, "sms-policy");
+
+        if r6 != null goto label05;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsUsageMonitor", "Error: missing package name attribute");
+
+        goto label09;
+
+     label05:
+        if r7 != null goto label06;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsUsageMonitor", "Error: missing package policy attribute");
+
+        goto label09;
+
+     label06:
+        $r25 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mPremiumSmsPolicy>;
+
+        $i1 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r7);
+
+        $r23 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i1);
+
+        virtualinvoke $r25.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r6, $r23);
+
+     label07:
+        goto label09;
+
+     label08:
+        $r32 := @caughtexception;
+
+        $r33 = new java.lang.StringBuilder;
+
+        specialinvoke $r33.<java.lang.StringBuilder: void <init>()>();
+
+        $r31 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error: non-numeric policy type ");
+
+        $r36 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r7);
+
+        $r35 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsUsageMonitor", $r35);
+
+     label09:
+        goto label11;
+
+     label10:
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error: skipping unknown XML tag ");
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r5);
+
+        $r22 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("SmsUsageMonitor", $r22);
+
+     label11:
+        goto label03;
+
+     label12:
+        if r3 == null goto label42;
+
+     label13:
+        virtualinvoke r3.<java.io.FileInputStream: void close()>();
+
+     label14:
+        goto label42;
+
+     label15:
+        $r29 := @caughtexception;
+
+        goto label42;
+
+     label16:
+        $r37 := @caughtexception;
+
+     label17:
+        if r3 == null goto label42;
+
+     label18:
+        virtualinvoke r3.<java.io.FileInputStream: void close()>();
+
+     label19:
+        goto label42;
+
+     label20:
+        $r30 := @caughtexception;
+
+        goto label42;
+
+     label21:
+        $r40 := @caughtexception;
+
+        r46 = $r40;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("SmsUsageMonitor", "Unable to read premium SMS policy database", r46);
+
+     label22:
+        if r3 == null goto label42;
+
+     label23:
+        virtualinvoke r3.<java.io.FileInputStream: void close()>();
+
+     label24:
+        goto label42;
+
+     label25:
+        $r39 := @caughtexception;
+
+        goto label42;
+
+     label26:
+        $r34 := @caughtexception;
+
+        r48 = $r34;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("SmsUsageMonitor", "Unable to parse premium SMS policy database", r48);
+
+     label27:
+        if r3 == null goto label42;
+
+     label28:
+        virtualinvoke r3.<java.io.FileInputStream: void close()>();
+
+     label29:
+        goto label42;
+
+     label30:
+        $r42 := @caughtexception;
+
+        goto label42;
+
+     label31:
+        $r26 := @caughtexception;
+
+        r50 = $r26;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("SmsUsageMonitor", "Unable to parse premium SMS policy database", r50);
+
+     label32:
+        if r3 == null goto label42;
+
+     label33:
+        virtualinvoke r3.<java.io.FileInputStream: void close()>();
+
+     label34:
+        goto label42;
+
+     label35:
+        $r28 := @caughtexception;
+
+        goto label42;
+
+     label36:
+        $r38 := @caughtexception;
+
+        r9 = $r38;
+
+     label37:
+        if r3 == null goto label41;
+
+     label38:
+        virtualinvoke r3.<java.io.FileInputStream: void close()>();
+
+     label39:
+        goto label41;
+
+     label40:
+        $r27 := @caughtexception;
+
+     label41:
+        throw r9;
+
+     label42:
+        exitmonitor r1;
+
+     label43:
+        goto label46;
+
+     label44:
+        $r41 := @caughtexception;
+
+        r11 = $r41;
+
+        exitmonitor r1;
+
+     label45:
+        throw r11;
+
+     label46:
+        return;
+
+        catch java.lang.NumberFormatException from label06 to label07 with label08;
+        catch java.io.IOException from label13 to label14 with label15;
+        catch java.io.FileNotFoundException from label02 to label12 with label16;
+        catch java.io.IOException from label18 to label19 with label20;
+        catch java.io.IOException from label02 to label12 with label21;
+        catch java.io.IOException from label23 to label24 with label25;
+        catch java.lang.NumberFormatException from label02 to label12 with label26;
+        catch java.io.IOException from label28 to label29 with label30;
+        catch org.xmlpull.v1.XmlPullParserException from label02 to label12 with label31;
+        catch java.io.IOException from label33 to label34 with label35;
+        catch java.lang.Throwable from label02 to label12 with label36;
+        catch java.lang.Throwable from label16 to label17 with label36;
+        catch java.lang.Throwable from label21 to label22 with label36;
+        catch java.lang.Throwable from label26 to label27 with label36;
+        catch java.lang.Throwable from label31 to label32 with label36;
+        catch java.io.IOException from label38 to label39 with label40;
+        catch java.lang.Throwable from label36 to label37 with label36;
+        catch java.lang.Throwable from label01 to label43 with label44;
+        catch java.lang.Throwable from label44 to label45 with label44;
+    }
+
+    private void writePremiumSmsPolicyDb()
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        java.util.HashMap r1, $r7, $r12;
+        java.io.FileOutputStream r2;
+        com.android.internal.util.FastXmlSerializer r3, $r9;
+        java.util.Iterator r4;
+        java.util.Map$Entry r5;
+        java.lang.Throwable r6, $r24;
+        android.util.AtomicFile $r8, $r14, $r27;
+        java.lang.Boolean $r10;
+        java.util.Set $r13;
+        boolean $z0;
+        java.lang.Object $r16, $r18, $r22;
+        java.lang.String $r20, $r25;
+        java.lang.Integer $r21;
+        java.io.IOException $r28, r29;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        $r7 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mPremiumSmsPolicy>;
+
+        r1 = $r7;
+
+        entermonitor $r7;
+
+     label01:
+        r2 = null;
+
+     label02:
+        $r8 = r0.<com.android.internal.telephony.SmsUsageMonitor: android.util.AtomicFile mPolicyFile>;
+
+        r2 = virtualinvoke $r8.<android.util.AtomicFile: java.io.FileOutputStream startWrite()>();
+
+        $r9 = new com.android.internal.util.FastXmlSerializer;
+
+        specialinvoke $r9.<com.android.internal.util.FastXmlSerializer: void <init>()>();
+
+        r3 = $r9;
+
+        interfaceinvoke r3.<org.xmlpull.v1.XmlSerializer: void setOutput(java.io.OutputStream,java.lang.String)>(r2, "utf-8");
+
+        $r10 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(1);
+
+        interfaceinvoke r3.<org.xmlpull.v1.XmlSerializer: void startDocument(java.lang.String,java.lang.Boolean)>(null, $r10);
+
+        interfaceinvoke r3.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer startTag(java.lang.String,java.lang.String)>(null, "premium-sms-policy");
+
+        $r12 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mPremiumSmsPolicy>;
+
+        $r13 = virtualinvoke $r12.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r4 = interfaceinvoke $r13.<java.util.Set: java.util.Iterator iterator()>();
+
+     label03:
+        $z0 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label04;
+
+        $r16 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (java.util.Map$Entry) $r16;
+
+        interfaceinvoke r3.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer startTag(java.lang.String,java.lang.String)>(null, "package");
+
+        $r18 = interfaceinvoke r5.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r20 = (java.lang.String) $r18;
+
+        interfaceinvoke r3.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer attribute(java.lang.String,java.lang.String,java.lang.String)>(null, "name", $r20);
+
+        $r22 = interfaceinvoke r5.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r21 = (java.lang.Integer) $r22;
+
+        $r25 = virtualinvoke $r21.<java.lang.Integer: java.lang.String toString()>();
+
+        interfaceinvoke r3.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer attribute(java.lang.String,java.lang.String,java.lang.String)>(null, "sms-policy", $r25);
+
+        interfaceinvoke r3.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer endTag(java.lang.String,java.lang.String)>(null, "package");
+
+        goto label03;
+
+     label04:
+        interfaceinvoke r3.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer endTag(java.lang.String,java.lang.String)>(null, "premium-sms-policy");
+
+        interfaceinvoke r3.<org.xmlpull.v1.XmlSerializer: void endDocument()>();
+
+        $r14 = r0.<com.android.internal.telephony.SmsUsageMonitor: android.util.AtomicFile mPolicyFile>;
+
+        virtualinvoke $r14.<android.util.AtomicFile: void finishWrite(java.io.FileOutputStream)>(r2);
+
+     label05:
+        goto label07;
+
+     label06:
+        $r28 := @caughtexception;
+
+        r29 = $r28;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("SmsUsageMonitor", "Unable to write premium SMS policy database", r29);
+
+        if r2 == null goto label07;
+
+        $r27 = r0.<com.android.internal.telephony.SmsUsageMonitor: android.util.AtomicFile mPolicyFile>;
+
+        virtualinvoke $r27.<android.util.AtomicFile: void failWrite(java.io.FileOutputStream)>(r2);
+
+     label07:
+        exitmonitor r1;
+
+     label08:
+        goto label11;
+
+     label09:
+        $r24 := @caughtexception;
+
+        r6 = $r24;
+
+        exitmonitor r1;
+
+     label10:
+        throw r6;
+
+     label11:
+        return;
+
+        catch java.io.IOException from label02 to label05 with label06;
+        catch java.lang.Throwable from label01 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    public int getPremiumSmsPermission(java.lang.String)
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        java.lang.String r1;
+        java.util.HashMap r2, $r5, $r6;
+        java.lang.Integer r3;
+        java.lang.Throwable r4, $r8;
+        java.lang.Object $r7;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        r1 := @parameter0: java.lang.String;
+
+        staticinvoke <com.android.internal.telephony.SmsUsageMonitor: void checkCallerIsSystemOrSameApp(java.lang.String)>(r1);
+
+        $r5 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mPremiumSmsPolicy>;
+
+        r2 = $r5;
+
+        entermonitor $r5;
+
+     label1:
+        $r6 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mPremiumSmsPolicy>;
+
+        $r7 = virtualinvoke $r6.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r3 = (java.lang.Integer) $r7;
+
+        if r3 != null goto label3;
+
+        exitmonitor r2;
+
+     label2:
+        return 0;
+
+     label3:
+        $i0 = virtualinvoke r3.<java.lang.Integer: int intValue()>();
+
+        exitmonitor r2;
+
+     label4:
+        return $i0;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r4 = $r8;
+
+        exitmonitor r2;
+
+     label6:
+        throw r4;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public void setPremiumSmsPermission(java.lang.String, int)
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        java.lang.String r1, $r8;
+        int i0;
+        java.util.HashMap r2, $r9, $r10;
+        java.lang.Throwable r3, $r14;
+        java.lang.IllegalArgumentException $r4;
+        java.lang.StringBuilder $r5, $r6, $r7;
+        java.lang.Integer $r11;
+        java.lang.Thread $r13;
+        com.android.internal.telephony.SmsUsageMonitor$1 $r15;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        staticinvoke <com.android.internal.telephony.SmsUsageMonitor: void checkCallerIsSystemOrPhoneApp()>();
+
+        if i0 < 1 goto label1;
+
+        if i0 <= 3 goto label2;
+
+     label1:
+        $r4 = new java.lang.IllegalArgumentException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("invalid SMS permission type ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r8);
+
+        throw $r4;
+
+     label2:
+        $r9 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mPremiumSmsPolicy>;
+
+        r2 = $r9;
+
+        entermonitor $r9;
+
+     label3:
+        $r10 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mPremiumSmsPolicy>;
+
+        $r11 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        virtualinvoke $r10.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, $r11);
+
+        exitmonitor r2;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r14 := @caughtexception;
+
+        r3 = $r14;
+
+        exitmonitor r2;
+
+     label6:
+        throw r3;
+
+     label7:
+        $r13 = new java.lang.Thread;
+
+        $r15 = new com.android.internal.telephony.SmsUsageMonitor$1;
+
+        specialinvoke $r15.<com.android.internal.telephony.SmsUsageMonitor$1: void <init>(com.android.internal.telephony.SmsUsageMonitor)>(r0);
+
+        specialinvoke $r13.<java.lang.Thread: void <init>(java.lang.Runnable)>($r15);
+
+        virtualinvoke $r13.<java.lang.Thread: void start()>();
+
+        return;
+
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private static void checkCallerIsSystemOrSameApp(java.lang.String)
+    {
+        java.lang.String r0, $r12, $r19;
+        int i0, $i1, $i2, $i3, $i4;
+        android.content.pm.ApplicationInfo r1;
+        android.content.pm.IPackageManager $r2;
+        boolean $z0;
+        java.lang.SecurityException $r3, $r14;
+        java.lang.StringBuilder $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r13, $r15, $r16, $r17, $r18;
+        android.os.RemoteException $r11, r20;
+
+        r0 := @parameter0: java.lang.String;
+
+        i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $i1 = staticinvoke <android.os.UserHandle: int getAppId(int)>(i0);
+
+        if $i1 == 1000 goto label1;
+
+        if i0 != 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r2 = staticinvoke <android.app.AppGlobals: android.content.pm.IPackageManager getPackageManager()>();
+
+        $i2 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        r1 = interfaceinvoke $r2.<android.content.pm.IPackageManager: android.content.pm.ApplicationInfo getApplicationInfo(java.lang.String,int,int)>(r0, 0, $i2);
+
+        $i3 = r1.<android.content.pm.ApplicationInfo: int uid>;
+
+        $z0 = staticinvoke <android.os.UserHandle: boolean isSameApp(int,int)>($i3, i0);
+
+        if $z0 != 0 goto label3;
+
+        $r3 = new java.lang.SecurityException;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Calling uid ");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" gave package");
+
+        $r9 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r8 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" which is owned by uid ");
+
+        $i4 = r1.<android.content.pm.ApplicationInfo: int uid>;
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r3.<java.lang.SecurityException: void <init>(java.lang.String)>($r12);
+
+        throw $r3;
+
+     label3:
+        goto label5;
+
+     label4:
+        $r11 := @caughtexception;
+
+        r20 = $r11;
+
+        $r14 = new java.lang.SecurityException;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown package ");
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\n");
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r20);
+
+        $r19 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r14.<java.lang.SecurityException: void <init>(java.lang.String)>($r19);
+
+        throw $r14;
+
+     label5:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    private static void checkCallerIsSystemOrPhoneApp()
+    {
+        int i0, i1;
+        java.lang.SecurityException $r0;
+        java.lang.StringBuilder $r1, $r2, $r3;
+        java.lang.String $r4;
+
+        i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        i1 = staticinvoke <android.os.UserHandle: int getAppId(int)>(i0);
+
+        if i1 == 1000 goto label1;
+
+        if i1 == 1001 goto label1;
+
+        if i0 != 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r0 = new java.lang.SecurityException;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Disallowed call for uid ");
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r0.<java.lang.SecurityException: void <init>(java.lang.String)>($r4);
+
+        throw $r0;
+    }
+
+    private void removeExpiredTimestamps()
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        long l0, $l1, $l3, $l7;
+        java.util.HashMap r1, $r6, $r7;
+        java.util.Iterator r2;
+        java.util.Map$Entry r3;
+        java.util.ArrayList r4;
+        java.lang.Throwable r5, $r13;
+        int $i2, $i4, $i5;
+        java.util.Set $r8;
+        boolean $z0, $z1;
+        java.lang.Object $r9, $r10, $r12;
+        java.lang.Long $r11;
+        byte $b6;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        $l1 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $i2 = r0.<com.android.internal.telephony.SmsUsageMonitor: int mCheckPeriod>;
+
+        $l3 = (long) $i2;
+
+        l0 = $l1 - $l3;
+
+        $r6 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mSmsStamp>;
+
+        r1 = $r6;
+
+        entermonitor $r6;
+
+     label1:
+        $r7 = r0.<com.android.internal.telephony.SmsUsageMonitor: java.util.HashMap mSmsStamp>;
+
+        $r8 = virtualinvoke $r7.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r2 = interfaceinvoke $r8.<java.util.Set: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label5;
+
+        $r9 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.util.Map$Entry) $r9;
+
+        $r10 = interfaceinvoke r3.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        r4 = (java.util.ArrayList) $r10;
+
+        $z1 = virtualinvoke r4.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z1 != 0 goto label3;
+
+        $i5 = virtualinvoke r4.<java.util.ArrayList: int size()>();
+
+        $i4 = $i5 - 1;
+
+        $r12 = virtualinvoke r4.<java.util.ArrayList: java.lang.Object get(int)>($i4);
+
+        $r11 = (java.lang.Long) $r12;
+
+        $l7 = virtualinvoke $r11.<java.lang.Long: long longValue()>();
+
+        $b6 = $l7 cmp l0;
+
+        if $b6 >= 0 goto label4;
+
+     label3:
+        interfaceinvoke r2.<java.util.Iterator: void remove()>();
+
+     label4:
+        goto label2;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r13 := @caughtexception;
+
+        r5 = $r13;
+
+        exitmonitor r1;
+
+     label8:
+        throw r5;
+
+     label9:
+        return;
+
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    private boolean isUnderLimit(java.util.ArrayList, int)
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+        java.util.ArrayList r1;
+        int i0, i2, $i5, $i7, $i8, $i9;
+        java.lang.Long r2, $r4;
+        long l1, $l3, $l4, $l6, $l10;
+        boolean $z0;
+        java.lang.Object $r3;
+        byte $b11;
+
+        r0 := @this: com.android.internal.telephony.SmsUsageMonitor;
+
+        r1 := @parameter0: java.util.ArrayList;
+
+        i0 := @parameter1: int;
+
+        $l3 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        r2 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l3);
+
+        $l4 = virtualinvoke r2.<java.lang.Long: long longValue()>();
+
+        $i5 = r0.<com.android.internal.telephony.SmsUsageMonitor: int mCheckPeriod>;
+
+        $l6 = (long) $i5;
+
+        l1 = $l4 - $l6;
+
+     label1:
+        $z0 = virtualinvoke r1.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z0 != 0 goto label2;
+
+        $r3 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        $r4 = (java.lang.Long) $r3;
+
+        $l10 = virtualinvoke $r4.<java.lang.Long: long longValue()>();
+
+        $b11 = $l10 cmp l1;
+
+        if $b11 >= 0 goto label2;
+
+        virtualinvoke r1.<java.util.ArrayList: java.lang.Object remove(int)>(0);
+
+        goto label1;
+
+     label2:
+        $i7 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        $i9 = $i7 + i0;
+
+        $i8 = r0.<com.android.internal.telephony.SmsUsageMonitor: int mMaxAllowed>;
+
+        if $i9 > $i8 goto label5;
+
+        i2 = 0;
+
+     label3:
+        if i2 >= i0 goto label4;
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>(r2);
+
+        i2 = i2 + 1;
+
+        goto label3;
+
+     label4:
+        return 1;
+
+     label5:
+        return 0;
+    }
+
+    private static void log(java.lang.String)
+    {
+        java.lang.String r0;
+
+        r0 := @parameter0: java.lang.String;
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("SmsUsageMonitor", r0);
+
+        return;
+    }
+
+    static void access$000(com.android.internal.telephony.SmsUsageMonitor)
+    {
+        com.android.internal.telephony.SmsUsageMonitor r0;
+
+        r0 := @parameter0: com.android.internal.telephony.SmsUsageMonitor;
+
+        specialinvoke r0.<com.android.internal.telephony.SmsUsageMonitor: void writePremiumSmsPolicyDb()>();
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String ATTR_PACKAGE_SMS_POLICY> = "sms-policy";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String ATTR_PACKAGE_NAME> = "name";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String TAG_PACKAGE> = "package";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String TAG_SMS_POLICY_BODY> = "premium-sms-policy";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String ATTR_STANDARD> = "standard";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String ATTR_FREE> = "free";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String ATTR_PREMIUM> = "premium";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String ATTR_PATTERN> = "pattern";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String ATTR_COUNTRY> = "country";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String TAG_SHORTCODE> = "shortcode";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String TAG_SHORTCODES> = "shortcodes";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String SMS_POLICY_FILE_NAME> = "premium_sms_policy.xml";
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String SMS_POLICY_FILE_DIRECTORY> = "/data/misc/sms";
+
+        <com.android.internal.telephony.SmsUsageMonitor: int PREMIUM_SMS_PERMISSION_ALWAYS_ALLOW> = 3;
+
+        <com.android.internal.telephony.SmsUsageMonitor: int PREMIUM_SMS_PERMISSION_NEVER_ALLOW> = 2;
+
+        <com.android.internal.telephony.SmsUsageMonitor: int PREMIUM_SMS_PERMISSION_ASK_USER> = 1;
+
+        <com.android.internal.telephony.SmsUsageMonitor: int PREMIUM_SMS_PERMISSION_UNKNOWN> = 0;
+
+        <com.android.internal.telephony.SmsUsageMonitor: int CATEGORY_PREMIUM_SHORT_CODE> = 4;
+
+        <com.android.internal.telephony.SmsUsageMonitor: int CATEGORY_POSSIBLE_PREMIUM_SHORT_CODE> = 3;
+
+        <com.android.internal.telephony.SmsUsageMonitor: int CATEGORY_STANDARD_SHORT_CODE> = 2;
+
+        <com.android.internal.telephony.SmsUsageMonitor: int CATEGORY_FREE_SHORT_CODE> = 1;
+
+        <com.android.internal.telephony.SmsUsageMonitor: int CATEGORY_NOT_SHORT_CODE> = 0;
+
+        <com.android.internal.telephony.SmsUsageMonitor: int DEFAULT_SMS_MAX_COUNT> = 30;
+
+        <com.android.internal.telephony.SmsUsageMonitor: int DEFAULT_SMS_CHECK_PERIOD> = 60000;
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String SHORT_CODE_PATH> = "/data/misc/sms/codes";
+
+        <com.android.internal.telephony.SmsUsageMonitor: boolean VDBG> = 0;
+
+        <com.android.internal.telephony.SmsUsageMonitor: boolean DBG> = 0;
+
+        <com.android.internal.telephony.SmsUsageMonitor: java.lang.String TAG> = "SmsUsageMonitor";
+
+        return;
+    }
+}

@@ -1,0 +1,2569 @@
+class com.android.server.accessibility.TouchExplorer extends java.lang.Object implements com.android.server.accessibility.EventStreamTransformation
+{
+    private static final boolean DEBUG;
+    private static final java.lang.String LOG_TAG;
+    private static final int STATE_TOUCH_EXPLORING;
+    private static final int STATE_DRAGGING;
+    private static final int STATE_DELEGATING;
+    private static final int STATE_GESTURE_DETECTING;
+    private static final float MAX_DRAGGING_ANGLE_COS;
+    private static final int ALL_POINTER_ID_BITS;
+    private static final int MAX_POINTER_COUNT;
+    private static final int INVALID_POINTER_ID;
+    private static final int GESTURE_DETECTION_VELOCITY_DIP;
+    private static final int MIN_POINTER_DISTANCE_TO_USE_MIDDLE_LOCATION_DIP;
+    private static final int EXIT_GESTURE_DETECTION_TIMEOUT;
+    private final int mDetermineUserIntentTimeout;
+    private final int mTapTimeout;
+    private final int mDoubleTapTimeout;
+    private final int mTouchSlop;
+    private final int mDoubleTapSlop;
+    private int mCurrentState;
+    private int mDraggingPointerId;
+    private final android.os.Handler mHandler;
+    private final com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed;
+    private final com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed mSendHoverExitDelayed;
+    private final com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchExplorationEndDelayed;
+    private final com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchInteractionEndDelayed;
+    private final com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed;
+    private final com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed mExitGestureDetectionModeDelayed;
+    private final com.android.server.accessibility.TouchExplorer$DoubleTapDetector mDoubleTapDetector;
+    private final int mScaledMinPointerDistanceToUseMiddleLocation;
+    private final int mScaledGestureDetectionVelocity;
+    private com.android.server.accessibility.EventStreamTransformation mNext;
+    private final android.view.VelocityTracker mVelocityTracker;
+    private final com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker mReceivedPointerTracker;
+    private final com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker;
+    private final com.android.server.accessibility.AccessibilityManagerService mAms;
+    private final android.graphics.Rect mTempRect;
+    private final android.graphics.Point mTempPoint;
+    private final android.content.Context mContext;
+    private float mPreviousX;
+    private float mPreviousY;
+    private final java.util.ArrayList mStrokeBuffer;
+    private static final int TOUCH_TOLERANCE;
+    private static final float MIN_PREDICTION_SCORE;
+    private android.gesture.GestureLibrary mGestureLibrary;
+    private int mLongPressingPointerId;
+    private int mLongPressingPointerDeltaX;
+    private int mLongPressingPointerDeltaY;
+    private int mLastTouchedWindowId;
+    private boolean mTouchExplorationInProgress;
+
+    public void <init>(android.content.Context, com.android.server.accessibility.AccessibilityManagerService)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.content.Context r1;
+        com.android.server.accessibility.AccessibilityManagerService r2;
+        float f0, $f1, $f2;
+        android.view.VelocityTracker $r3;
+        android.graphics.Rect $r4;
+        android.graphics.Point $r5;
+        java.util.ArrayList $r6;
+        com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker $r7;
+        com.android.server.accessibility.TouchExplorer$InjectedPointerTracker $r8;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        android.view.ViewConfiguration $r9, $r10;
+        android.os.Handler $r11;
+        com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed $r12;
+        android.os.Looper $r13;
+        android.gesture.GestureLibrary $r14, $r16, $r17, $r18;
+        com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed $r15;
+        com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed $r19;
+        com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed $r20;
+        com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed $r21, $r22;
+        android.util.DisplayMetrics $r23;
+        com.android.server.accessibility.TouchExplorer$DoubleTapDetector $r24;
+        android.content.res.Resources $r25;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.server.accessibility.AccessibilityManagerService;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 1;
+
+        $r3 = staticinvoke <android.view.VelocityTracker: android.view.VelocityTracker obtain()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: android.view.VelocityTracker mVelocityTracker> = $r3;
+
+        $r4 = new android.graphics.Rect;
+
+        specialinvoke $r4.<android.graphics.Rect: void <init>()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: android.graphics.Rect mTempRect> = $r4;
+
+        $r5 = new android.graphics.Point;
+
+        specialinvoke $r5.<android.graphics.Point: void <init>()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: android.graphics.Point mTempPoint> = $r5;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>(int)>(100);
+
+        r0.<com.android.server.accessibility.TouchExplorer: java.util.ArrayList mStrokeBuffer> = $r6;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerId> = -1;
+
+        r0.<com.android.server.accessibility.TouchExplorer: android.content.Context mContext> = r1;
+
+        r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms> = r2;
+
+        $r7 = new com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker;
+
+        specialinvoke $r7.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: void <init>(com.android.server.accessibility.TouchExplorer)>(r0);
+
+        r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker mReceivedPointerTracker> = $r7;
+
+        $r8 = new com.android.server.accessibility.TouchExplorer$InjectedPointerTracker;
+
+        specialinvoke $r8.<com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: void <init>(com.android.server.accessibility.TouchExplorer)>(r0);
+
+        r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker> = $r8;
+
+        $i0 = staticinvoke <android.view.ViewConfiguration: int getTapTimeout()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mTapTimeout> = $i0;
+
+        $i1 = staticinvoke <android.view.ViewConfiguration: int getDoubleTapTimeout()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mDetermineUserIntentTimeout> = $i1;
+
+        $i2 = staticinvoke <android.view.ViewConfiguration: int getDoubleTapTimeout()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mDoubleTapTimeout> = $i2;
+
+        $r9 = staticinvoke <android.view.ViewConfiguration: android.view.ViewConfiguration get(android.content.Context)>(r1);
+
+        $i3 = virtualinvoke $r9.<android.view.ViewConfiguration: int getScaledTouchSlop()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mTouchSlop> = $i3;
+
+        $r10 = staticinvoke <android.view.ViewConfiguration: android.view.ViewConfiguration get(android.content.Context)>(r1);
+
+        $i4 = virtualinvoke $r10.<android.view.ViewConfiguration: int getScaledDoubleTapSlop()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mDoubleTapSlop> = $i4;
+
+        $r11 = new android.os.Handler;
+
+        $r13 = virtualinvoke r1.<android.content.Context: android.os.Looper getMainLooper()>();
+
+        specialinvoke $r11.<android.os.Handler: void <init>(android.os.Looper)>($r13);
+
+        r0.<com.android.server.accessibility.TouchExplorer: android.os.Handler mHandler> = $r11;
+
+        $r12 = new com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed;
+
+        specialinvoke $r12.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void <init>(com.android.server.accessibility.TouchExplorer,com.android.server.accessibility.TouchExplorer$1)>(r0, null);
+
+        r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed> = $r12;
+
+        $r15 = new com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed;
+
+        specialinvoke $r15.<com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed: void <init>(com.android.server.accessibility.TouchExplorer,com.android.server.accessibility.TouchExplorer$1)>(r0, null);
+
+        r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed mExitGestureDetectionModeDelayed> = $r15;
+
+        $r14 = staticinvoke <android.gesture.GestureLibraries: android.gesture.GestureLibrary fromRawResource(android.content.Context,int)>(r1, 17825794);
+
+        r0.<com.android.server.accessibility.TouchExplorer: android.gesture.GestureLibrary mGestureLibrary> = $r14;
+
+        $r17 = r0.<com.android.server.accessibility.TouchExplorer: android.gesture.GestureLibrary mGestureLibrary>;
+
+        virtualinvoke $r17.<android.gesture.GestureLibrary: void setOrientationStyle(int)>(8);
+
+        $r16 = r0.<com.android.server.accessibility.TouchExplorer: android.gesture.GestureLibrary mGestureLibrary>;
+
+        virtualinvoke $r16.<android.gesture.GestureLibrary: void setSequenceType(int)>(2);
+
+        $r18 = r0.<com.android.server.accessibility.TouchExplorer: android.gesture.GestureLibrary mGestureLibrary>;
+
+        virtualinvoke $r18.<android.gesture.GestureLibrary: boolean load()>();
+
+        $r20 = new com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed;
+
+        specialinvoke $r20.<com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: void <init>(com.android.server.accessibility.TouchExplorer)>(r0);
+
+        r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed> = $r20;
+
+        $r19 = new com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed;
+
+        specialinvoke $r19.<com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed: void <init>(com.android.server.accessibility.TouchExplorer)>(r0);
+
+        r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed mSendHoverExitDelayed> = $r19;
+
+        $r21 = new com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed;
+
+        $i5 = r0.<com.android.server.accessibility.TouchExplorer: int mDetermineUserIntentTimeout>;
+
+        specialinvoke $r21.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: void <init>(com.android.server.accessibility.TouchExplorer,int,int)>(r0, 1024, $i5);
+
+        r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchExplorationEndDelayed> = $r21;
+
+        $r22 = new com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed;
+
+        $i6 = r0.<com.android.server.accessibility.TouchExplorer: int mDetermineUserIntentTimeout>;
+
+        specialinvoke $r22.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: void <init>(com.android.server.accessibility.TouchExplorer,int,int)>(r0, 2097152, $i6);
+
+        r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchInteractionEndDelayed> = $r22;
+
+        $r24 = new com.android.server.accessibility.TouchExplorer$DoubleTapDetector;
+
+        specialinvoke $r24.<com.android.server.accessibility.TouchExplorer$DoubleTapDetector: void <init>(com.android.server.accessibility.TouchExplorer,com.android.server.accessibility.TouchExplorer$1)>(r0, null);
+
+        r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$DoubleTapDetector mDoubleTapDetector> = $r24;
+
+        $r25 = virtualinvoke r1.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $r23 = virtualinvoke $r25.<android.content.res.Resources: android.util.DisplayMetrics getDisplayMetrics()>();
+
+        f0 = $r23.<android.util.DisplayMetrics: float density>;
+
+        $f1 = 200.0F * f0;
+
+        $i8 = (int) $f1;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mScaledMinPointerDistanceToUseMiddleLocation> = $i8;
+
+        $f2 = 1000.0F * f0;
+
+        $i7 = (int) $f2;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mScaledGestureDetectionVelocity> = $i7;
+
+        return;
+    }
+
+    public void clear()
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1, $r4;
+        com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker $r2, $r3;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        $r2 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker mReceivedPointerTracker>;
+
+        r1 = virtualinvoke $r2.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: android.view.MotionEvent getLastReceivedEvent()>();
+
+        if r1 == null goto label1;
+
+        $r3 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker mReceivedPointerTracker>;
+
+        $r4 = virtualinvoke $r3.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: android.view.MotionEvent getLastReceivedEvent()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void clear(android.view.MotionEvent,int)>($r4, 33554432);
+
+     label1:
+        return;
+    }
+
+    public void onDestroy()
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        return;
+    }
+
+    private void clear(android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1;
+        int i0, $i1;
+        com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed $r2;
+        com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed $r3;
+        com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed $r4;
+        com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed $r5;
+        com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed $r6, $r7;
+        com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker $r8;
+        com.android.server.accessibility.TouchExplorer$InjectedPointerTracker $r9;
+        com.android.server.accessibility.TouchExplorer$DoubleTapDetector $r10;
+        com.android.server.accessibility.EventStreamTransformation $r11, $r13;
+        com.android.server.accessibility.AccessibilityManagerService $r12;
+        java.util.ArrayList $r14;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        i0 := @parameter1: int;
+
+        $i1 = r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState>;
+
+        tableswitch($i1)
+        {
+            case 1: goto label1;
+            case 2: goto label2;
+            case 3: goto label5;
+            case 4: goto label3;
+            case 5: goto label4;
+            default: goto label5;
+        };
+
+     label1:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendHoverExitAndTouchExplorationGestureEndIfNeeded(int)>(i0);
+
+        goto label5;
+
+     label2:
+        r0.<com.android.server.accessibility.TouchExplorer: int mDraggingPointerId> = -1;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendUpForInjectedDownPointers(android.view.MotionEvent,int)>(r1, i0);
+
+        goto label5;
+
+     label3:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendUpForInjectedDownPointers(android.view.MotionEvent,int)>(r1, i0);
+
+        goto label5;
+
+     label4:
+        $r14 = r0.<com.android.server.accessibility.TouchExplorer: java.util.ArrayList mStrokeBuffer>;
+
+        virtualinvoke $r14.<java.util.ArrayList: void clear()>();
+
+     label5:
+        $r2 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        virtualinvoke $r2.<com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: void cancel()>();
+
+        $r3 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed mSendHoverExitDelayed>;
+
+        virtualinvoke $r3.<com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed: void cancel()>();
+
+        $r4 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r4.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void cancel()>();
+
+        $r5 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed mExitGestureDetectionModeDelayed>;
+
+        virtualinvoke $r5.<com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed: void cancel()>();
+
+        $r6 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchExplorationEndDelayed>;
+
+        virtualinvoke $r6.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: void cancel()>();
+
+        $r7 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchInteractionEndDelayed>;
+
+        virtualinvoke $r7.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: void cancel()>();
+
+        $r8 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker mReceivedPointerTracker>;
+
+        virtualinvoke $r8.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: void clear()>();
+
+        $r9 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        virtualinvoke $r9.<com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: void clear()>();
+
+        $r10 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$DoubleTapDetector mDoubleTapDetector>;
+
+        virtualinvoke $r10.<com.android.server.accessibility.TouchExplorer$DoubleTapDetector: void clear()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerId> = -1;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerDeltaX> = 0;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerDeltaY> = 0;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 1;
+
+        $r11 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        if $r11 == null goto label6;
+
+        $r13 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        interfaceinvoke $r13.<com.android.server.accessibility.EventStreamTransformation: void clear()>();
+
+     label6:
+        r0.<com.android.server.accessibility.TouchExplorer: boolean mTouchExplorationInProgress> = 0;
+
+        $r12 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        virtualinvoke $r12.<com.android.server.accessibility.AccessibilityManagerService: void onTouchInteractionEnd()>();
+
+        return;
+    }
+
+    public void setNext(com.android.server.accessibility.EventStreamTransformation)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        com.android.server.accessibility.EventStreamTransformation r1;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: com.android.server.accessibility.EventStreamTransformation;
+
+        r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.EventStreamTransformation mNext> = r1;
+
+        return;
+    }
+
+    public void onMotionEvent(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1, r2;
+        int i0, $i1, $i2;
+        com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker $r3;
+        java.lang.IllegalStateException $r4;
+        java.lang.StringBuilder $r5, $r6, $r7;
+        java.lang.String $r8;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        $r3 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker mReceivedPointerTracker>;
+
+        virtualinvoke $r3.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: void onMotionEvent(android.view.MotionEvent)>(r2);
+
+        $i1 = r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState>;
+
+        tableswitch($i1)
+        {
+            case 1: goto label1;
+            case 2: goto label2;
+            case 3: goto label5;
+            case 4: goto label3;
+            case 5: goto label4;
+            default: goto label5;
+        };
+
+     label1:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void handleMotionEventStateTouchExploring(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        goto label6;
+
+     label2:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void handleMotionEventStateDragging(android.view.MotionEvent,int)>(r1, i0);
+
+        goto label6;
+
+     label3:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void handleMotionEventStateDelegating(android.view.MotionEvent,int)>(r1, i0);
+
+        goto label6;
+
+     label4:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void handleMotionEventGestureDetecting(android.view.MotionEvent,int)>(r2, i0);
+
+        goto label6;
+
+     label5:
+        $r4 = new java.lang.IllegalStateException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Illegal state: ");
+
+        $i2 = r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState>;
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r8);
+
+        throw $r4;
+
+     label6:
+        return;
+    }
+
+    public void onAccessibilityEvent(android.view.accessibility.AccessibilityEvent)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.accessibility.AccessibilityEvent r1;
+        int i0, $i1;
+        com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed $r2, $r3, $r11, $r13;
+        boolean $z0, $z1;
+        com.android.server.accessibility.EventStreamTransformation $r4, $r5;
+        com.android.server.accessibility.TouchExplorer$InjectedPointerTracker $r6, $r8, $r10;
+        android.view.MotionEvent $r7, $r9;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.accessibility.AccessibilityEvent;
+
+        i0 = virtualinvoke r1.<android.view.accessibility.AccessibilityEvent: int getEventType()>();
+
+        $r2 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchExplorationEndDelayed>;
+
+        $z0 = virtualinvoke $r2.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: boolean isPending()>();
+
+        if $z0 == 0 goto label1;
+
+        if i0 != 256 goto label1;
+
+        $r13 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchExplorationEndDelayed>;
+
+        virtualinvoke $r13.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: void cancel()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendAccessibilityEvent(int)>(1024);
+
+     label1:
+        $r3 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchInteractionEndDelayed>;
+
+        $z1 = virtualinvoke $r3.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: boolean isPending()>();
+
+        if $z1 == 0 goto label2;
+
+        if i0 != 256 goto label2;
+
+        $r11 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchInteractionEndDelayed>;
+
+        virtualinvoke $r11.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: void cancel()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendAccessibilityEvent(int)>(2097152);
+
+     label2:
+        lookupswitch(i0)
+        {
+            case 32: goto label3;
+            case 128: goto label5;
+            case 256: goto label5;
+            case 32768: goto label3;
+            default: goto label6;
+        };
+
+     label3:
+        $r6 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        $r7 = staticinvoke <com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: android.view.MotionEvent access$300(com.android.server.accessibility.TouchExplorer$InjectedPointerTracker)>($r6);
+
+        if $r7 == null goto label4;
+
+        $r8 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        $r9 = staticinvoke <com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: android.view.MotionEvent access$300(com.android.server.accessibility.TouchExplorer$InjectedPointerTracker)>($r8);
+
+        virtualinvoke $r9.<android.view.MotionEvent: void recycle()>();
+
+        $r10 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        staticinvoke <com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: android.view.MotionEvent access$302(com.android.server.accessibility.TouchExplorer$InjectedPointerTracker,android.view.MotionEvent)>($r10, null);
+
+     label4:
+        r0.<com.android.server.accessibility.TouchExplorer: int mLastTouchedWindowId> = -1;
+
+        goto label6;
+
+     label5:
+        $i1 = virtualinvoke r1.<android.view.accessibility.AccessibilityEvent: int getWindowId()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mLastTouchedWindowId> = $i1;
+
+     label6:
+        $r4 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        if $r4 == null goto label7;
+
+        $r5 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        interfaceinvoke $r5.<com.android.server.accessibility.EventStreamTransformation: void onAccessibilityEvent(android.view.accessibility.AccessibilityEvent)>(r1);
+
+     label7:
+        return;
+    }
+
+    private void handleMotionEventStateTouchExploring(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1, r2;
+        int i0, i1, i2, i3, $i4, $i5, $i6, $i8, $i10, $i11, $i14, $i15, i16, i17, i18, i19;
+        com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker r3;
+        float f0, f1, f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, f20, f21, f22, f23;
+        double d0, $d1, $d2, $d3, $d4, $d5, $d6, $d7, $d8, $d9, d10, d11;
+        android.view.VelocityTracker $r4, $r24, $r33, $r34, $r35, $r37, $r41, $r57;
+        com.android.server.accessibility.TouchExplorer$DoubleTapDetector $r5, $r12;
+        com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed $r6, $r13, $r14, $r15, $r17, $r23, $r26, $r27, $r32, $r38, $r42, $r45, $r52, $r56;
+        com.android.server.accessibility.AccessibilityManagerService $r7, $r49;
+        com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed $r8, $r18, $r21, $r22, $r28, $r30, $r31, $r36, $r40, $r43, $r47, $r50;
+        com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed $r9, $r20, $r29, $r39, $r46, $r51, $r53;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z13;
+        com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed $r10, $r11, $r16, $r19, $r54, $r55;
+        java.util.ArrayList $r25, $r48;
+        byte $b7, $b9, $b12, $b13;
+        com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed $r44;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        r3 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker mReceivedPointerTracker>;
+
+        $r4 = r0.<com.android.server.accessibility.TouchExplorer: android.view.VelocityTracker mVelocityTracker>;
+
+        virtualinvoke $r4.<android.view.VelocityTracker: void addMovement(android.view.MotionEvent)>(r2);
+
+        $r5 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$DoubleTapDetector mDoubleTapDetector>;
+
+        virtualinvoke $r5.<com.android.server.accessibility.TouchExplorer$DoubleTapDetector: void onMotionEvent(android.view.MotionEvent,int)>(r1, i0);
+
+        $i4 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        tableswitch($i4)
+        {
+            case 0: goto label01;
+            case 1: goto label23;
+            case 2: goto label07;
+            case 3: goto label27;
+            case 4: goto label28;
+            case 5: goto label06;
+            default: goto label28;
+        };
+
+     label01:
+        $r7 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        virtualinvoke $r7.<com.android.server.accessibility.AccessibilityManagerService: void onTouchInteractionStart()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void handleMotionEventGestureDetecting(android.view.MotionEvent,int)>(r2, i0);
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendAccessibilityEvent(int)>(1048576);
+
+        $r6 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        virtualinvoke $r6.<com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: void cancel()>();
+
+        $r9 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed mSendHoverExitDelayed>;
+
+        virtualinvoke $r9.<com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed: void cancel()>();
+
+        $r8 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r8.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void cancel()>();
+
+        $r10 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchExplorationEndDelayed>;
+
+        $z0 = virtualinvoke $r10.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: boolean isPending()>();
+
+        if $z0 == 0 goto label02;
+
+        $r16 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchExplorationEndDelayed>;
+
+        virtualinvoke $r16.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: void forceSendAndRemove()>();
+
+     label02:
+        $r11 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchInteractionEndDelayed>;
+
+        $z1 = virtualinvoke $r11.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: boolean isPending()>();
+
+        if $z1 == 0 goto label03;
+
+        $r19 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchInteractionEndDelayed>;
+
+        virtualinvoke $r19.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: void forceSendAndRemove()>();
+
+     label03:
+        $r12 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$DoubleTapDetector mDoubleTapDetector>;
+
+        $z2 = virtualinvoke $r12.<com.android.server.accessibility.TouchExplorer$DoubleTapDetector: boolean firstTapDetected()>();
+
+        if $z2 == 0 goto label04;
+
+        $r18 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r18.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void post(android.view.MotionEvent,int)>(r1, i0);
+
+        goto label28;
+
+     label04:
+        $z3 = r0.<com.android.server.accessibility.TouchExplorer: boolean mTouchExplorationInProgress>;
+
+        if $z3 != 0 goto label28;
+
+        $r13 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        $z4 = staticinvoke <com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: boolean access$400(com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed)>($r13);
+
+        if $z4 != 0 goto label05;
+
+        i1 = virtualinvoke r3.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: int getPrimaryPointerId()>();
+
+        i2 = 1 << i1;
+
+        $r15 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        virtualinvoke $r15.<com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: void post(android.view.MotionEvent,boolean,int,int)>(r1, 1, i2, i0);
+
+        goto label28;
+
+     label05:
+        $r14 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        virtualinvoke $r14.<com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: void addEvent(android.view.MotionEvent)>(r1);
+
+        goto label28;
+
+     label06:
+        $r17 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        virtualinvoke $r17.<com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: void cancel()>();
+
+        $r20 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed mSendHoverExitDelayed>;
+
+        virtualinvoke $r20.<com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed: void cancel()>();
+
+        $r21 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r21.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void cancel()>();
+
+        goto label28;
+
+     label07:
+        i16 = virtualinvoke r3.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: int getPrimaryPointerId()>();
+
+        i17 = virtualinvoke r1.<android.view.MotionEvent: int findPointerIndex(int)>(i16);
+
+        i3 = 1 << i16;
+
+        $i5 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        lookupswitch($i5)
+        {
+            case 1: goto label08;
+            case 2: goto label13;
+            default: goto label19;
+        };
+
+     label08:
+        $r27 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        $z8 = staticinvoke <com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: boolean access$400(com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed)>($r27);
+
+        if $z8 == 0 goto label11;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void handleMotionEventGestureDetecting(android.view.MotionEvent,int)>(r2, i0);
+
+        $r32 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        virtualinvoke $r32.<com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: void addEvent(android.view.MotionEvent)>(r1);
+
+        $f11 = virtualinvoke r3.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: float getReceivedPointerDownX(int)>(i16);
+
+        $f13 = virtualinvoke r2.<android.view.MotionEvent: float getX(int)>(i17);
+
+        f0 = $f11 - $f13;
+
+        $f12 = virtualinvoke r3.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: float getReceivedPointerDownY(int)>(i16);
+
+        $f14 = virtualinvoke r2.<android.view.MotionEvent: float getY(int)>(i17);
+
+        f1 = $f12 - $f14;
+
+        $d7 = (double) f0;
+
+        $d9 = (double) f1;
+
+        d0 = staticinvoke <java.lang.Math: double hypot(double,double)>($d7, $d9);
+
+        $i11 = r0.<com.android.server.accessibility.TouchExplorer: int mDoubleTapSlop>;
+
+        $d8 = (double) $i11;
+
+        $b12 = d0 cmpl $d8;
+
+        if $b12 <= 0 goto label10;
+
+        $r34 = r0.<com.android.server.accessibility.TouchExplorer: android.view.VelocityTracker mVelocityTracker>;
+
+        virtualinvoke $r34.<android.view.VelocityTracker: void computeCurrentVelocity(int)>(1000);
+
+        $r35 = r0.<com.android.server.accessibility.TouchExplorer: android.view.VelocityTracker mVelocityTracker>;
+
+        $f18 = virtualinvoke $r35.<android.view.VelocityTracker: float getXVelocity(int)>(i16);
+
+        $f15 = staticinvoke <java.lang.Math: float abs(float)>($f18);
+
+        $r33 = r0.<com.android.server.accessibility.TouchExplorer: android.view.VelocityTracker mVelocityTracker>;
+
+        $f17 = virtualinvoke $r33.<android.view.VelocityTracker: float getYVelocity(int)>(i16);
+
+        $f16 = staticinvoke <java.lang.Math: float abs(float)>($f17);
+
+        f2 = staticinvoke <java.lang.Math: float max(float,float)>($f15, $f16);
+
+        $i14 = r0.<com.android.server.accessibility.TouchExplorer: int mScaledGestureDetectionVelocity>;
+
+        $f19 = (float) $i14;
+
+        $b13 = f2 cmpl $f19;
+
+        if $b13 <= 0 goto label09;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 5;
+
+        $r37 = r0.<com.android.server.accessibility.TouchExplorer: android.view.VelocityTracker mVelocityTracker>;
+
+        virtualinvoke $r37.<android.view.VelocityTracker: void clear()>();
+
+        $r45 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        virtualinvoke $r45.<com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: void cancel()>();
+
+        $r46 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed mSendHoverExitDelayed>;
+
+        virtualinvoke $r46.<com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed: void cancel()>();
+
+        $r43 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r43.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void cancel()>();
+
+        $r44 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed mExitGestureDetectionModeDelayed>;
+
+        virtualinvoke $r44.<com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed: void post()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendAccessibilityEvent(int)>(262144);
+
+        goto label22;
+
+     label09:
+        $r38 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        virtualinvoke $r38.<com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: void forceSendAndRemove()>();
+
+        $r39 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed mSendHoverExitDelayed>;
+
+        virtualinvoke $r39.<com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed: void cancel()>();
+
+        $r36 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r36.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void cancel()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 7, i3, i0);
+
+        goto label22;
+
+     label10:
+        goto label22;
+
+     label11:
+        $r30 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        $z9 = staticinvoke <com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: boolean access$500(com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed)>($r30);
+
+        if $z9 == 0 goto label12;
+
+        $f10 = virtualinvoke r3.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: float getReceivedPointerDownX(int)>(i16);
+
+        $f7 = virtualinvoke r2.<android.view.MotionEvent: float getX(int)>(i17);
+
+        f20 = $f10 - $f7;
+
+        $f8 = virtualinvoke r3.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: float getReceivedPointerDownY(int)>(i16);
+
+        $f9 = virtualinvoke r2.<android.view.MotionEvent: float getY(int)>(i17);
+
+        f21 = $f8 - $f9;
+
+        $d5 = (double) f20;
+
+        $d4 = (double) f21;
+
+        d10 = staticinvoke <java.lang.Math: double hypot(double,double)>($d5, $d4);
+
+        $i10 = r0.<com.android.server.accessibility.TouchExplorer: int mTouchSlop>;
+
+        $d6 = (double) $i10;
+
+        $b9 = d10 cmpl $d6;
+
+        if $b9 <= 0 goto label12;
+
+        $r31 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r31.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void cancel()>();
+
+     label12:
+        $z10 = r0.<com.android.server.accessibility.TouchExplorer: boolean mTouchExplorationInProgress>;
+
+        if $z10 == 0 goto label22;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendTouchExplorationGestureStartAndHoverEnterIfNeeded(int)>(i0);
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 7, i3, i0);
+
+        goto label22;
+
+     label13:
+        $r23 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        $z5 = staticinvoke <com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: boolean access$400(com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed)>($r23);
+
+        if $z5 == 0 goto label14;
+
+        $r26 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        virtualinvoke $r26.<com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: void cancel()>();
+
+        $r29 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed mSendHoverExitDelayed>;
+
+        virtualinvoke $r29.<com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed: void cancel()>();
+
+        $r28 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r28.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void cancel()>();
+
+        goto label16;
+
+     label14:
+        $r22 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r22.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void cancel()>();
+
+        $z7 = r0.<com.android.server.accessibility.TouchExplorer: boolean mTouchExplorationInProgress>;
+
+        if $z7 == 0 goto label16;
+
+        $f5 = virtualinvoke r3.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: float getReceivedPointerDownX(int)>(i16);
+
+        $f4 = virtualinvoke r2.<android.view.MotionEvent: float getX(int)>(i17);
+
+        f22 = $f5 - $f4;
+
+        $f3 = virtualinvoke r3.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: float getReceivedPointerDownY(int)>(i16);
+
+        $f6 = virtualinvoke r2.<android.view.MotionEvent: float getY(int)>(i17);
+
+        f23 = $f3 - $f6;
+
+        $d1 = (double) f22;
+
+        $d2 = (double) f23;
+
+        d11 = staticinvoke <java.lang.Math: double hypot(double,double)>($d1, $d2);
+
+        $i8 = r0.<com.android.server.accessibility.TouchExplorer: int mDoubleTapSlop>;
+
+        $d3 = (double) $i8;
+
+        $b7 = d11 cmpg $d3;
+
+        if $b7 >= 0 goto label15;
+
+        goto label22;
+
+     label15:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendHoverExitAndTouchExplorationGestureEndIfNeeded(int)>(i0);
+
+     label16:
+        $r25 = r0.<com.android.server.accessibility.TouchExplorer: java.util.ArrayList mStrokeBuffer>;
+
+        virtualinvoke $r25.<java.util.ArrayList: void clear()>();
+
+        $z6 = specialinvoke r0.<com.android.server.accessibility.TouchExplorer: boolean isDraggingGesture(android.view.MotionEvent)>(r1);
+
+        if $z6 == 0 goto label17;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 2;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mDraggingPointerId> = i16;
+
+        $i6 = virtualinvoke r3.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: int getLastReceivedDownEdgeFlags()>();
+
+        virtualinvoke r1.<android.view.MotionEvent: void setEdgeFlags(int)>($i6);
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 0, i3, i0);
+
+        goto label18;
+
+     label17:
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 4;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendDownForAllNotInjectedPointers(android.view.MotionEvent,int)>(r1, i0);
+
+     label18:
+        $r24 = r0.<com.android.server.accessibility.TouchExplorer: android.view.VelocityTracker mVelocityTracker>;
+
+        virtualinvoke $r24.<android.view.VelocityTracker: void clear()>();
+
+        goto label22;
+
+     label19:
+        $r42 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        $z11 = staticinvoke <com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: boolean access$400(com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed)>($r42);
+
+        if $z11 == 0 goto label20;
+
+        $r52 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        virtualinvoke $r52.<com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: void cancel()>();
+
+        $r51 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed mSendHoverExitDelayed>;
+
+        virtualinvoke $r51.<com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed: void cancel()>();
+
+        $r50 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r50.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void cancel()>();
+
+        goto label21;
+
+     label20:
+        $r40 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r40.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void cancel()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendHoverExitAndTouchExplorationGestureEndIfNeeded(int)>(i0);
+
+     label21:
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 4;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendDownForAllNotInjectedPointers(android.view.MotionEvent,int)>(r1, i0);
+
+        $r41 = r0.<com.android.server.accessibility.TouchExplorer: android.view.VelocityTracker mVelocityTracker>;
+
+        virtualinvoke $r41.<android.view.VelocityTracker: void clear()>();
+
+     label22:
+        goto label28;
+
+     label23:
+        $r49 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        virtualinvoke $r49.<com.android.server.accessibility.AccessibilityManagerService: void onTouchInteractionEnd()>();
+
+        $r48 = r0.<com.android.server.accessibility.TouchExplorer: java.util.ArrayList mStrokeBuffer>;
+
+        virtualinvoke $r48.<java.util.ArrayList: void clear()>();
+
+        $i15 = virtualinvoke r1.<android.view.MotionEvent: int getActionIndex()>();
+
+        i18 = virtualinvoke r1.<android.view.MotionEvent: int getPointerId(int)>($i15);
+
+        i19 = 1 << i18;
+
+        $r47 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        virtualinvoke $r47.<com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed: void cancel()>();
+
+        $r57 = r0.<com.android.server.accessibility.TouchExplorer: android.view.VelocityTracker mVelocityTracker>;
+
+        virtualinvoke $r57.<android.view.VelocityTracker: void clear()>();
+
+        $r56 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        $z13 = staticinvoke <com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed: boolean access$400(com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed)>($r56);
+
+        if $z13 == 0 goto label24;
+
+        $r53 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed mSendHoverExitDelayed>;
+
+        virtualinvoke $r53.<com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed: void post(android.view.MotionEvent,int,int)>(r1, i19, i0);
+
+        goto label25;
+
+     label24:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendHoverExitAndTouchExplorationGestureEndIfNeeded(int)>(i0);
+
+     label25:
+        $r55 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchInteractionEndDelayed>;
+
+        $z12 = virtualinvoke $r55.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: boolean isPending()>();
+
+        if $z12 != 0 goto label26;
+
+        $r54 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchInteractionEndDelayed>;
+
+        virtualinvoke $r54.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: void post()>();
+
+     label26:
+        goto label28;
+
+     label27:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void clear(android.view.MotionEvent,int)>(r1, i0);
+
+     label28:
+        return;
+    }
+
+    private void handleMotionEventStateDragging(android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i10, $i11, i12, i13;
+        float f0, f1, f2, f3, f4, f5, $f6, $f7;
+        double d0, $d1, $d2, $d3;
+        java.lang.IllegalStateException $r2;
+        boolean $z0;
+        byte $b9;
+        com.android.server.accessibility.AccessibilityManagerService $r3;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        i0 := @parameter1: int;
+
+        $i2 = r0.<com.android.server.accessibility.TouchExplorer: int mDraggingPointerId>;
+
+        i1 = 1 << $i2;
+
+        $i3 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        tableswitch($i3)
+        {
+            case 0: goto label01;
+            case 1: goto label12;
+            case 2: goto label04;
+            case 3: goto label14;
+            case 4: goto label15;
+            case 5: goto label02;
+            case 6: goto label10;
+            default: goto label15;
+        };
+
+     label01:
+        $r2 = new java.lang.IllegalStateException;
+
+        specialinvoke $r2.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Dragging state can be reached only if two pointers are already down");
+
+        throw $r2;
+
+     label02:
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 4;
+
+        $i7 = r0.<com.android.server.accessibility.TouchExplorer: int mDraggingPointerId>;
+
+        if $i7 == -1 goto label03;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 1, i1, i0);
+
+     label03:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendDownForAllNotInjectedPointers(android.view.MotionEvent,int)>(r1, i0);
+
+        goto label15;
+
+     label04:
+        $i6 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        lookupswitch($i6)
+        {
+            case 1: goto label05;
+            case 2: goto label06;
+            default: goto label09;
+        };
+
+     label05:
+        goto label15;
+
+     label06:
+        $z0 = specialinvoke r0.<com.android.server.accessibility.TouchExplorer: boolean isDraggingGesture(android.view.MotionEvent)>(r1);
+
+        if $z0 == 0 goto label08;
+
+        f0 = virtualinvoke r1.<android.view.MotionEvent: float getX(int)>(0);
+
+        f1 = virtualinvoke r1.<android.view.MotionEvent: float getY(int)>(0);
+
+        f2 = virtualinvoke r1.<android.view.MotionEvent: float getX(int)>(1);
+
+        f3 = virtualinvoke r1.<android.view.MotionEvent: float getY(int)>(1);
+
+        f4 = f0 - f2;
+
+        f5 = f1 - f3;
+
+        $d2 = (double) f4;
+
+        $d1 = (double) f5;
+
+        d0 = staticinvoke <java.lang.Math: double hypot(double,double)>($d2, $d1);
+
+        $i8 = r0.<com.android.server.accessibility.TouchExplorer: int mScaledMinPointerDistanceToUseMiddleLocation>;
+
+        $d3 = (double) $i8;
+
+        $b9 = d0 cmpl $d3;
+
+        if $b9 <= 0 goto label07;
+
+        $f7 = f4 / 2.0F;
+
+        $f6 = f5 / 2.0F;
+
+        virtualinvoke r1.<android.view.MotionEvent: void setLocation(float,float)>($f7, $f6);
+
+     label07:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 2, i1, i0);
+
+        goto label15;
+
+     label08:
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 4;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 1, i1, i0);
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendDownForAllNotInjectedPointers(android.view.MotionEvent,int)>(r1, i0);
+
+        goto label15;
+
+     label09:
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 4;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 1, i1, i0);
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendDownForAllNotInjectedPointers(android.view.MotionEvent,int)>(r1, i0);
+
+        goto label15;
+
+     label10:
+        $i4 = virtualinvoke r1.<android.view.MotionEvent: int getActionIndex()>();
+
+        i12 = virtualinvoke r1.<android.view.MotionEvent: int getPointerId(int)>($i4);
+
+        $i5 = r0.<com.android.server.accessibility.TouchExplorer: int mDraggingPointerId>;
+
+        if i12 != $i5 goto label11;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mDraggingPointerId> = -1;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 1, i1, i0);
+
+     label11:
+        goto label15;
+
+     label12:
+        $r3 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        virtualinvoke $r3.<com.android.server.accessibility.AccessibilityManagerService: void onTouchInteractionEnd()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendAccessibilityEvent(int)>(2097152);
+
+        $i10 = virtualinvoke r1.<android.view.MotionEvent: int getActionIndex()>();
+
+        i13 = virtualinvoke r1.<android.view.MotionEvent: int getPointerId(int)>($i10);
+
+        $i11 = r0.<com.android.server.accessibility.TouchExplorer: int mDraggingPointerId>;
+
+        if i13 != $i11 goto label13;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mDraggingPointerId> = -1;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 1, i1, i0);
+
+     label13:
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 1;
+
+        goto label15;
+
+     label14:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void clear(android.view.MotionEvent,int)>(r1, i0);
+
+     label15:
+        return;
+    }
+
+    private void handleMotionEventStateDelegating(android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        java.lang.IllegalStateException $r2;
+        com.android.server.accessibility.AccessibilityManagerService $r3;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        i0 := @parameter1: int;
+
+        $i1 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        tableswitch($i1)
+        {
+            case 0: goto label1;
+            case 1: goto label2;
+            case 2: goto label5;
+            case 3: goto label4;
+            default: goto label5;
+        };
+
+     label1:
+        $r2 = new java.lang.IllegalStateException;
+
+        specialinvoke $r2.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Delegating state can only be reached if there is at least one pointer down!");
+
+        throw $r2;
+
+     label2:
+        $i2 = r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerId>;
+
+        if $i2 < 0 goto label3;
+
+        $i4 = r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerDeltaX>;
+
+        $i7 = neg $i4;
+
+        $i5 = r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerDeltaY>;
+
+        $i6 = neg $i5;
+
+        r1 = specialinvoke r0.<com.android.server.accessibility.TouchExplorer: android.view.MotionEvent offsetEvent(android.view.MotionEvent,int,int)>(r1, $i7, $i6);
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerId> = -1;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerDeltaX> = 0;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerDeltaY> = 0;
+
+     label3:
+        $i3 = virtualinvoke r1.<android.view.MotionEvent: int getAction()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, $i3, -1, i0);
+
+        $r3 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        virtualinvoke $r3.<com.android.server.accessibility.AccessibilityManagerService: void onTouchInteractionEnd()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendAccessibilityEvent(int)>(2097152);
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 1;
+
+        goto label6;
+
+     label4:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void clear(android.view.MotionEvent,int)>(r1, i0);
+
+        goto label6;
+
+     label5:
+        $i8 = virtualinvoke r1.<android.view.MotionEvent: int getAction()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, $i8, -1, i0);
+
+     label6:
+        return;
+    }
+
+    private void handleMotionEventGestureDetecting(android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1;
+        int i0, i1, $i2;
+        float f0, f1, f2, f3, $f4, $f5, $f6, $f7, f8, f9, f10, f11;
+        android.gesture.Prediction r2;
+        android.gesture.GesturePoint $r3, $r5, $r9;
+        java.util.ArrayList $r4, $r6, $r8, $r11, $r13, r26;
+        long $l3, $l5, $l7;
+        byte $b4, $b6, $b8;
+        com.android.server.accessibility.AccessibilityManagerService $r7, $r17;
+        android.gesture.GestureStroke $r10;
+        android.gesture.Gesture $r12, r25;
+        boolean $z3;
+        android.gesture.GestureLibrary $r14;
+        double $d0;
+        com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed $r15;
+        java.lang.Object $r16;
+        java.lang.String $r18, $r22, $r24;
+        java.lang.StringBuilder $r19, $r20, $r23;
+        java.lang.NumberFormatException $r21;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        i0 := @parameter1: int;
+
+        $i2 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        tableswitch($i2)
+        {
+            case 0: goto label01;
+            case 1: goto label05;
+            case 2: goto label02;
+            case 3: goto label10;
+            default: goto label11;
+        };
+
+     label01:
+        f0 = virtualinvoke r1.<android.view.MotionEvent: float getX()>();
+
+        f1 = virtualinvoke r1.<android.view.MotionEvent: float getY()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: float mPreviousX> = f0;
+
+        r0.<com.android.server.accessibility.TouchExplorer: float mPreviousY> = f1;
+
+        $r4 = r0.<com.android.server.accessibility.TouchExplorer: java.util.ArrayList mStrokeBuffer>;
+
+        $r3 = new android.gesture.GesturePoint;
+
+        $l3 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        specialinvoke $r3.<android.gesture.GesturePoint: void <init>(float,float,long)>(f0, f1, $l3);
+
+        virtualinvoke $r4.<java.util.ArrayList: boolean add(java.lang.Object)>($r3);
+
+        goto label11;
+
+     label02:
+        f8 = virtualinvoke r1.<android.view.MotionEvent: float getX()>();
+
+        f9 = virtualinvoke r1.<android.view.MotionEvent: float getY()>();
+
+        $f5 = r0.<com.android.server.accessibility.TouchExplorer: float mPreviousX>;
+
+        $f4 = f8 - $f5;
+
+        f2 = staticinvoke <java.lang.Math: float abs(float)>($f4);
+
+        $f6 = r0.<com.android.server.accessibility.TouchExplorer: float mPreviousY>;
+
+        $f7 = f9 - $f6;
+
+        f3 = staticinvoke <java.lang.Math: float abs(float)>($f7);
+
+        $b4 = f2 cmpl 3.0F;
+
+        if $b4 >= 0 goto label03;
+
+        $b6 = f3 cmpl 3.0F;
+
+        if $b6 < 0 goto label04;
+
+     label03:
+        r0.<com.android.server.accessibility.TouchExplorer: float mPreviousX> = f8;
+
+        r0.<com.android.server.accessibility.TouchExplorer: float mPreviousY> = f9;
+
+        $r6 = r0.<com.android.server.accessibility.TouchExplorer: java.util.ArrayList mStrokeBuffer>;
+
+        $r5 = new android.gesture.GesturePoint;
+
+        $l5 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        specialinvoke $r5.<android.gesture.GesturePoint: void <init>(float,float,long)>(f8, f9, $l5);
+
+        virtualinvoke $r6.<java.util.ArrayList: boolean add(java.lang.Object)>($r5);
+
+     label04:
+        goto label11;
+
+     label05:
+        $r7 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        virtualinvoke $r7.<com.android.server.accessibility.AccessibilityManagerService: void onTouchInteractionEnd()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendAccessibilityEvent(int)>(524288);
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendAccessibilityEvent(int)>(2097152);
+
+        f10 = virtualinvoke r1.<android.view.MotionEvent: float getX()>();
+
+        f11 = virtualinvoke r1.<android.view.MotionEvent: float getY()>();
+
+        $r8 = r0.<com.android.server.accessibility.TouchExplorer: java.util.ArrayList mStrokeBuffer>;
+
+        $r9 = new android.gesture.GesturePoint;
+
+        $l7 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        specialinvoke $r9.<android.gesture.GesturePoint: void <init>(float,float,long)>(f10, f11, $l7);
+
+        virtualinvoke $r8.<java.util.ArrayList: boolean add(java.lang.Object)>($r9);
+
+        $r12 = new android.gesture.Gesture;
+
+        specialinvoke $r12.<android.gesture.Gesture: void <init>()>();
+
+        r25 = $r12;
+
+        $r10 = new android.gesture.GestureStroke;
+
+        $r11 = r0.<com.android.server.accessibility.TouchExplorer: java.util.ArrayList mStrokeBuffer>;
+
+        specialinvoke $r10.<android.gesture.GestureStroke: void <init>(java.util.ArrayList)>($r11);
+
+        virtualinvoke r25.<android.gesture.Gesture: void addStroke(android.gesture.GestureStroke)>($r10);
+
+        $r14 = r0.<com.android.server.accessibility.TouchExplorer: android.gesture.GestureLibrary mGestureLibrary>;
+
+        r26 = virtualinvoke $r14.<android.gesture.GestureLibrary: java.util.ArrayList recognize(android.gesture.Gesture)>(r25);
+
+        $z3 = virtualinvoke r26.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z3 != 0 goto label09;
+
+        $r16 = virtualinvoke r26.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        r2 = (android.gesture.Prediction) $r16;
+
+        $d0 = r2.<android.gesture.Prediction: double score>;
+
+        $b8 = $d0 cmpl 2.0;
+
+        if $b8 < 0 goto label09;
+
+     label06:
+        $r18 = r2.<android.gesture.Prediction: java.lang.String name>;
+
+        i1 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r18);
+
+        $r17 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        virtualinvoke $r17.<com.android.server.accessibility.AccessibilityManagerService: boolean onGesture(int)>(i1);
+
+     label07:
+        goto label09;
+
+     label08:
+        $r21 := @caughtexception;
+
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        $r19 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Non numeric gesture id:");
+
+        $r24 = r2.<android.gesture.Prediction: java.lang.String name>;
+
+        $r23 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r24);
+
+        $r22 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("TouchExplorer", $r22);
+
+     label09:
+        $r13 = r0.<com.android.server.accessibility.TouchExplorer: java.util.ArrayList mStrokeBuffer>;
+
+        virtualinvoke $r13.<java.util.ArrayList: void clear()>();
+
+        $r15 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed mExitGestureDetectionModeDelayed>;
+
+        virtualinvoke $r15.<com.android.server.accessibility.TouchExplorer$ExitGestureDetectionModeDelayed: void cancel()>();
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = 1;
+
+        goto label11;
+
+     label10:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void clear(android.view.MotionEvent,int)>(r1, i0);
+
+     label11:
+        return;
+
+        catch java.lang.NumberFormatException from label06 to label07 with label08;
+    }
+
+    private void sendAccessibilityEvent(int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int i0, $i1;
+        android.view.accessibility.AccessibilityManager r1;
+        android.view.accessibility.AccessibilityEvent r2;
+        android.content.Context $r3;
+        boolean $z0;
+        com.android.server.accessibility.AccessibilityManagerService $r4;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        i0 := @parameter0: int;
+
+        $r3 = r0.<com.android.server.accessibility.TouchExplorer: android.content.Context mContext>;
+
+        r1 = staticinvoke <android.view.accessibility.AccessibilityManager: android.view.accessibility.AccessibilityManager getInstance(android.content.Context)>($r3);
+
+        $z0 = virtualinvoke r1.<android.view.accessibility.AccessibilityManager: boolean isEnabled()>();
+
+        if $z0 == 0 goto label3;
+
+        r2 = staticinvoke <android.view.accessibility.AccessibilityEvent: android.view.accessibility.AccessibilityEvent obtain(int)>(i0);
+
+        $r4 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        $i1 = virtualinvoke $r4.<com.android.server.accessibility.AccessibilityManagerService: int getActiveWindowId()>();
+
+        virtualinvoke r2.<android.view.accessibility.AccessibilityEvent: void setWindowId(int)>($i1);
+
+        virtualinvoke r1.<android.view.accessibility.AccessibilityManager: void sendAccessibilityEvent(android.view.accessibility.AccessibilityEvent)>(r2);
+
+        lookupswitch(i0)
+        {
+            case 512: goto label1;
+            case 1024: goto label2;
+            default: goto label3;
+        };
+
+     label1:
+        r0.<com.android.server.accessibility.TouchExplorer: boolean mTouchExplorationInProgress> = 1;
+
+        goto label3;
+
+     label2:
+        r0.<com.android.server.accessibility.TouchExplorer: boolean mTouchExplorationInProgress> = 0;
+
+     label3:
+        return;
+    }
+
+    private void sendDownForAllNotInjectedPointers(android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1;
+        int i0, i1, i2, i3, i4, i5, $i6;
+        com.android.server.accessibility.TouchExplorer$InjectedPointerTracker r2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        i0 := @parameter1: int;
+
+        r2 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        i1 = 0;
+
+        i2 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        i3 = 0;
+
+     label1:
+        if i3 >= i2 goto label3;
+
+        i4 = virtualinvoke r1.<android.view.MotionEvent: int getPointerId(int)>(i3);
+
+        $z0 = virtualinvoke r2.<com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: boolean isInjectedPointerDown(int)>(i4);
+
+        if $z0 != 0 goto label2;
+
+        $i6 = 1 << i4;
+
+        i1 = i1 | $i6;
+
+        i5 = specialinvoke r0.<com.android.server.accessibility.TouchExplorer: int computeInjectionAction(int,int)>(0, i3);
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, i5, i1, i0);
+
+     label2:
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    private void sendHoverExitAndTouchExplorationGestureEndIfNeeded(int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int i0, i1, $i2;
+        android.view.MotionEvent r1;
+        com.android.server.accessibility.TouchExplorer$InjectedPointerTracker $r2;
+        com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed $r3, $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        r1 = virtualinvoke $r2.<com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: android.view.MotionEvent getLastInjectedHoverEvent()>();
+
+        if r1 == null goto label2;
+
+        $i2 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i2 == 10 goto label2;
+
+        i1 = virtualinvoke r1.<android.view.MotionEvent: int getPointerIdBits()>();
+
+        $r3 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchExplorationEndDelayed>;
+
+        $z0 = virtualinvoke $r3.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: boolean isPending()>();
+
+        if $z0 != 0 goto label1;
+
+        $r4 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchExplorationEndDelayed>;
+
+        virtualinvoke $r4.<com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed: void post()>();
+
+     label1:
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 10, i1, i0);
+
+     label2:
+        return;
+    }
+
+    private void sendTouchExplorationGestureStartAndHoverEnterIfNeeded(int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int i0, i1, $i2;
+        android.view.MotionEvent r1;
+        com.android.server.accessibility.TouchExplorer$InjectedPointerTracker $r2;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        r1 = virtualinvoke $r2.<com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: android.view.MotionEvent getLastInjectedHoverEvent()>();
+
+        if r1 == null goto label1;
+
+        $i2 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i2 != 10 goto label1;
+
+        i1 = virtualinvoke r1.<android.view.MotionEvent: int getPointerIdBits()>();
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendAccessibilityEvent(int)>(512);
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 9, i1, i0);
+
+     label1:
+        return;
+    }
+
+    private void sendUpForInjectedDownPointers(android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1;
+        int i0, i1, i2, i3, i4, i5, $i6;
+        com.android.server.accessibility.TouchExplorer$InjectedPointerTracker r2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        i0 := @parameter1: int;
+
+        r2 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        i1 = 0;
+
+        i2 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        i3 = 0;
+
+     label1:
+        if i3 >= i2 goto label4;
+
+        i4 = virtualinvoke r1.<android.view.MotionEvent: int getPointerId(int)>(i3);
+
+        $z0 = virtualinvoke r2.<com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: boolean isInjectedPointerDown(int)>(i4);
+
+        if $z0 != 0 goto label2;
+
+        goto label3;
+
+     label2:
+        $i6 = 1 << i4;
+
+        i1 = i1 | $i6;
+
+        i5 = specialinvoke r0.<com.android.server.accessibility.TouchExplorer: int computeInjectionAction(int,int)>(1, i3);
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, i5, i1, i0);
+
+     label3:
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label4:
+        return;
+    }
+
+    private void sendActionDownAndUp(android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1;
+        int i0, i1, i2, $i3;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        i0 := @parameter1: int;
+
+        $i3 = virtualinvoke r1.<android.view.MotionEvent: int getActionIndex()>();
+
+        i1 = virtualinvoke r1.<android.view.MotionEvent: int getPointerId(int)>($i3);
+
+        i2 = 1 << i1;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 0, i2, i0);
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, 1, i2, i0);
+
+        return;
+    }
+
+    private void sendMotionEvent(android.view.MotionEvent, int, int, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1, r6;
+        int i0, i1, i2, $i4, $i5, $i6, $i7, $i8, i10;
+        com.android.server.accessibility.TouchExplorer$InjectedPointerTracker $r2, $r4;
+        long $l3, $l9;
+        com.android.server.accessibility.EventStreamTransformation $r3, $r5;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        virtualinvoke r1.<android.view.MotionEvent: void setAction(int)>(i0);
+
+        if i1 != -1 goto label1;
+
+        r6 = r1;
+
+        goto label2;
+
+     label1:
+        r6 = virtualinvoke r1.<android.view.MotionEvent: android.view.MotionEvent split(int)>(i1);
+
+     label2:
+        if i0 != 0 goto label3;
+
+        $l9 = virtualinvoke r6.<android.view.MotionEvent: long getEventTime()>();
+
+        virtualinvoke r6.<android.view.MotionEvent: void setDownTime(long)>($l9);
+
+        goto label4;
+
+     label3:
+        $r2 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        $l3 = virtualinvoke $r2.<com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: long getLastInjectedDownEventTime()>();
+
+        virtualinvoke r6.<android.view.MotionEvent: void setDownTime(long)>($l3);
+
+     label4:
+        $i4 = r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerId>;
+
+        if $i4 < 0 goto label5;
+
+        $i5 = r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerDeltaX>;
+
+        $i8 = neg $i5;
+
+        $i6 = r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerDeltaY>;
+
+        $i7 = neg $i6;
+
+        r6 = specialinvoke r0.<com.android.server.accessibility.TouchExplorer: android.view.MotionEvent offsetEvent(android.view.MotionEvent,int,int)>(r6, $i8, $i7);
+
+     label5:
+        i10 = i2 | 1073741824;
+
+        $r3 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        if $r3 == null goto label6;
+
+        $r5 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        interfaceinvoke $r5.<com.android.server.accessibility.EventStreamTransformation: void onMotionEvent(android.view.MotionEvent,android.view.MotionEvent,int)>(r6, null, i10);
+
+     label6:
+        $r4 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        virtualinvoke $r4.<com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: void onMotionEvent(android.view.MotionEvent)>(r6);
+
+        if r6 == r1 goto label7;
+
+        virtualinvoke r6.<android.view.MotionEvent: void recycle()>();
+
+     label7:
+        return;
+    }
+
+    private android.view.MotionEvent offsetEvent(android.view.MotionEvent, int, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1, $r5;
+        int i0, i1, i2, i3, i4, $i5, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15;
+        android.view.MotionEvent$PointerProperties[] r2;
+        android.view.MotionEvent$PointerCoords[] r3;
+        long $l6, $l7;
+        android.view.MotionEvent$PointerProperties $r4;
+        android.view.MotionEvent$PointerCoords $r6, $r7, $r8;
+        float $f0, $f1, $f2, $f3, $f4, $f5;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        if i0 != 0 goto label1;
+
+        if i1 != 0 goto label1;
+
+        return r1;
+
+     label1:
+        $i5 = r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerId>;
+
+        i2 = virtualinvoke r1.<android.view.MotionEvent: int findPointerIndex(int)>($i5);
+
+        i3 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        r2 = staticinvoke <android.view.MotionEvent$PointerProperties: android.view.MotionEvent$PointerProperties[] createArray(int)>(i3);
+
+        r3 = staticinvoke <android.view.MotionEvent$PointerCoords: android.view.MotionEvent$PointerCoords[] createArray(int)>(i3);
+
+        i4 = 0;
+
+     label2:
+        if i4 >= i3 goto label4;
+
+        $r4 = r2[i4];
+
+        virtualinvoke r1.<android.view.MotionEvent: void getPointerProperties(int,android.view.MotionEvent$PointerProperties)>(i4, $r4);
+
+        $r7 = r3[i4];
+
+        virtualinvoke r1.<android.view.MotionEvent: void getPointerCoords(int,android.view.MotionEvent$PointerCoords)>(i4, $r7);
+
+        if i4 != i2 goto label3;
+
+        $r6 = r3[i4];
+
+        $f0 = $r6.<android.view.MotionEvent$PointerCoords: float x>;
+
+        $f1 = (float) i0;
+
+        $f4 = $f0 + $f1;
+
+        $r6.<android.view.MotionEvent$PointerCoords: float x> = $f4;
+
+        $r8 = r3[i4];
+
+        $f3 = $r8.<android.view.MotionEvent$PointerCoords: float y>;
+
+        $f2 = (float) i1;
+
+        $f5 = $f3 + $f2;
+
+        $r8.<android.view.MotionEvent$PointerCoords: float y> = $f5;
+
+     label3:
+        i4 = i4 + 1;
+
+        goto label2;
+
+     label4:
+        $l6 = virtualinvoke r1.<android.view.MotionEvent: long getDownTime()>();
+
+        $l7 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        $i9 = virtualinvoke r1.<android.view.MotionEvent: int getAction()>();
+
+        $i8 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        $i11 = virtualinvoke r1.<android.view.MotionEvent: int getMetaState()>();
+
+        $i10 = virtualinvoke r1.<android.view.MotionEvent: int getButtonState()>();
+
+        $i13 = virtualinvoke r1.<android.view.MotionEvent: int getDeviceId()>();
+
+        $i12 = virtualinvoke r1.<android.view.MotionEvent: int getEdgeFlags()>();
+
+        $i15 = virtualinvoke r1.<android.view.MotionEvent: int getSource()>();
+
+        $i14 = virtualinvoke r1.<android.view.MotionEvent: int getFlags()>();
+
+        $r5 = staticinvoke <android.view.MotionEvent: android.view.MotionEvent obtain(long,long,int,int,android.view.MotionEvent$PointerProperties[],android.view.MotionEvent$PointerCoords[],int,int,float,float,int,int,int,int)>($l6, $l7, $i9, $i8, r2, r3, $i11, $i10, 1.0F, 1.0F, $i13, $i12, $i15, $i14);
+
+        return $r5;
+    }
+
+    private int computeInjectionAction(int, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        com.android.server.accessibility.TouchExplorer$InjectedPointerTracker r1, r2;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        lookupswitch(i0)
+        {
+            case 0: goto label1;
+            case 5: goto label1;
+            case 6: goto label3;
+            default: goto label5;
+        };
+
+     label1:
+        r1 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        $i5 = virtualinvoke r1.<com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: int getInjectedPointerDownCount()>();
+
+        if $i5 != 0 goto label2;
+
+        return 0;
+
+     label2:
+        $i6 = i1 << 8;
+
+        $i7 = $i6 | 5;
+
+        return $i7;
+
+     label3:
+        r2 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        $i2 = virtualinvoke r2.<com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: int getInjectedPointerDownCount()>();
+
+        if $i2 != 1 goto label4;
+
+        return 1;
+
+     label4:
+        $i3 = i1 << 8;
+
+        $i4 = $i3 | 6;
+
+        return $i4;
+
+     label5:
+        return i0;
+    }
+
+    private boolean isDraggingGesture(android.view.MotionEvent)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1;
+        com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker r2;
+        float f0, f1, f2, f3, f4, f5, f6, f7;
+        boolean $z0;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker mReceivedPointerTracker>;
+
+        f0 = virtualinvoke r1.<android.view.MotionEvent: float getX(int)>(0);
+
+        f1 = virtualinvoke r1.<android.view.MotionEvent: float getY(int)>(0);
+
+        f2 = virtualinvoke r1.<android.view.MotionEvent: float getX(int)>(1);
+
+        f3 = virtualinvoke r1.<android.view.MotionEvent: float getY(int)>(1);
+
+        f4 = virtualinvoke r2.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: float getReceivedPointerDownX(int)>(0);
+
+        f5 = virtualinvoke r2.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: float getReceivedPointerDownY(int)>(0);
+
+        f6 = virtualinvoke r2.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: float getReceivedPointerDownX(int)>(1);
+
+        f7 = virtualinvoke r2.<com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker: float getReceivedPointerDownY(int)>(1);
+
+        $z0 = staticinvoke <com.android.server.accessibility.GestureUtils: boolean isDraggingGesture(float,float,float,float,float,float,float,float,float)>(f4, f5, f6, f7, f0, f1, f2, f3, 0.52532196F);
+
+        return $z0;
+    }
+
+    private boolean computeClickLocation(android.graphics.Point)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.graphics.Point r1;
+        android.view.MotionEvent r2;
+        int i0, $i1, $i2, $i3, $i4;
+        com.android.server.accessibility.TouchExplorer$InjectedPointerTracker $r3;
+        com.android.server.accessibility.AccessibilityManagerService $r4, $r5, $r6, $r7;
+        boolean $z0, $z1;
+        float $f0, $f1;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter0: android.graphics.Point;
+
+        $r3 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$InjectedPointerTracker mInjectedPointerTracker>;
+
+        r2 = virtualinvoke $r3.<com.android.server.accessibility.TouchExplorer$InjectedPointerTracker: android.view.MotionEvent getLastInjectedHoverEventForClick()>();
+
+        if r2 == null goto label3;
+
+        i0 = virtualinvoke r2.<android.view.MotionEvent: int getActionIndex()>();
+
+        $f0 = virtualinvoke r2.<android.view.MotionEvent: float getX(int)>(i0);
+
+        $i1 = (int) $f0;
+
+        r1.<android.graphics.Point: int x> = $i1;
+
+        $f1 = virtualinvoke r2.<android.view.MotionEvent: float getY(int)>(i0);
+
+        $i2 = (int) $f1;
+
+        r1.<android.graphics.Point: int y> = $i2;
+
+        $r5 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        $z1 = virtualinvoke $r5.<com.android.server.accessibility.AccessibilityManagerService: boolean accessibilityFocusOnlyInActiveWindow()>();
+
+        if $z1 == 0 goto label1;
+
+        $i4 = r0.<com.android.server.accessibility.TouchExplorer: int mLastTouchedWindowId>;
+
+        $r7 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        $i3 = virtualinvoke $r7.<com.android.server.accessibility.AccessibilityManagerService: int getActiveWindowId()>();
+
+        if $i4 != $i3 goto label2;
+
+     label1:
+        $r6 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        virtualinvoke $r6.<com.android.server.accessibility.AccessibilityManagerService: boolean getAccessibilityFocusClickPointInScreen(android.graphics.Point)>(r1);
+
+     label2:
+        return 1;
+
+     label3:
+        $r4 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        $z0 = virtualinvoke $r4.<com.android.server.accessibility.AccessibilityManagerService: boolean getAccessibilityFocusClickPointInScreen(android.graphics.Point)>(r1);
+
+        if $z0 == 0 goto label4;
+
+        return 1;
+
+     label4:
+        return 0;
+    }
+
+    private static java.lang.String getStateSymbolicName(int)
+    {
+        int i0;
+        java.lang.IllegalArgumentException $r0;
+        java.lang.StringBuilder $r1, $r2, $r3;
+        java.lang.String $r4;
+
+        i0 := @parameter0: int;
+
+        tableswitch(i0)
+        {
+            case 1: goto label1;
+            case 2: goto label2;
+            case 3: goto label5;
+            case 4: goto label3;
+            case 5: goto label4;
+            default: goto label5;
+        };
+
+     label1:
+        return "STATE_TOUCH_EXPLORING";
+
+     label2:
+        return "STATE_DRAGGING";
+
+     label3:
+        return "STATE_DELEGATING";
+
+     label4:
+        return "STATE_GESTURE_DETECTING";
+
+     label5:
+        $r0 = new java.lang.IllegalArgumentException;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown state: ");
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r0.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r4);
+
+        throw $r0;
+    }
+
+    public java.lang.String toString()
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+
+        r0 := @this: com.android.server.accessibility.TouchExplorer;
+
+        return "TouchExplorer";
+    }
+
+    static int access$600(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $i0 = r0.<com.android.server.accessibility.TouchExplorer: int mTapTimeout>;
+
+        return $i0;
+    }
+
+    static int access$700(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $i0 = r0.<com.android.server.accessibility.TouchExplorer: int mTouchSlop>;
+
+        return $i0;
+    }
+
+    static int access$800(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $i0 = r0.<com.android.server.accessibility.TouchExplorer: int mDoubleTapTimeout>;
+
+        return $i0;
+    }
+
+    static int access$900(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $i0 = r0.<com.android.server.accessibility.TouchExplorer: int mDoubleTapSlop>;
+
+        return $i0;
+    }
+
+    static com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed access$1000(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $r1 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverEnterAndMoveDelayed mSendHoverEnterAndMoveDelayed>;
+
+        return $r1;
+    }
+
+    static com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed access$1100(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $r1 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendHoverExitDelayed mSendHoverExitDelayed>;
+
+        return $r1;
+    }
+
+    static com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed access$1200(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $r1 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$PerformLongPressDelayed mPerformLongPressDelayed>;
+
+        return $r1;
+    }
+
+    static com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed access$1300(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $r1 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchExplorationEndDelayed>;
+
+        return $r1;
+    }
+
+    static com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed access$1400(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $r1 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$SendAccessibilityEventDelayed mSendTouchInteractionEndDelayed>;
+
+        return $r1;
+    }
+
+    static android.graphics.Point access$1500(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.graphics.Point $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $r1 = r0.<com.android.server.accessibility.TouchExplorer: android.graphics.Point mTempPoint>;
+
+        return $r1;
+    }
+
+    static boolean access$1600(com.android.server.accessibility.TouchExplorer, android.graphics.Point)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.graphics.Point r1;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter1: android.graphics.Point;
+
+        $z0 = specialinvoke r0.<com.android.server.accessibility.TouchExplorer: boolean computeClickLocation(android.graphics.Point)>(r1);
+
+        return $z0;
+    }
+
+    static void access$1700(com.android.server.accessibility.TouchExplorer, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1;
+        int i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendActionDownAndUp(android.view.MotionEvent,int)>(r1, i0);
+
+        return;
+    }
+
+    static android.os.Handler access$1800(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.os.Handler $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $r1 = r0.<com.android.server.accessibility.TouchExplorer: android.os.Handler mHandler>;
+
+        return $r1;
+    }
+
+    static void access$1900(com.android.server.accessibility.TouchExplorer, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendAccessibilityEvent(int)>(i0);
+
+        return;
+    }
+
+    static com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker access$2000(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $r1 = r0.<com.android.server.accessibility.TouchExplorer: com.android.server.accessibility.TouchExplorer$ReceivedPointerTracker mReceivedPointerTracker>;
+
+        return $r1;
+    }
+
+    static int access$2102(com.android.server.accessibility.TouchExplorer, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerId> = i0;
+
+        return i0;
+    }
+
+    static int access$2202(com.android.server.accessibility.TouchExplorer, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerDeltaX> = i0;
+
+        return i0;
+    }
+
+    static int access$2302(com.android.server.accessibility.TouchExplorer, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mLongPressingPointerDeltaY> = i0;
+
+        return i0;
+    }
+
+    static void access$2400(com.android.server.accessibility.TouchExplorer, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendHoverExitAndTouchExplorationGestureEndIfNeeded(int)>(i0);
+
+        return;
+    }
+
+    static int access$2502(com.android.server.accessibility.TouchExplorer, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.accessibility.TouchExplorer: int mCurrentState> = i0;
+
+        return i0;
+    }
+
+    static void access$2600(com.android.server.accessibility.TouchExplorer, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1;
+        int i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendDownForAllNotInjectedPointers(android.view.MotionEvent,int)>(r1, i0);
+
+        return;
+    }
+
+    static int access$2700(com.android.server.accessibility.TouchExplorer)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        $i0 = r0.<com.android.server.accessibility.TouchExplorer: int mDetermineUserIntentTimeout>;
+
+        return $i0;
+    }
+
+    static void access$2800(com.android.server.accessibility.TouchExplorer, android.view.MotionEvent, int, int, int)
+    {
+        com.android.server.accessibility.TouchExplorer r0;
+        android.view.MotionEvent r1;
+        int i0, i1, i2;
+
+        r0 := @parameter0: com.android.server.accessibility.TouchExplorer;
+
+        r1 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        i2 := @parameter4: int;
+
+        specialinvoke r0.<com.android.server.accessibility.TouchExplorer: void sendMotionEvent(android.view.MotionEvent,int,int,int)>(r1, i0, i1, i2);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.accessibility.TouchExplorer: float MIN_PREDICTION_SCORE> = 2.0F;
+
+        <com.android.server.accessibility.TouchExplorer: int TOUCH_TOLERANCE> = 3;
+
+        <com.android.server.accessibility.TouchExplorer: int EXIT_GESTURE_DETECTION_TIMEOUT> = 2000;
+
+        <com.android.server.accessibility.TouchExplorer: int MIN_POINTER_DISTANCE_TO_USE_MIDDLE_LOCATION_DIP> = 200;
+
+        <com.android.server.accessibility.TouchExplorer: int GESTURE_DETECTION_VELOCITY_DIP> = 1000;
+
+        <com.android.server.accessibility.TouchExplorer: int INVALID_POINTER_ID> = -1;
+
+        <com.android.server.accessibility.TouchExplorer: int MAX_POINTER_COUNT> = 32;
+
+        <com.android.server.accessibility.TouchExplorer: int ALL_POINTER_ID_BITS> = -1;
+
+        <com.android.server.accessibility.TouchExplorer: float MAX_DRAGGING_ANGLE_COS> = 0.52532196F;
+
+        <com.android.server.accessibility.TouchExplorer: int STATE_GESTURE_DETECTING> = 5;
+
+        <com.android.server.accessibility.TouchExplorer: int STATE_DELEGATING> = 4;
+
+        <com.android.server.accessibility.TouchExplorer: int STATE_DRAGGING> = 2;
+
+        <com.android.server.accessibility.TouchExplorer: int STATE_TOUCH_EXPLORING> = 1;
+
+        <com.android.server.accessibility.TouchExplorer: java.lang.String LOG_TAG> = "TouchExplorer";
+
+        <com.android.server.accessibility.TouchExplorer: boolean DEBUG> = 0;
+
+        return;
+    }
+}

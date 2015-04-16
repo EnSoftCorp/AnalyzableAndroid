@@ -1,0 +1,2273 @@
+public class com.android.gallery3d.app.AlbumSetPage extends com.android.gallery3d.app.ActivityState implements com.android.gallery3d.ui.SelectionManager$SelectionListener, com.android.gallery3d.app.GalleryActionBar$ClusterRunner, com.android.gallery3d.app.EyePosition$EyePositionListener, com.android.gallery3d.data.MediaSet$SyncListener
+{
+    private static final java.lang.String TAG;
+    private static final int MSG_PICK_ALBUM;
+    public static final java.lang.String KEY_MEDIA_PATH;
+    public static final java.lang.String KEY_SET_TITLE;
+    public static final java.lang.String KEY_SET_SUBTITLE;
+    public static final java.lang.String KEY_SELECTED_CLUSTER_TYPE;
+    private static final int DATA_CACHE_SIZE;
+    private static final int REQUEST_DO_ANIMATION;
+    private static final int BIT_LOADING_RELOAD;
+    private static final int BIT_LOADING_SYNC;
+    private boolean mIsActive;
+    private com.android.gallery3d.ui.SlotView mSlotView;
+    private com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView;
+    private com.android.gallery3d.app.Config$AlbumSetPage mConfig;
+    private com.android.gallery3d.data.MediaSet mMediaSet;
+    private java.lang.String mTitle;
+    private java.lang.String mSubtitle;
+    private boolean mShowClusterMenu;
+    private com.android.gallery3d.app.GalleryActionBar mActionBar;
+    private int mSelectedAction;
+    protected com.android.gallery3d.ui.SelectionManager mSelectionManager;
+    private com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter;
+    private boolean mGetContent;
+    private boolean mGetAlbum;
+    private com.android.gallery3d.ui.ActionModeHandler mActionModeHandler;
+    private com.android.gallery3d.ui.DetailsHelper mDetailsHelper;
+    private com.android.gallery3d.app.AlbumSetPage$MyDetailsSource mDetailsSource;
+    private boolean mShowDetails;
+    private com.android.gallery3d.app.EyePosition mEyePosition;
+    private android.os.Handler mHandler;
+    private float mX;
+    private float mY;
+    private float mZ;
+    private com.android.gallery3d.util.Future mSyncTask;
+    private int mLoadingBits;
+    private boolean mInitialSynced;
+    private android.widget.Button mCameraButton;
+    private boolean mShowedEmptyToastForSelf;
+    private final com.android.gallery3d.ui.GLView mRootPane;
+    java.lang.ref.WeakReference mEmptyAlbumToast;
+
+    public void <init>()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.app.AlbumSetPage$1 $r1;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        specialinvoke r0.<com.android.gallery3d.app.ActivityState: void <init>()>();
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mIsActive> = 0;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.util.Future mSyncTask> = null;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: int mLoadingBits> = 0;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mInitialSynced> = 0;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowedEmptyToastForSelf> = 0;
+
+        $r1 = new com.android.gallery3d.app.AlbumSetPage$1;
+
+        specialinvoke $r1.<com.android.gallery3d.app.AlbumSetPage$1: void <init>(com.android.gallery3d.app.AlbumSetPage)>(r0);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.GLView mRootPane> = $r1;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: java.lang.ref.WeakReference mEmptyAlbumToast> = null;
+
+        return;
+    }
+
+    protected int getBackgroundColorId()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        return 2131427329;
+    }
+
+    public void onEyePositionChanged(float, float, float)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        float f0, f1, f2;
+        com.android.gallery3d.ui.GLView $r1, $r2, $r3;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        f0 := @parameter0: float;
+
+        f1 := @parameter1: float;
+
+        f2 := @parameter2: float;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.GLView mRootPane>;
+
+        virtualinvoke $r1.<com.android.gallery3d.ui.GLView: void lockRendering()>();
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: float mX> = f0;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: float mY> = f1;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: float mZ> = f2;
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.GLView mRootPane>;
+
+        virtualinvoke $r2.<com.android.gallery3d.ui.GLView: void unlockRendering()>();
+
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.GLView mRootPane>;
+
+        virtualinvoke $r3.<com.android.gallery3d.ui.GLView: void invalidate()>();
+
+        return;
+    }
+
+    public void onBackPressed()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        boolean $z0, $z1;
+        com.android.gallery3d.ui.SelectionManager $r1, $r2;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        $z0 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowDetails>;
+
+        if $z0 == 0 goto label1;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void hideDetails()>();
+
+        goto label3;
+
+     label1:
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        $z1 = virtualinvoke $r1.<com.android.gallery3d.ui.SelectionManager: boolean inSelectionMode()>();
+
+        if $z1 == 0 goto label2;
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        virtualinvoke $r2.<com.android.gallery3d.ui.SelectionManager: void leaveSelectionMode()>();
+
+        goto label3;
+
+     label2:
+        specialinvoke r0.<com.android.gallery3d.app.ActivityState: void onBackPressed()>();
+
+     label3:
+        return;
+    }
+
+    private void getSlotCenter(int, int[])
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16;
+        int[] r1;
+        android.graphics.Rect r2, r3, $r4;
+        com.android.gallery3d.ui.SlotView $r5, $r7, $r8, $r9;
+        com.android.gallery3d.ui.GLView $r6;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: int[];
+
+        $r4 = new android.graphics.Rect;
+
+        specialinvoke $r4.<android.graphics.Rect: void <init>()>();
+
+        r2 = $r4;
+
+        $r6 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.GLView mRootPane>;
+
+        $r5 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        virtualinvoke $r6.<com.android.gallery3d.ui.GLView: boolean getBoundsOf(com.android.gallery3d.ui.GLView,android.graphics.Rect)>($r5, r2);
+
+        $r7 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        r3 = virtualinvoke $r7.<com.android.gallery3d.ui.SlotView: android.graphics.Rect getSlotRect(int)>(i0);
+
+        $r8 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        i1 = virtualinvoke $r8.<com.android.gallery3d.ui.SlotView: int getScrollX()>();
+
+        $r9 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        i2 = virtualinvoke $r9.<com.android.gallery3d.ui.SlotView: int getScrollY()>();
+
+        $i6 = r2.<android.graphics.Rect: int left>;
+
+        $i5 = r3.<android.graphics.Rect: int left>;
+
+        $i3 = r3.<android.graphics.Rect: int right>;
+
+        $i4 = $i5 + $i3;
+
+        $i7 = $i4 / 2;
+
+        $i9 = $i6 + $i7;
+
+        $i8 = $i9 - i1;
+
+        r1[0] = $i8;
+
+        $i15 = r2.<android.graphics.Rect: int top>;
+
+        $i10 = r3.<android.graphics.Rect: int top>;
+
+        $i11 = r3.<android.graphics.Rect: int bottom>;
+
+        $i13 = $i10 + $i11;
+
+        $i12 = $i13 / 2;
+
+        $i14 = $i15 + $i12;
+
+        $i16 = $i14 - i2;
+
+        r1[1] = $i16;
+
+        return;
+    }
+
+    public void onSingleTapUp(int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0;
+        com.android.gallery3d.data.MediaSet r1;
+        boolean $z0, $z1;
+        com.android.gallery3d.ui.SelectionManager $r2, $r9;
+        com.android.gallery3d.ui.AlbumSetSlotRenderer $r3, $r4;
+        android.os.Handler $r5, $r6;
+        android.os.Message $r7;
+        com.android.gallery3d.app.AlbumSetDataLoader $r8;
+        com.android.gallery3d.data.Path $r10;
+        com.android.gallery3d.ui.SlotView $r11;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter0: int;
+
+        $z0 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mIsActive>;
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        $z1 = virtualinvoke $r2.<com.android.gallery3d.ui.SelectionManager: boolean inSelectionMode()>();
+
+        if $z1 == 0 goto label3;
+
+        $r8 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter>;
+
+        r1 = virtualinvoke $r8.<com.android.gallery3d.app.AlbumSetDataLoader: com.android.gallery3d.data.MediaSet getMediaSet(int)>(i0);
+
+        if r1 != null goto label2;
+
+        return;
+
+     label2:
+        $r9 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        $r10 = virtualinvoke r1.<com.android.gallery3d.data.MediaSet: com.android.gallery3d.data.Path getPath()>();
+
+        virtualinvoke $r9.<com.android.gallery3d.ui.SelectionManager: void toggle(com.android.gallery3d.data.Path)>($r10);
+
+        $r11 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        virtualinvoke $r11.<com.android.gallery3d.ui.SlotView: void invalidate()>();
+
+        goto label4;
+
+     label3:
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView>;
+
+        virtualinvoke $r3.<com.android.gallery3d.ui.AlbumSetSlotRenderer: void setPressedIndex(int)>(i0);
+
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView>;
+
+        virtualinvoke $r4.<com.android.gallery3d.ui.AlbumSetSlotRenderer: void setPressedUp()>();
+
+        $r6 = r0.<com.android.gallery3d.app.AlbumSetPage: android.os.Handler mHandler>;
+
+        $r5 = r0.<com.android.gallery3d.app.AlbumSetPage: android.os.Handler mHandler>;
+
+        $r7 = virtualinvoke $r5.<android.os.Handler: android.os.Message obtainMessage(int,int,int)>(1, i0, 0);
+
+        virtualinvoke $r6.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>($r7, 180L);
+
+     label4:
+        return;
+    }
+
+    private static boolean albumShouldOpenInFilmstrip(com.android.gallery3d.data.MediaSet)
+    {
+        com.android.gallery3d.data.MediaSet r0;
+        int i0;
+        java.util.ArrayList r1, $r2;
+        boolean $z0, $z1;
+
+        r0 := @parameter0: com.android.gallery3d.data.MediaSet;
+
+        i0 = virtualinvoke r0.<com.android.gallery3d.data.MediaSet: int getMediaItemCount()>();
+
+        if i0 != 1 goto label1;
+
+        $r2 = virtualinvoke r0.<com.android.gallery3d.data.MediaSet: java.util.ArrayList getMediaItem(int,int)>(0, 1);
+
+        goto label2;
+
+     label1:
+        $r2 = null;
+
+     label2:
+        r1 = $r2;
+
+        if r1 == null goto label3;
+
+        $z0 = virtualinvoke r1.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z0 != 0 goto label3;
+
+        $z1 = 1;
+
+        goto label4;
+
+     label3:
+        $z1 = 0;
+
+     label4:
+        return $z1;
+    }
+
+    private void showEmptyAlbumToast(int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0;
+        android.widget.Toast r1, r7;
+        java.lang.ref.WeakReference $r2, $r4, $r5;
+        com.android.gallery3d.app.AbstractGalleryActivity $r3;
+        java.lang.Object $r6;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: java.lang.ref.WeakReference mEmptyAlbumToast>;
+
+        if $r2 == null goto label1;
+
+        $r5 = r0.<com.android.gallery3d.app.AlbumSetPage: java.lang.ref.WeakReference mEmptyAlbumToast>;
+
+        $r6 = virtualinvoke $r5.<java.lang.ref.WeakReference: java.lang.Object get()>();
+
+        r1 = (android.widget.Toast) $r6;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<android.widget.Toast: void show()>();
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        r7 = staticinvoke <android.widget.Toast: android.widget.Toast makeText(android.content.Context,int,int)>($r3, 2131689686, i0);
+
+        $r4 = new java.lang.ref.WeakReference;
+
+        specialinvoke $r4.<java.lang.ref.WeakReference: void <init>(java.lang.Object)>(r7);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: java.lang.ref.WeakReference mEmptyAlbumToast> = $r4;
+
+        virtualinvoke r7.<android.widget.Toast: void show()>();
+
+        return;
+    }
+
+    private void hideEmptyAlbumToast()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        android.widget.Toast r1;
+        java.lang.ref.WeakReference $r2, $r3;
+        java.lang.Object $r4;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: java.lang.ref.WeakReference mEmptyAlbumToast>;
+
+        if $r2 == null goto label1;
+
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: java.lang.ref.WeakReference mEmptyAlbumToast>;
+
+        $r4 = virtualinvoke $r3.<java.lang.ref.WeakReference: java.lang.Object get()>();
+
+        r1 = (android.widget.Toast) $r4;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<android.widget.Toast: void cancel()>();
+
+     label1:
+        return;
+    }
+
+    private void pickAlbum(int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0, $i1, $i2;
+        com.android.gallery3d.data.MediaSet r1;
+        java.lang.String r2, $r24;
+        android.os.Bundle r3, $r9, $r10;
+        int[] r4;
+        com.android.gallery3d.app.AbstractGalleryActivity r5, $r11, $r14, $r18, $r20;
+        android.content.Intent r6, $r23;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, z7;
+        com.android.gallery3d.app.AlbumSetDataLoader $r7;
+        com.android.gallery3d.data.Path $r8, $r22;
+        com.android.gallery3d.app.StateManager $r12, $r13, $r19, $r21;
+        com.android.gallery3d.ui.SlotView $r15;
+        com.android.gallery3d.ui.GLView $r16;
+        android.graphics.Rect $r17;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter0: int;
+
+        $z0 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mIsActive>;
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r7 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter>;
+
+        r1 = virtualinvoke $r7.<com.android.gallery3d.app.AlbumSetDataLoader: com.android.gallery3d.data.MediaSet getMediaSet(int)>(i0);
+
+        if r1 != null goto label2;
+
+        return;
+
+     label2:
+        $i1 = virtualinvoke r1.<com.android.gallery3d.data.MediaSet: int getTotalMediaItemCount()>();
+
+        if $i1 != 0 goto label3;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void showEmptyAlbumToast(int)>(0);
+
+        return;
+
+     label3:
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void hideEmptyAlbumToast()>();
+
+        $r8 = virtualinvoke r1.<com.android.gallery3d.data.MediaSet: com.android.gallery3d.data.Path getPath()>();
+
+        r2 = virtualinvoke $r8.<com.android.gallery3d.data.Path: java.lang.String toString()>();
+
+        $r9 = new android.os.Bundle;
+
+        $r10 = virtualinvoke r0.<com.android.gallery3d.app.AlbumSetPage: android.os.Bundle getData()>();
+
+        specialinvoke $r9.<android.os.Bundle: void <init>(android.os.Bundle)>($r10);
+
+        r3 = $r9;
+
+        r4 = newarray (int)[2];
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void getSlotCenter(int,int[])>(i0, r4);
+
+        virtualinvoke r3.<android.os.Bundle: void putIntArray(java.lang.String,int[])>("set-center", r4);
+
+        $z1 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mGetAlbum>;
+
+        if $z1 == 0 goto label4;
+
+        $z6 = virtualinvoke r1.<com.android.gallery3d.data.MediaSet: boolean isLeafAlbum()>();
+
+        if $z6 == 0 goto label4;
+
+        r5 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r23 = new android.content.Intent;
+
+        specialinvoke $r23.<android.content.Intent: void <init>()>();
+
+        $r22 = virtualinvoke r1.<com.android.gallery3d.data.MediaSet: com.android.gallery3d.data.Path getPath()>();
+
+        $r24 = virtualinvoke $r22.<com.android.gallery3d.data.Path: java.lang.String toString()>();
+
+        r6 = virtualinvoke $r23.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("album-path", $r24);
+
+        virtualinvoke r5.<android.app.Activity: void setResult(int,android.content.Intent)>(-1, r6);
+
+        virtualinvoke r5.<android.app.Activity: void finish()>();
+
+        goto label9;
+
+     label4:
+        $i2 = virtualinvoke r1.<com.android.gallery3d.data.MediaSet: int getSubMediaSetCount()>();
+
+        if $i2 <= 0 goto label5;
+
+        virtualinvoke r3.<android.os.Bundle: void putString(java.lang.String,java.lang.String)>("media-path", r2);
+
+        $r18 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r19 = virtualinvoke $r18.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.app.StateManager getStateManager()>();
+
+        virtualinvoke $r19.<com.android.gallery3d.app.StateManager: void startStateForResult(java.lang.Class,int,android.os.Bundle)>(class "com/android/gallery3d/app/AlbumSetPage", 1, r3);
+
+        goto label9;
+
+     label5:
+        $z2 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mGetContent>;
+
+        if $z2 != 0 goto label6;
+
+        $z3 = staticinvoke <com.android.gallery3d.app.AlbumSetPage: boolean albumShouldOpenInFilmstrip(com.android.gallery3d.data.MediaSet)>(r1);
+
+        if $z3 == 0 goto label6;
+
+        $r15 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        $r16 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.GLView mRootPane>;
+
+        $r17 = virtualinvoke $r15.<com.android.gallery3d.ui.SlotView: android.graphics.Rect getSlotRect(int,com.android.gallery3d.ui.GLView)>(i0, $r16);
+
+        virtualinvoke r3.<android.os.Bundle: void putParcelable(java.lang.String,android.os.Parcelable)>("open-animation-rect", $r17);
+
+        virtualinvoke r3.<android.os.Bundle: void putInt(java.lang.String,int)>("index-hint", 0);
+
+        virtualinvoke r3.<android.os.Bundle: void putString(java.lang.String,java.lang.String)>("media-set-path", r2);
+
+        virtualinvoke r3.<android.os.Bundle: void putBoolean(java.lang.String,boolean)>("start-in-filmstrip", 1);
+
+        $z5 = virtualinvoke r1.<com.android.gallery3d.data.MediaSet: boolean isCameraRoll()>();
+
+        virtualinvoke r3.<android.os.Bundle: void putBoolean(java.lang.String,boolean)>("in_camera_roll", $z5);
+
+        $r20 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r21 = virtualinvoke $r20.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.app.StateManager getStateManager()>();
+
+        virtualinvoke $r21.<com.android.gallery3d.app.StateManager: void startStateForResult(java.lang.Class,int,android.os.Bundle)>(class "com/android/gallery3d/app/FilmstripPage", 2, r3);
+
+        return;
+
+     label6:
+        virtualinvoke r3.<android.os.Bundle: void putString(java.lang.String,java.lang.String)>("media-path", r2);
+
+        $r11 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r12 = virtualinvoke $r11.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.app.StateManager getStateManager()>();
+
+        z7 = virtualinvoke $r12.<com.android.gallery3d.app.StateManager: boolean hasStateClass(java.lang.Class)>(class "com/android/gallery3d/app/AlbumPage");
+
+        if z7 != 0 goto label7;
+
+        $z4 = 1;
+
+        goto label8;
+
+     label7:
+        $z4 = 0;
+
+     label8:
+        virtualinvoke r3.<android.os.Bundle: void putBoolean(java.lang.String,boolean)>("cluster-menu", $z4);
+
+        $r14 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r13 = virtualinvoke $r14.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.app.StateManager getStateManager()>();
+
+        virtualinvoke $r13.<com.android.gallery3d.app.StateManager: void startStateForResult(java.lang.Class,int,android.os.Bundle)>(class "com/android/gallery3d/app/AlbumPage", 1, r3);
+
+     label9:
+        return;
+    }
+
+    private void onDown(int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0;
+        com.android.gallery3d.ui.AlbumSetSlotRenderer $r1;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView>;
+
+        virtualinvoke $r1.<com.android.gallery3d.ui.AlbumSetSlotRenderer: void setPressedIndex(int)>(i0);
+
+        return;
+    }
+
+    private void onUp(boolean)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        boolean z0;
+        com.android.gallery3d.ui.AlbumSetSlotRenderer $r1, $r2;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        z0 := @parameter0: boolean;
+
+        if z0 == 0 goto label1;
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView>;
+
+        virtualinvoke $r2.<com.android.gallery3d.ui.AlbumSetSlotRenderer: void setPressedIndex(int)>(-1);
+
+        goto label2;
+
+     label1:
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView>;
+
+        virtualinvoke $r1.<com.android.gallery3d.ui.AlbumSetSlotRenderer: void setPressedUp()>();
+
+     label2:
+        return;
+    }
+
+    public void onLongTap(int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0;
+        com.android.gallery3d.data.MediaSet r1;
+        boolean $z0, $z1;
+        com.android.gallery3d.app.AlbumSetDataLoader $r2;
+        com.android.gallery3d.ui.SelectionManager $r3, $r4;
+        com.android.gallery3d.data.Path $r5;
+        com.android.gallery3d.ui.SlotView $r6;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter0: int;
+
+        $z0 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mGetContent>;
+
+        if $z0 != 0 goto label1;
+
+        $z1 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mGetAlbum>;
+
+        if $z1 == 0 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter>;
+
+        r1 = virtualinvoke $r2.<com.android.gallery3d.app.AlbumSetDataLoader: com.android.gallery3d.data.MediaSet getMediaSet(int)>(i0);
+
+        if r1 != null goto label3;
+
+        return;
+
+     label3:
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        virtualinvoke $r3.<com.android.gallery3d.ui.SelectionManager: void setAutoLeaveSelectionMode(boolean)>(1);
+
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        $r5 = virtualinvoke r1.<com.android.gallery3d.data.MediaSet: com.android.gallery3d.data.Path getPath()>();
+
+        virtualinvoke $r4.<com.android.gallery3d.ui.SelectionManager: void toggle(com.android.gallery3d.data.Path)>($r5);
+
+        $r6 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        virtualinvoke $r6.<com.android.gallery3d.ui.SlotView: void invalidate()>();
+
+        return;
+    }
+
+    public void doCluster(int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0;
+        java.lang.String r1, r2;
+        android.os.Bundle r3, $r6, $r7;
+        com.android.gallery3d.data.MediaSet $r4;
+        com.android.gallery3d.data.Path $r5;
+        com.android.gallery3d.app.AbstractGalleryActivity $r8;
+        com.android.gallery3d.app.StateManager $r9;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter0: int;
+
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.data.MediaSet mMediaSet>;
+
+        $r5 = virtualinvoke $r4.<com.android.gallery3d.data.MediaSet: com.android.gallery3d.data.Path getPath()>();
+
+        r1 = virtualinvoke $r5.<com.android.gallery3d.data.Path: java.lang.String toString()>();
+
+        r2 = staticinvoke <com.android.gallery3d.app.FilterUtils: java.lang.String switchClusterPath(java.lang.String,int)>(r1, i0);
+
+        $r6 = new android.os.Bundle;
+
+        $r7 = virtualinvoke r0.<com.android.gallery3d.app.AlbumSetPage: android.os.Bundle getData()>();
+
+        specialinvoke $r6.<android.os.Bundle: void <init>(android.os.Bundle)>($r7);
+
+        r3 = $r6;
+
+        virtualinvoke r3.<android.os.Bundle: void putString(java.lang.String,java.lang.String)>("media-path", r2);
+
+        virtualinvoke r3.<android.os.Bundle: void putInt(java.lang.String,int)>("selected-cluster", i0);
+
+        $r8 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r9 = virtualinvoke $r8.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.app.StateManager getStateManager()>();
+
+        virtualinvoke $r9.<com.android.gallery3d.app.StateManager: void switchState(com.android.gallery3d.app.ActivityState,java.lang.Class,android.os.Bundle)>(r0, class "com/android/gallery3d/app/AlbumSetPage", r3);
+
+        return;
+    }
+
+    public void onCreate(android.os.Bundle, android.os.Bundle)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        android.os.Bundle r1, r2;
+        android.content.Context r3;
+        com.android.gallery3d.app.AbstractGalleryActivity $r4, $r9, $r13;
+        boolean $z0, $z1;
+        java.lang.String $r5, $r6;
+        com.android.gallery3d.app.EyePosition $r7;
+        com.android.gallery3d.app.AlbumSetPage$MyDetailsSource $r8;
+        com.android.gallery3d.app.GalleryActionBar $r10;
+        int $i0;
+        com.android.gallery3d.app.AlbumSetPage$2 $r11;
+        com.android.gallery3d.ui.GLRoot $r12;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        r1 := @parameter0: android.os.Bundle;
+
+        r2 := @parameter1: android.os.Bundle;
+
+        specialinvoke r0.<com.android.gallery3d.app.ActivityState: void onCreate(android.os.Bundle,android.os.Bundle)>(r1, r2);
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void initializeViews()>();
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void initializeData(android.os.Bundle)>(r1);
+
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        r3 = virtualinvoke $r4.<com.android.gallery3d.app.AbstractGalleryActivity: android.content.Context getAndroidContext()>();
+
+        $z0 = virtualinvoke r1.<android.os.Bundle: boolean getBoolean(java.lang.String,boolean)>("get-content", 0);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mGetContent> = $z0;
+
+        $z1 = virtualinvoke r1.<android.os.Bundle: boolean getBoolean(java.lang.String,boolean)>("get-album", 0);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mGetAlbum> = $z1;
+
+        $r5 = virtualinvoke r1.<android.os.Bundle: java.lang.String getString(java.lang.String)>("set-title");
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: java.lang.String mTitle> = $r5;
+
+        $r6 = virtualinvoke r1.<android.os.Bundle: java.lang.String getString(java.lang.String)>("set-subtitle");
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: java.lang.String mSubtitle> = $r6;
+
+        $r7 = new com.android.gallery3d.app.EyePosition;
+
+        specialinvoke $r7.<com.android.gallery3d.app.EyePosition: void <init>(android.content.Context,com.android.gallery3d.app.EyePosition$EyePositionListener)>(r3, r0);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.EyePosition mEyePosition> = $r7;
+
+        $r8 = new com.android.gallery3d.app.AlbumSetPage$MyDetailsSource;
+
+        specialinvoke $r8.<com.android.gallery3d.app.AlbumSetPage$MyDetailsSource: void <init>(com.android.gallery3d.app.AlbumSetPage,com.android.gallery3d.app.AlbumSetPage$1)>(r0, null);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetPage$MyDetailsSource mDetailsSource> = $r8;
+
+        $r9 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r10 = virtualinvoke $r9.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.app.GalleryActionBar getGalleryActionBar()>();
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar> = $r10;
+
+        $i0 = virtualinvoke r1.<android.os.Bundle: int getInt(java.lang.String,int)>("selected-cluster", 1);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: int mSelectedAction> = $i0;
+
+        $r11 = new com.android.gallery3d.app.AlbumSetPage$2;
+
+        $r13 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r12 = virtualinvoke $r13.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.ui.GLRoot getGLRoot()>();
+
+        specialinvoke $r11.<com.android.gallery3d.app.AlbumSetPage$2: void <init>(com.android.gallery3d.app.AlbumSetPage,com.android.gallery3d.ui.GLRoot)>(r0, $r12);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: android.os.Handler mHandler> = $r11;
+
+        return;
+    }
+
+    public void onDestroy()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.ui.ActionModeHandler $r1;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        specialinvoke r0.<com.android.gallery3d.app.ActivityState: void onDestroy()>();
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void cleanupCameraButton()>();
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.ActionModeHandler mActionModeHandler>;
+
+        virtualinvoke $r1.<com.android.gallery3d.ui.ActionModeHandler: void destroy()>();
+
+        return;
+    }
+
+    private boolean setupCameraButton()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        android.widget.RelativeLayout r1;
+        android.widget.RelativeLayout$LayoutParams r2, $r12;
+        com.android.gallery3d.app.AbstractGalleryActivity $r3, $r4, $r7;
+        boolean $z0;
+        android.view.View $r5;
+        android.widget.Button $r6, $r8, $r9, $r11, $r13;
+        com.android.gallery3d.app.AlbumSetPage$3 $r10;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $z0 = staticinvoke <com.android.gallery3d.util.GalleryUtils: boolean isCameraAvailable(android.content.Context)>($r3);
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r5 = virtualinvoke $r4.<android.app.Activity: android.view.View findViewById(int)>(2131624210);
+
+        r1 = (android.widget.RelativeLayout) $r5;
+
+        if r1 != null goto label2;
+
+        return 0;
+
+     label2:
+        $r6 = new android.widget.Button;
+
+        $r7 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        specialinvoke $r6.<android.widget.Button: void <init>(android.content.Context)>($r7);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton> = $r6;
+
+        $r8 = r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton>;
+
+        virtualinvoke $r8.<android.widget.Button: void setText(int)>(2131689786);
+
+        $r9 = r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton>;
+
+        virtualinvoke $r9.<android.widget.Button: void setCompoundDrawablesWithIntrinsicBounds(int,int,int,int)>(0, 2130837609, 0, 0);
+
+        $r11 = r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton>;
+
+        $r10 = new com.android.gallery3d.app.AlbumSetPage$3;
+
+        specialinvoke $r10.<com.android.gallery3d.app.AlbumSetPage$3: void <init>(com.android.gallery3d.app.AlbumSetPage)>(r0);
+
+        virtualinvoke $r11.<android.widget.Button: void setOnClickListener(android.view.View$OnClickListener)>($r10);
+
+        $r12 = new android.widget.RelativeLayout$LayoutParams;
+
+        specialinvoke $r12.<android.widget.RelativeLayout$LayoutParams: void <init>(int,int)>(-2, -2);
+
+        r2 = $r12;
+
+        virtualinvoke r2.<android.widget.RelativeLayout$LayoutParams: void addRule(int)>(13);
+
+        $r13 = r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton>;
+
+        virtualinvoke r1.<android.widget.RelativeLayout: void addView(android.view.View,android.view.ViewGroup$LayoutParams)>($r13, r2);
+
+        return 1;
+    }
+
+    private void cleanupCameraButton()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        android.widget.RelativeLayout r1;
+        android.widget.Button $r2, $r5;
+        com.android.gallery3d.app.AbstractGalleryActivity $r3;
+        android.view.View $r4;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton>;
+
+        if $r2 != null goto label1;
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r4 = virtualinvoke $r3.<android.app.Activity: android.view.View findViewById(int)>(2131624210);
+
+        r1 = (android.widget.RelativeLayout) $r4;
+
+        if r1 != null goto label2;
+
+        return;
+
+     label2:
+        $r5 = r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton>;
+
+        virtualinvoke r1.<android.widget.RelativeLayout: void removeView(android.view.View)>($r5);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton> = null;
+
+        return;
+    }
+
+    private void showCameraButton()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        android.widget.Button $r1, $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton>;
+
+        if $r1 != null goto label1;
+
+        $z0 = specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: boolean setupCameraButton()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton>;
+
+        virtualinvoke $r2.<android.widget.Button: void setVisibility(int)>(0);
+
+        return;
+    }
+
+    private void hideCameraButton()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        android.widget.Button $r1, $r2;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton>;
+
+        if $r1 != null goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: android.widget.Button mCameraButton>;
+
+        virtualinvoke $r2.<android.widget.Button: void setVisibility(int)>(8);
+
+        return;
+    }
+
+    private void clearLoadingBit(int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6;
+        android.content.Intent r1, $r6;
+        boolean $z0, $z1;
+        com.android.gallery3d.app.AlbumSetDataLoader $r2;
+        com.android.gallery3d.app.AbstractGalleryActivity $r3, $r7;
+        com.android.gallery3d.app.StateManager $r4, $r9;
+        com.android.gallery3d.ui.SlotView $r5;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter0: int;
+
+        $i2 = r0.<com.android.gallery3d.app.AlbumSetPage: int mLoadingBits>;
+
+        $i1 = i0 ^ -1;
+
+        $i3 = $i2 & $i1;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: int mLoadingBits> = $i3;
+
+        $i4 = r0.<com.android.gallery3d.app.AlbumSetPage: int mLoadingBits>;
+
+        if $i4 != 0 goto label3;
+
+        $z1 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mIsActive>;
+
+        if $z1 == 0 goto label3;
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter>;
+
+        $i5 = virtualinvoke $r2.<com.android.gallery3d.app.AlbumSetDataLoader: int size()>();
+
+        if $i5 != 0 goto label3;
+
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r4 = virtualinvoke $r3.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.app.StateManager getStateManager()>();
+
+        $i6 = virtualinvoke $r4.<com.android.gallery3d.app.StateManager: int getStateCount()>();
+
+        if $i6 <= 1 goto label1;
+
+        $r6 = new android.content.Intent;
+
+        specialinvoke $r6.<android.content.Intent: void <init>()>();
+
+        r1 = $r6;
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,boolean)>("empty-album", 1);
+
+        virtualinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void setStateResult(int,android.content.Intent)>(-1, r1);
+
+        $r7 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r9 = virtualinvoke $r7.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.app.StateManager getStateManager()>();
+
+        virtualinvoke $r9.<com.android.gallery3d.app.StateManager: void finishState(com.android.gallery3d.app.ActivityState)>(r0);
+
+        goto label2;
+
+     label1:
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowedEmptyToastForSelf> = 1;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void showEmptyAlbumToast(int)>(1);
+
+        $r5 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        virtualinvoke $r5.<com.android.gallery3d.ui.SlotView: void invalidate()>();
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void showCameraButton()>();
+
+     label2:
+        return;
+
+     label3:
+        $z0 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowedEmptyToastForSelf>;
+
+        if $z0 == 0 goto label4;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowedEmptyToastForSelf> = 0;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void hideEmptyAlbumToast()>();
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void hideCameraButton()>();
+
+     label4:
+        return;
+    }
+
+    private void setLoadingBit(int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0, $i1, $i2;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter0: int;
+
+        $i1 = r0.<com.android.gallery3d.app.AlbumSetPage: int mLoadingBits>;
+
+        $i2 = $i1 | i0;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: int mLoadingBits> = $i2;
+
+        return;
+    }
+
+    public void onPause()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.app.AlbumSetDataLoader $r1;
+        com.android.gallery3d.ui.AlbumSetSlotRenderer $r2;
+        com.android.gallery3d.ui.ActionModeHandler $r3;
+        com.android.gallery3d.app.EyePosition $r4;
+        com.android.gallery3d.app.GalleryActionBar $r5;
+        com.android.gallery3d.util.Future $r6, $r7;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        specialinvoke r0.<com.android.gallery3d.app.ActivityState: void onPause()>();
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mIsActive> = 0;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter>;
+
+        virtualinvoke $r1.<com.android.gallery3d.app.AlbumSetDataLoader: void pause()>();
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView>;
+
+        virtualinvoke $r2.<com.android.gallery3d.ui.AlbumSetSlotRenderer: void pause()>();
+
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.ActionModeHandler mActionModeHandler>;
+
+        virtualinvoke $r3.<com.android.gallery3d.ui.ActionModeHandler: void pause()>();
+
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.EyePosition mEyePosition>;
+
+        virtualinvoke $r4.<com.android.gallery3d.app.EyePosition: void pause()>();
+
+        staticinvoke <com.android.gallery3d.ui.DetailsHelper: void pause()>();
+
+        $r5 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        virtualinvoke $r5.<com.android.gallery3d.app.GalleryActionBar: void disableClusterMenu(boolean)>(0);
+
+        $r6 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.util.Future mSyncTask>;
+
+        if $r6 == null goto label1;
+
+        $r7 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.util.Future mSyncTask>;
+
+        interfaceinvoke $r7.<com.android.gallery3d.util.Future: void cancel()>();
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.util.Future mSyncTask> = null;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void clearLoadingBit(int)>(2);
+
+     label1:
+        return;
+    }
+
+    public void onResume()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.ui.GLView $r1;
+        com.android.gallery3d.app.AlbumSetDataLoader $r2;
+        com.android.gallery3d.ui.AlbumSetSlotRenderer $r3;
+        com.android.gallery3d.app.EyePosition $r4;
+        com.android.gallery3d.ui.ActionModeHandler $r5;
+        boolean $z0, $z1;
+        com.android.gallery3d.data.MediaSet $r6;
+        com.android.gallery3d.util.Future $r7;
+        int $i0;
+        com.android.gallery3d.app.GalleryActionBar $r8;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        specialinvoke r0.<com.android.gallery3d.app.ActivityState: void onResume()>();
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mIsActive> = 1;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.GLView mRootPane>;
+
+        virtualinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void setContentPane(com.android.gallery3d.ui.GLView)>($r1);
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void setLoadingBit(int)>(1);
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter>;
+
+        virtualinvoke $r2.<com.android.gallery3d.app.AlbumSetDataLoader: void resume()>();
+
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView>;
+
+        virtualinvoke $r3.<com.android.gallery3d.ui.AlbumSetSlotRenderer: void resume()>();
+
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.EyePosition mEyePosition>;
+
+        virtualinvoke $r4.<com.android.gallery3d.app.EyePosition: void resume()>();
+
+        $r5 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.ActionModeHandler mActionModeHandler>;
+
+        virtualinvoke $r5.<com.android.gallery3d.ui.ActionModeHandler: void resume()>();
+
+        $z0 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowClusterMenu>;
+
+        if $z0 == 0 goto label1;
+
+        $r8 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        $i0 = r0.<com.android.gallery3d.app.AlbumSetPage: int mSelectedAction>;
+
+        virtualinvoke $r8.<com.android.gallery3d.app.GalleryActionBar: void enableClusterMenu(int,com.android.gallery3d.app.GalleryActionBar$ClusterRunner)>($i0, r0);
+
+     label1:
+        $z1 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mInitialSynced>;
+
+        if $z1 != 0 goto label2;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void setLoadingBit(int)>(2);
+
+        $r6 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.data.MediaSet mMediaSet>;
+
+        $r7 = virtualinvoke $r6.<com.android.gallery3d.data.MediaSet: com.android.gallery3d.util.Future requestSync(com.android.gallery3d.data.MediaSet$SyncListener)>(r0);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.util.Future mSyncTask> = $r7;
+
+     label2:
+        return;
+    }
+
+    private void initializeData(android.os.Bundle)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        android.os.Bundle r1;
+        java.lang.String r2;
+        com.android.gallery3d.app.AbstractGalleryActivity $r3, $r10;
+        com.android.gallery3d.data.DataManager $r4;
+        com.android.gallery3d.data.MediaSet $r5, $r6, $r9;
+        com.android.gallery3d.ui.SelectionManager $r7;
+        com.android.gallery3d.app.AlbumSetDataLoader $r8, $r12, $r13;
+        com.android.gallery3d.app.AlbumSetPage$MyLoadingListener $r11;
+        com.android.gallery3d.ui.AlbumSetSlotRenderer $r14;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        r1 := @parameter0: android.os.Bundle;
+
+        r2 = virtualinvoke r1.<android.os.Bundle: java.lang.String getString(java.lang.String)>("media-path");
+
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r4 = virtualinvoke $r3.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.data.DataManager getDataManager()>();
+
+        $r5 = virtualinvoke $r4.<com.android.gallery3d.data.DataManager: com.android.gallery3d.data.MediaSet getMediaSet(java.lang.String)>(r2);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.data.MediaSet mMediaSet> = $r5;
+
+        $r7 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        $r6 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.data.MediaSet mMediaSet>;
+
+        virtualinvoke $r7.<com.android.gallery3d.ui.SelectionManager: void setSourceMediaSet(com.android.gallery3d.data.MediaSet)>($r6);
+
+        $r8 = new com.android.gallery3d.app.AlbumSetDataLoader;
+
+        $r10 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r9 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.data.MediaSet mMediaSet>;
+
+        specialinvoke $r8.<com.android.gallery3d.app.AlbumSetDataLoader: void <init>(com.android.gallery3d.app.AbstractGalleryActivity,com.android.gallery3d.data.MediaSet,int)>($r10, $r9, 256);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter> = $r8;
+
+        $r12 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter>;
+
+        $r11 = new com.android.gallery3d.app.AlbumSetPage$MyLoadingListener;
+
+        specialinvoke $r11.<com.android.gallery3d.app.AlbumSetPage$MyLoadingListener: void <init>(com.android.gallery3d.app.AlbumSetPage,com.android.gallery3d.app.AlbumSetPage$1)>(r0, null);
+
+        virtualinvoke $r12.<com.android.gallery3d.app.AlbumSetDataLoader: void setLoadingListener(com.android.gallery3d.app.LoadingListener)>($r11);
+
+        $r14 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView>;
+
+        $r13 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter>;
+
+        virtualinvoke $r14.<com.android.gallery3d.ui.AlbumSetSlotRenderer: void setModel(com.android.gallery3d.app.AlbumSetDataLoader)>($r13);
+
+        return;
+    }
+
+    private void initializeViews()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.ui.SelectionManager $r1, $r3, $r16, $r21;
+        com.android.gallery3d.app.AbstractGalleryActivity $r2, $r4, $r9, $r15, $r24;
+        com.android.gallery3d.app.Config$AlbumSetPage $r5, $r7, $r11, $r12;
+        com.android.gallery3d.ui.SlotView $r6, $r14, $r17, $r19, $r25;
+        com.android.gallery3d.ui.SlotView$Spec $r8;
+        com.android.gallery3d.ui.AlbumSetSlotRenderer $r10, $r18;
+        int $i0;
+        com.android.gallery3d.ui.AlbumSetSlotRenderer$LabelSpec $r13;
+        com.android.gallery3d.app.AlbumSetPage$4 $r20;
+        com.android.gallery3d.ui.ActionModeHandler $r22, $r26;
+        com.android.gallery3d.app.AlbumSetPage$5 $r23;
+        com.android.gallery3d.ui.GLView $r27;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        $r1 = new com.android.gallery3d.ui.SelectionManager;
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        specialinvoke $r1.<com.android.gallery3d.ui.SelectionManager: void <init>(com.android.gallery3d.app.AbstractGalleryActivity,boolean)>($r2, 1);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager> = $r1;
+
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        virtualinvoke $r3.<com.android.gallery3d.ui.SelectionManager: void setSelectionListener(com.android.gallery3d.ui.SelectionManager$SelectionListener)>(r0);
+
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r5 = staticinvoke <com.android.gallery3d.app.Config$AlbumSetPage: com.android.gallery3d.app.Config$AlbumSetPage get(android.content.Context)>($r4);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.Config$AlbumSetPage mConfig> = $r5;
+
+        $r6 = new com.android.gallery3d.ui.SlotView;
+
+        $r9 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r7 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.Config$AlbumSetPage mConfig>;
+
+        $r8 = $r7.<com.android.gallery3d.app.Config$AlbumSetPage: com.android.gallery3d.ui.SlotView$Spec slotViewSpec>;
+
+        specialinvoke $r6.<com.android.gallery3d.ui.SlotView: void <init>(com.android.gallery3d.app.AbstractGalleryActivity,com.android.gallery3d.ui.SlotView$Spec)>($r9, $r8);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView> = $r6;
+
+        $r10 = new com.android.gallery3d.ui.AlbumSetSlotRenderer;
+
+        $r15 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r16 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        $r14 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        $r11 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.Config$AlbumSetPage mConfig>;
+
+        $r13 = $r11.<com.android.gallery3d.app.Config$AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer$LabelSpec labelSpec>;
+
+        $r12 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.Config$AlbumSetPage mConfig>;
+
+        $i0 = $r12.<com.android.gallery3d.app.Config$AlbumSetPage: int placeholderColor>;
+
+        specialinvoke $r10.<com.android.gallery3d.ui.AlbumSetSlotRenderer: void <init>(com.android.gallery3d.app.AbstractGalleryActivity,com.android.gallery3d.ui.SelectionManager,com.android.gallery3d.ui.SlotView,com.android.gallery3d.ui.AlbumSetSlotRenderer$LabelSpec,int)>($r15, $r16, $r14, $r13, $i0);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView> = $r10;
+
+        $r17 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        $r18 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView>;
+
+        virtualinvoke $r17.<com.android.gallery3d.ui.SlotView: void setSlotRenderer(com.android.gallery3d.ui.SlotView$SlotRenderer)>($r18);
+
+        $r19 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        $r20 = new com.android.gallery3d.app.AlbumSetPage$4;
+
+        specialinvoke $r20.<com.android.gallery3d.app.AlbumSetPage$4: void <init>(com.android.gallery3d.app.AlbumSetPage)>(r0);
+
+        virtualinvoke $r19.<com.android.gallery3d.ui.SlotView: void setListener(com.android.gallery3d.ui.SlotView$Listener)>($r20);
+
+        $r22 = new com.android.gallery3d.ui.ActionModeHandler;
+
+        $r24 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r21 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        specialinvoke $r22.<com.android.gallery3d.ui.ActionModeHandler: void <init>(com.android.gallery3d.app.AbstractGalleryActivity,com.android.gallery3d.ui.SelectionManager)>($r24, $r21);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.ActionModeHandler mActionModeHandler> = $r22;
+
+        $r26 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.ActionModeHandler mActionModeHandler>;
+
+        $r23 = new com.android.gallery3d.app.AlbumSetPage$5;
+
+        specialinvoke $r23.<com.android.gallery3d.app.AlbumSetPage$5: void <init>(com.android.gallery3d.app.AlbumSetPage)>(r0);
+
+        virtualinvoke $r26.<com.android.gallery3d.ui.ActionModeHandler: void setActionModeListener(com.android.gallery3d.ui.ActionModeHandler$ActionModeListener)>($r23);
+
+        $r27 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.GLView mRootPane>;
+
+        $r25 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        virtualinvoke $r27.<com.android.gallery3d.ui.GLView: void addComponent(com.android.gallery3d.ui.GLView)>($r25);
+
+        return;
+    }
+
+    protected boolean onCreateActionBar(android.view.Menu)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        android.view.Menu r1;
+        com.android.gallery3d.app.AbstractGalleryActivity r2, $r8;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, z10;
+        android.view.MenuInflater r3;
+        int i0, $i1, $i2, $i3, $i4;
+        android.view.MenuItem r4, r5, r7;
+        android.content.Intent r6;
+        com.android.gallery3d.app.StateManager $r9;
+        java.lang.String $r11, $r16, $r18;
+        com.android.gallery3d.data.MediaSet $r12;
+        com.android.gallery3d.data.Path $r14;
+        com.android.gallery3d.app.GalleryActionBar $r15, $r19, $r20, $r21, $r23, $r24, $r26, $r27;
+        android.os.Bundle $r25;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        r1 := @parameter0: android.view.Menu;
+
+        r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r8 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r9 = virtualinvoke $r8.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.app.StateManager getStateManager()>();
+
+        z0 = virtualinvoke $r9.<com.android.gallery3d.app.StateManager: boolean hasStateClass(java.lang.Class)>(class "com/android/gallery3d/app/AlbumPage");
+
+        r3 = virtualinvoke r0.<com.android.gallery3d.app.AlbumSetPage: android.view.MenuInflater getSupportMenuInflater()>();
+
+        $z2 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mGetContent>;
+
+        if $z2 == 0 goto label01;
+
+        virtualinvoke r3.<android.view.MenuInflater: void inflate(int,android.view.Menu)>(2131886099, r1);
+
+        $r25 = r0.<com.android.gallery3d.app.AlbumSetPage: android.os.Bundle mData>;
+
+        i0 = virtualinvoke $r25.<android.os.Bundle: int getInt(java.lang.String,int)>("type-bits", 1);
+
+        $r27 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        $i4 = staticinvoke <com.android.gallery3d.util.GalleryUtils: int getSelectionModePrompt(int)>(i0);
+
+        virtualinvoke $r27.<com.android.gallery3d.app.GalleryActionBar: void setTitle(int)>($i4);
+
+        goto label13;
+
+     label01:
+        $z3 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mGetAlbum>;
+
+        if $z3 == 0 goto label02;
+
+        virtualinvoke r3.<android.view.MenuInflater: void inflate(int,android.view.Menu)>(2131886099, r1);
+
+        $r26 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        virtualinvoke $r26.<com.android.gallery3d.app.GalleryActionBar: void setTitle(int)>(2131689634);
+
+        goto label13;
+
+     label02:
+        virtualinvoke r3.<android.view.MenuInflater: void inflate(int,android.view.Menu)>(2131886081, r1);
+
+        z10 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowClusterMenu>;
+
+        if z0 != 0 goto label03;
+
+        $z9 = 1;
+
+        goto label04;
+
+     label03:
+        $z9 = 0;
+
+     label04:
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowClusterMenu> = $z9;
+
+        if z0 != 0 goto label05;
+
+        $r24 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        $i2 = virtualinvoke $r24.<com.android.gallery3d.app.GalleryActionBar: int getClusterTypeAction()>();
+
+        if $i2 != 1 goto label05;
+
+        $z8 = 1;
+
+        goto label06;
+
+     label05:
+        $z8 = 0;
+
+     label06:
+        z1 = $z8;
+
+        r4 = interfaceinvoke r1.<android.view.Menu: android.view.MenuItem findItem(int)>(2131624271);
+
+        if z1 == 0 goto label07;
+
+        $i3 = 2131689634;
+
+        goto label08;
+
+     label07:
+        $i3 = 2131689635;
+
+     label08:
+        $r11 = virtualinvoke r2.<android.app.Activity: java.lang.String getString(int)>($i3);
+
+        interfaceinvoke r4.<android.view.MenuItem: android.view.MenuItem setTitle(java.lang.CharSequence)>($r11);
+
+        r5 = interfaceinvoke r1.<android.view.Menu: android.view.MenuItem findItem(int)>(2131624269);
+
+        $z4 = staticinvoke <com.android.gallery3d.util.GalleryUtils: boolean isCameraAvailable(android.content.Context)>(r2);
+
+        interfaceinvoke r5.<android.view.MenuItem: android.view.MenuItem setVisible(boolean)>($z4);
+
+        $r15 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        $r12 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.data.MediaSet mMediaSet>;
+
+        $r14 = virtualinvoke $r12.<com.android.gallery3d.data.MediaSet: com.android.gallery3d.data.Path getPath()>();
+
+        staticinvoke <com.android.gallery3d.app.FilterUtils: void setupMenuItems(com.android.gallery3d.app.GalleryActionBar,com.android.gallery3d.data.Path,boolean)>($r15, $r14, 0);
+
+        r6 = staticinvoke <com.android.gallery3d.util.HelpUtils: android.content.Intent getHelpIntent(android.content.Context)>(r2);
+
+        r7 = interfaceinvoke r1.<android.view.Menu: android.view.MenuItem findItem(int)>(2131624276);
+
+        if r6 == null goto label09;
+
+        $z7 = 1;
+
+        goto label10;
+
+     label09:
+        $z7 = 0;
+
+     label10:
+        interfaceinvoke r7.<android.view.MenuItem: android.view.MenuItem setVisible(boolean)>($z7);
+
+        if r6 == null goto label11;
+
+        interfaceinvoke r7.<android.view.MenuItem: android.view.MenuItem setIntent(android.content.Intent)>(r6);
+
+     label11:
+        $r19 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        $r16 = r0.<com.android.gallery3d.app.AlbumSetPage: java.lang.String mTitle>;
+
+        virtualinvoke $r19.<com.android.gallery3d.app.GalleryActionBar: void setTitle(java.lang.String)>($r16);
+
+        $r21 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        $r18 = r0.<com.android.gallery3d.app.AlbumSetPage: java.lang.String mSubtitle>;
+
+        virtualinvoke $r21.<com.android.gallery3d.app.GalleryActionBar: void setSubtitle(java.lang.String)>($r18);
+
+        $z6 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowClusterMenu>;
+
+        if $z6 == z10 goto label13;
+
+        $z5 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowClusterMenu>;
+
+        if $z5 == 0 goto label12;
+
+        $r23 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        $i1 = r0.<com.android.gallery3d.app.AlbumSetPage: int mSelectedAction>;
+
+        virtualinvoke $r23.<com.android.gallery3d.app.GalleryActionBar: void enableClusterMenu(int,com.android.gallery3d.app.GalleryActionBar$ClusterRunner)>($i1, r0);
+
+        goto label13;
+
+     label12:
+        $r20 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        virtualinvoke $r20.<com.android.gallery3d.app.GalleryActionBar: void disableClusterMenu(boolean)>(1);
+
+     label13:
+        return 1;
+    }
+
+    protected boolean onItemSelected(android.view.MenuItem)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        android.view.MenuItem r1;
+        com.android.gallery3d.app.AbstractGalleryActivity r2, $r10, $r13;
+        android.os.Bundle r3, $r9;
+        java.lang.String r4;
+        int $i0, $i1;
+        com.android.gallery3d.app.AlbumSetDataLoader $r5;
+        java.lang.CharSequence $r6;
+        android.widget.Toast $r7;
+        boolean $z0;
+        android.content.Intent $r8;
+        com.android.gallery3d.data.DataManager $r11;
+        com.android.gallery3d.app.StateManager $r12;
+        com.android.gallery3d.ui.SelectionManager $r14, $r15;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        r1 := @parameter0: android.view.MenuItem;
+
+        r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $i0 = interfaceinvoke r1.<android.view.MenuItem: int getItemId()>();
+
+        lookupswitch($i0)
+        {
+            case 2131624269: goto label07;
+            case 2131624271: goto label02;
+            case 2131624273: goto label08;
+            case 2131624274: goto label09;
+            case 2131624275: goto label10;
+            case 2131624356: goto label03;
+            case 2131624362: goto label01;
+            default: goto label11;
+        };
+
+     label01:
+        virtualinvoke r2.<android.app.Activity: void setResult(int)>(0);
+
+        virtualinvoke r2.<android.app.Activity: void finish()>();
+
+        return 1;
+
+     label02:
+        $r15 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        virtualinvoke $r15.<com.android.gallery3d.ui.SelectionManager: void setAutoLeaveSelectionMode(boolean)>(0);
+
+        $r14 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        virtualinvoke $r14.<com.android.gallery3d.ui.SelectionManager: void enterSelectionMode()>();
+
+        return 1;
+
+     label03:
+        $r5 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter>;
+
+        $i1 = virtualinvoke $r5.<com.android.gallery3d.app.AlbumSetDataLoader: int size()>();
+
+        if $i1 == 0 goto label05;
+
+        $z0 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowDetails>;
+
+        if $z0 == 0 goto label04;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void hideDetails()>();
+
+        goto label06;
+
+     label04:
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void showDetails()>();
+
+        goto label06;
+
+     label05:
+        $r6 = virtualinvoke r2.<android.app.Activity: java.lang.CharSequence getText(int)>(2131689685);
+
+        $r7 = staticinvoke <android.widget.Toast: android.widget.Toast makeText(android.content.Context,java.lang.CharSequence,int)>(r2, $r6, 0);
+
+        virtualinvoke $r7.<android.widget.Toast: void show()>();
+
+     label06:
+        return 1;
+
+     label07:
+        staticinvoke <com.android.gallery3d.util.GalleryUtils: void startCameraActivity(android.content.Context)>(r2);
+
+        return 1;
+
+     label08:
+        $r9 = new android.os.Bundle;
+
+        specialinvoke $r9.<android.os.Bundle: void <init>()>();
+
+        r3 = $r9;
+
+        $r10 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r11 = virtualinvoke $r10.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.data.DataManager getDataManager()>();
+
+        r4 = virtualinvoke $r11.<com.android.gallery3d.data.DataManager: java.lang.String getTopSetPath(int)>(3);
+
+        virtualinvoke r3.<android.os.Bundle: void putString(java.lang.String,java.lang.String)>("media-path", r4);
+
+        $r13 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r12 = virtualinvoke $r13.<com.android.gallery3d.app.AbstractGalleryActivity: com.android.gallery3d.app.StateManager getStateManager()>();
+
+        virtualinvoke $r12.<com.android.gallery3d.app.StateManager: void startState(java.lang.Class,android.os.Bundle)>(class "com/android/gallery3d/app/ManageCachePage", r3);
+
+        return 1;
+
+     label09:
+        staticinvoke <com.android.gallery3d.picasasource.PicasaSource: void requestSync(android.content.Context)>(r2);
+
+        return 1;
+
+     label10:
+        $r8 = new android.content.Intent;
+
+        specialinvoke $r8.<android.content.Intent: void <init>(android.content.Context,java.lang.Class)>(r2, class "com/android/gallery3d/settings/GallerySettings");
+
+        virtualinvoke r2.<android.app.Activity: void startActivity(android.content.Intent)>($r8);
+
+        return 1;
+
+     label11:
+        return 0;
+    }
+
+    protected void onStateResult(int, int, android.content.Intent)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0, i1;
+        android.content.Intent r1;
+        com.android.gallery3d.ui.SlotView $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 := @parameter2: android.content.Intent;
+
+        if r1 == null goto label1;
+
+        $z0 = virtualinvoke r1.<android.content.Intent: boolean getBooleanExtra(java.lang.String,boolean)>("empty-album", 0);
+
+        if $z0 == 0 goto label1;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void showEmptyAlbumToast(int)>(0);
+
+     label1:
+        lookupswitch(i0)
+        {
+            case 1: goto label2;
+            default: goto label3;
+        };
+
+     label2:
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        virtualinvoke $r2.<com.android.gallery3d.ui.SlotView: void startRisingAnimation()>();
+
+     label3:
+        return;
+    }
+
+    private java.lang.String getSelectedString()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0, i1, i2, $i3;
+        java.lang.String r1, $r8;
+        com.android.gallery3d.ui.SelectionManager $r2;
+        com.android.gallery3d.app.GalleryActionBar $r3;
+        com.android.gallery3d.app.AbstractGalleryActivity $r4;
+        android.content.res.Resources $r5;
+        java.lang.Object[] $r6;
+        java.lang.Integer $r7;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SelectionManager mSelectionManager>;
+
+        i0 = virtualinvoke $r2.<com.android.gallery3d.ui.SelectionManager: int getSelectedCount()>();
+
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        i1 = virtualinvoke $r3.<com.android.gallery3d.app.GalleryActionBar: int getClusterTypeAction()>();
+
+        if i1 != 1 goto label1;
+
+        $i3 = 2131820546;
+
+        goto label2;
+
+     label1:
+        $i3 = 2131820547;
+
+     label2:
+        i2 = $i3;
+
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r5 = virtualinvoke $r4.<com.android.gallery3d.app.AbstractGalleryActivity: android.content.res.Resources getResources()>();
+
+        r1 = virtualinvoke $r5.<android.content.res.Resources: java.lang.String getQuantityString(int,int)>(i2, i0);
+
+        $r6 = newarray (java.lang.Object)[1];
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r6[0] = $r7;
+
+        $r8 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>(r1, $r6);
+
+        return $r8;
+    }
+
+    public void onSelectionModeChange(int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0, $i1;
+        com.android.gallery3d.app.GalleryActionBar $r1, $r7;
+        com.android.gallery3d.ui.ActionModeHandler $r2, $r3, $r5;
+        com.android.gallery3d.ui.GLView $r4, $r6;
+        boolean $z0;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter0: int;
+
+        tableswitch(i0)
+        {
+            case 1: goto label1;
+            case 2: goto label2;
+            case 3: goto label4;
+            default: goto label5;
+        };
+
+     label1:
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        virtualinvoke $r1.<com.android.gallery3d.app.GalleryActionBar: void disableClusterMenu(boolean)>(1);
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.ActionModeHandler mActionModeHandler>;
+
+        virtualinvoke $r2.<com.android.gallery3d.ui.ActionModeHandler: void startActionMode()>();
+
+        virtualinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void performHapticFeedback(int)>(0);
+
+        goto label5;
+
+     label2:
+        $r5 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.ActionModeHandler mActionModeHandler>;
+
+        virtualinvoke $r5.<com.android.gallery3d.ui.ActionModeHandler: void finishActionMode()>();
+
+        $z0 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowClusterMenu>;
+
+        if $z0 == 0 goto label3;
+
+        $r7 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        $i1 = r0.<com.android.gallery3d.app.AlbumSetPage: int mSelectedAction>;
+
+        virtualinvoke $r7.<com.android.gallery3d.app.GalleryActionBar: void enableClusterMenu(int,com.android.gallery3d.app.GalleryActionBar$ClusterRunner)>($i1, r0);
+
+     label3:
+        $r6 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.GLView mRootPane>;
+
+        virtualinvoke $r6.<com.android.gallery3d.ui.GLView: void invalidate()>();
+
+        goto label5;
+
+     label4:
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.ActionModeHandler mActionModeHandler>;
+
+        virtualinvoke $r3.<com.android.gallery3d.ui.ActionModeHandler: void updateSupportedOperation()>();
+
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.GLView mRootPane>;
+
+        virtualinvoke $r4.<com.android.gallery3d.ui.GLView: void invalidate()>();
+
+     label5:
+        return;
+    }
+
+    public void onSelectionChange(com.android.gallery3d.data.Path, boolean)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.data.Path r1;
+        boolean z0;
+        com.android.gallery3d.ui.ActionModeHandler $r2, $r4;
+        java.lang.String $r3;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        r1 := @parameter0: com.android.gallery3d.data.Path;
+
+        z0 := @parameter1: boolean;
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.ActionModeHandler mActionModeHandler>;
+
+        $r3 = specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: java.lang.String getSelectedString()>();
+
+        virtualinvoke $r2.<com.android.gallery3d.ui.ActionModeHandler: void setTitle(java.lang.String)>($r3);
+
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.ActionModeHandler mActionModeHandler>;
+
+        virtualinvoke $r4.<com.android.gallery3d.ui.ActionModeHandler: void updateSupportedOperation(com.android.gallery3d.data.Path,boolean)>(r1, z0);
+
+        return;
+    }
+
+    private void hideDetails()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.ui.DetailsHelper $r1;
+        com.android.gallery3d.ui.AlbumSetSlotRenderer $r2;
+        com.android.gallery3d.ui.SlotView $r3;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowDetails> = 0;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.DetailsHelper mDetailsHelper>;
+
+        virtualinvoke $r1.<com.android.gallery3d.ui.DetailsHelper: void hide()>();
+
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView>;
+
+        virtualinvoke $r2.<com.android.gallery3d.ui.AlbumSetSlotRenderer: void setHighlightItemPath(com.android.gallery3d.data.Path)>(null);
+
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        virtualinvoke $r3.<com.android.gallery3d.ui.SlotView: void invalidate()>();
+
+        return;
+    }
+
+    private void showDetails()
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.ui.DetailsHelper $r1, $r2, $r3, $r8;
+        com.android.gallery3d.app.AlbumSetPage$MyDetailsSource $r4;
+        com.android.gallery3d.ui.GLView $r5;
+        com.android.gallery3d.app.AbstractGalleryActivity $r6;
+        com.android.gallery3d.app.AlbumSetPage$6 $r7;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowDetails> = 1;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.DetailsHelper mDetailsHelper>;
+
+        if $r1 != null goto label1;
+
+        $r3 = new com.android.gallery3d.ui.DetailsHelper;
+
+        $r6 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r5 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.GLView mRootPane>;
+
+        $r4 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetPage$MyDetailsSource mDetailsSource>;
+
+        specialinvoke $r3.<com.android.gallery3d.ui.DetailsHelper: void <init>(com.android.gallery3d.app.AbstractGalleryActivity,com.android.gallery3d.ui.GLView,com.android.gallery3d.ui.DetailsHelper$DetailsSource)>($r6, $r5, $r4);
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.DetailsHelper mDetailsHelper> = $r3;
+
+        $r8 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.DetailsHelper mDetailsHelper>;
+
+        $r7 = new com.android.gallery3d.app.AlbumSetPage$6;
+
+        specialinvoke $r7.<com.android.gallery3d.app.AlbumSetPage$6: void <init>(com.android.gallery3d.app.AlbumSetPage)>(r0);
+
+        virtualinvoke $r8.<com.android.gallery3d.ui.DetailsHelper: void setCloseListener(com.android.gallery3d.ui.DetailsHelper$CloseListener)>($r7);
+
+     label1:
+        $r2 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.DetailsHelper mDetailsHelper>;
+
+        virtualinvoke $r2.<com.android.gallery3d.ui.DetailsHelper: void show()>();
+
+        return;
+    }
+
+    public void onSyncDone(com.android.gallery3d.data.MediaSet, int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.data.MediaSet r1;
+        int i0;
+        com.android.gallery3d.app.AlbumSetPage$7 $r2;
+        com.android.gallery3d.app.AbstractGalleryActivity $r3;
+        java.lang.StringBuilder $r4, $r5, $r8, $r9, $r10;
+        java.lang.String $r6, $r7, $r11;
+
+        r0 := @this: com.android.gallery3d.app.AlbumSetPage;
+
+        r1 := @parameter0: com.android.gallery3d.data.MediaSet;
+
+        i0 := @parameter1: int;
+
+        if i0 != 2 goto label1;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onSyncDone: ");
+
+        $r6 = virtualinvoke r1.<com.android.gallery3d.data.MediaSet: java.lang.String getName()>();
+
+        $r7 = staticinvoke <com.android.gallery3d.common.Utils: java.lang.String maskDebugInfo(java.lang.Object)>($r6);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" result=");
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.gallery3d.app.Log: int d(java.lang.String,java.lang.String)>("AlbumSetPage", $r11);
+
+     label1:
+        $r3 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AbstractGalleryActivity mActivity>;
+
+        $r2 = new com.android.gallery3d.app.AlbumSetPage$7;
+
+        specialinvoke $r2.<com.android.gallery3d.app.AlbumSetPage$7: void <init>(com.android.gallery3d.app.AlbumSetPage,int)>(r0, i0);
+
+        virtualinvoke $r3.<android.app.Activity: void runOnUiThread(java.lang.Runnable)>($r2);
+
+        return;
+    }
+
+    static com.android.gallery3d.app.EyePosition access$000(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.app.EyePosition $r1;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.EyePosition mEyePosition>;
+
+        return $r1;
+    }
+
+    static com.android.gallery3d.app.GalleryActionBar access$100(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.app.GalleryActionBar $r1;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.GalleryActionBar mActionBar>;
+
+        return $r1;
+    }
+
+    static com.android.gallery3d.app.Config$AlbumSetPage access$200(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.app.Config$AlbumSetPage $r1;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.Config$AlbumSetPage mConfig>;
+
+        return $r1;
+    }
+
+    static boolean access$300(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $z0 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mShowDetails>;
+
+        return $z0;
+    }
+
+    static com.android.gallery3d.ui.DetailsHelper access$400(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.ui.DetailsHelper $r1;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.DetailsHelper mDetailsHelper>;
+
+        return $r1;
+    }
+
+    static com.android.gallery3d.ui.AlbumSetSlotRenderer access$500(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.ui.AlbumSetSlotRenderer $r1;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.AlbumSetSlotRenderer mAlbumSetView>;
+
+        return $r1;
+    }
+
+    static com.android.gallery3d.ui.SlotView access$600(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.ui.SlotView $r1;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.ui.SlotView mSlotView>;
+
+        return $r1;
+    }
+
+    static float access$700(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $f0 = r0.<com.android.gallery3d.app.AlbumSetPage: float mX>;
+
+        return $f0;
+    }
+
+    static float access$800(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $f0 = r0.<com.android.gallery3d.app.AlbumSetPage: float mY>;
+
+        return $f0;
+    }
+
+    static float access$900(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $f0 = r0.<com.android.gallery3d.app.AlbumSetPage: float mZ>;
+
+        return $f0;
+    }
+
+    static void access$1100(com.android.gallery3d.app.AlbumSetPage, int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void pickAlbum(int)>(i0);
+
+        return;
+    }
+
+    static void access$1300(com.android.gallery3d.app.AlbumSetPage, int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void onDown(int)>(i0);
+
+        return;
+    }
+
+    static void access$1400(com.android.gallery3d.app.AlbumSetPage, boolean)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void onUp(boolean)>(z0);
+
+        return;
+    }
+
+    static void access$1500(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void hideDetails()>();
+
+        return;
+    }
+
+    static boolean access$1602(com.android.gallery3d.app.AlbumSetPage, boolean)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.gallery3d.app.AlbumSetPage: boolean mInitialSynced> = z0;
+
+        return z0;
+    }
+
+    static void access$1700(com.android.gallery3d.app.AlbumSetPage, int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void clearLoadingBit(int)>(i0);
+
+        return;
+    }
+
+    static boolean access$1800(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $z0 = r0.<com.android.gallery3d.app.AlbumSetPage: boolean mIsActive>;
+
+        return $z0;
+    }
+
+    static void access$1900(com.android.gallery3d.app.AlbumSetPage, int)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        int i0;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.gallery3d.app.AlbumSetPage: void setLoadingBit(int)>(i0);
+
+        return;
+    }
+
+    static com.android.gallery3d.app.AlbumSetDataLoader access$2000(com.android.gallery3d.app.AlbumSetPage)
+    {
+        com.android.gallery3d.app.AlbumSetPage r0;
+        com.android.gallery3d.app.AlbumSetDataLoader $r1;
+
+        r0 := @parameter0: com.android.gallery3d.app.AlbumSetPage;
+
+        $r1 = r0.<com.android.gallery3d.app.AlbumSetPage: com.android.gallery3d.app.AlbumSetDataLoader mAlbumSetDataAdapter>;
+
+        return $r1;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.gallery3d.app.AlbumSetPage: int BIT_LOADING_SYNC> = 2;
+
+        <com.android.gallery3d.app.AlbumSetPage: int BIT_LOADING_RELOAD> = 1;
+
+        <com.android.gallery3d.app.AlbumSetPage: int REQUEST_DO_ANIMATION> = 1;
+
+        <com.android.gallery3d.app.AlbumSetPage: int DATA_CACHE_SIZE> = 256;
+
+        <com.android.gallery3d.app.AlbumSetPage: java.lang.String KEY_SELECTED_CLUSTER_TYPE> = "selected-cluster";
+
+        <com.android.gallery3d.app.AlbumSetPage: java.lang.String KEY_SET_SUBTITLE> = "set-subtitle";
+
+        <com.android.gallery3d.app.AlbumSetPage: java.lang.String KEY_SET_TITLE> = "set-title";
+
+        <com.android.gallery3d.app.AlbumSetPage: java.lang.String KEY_MEDIA_PATH> = "media-path";
+
+        <com.android.gallery3d.app.AlbumSetPage: int MSG_PICK_ALBUM> = 1;
+
+        <com.android.gallery3d.app.AlbumSetPage: java.lang.String TAG> = "AlbumSetPage";
+
+        return;
+    }
+}

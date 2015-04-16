@@ -1,0 +1,5247 @@
+public final class com.android.server.hdmi.HdmiControlService extends com.android.server.SystemService
+{
+    private static final java.lang.String TAG;
+    static final java.lang.String PERMISSION;
+    static final int INITIATED_BY_ENABLE_CEC;
+    static final int INITIATED_BY_BOOT_UP;
+    static final int INITIATED_BY_SCREEN_ON;
+    static final int INITIATED_BY_WAKE_UP_MESSAGE;
+    static final int INITIATED_BY_HOTPLUG;
+    private final android.os.HandlerThread mIoThread;
+    private final java.lang.Object mLock;
+    private final java.util.List mLocalDevices;
+    private final java.util.ArrayList mHotplugEventListenerRecords;
+    private final java.util.ArrayList mDeviceEventListenerRecords;
+    private final java.util.ArrayList mVendorCommandListenerRecords;
+    private com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord mInputChangeListenerRecord;
+    private com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord;
+    private boolean mHdmiControlEnabled;
+    private boolean mProhibitMode;
+    private final java.util.ArrayList mSystemAudioModeChangeListenerRecords;
+    private final android.os.Handler mHandler;
+    private final com.android.server.hdmi.HdmiControlService$SettingsObserver mSettingsObserver;
+    private final com.android.server.hdmi.HdmiControlService$HdmiControlBroadcastReceiver mHdmiControlBroadcastReceiver;
+    private com.android.server.hdmi.HdmiCecController mCecController;
+    private java.util.List mPortInfo;
+    private com.android.server.hdmi.UnmodifiableSparseIntArray mPortIdMap;
+    private com.android.server.hdmi.UnmodifiableSparseArray mPortInfoMap;
+    private com.android.server.hdmi.UnmodifiableSparseArray mPortDeviceMap;
+    private com.android.server.hdmi.HdmiCecMessageValidator mMessageValidator;
+    private int mPowerStatus;
+    private java.lang.String mLanguage;
+    private boolean mStandbyMessageReceived;
+    private boolean mWakeUpMessageReceived;
+    private int mActivePortId;
+    private boolean mMhlInputChangeEnabled;
+    private final java.util.ArrayList mMhlVendorCommandListenerRecords;
+    private java.util.List mMhlDevices;
+    private com.android.server.hdmi.HdmiMhlControllerStub mMhlController;
+    private int mLastInputMhl;
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.content.Context r1;
+        android.os.HandlerThread $r2;
+        java.lang.Object $r3;
+        java.util.ArrayList $r4, $r5, $r6, $r7, $r12;
+        android.os.Handler $r8, $r16;
+        com.android.server.hdmi.HdmiControlService$HdmiControlBroadcastReceiver $r9;
+        java.util.Locale $r10;
+        java.lang.String $r11, $r13;
+        java.util.List $r14;
+        com.android.server.hdmi.HdmiControlService$SettingsObserver $r15;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<com.android.server.SystemService: void <init>(android.content.Context)>(r1);
+
+        $r2 = new android.os.HandlerThread;
+
+        specialinvoke $r2.<android.os.HandlerThread: void <init>(java.lang.String)>("Hdmi Control Io Thread");
+
+        r0.<com.android.server.hdmi.HdmiControlService: android.os.HandlerThread mIoThread> = $r2;
+
+        $r3 = new java.lang.Object;
+
+        specialinvoke $r3.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock> = $r3;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mHotplugEventListenerRecords> = $r4;
+
+        $r5 = new java.util.ArrayList;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mDeviceEventListenerRecords> = $r5;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mVendorCommandListenerRecords> = $r6;
+
+        $r7 = new java.util.ArrayList;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mSystemAudioModeChangeListenerRecords> = $r7;
+
+        $r8 = new android.os.Handler;
+
+        specialinvoke $r8.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: android.os.Handler mHandler> = $r8;
+
+        $r9 = new com.android.server.hdmi.HdmiControlService$HdmiControlBroadcastReceiver;
+
+        specialinvoke $r9.<com.android.server.hdmi.HdmiControlService$HdmiControlBroadcastReceiver: void <init>(com.android.server.hdmi.HdmiControlService,com.android.server.hdmi.HdmiControlService$1)>(r0, null);
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiControlBroadcastReceiver mHdmiControlBroadcastReceiver> = $r9;
+
+        r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus> = 1;
+
+        $r10 = staticinvoke <java.util.Locale: java.util.Locale getDefault()>();
+
+        $r11 = virtualinvoke $r10.<java.util.Locale: java.lang.String getISO3Language()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.lang.String mLanguage> = $r11;
+
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mStandbyMessageReceived> = 0;
+
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mWakeUpMessageReceived> = 0;
+
+        r0.<com.android.server.hdmi.HdmiControlService: int mActivePortId> = -1;
+
+        $r12 = new java.util.ArrayList;
+
+        specialinvoke $r12.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mMhlVendorCommandListenerRecords> = $r12;
+
+        r0.<com.android.server.hdmi.HdmiControlService: int mLastInputMhl> = -1;
+
+        $r13 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("ro.hdmi.device_type");
+
+        $r14 = staticinvoke <com.android.server.hdmi.HdmiControlService: java.util.List getIntList(java.lang.String)>($r13);
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.util.List mLocalDevices> = $r14;
+
+        $r15 = new com.android.server.hdmi.HdmiControlService$SettingsObserver;
+
+        $r16 = r0.<com.android.server.hdmi.HdmiControlService: android.os.Handler mHandler>;
+
+        specialinvoke $r15.<com.android.server.hdmi.HdmiControlService$SettingsObserver: void <init>(com.android.server.hdmi.HdmiControlService,android.os.Handler)>(r0, $r16);
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$SettingsObserver mSettingsObserver> = $r15;
+
+        return;
+    }
+
+    private static java.util.List getIntList(java.lang.String)
+    {
+        java.lang.String r0, r4, $r15;
+        java.util.ArrayList r1, $r6;
+        android.text.TextUtils$SimpleStringSplitter r2, $r7;
+        java.util.Iterator r3;
+        boolean $z0;
+        java.util.List $r8;
+        java.lang.Object $r9;
+        int $i0;
+        java.lang.Integer $r10;
+        java.lang.NumberFormatException $r11;
+        java.lang.StringBuilder $r12, $r13, $r14;
+
+        r0 := @parameter0: java.lang.String;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r6;
+
+        $r7 = new android.text.TextUtils$SimpleStringSplitter;
+
+        specialinvoke $r7.<android.text.TextUtils$SimpleStringSplitter: void <init>(char)>(44);
+
+        r2 = $r7;
+
+        virtualinvoke r2.<android.text.TextUtils$SimpleStringSplitter: void setString(java.lang.String)>(r0);
+
+        r3 = virtualinvoke r2.<android.text.TextUtils$SimpleStringSplitter: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label6;
+
+        $r9 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (java.lang.String) $r9;
+
+     label2:
+        $i0 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r4);
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i0);
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>($r10);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r11 := @caughtexception;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t parseInt: ");
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", $r15);
+
+     label5:
+        goto label1;
+
+     label6:
+        $r8 = staticinvoke <java.util.Collections: java.util.List unmodifiableList(java.util.List)>(r1);
+
+        return $r8;
+
+        catch java.lang.NumberFormatException from label2 to label3 with label4;
+    }
+
+    public void onStart()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.content.IntentFilter r1, $r12;
+        android.os.HandlerThread $r2;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.server.hdmi.HdmiCecController $r3, $r4, $r10, $r15;
+        com.android.server.hdmi.HdmiMhlControllerStub $r5, $r6;
+        java.util.List $r7;
+        com.android.server.hdmi.HdmiCecMessageValidator $r8;
+        com.android.server.hdmi.HdmiControlService$BinderService $r9;
+        android.content.Context $r11;
+        com.android.server.hdmi.HdmiControlService$HdmiControlBroadcastReceiver $r14;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r2 = r0.<com.android.server.hdmi.HdmiControlService: android.os.HandlerThread mIoThread>;
+
+        virtualinvoke $r2.<android.os.HandlerThread: void start()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus> = 2;
+
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mProhibitMode> = 0;
+
+        $z0 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: boolean readBooleanSetting(java.lang.String,boolean)>("hdmi_control_enabled", 1);
+
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mHdmiControlEnabled> = $z0;
+
+        $z1 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: boolean readBooleanSetting(java.lang.String,boolean)>("mhl_input_switching_enabled", 1);
+
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mMhlInputChangeEnabled> = $z1;
+
+        $r3 = staticinvoke <com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController create(com.android.server.hdmi.HdmiControlService)>(r0);
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController> = $r3;
+
+        $r4 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        if $r4 == null goto label1;
+
+        $r15 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        virtualinvoke $r15.<com.android.server.hdmi.HdmiCecController: void setOption(int,int)>(2, 1);
+
+        $z3 = r0.<com.android.server.hdmi.HdmiControlService: boolean mHdmiControlEnabled>;
+
+        if $z3 == 0 goto label2;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void initializeCec(int)>(1);
+
+        goto label2;
+
+     label1:
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("HdmiControlService", "Device does not support HDMI-CEC.");
+
+     label2:
+        $r5 = staticinvoke <com.android.server.hdmi.HdmiMhlControllerStub: com.android.server.hdmi.HdmiMhlControllerStub create(com.android.server.hdmi.HdmiControlService)>(r0);
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController> = $r5;
+
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        $z2 = virtualinvoke $r6.<com.android.server.hdmi.HdmiMhlControllerStub: boolean isReady()>();
+
+        if $z2 != 0 goto label3;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("HdmiControlService", "Device does not support MHL-control.");
+
+     label3:
+        $r7 = staticinvoke <java.util.Collections: java.util.List emptyList()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.util.List mMhlDevices> = $r7;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void initPortInfo()>();
+
+        $r8 = new com.android.server.hdmi.HdmiCecMessageValidator;
+
+        specialinvoke $r8.<com.android.server.hdmi.HdmiCecMessageValidator: void <init>(com.android.server.hdmi.HdmiControlService)>(r0);
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecMessageValidator mMessageValidator> = $r8;
+
+        $r9 = new com.android.server.hdmi.HdmiControlService$BinderService;
+
+        specialinvoke $r9.<com.android.server.hdmi.HdmiControlService$BinderService: void <init>(com.android.server.hdmi.HdmiControlService,com.android.server.hdmi.HdmiControlService$1)>(r0, null);
+
+        virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: void publishBinderService(java.lang.String,android.os.IBinder)>("hdmi_control", $r9);
+
+        $r10 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        if $r10 == null goto label4;
+
+        $r12 = new android.content.IntentFilter;
+
+        specialinvoke $r12.<android.content.IntentFilter: void <init>()>();
+
+        r1 = $r12;
+
+        virtualinvoke r1.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.SCREEN_OFF");
+
+        virtualinvoke r1.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.SCREEN_ON");
+
+        virtualinvoke r1.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.CONFIGURATION_CHANGED");
+
+        $r11 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.content.Context getContext()>();
+
+        $r14 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiControlBroadcastReceiver mHdmiControlBroadcastReceiver>;
+
+        virtualinvoke $r11.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r14, r1);
+
+     label4:
+        return;
+    }
+
+    private void onInitializeCecComplete()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int $i0, $i1;
+        boolean $z0, $z1;
+        com.android.server.hdmi.HdmiCecController $r1;
+        com.android.server.hdmi.HdmiCecLocalDeviceTv $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $i0 = r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus>;
+
+        if $i0 != 2 goto label1;
+
+        r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus> = 0;
+
+     label1:
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mWakeUpMessageReceived> = 0;
+
+        $z0 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: boolean isTvDevice()>();
+
+        if $z0 == 0 goto label2;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $r2 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecLocalDeviceTv tv()>();
+
+        $z1 = virtualinvoke $r2.<com.android.server.hdmi.HdmiCecLocalDeviceTv: boolean getAutoWakeup()>();
+
+        $i1 = staticinvoke <com.android.server.hdmi.HdmiControlService: int toInt(boolean)>($z1);
+
+        virtualinvoke $r1.<com.android.server.hdmi.HdmiCecController: void setOption(int,int)>(1, $i1);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void registerContentObserver()>();
+
+     label2:
+        return;
+    }
+
+    private void registerContentObserver()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.content.ContentResolver r1;
+        java.lang.String[] r2, r3, $r6;
+        int i0, i1;
+        java.lang.String r4;
+        android.content.Context $r5;
+        android.net.Uri $r7;
+        com.android.server.hdmi.HdmiControlService$SettingsObserver $r8;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r5 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.content.Context getContext()>();
+
+        r1 = virtualinvoke $r5.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r6 = newarray (java.lang.String)[5];
+
+        $r6[0] = "hdmi_control_enabled";
+
+        $r6[1] = "hdmi_control_auto_wakeup_enabled";
+
+        $r6[2] = "hdmi_control_auto_device_off_enabled";
+
+        $r6[3] = "mhl_input_switching_enabled";
+
+        $r6[4] = "mhl_power_charge_enabled";
+
+        r2 = $r6;
+
+        r3 = r2;
+
+        i0 = lengthof r3;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        r4 = r3[i1];
+
+        $r7 = staticinvoke <android.provider.Settings$Global: android.net.Uri getUriFor(java.lang.String)>(r4);
+
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$SettingsObserver mSettingsObserver>;
+
+        virtualinvoke r1.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver,int)>($r7, 0, $r8, -1);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private static int toInt(boolean)
+    {
+        boolean z0;
+        byte $b0;
+
+        z0 := @parameter0: boolean;
+
+        if z0 == 0 goto label1;
+
+        $b0 = 1;
+
+        goto label2;
+
+     label1:
+        $b0 = 0;
+
+     label2:
+        return $b0;
+    }
+
+    boolean readBooleanSetting(java.lang.String, boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.String r1;
+        boolean z0, $z1;
+        android.content.ContentResolver r2;
+        android.content.Context $r3;
+        int $i0, $i1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        $r3 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.content.Context getContext()>();
+
+        r2 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i0 = staticinvoke <com.android.server.hdmi.HdmiControlService: int toInt(boolean)>(z0);
+
+        $i1 = staticinvoke <android.provider.Settings$Global: int getInt(android.content.ContentResolver,java.lang.String,int)>(r2, r1, $i0);
+
+        if $i1 != 1 goto label1;
+
+        $z1 = 1;
+
+        goto label2;
+
+     label1:
+        $z1 = 0;
+
+     label2:
+        return $z1;
+    }
+
+    void writeBooleanSetting(java.lang.String, boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.String r1;
+        boolean z0;
+        android.content.ContentResolver r2;
+        android.content.Context $r3;
+        int $i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        $r3 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.content.Context getContext()>();
+
+        r2 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i0 = staticinvoke <com.android.server.hdmi.HdmiControlService: int toInt(boolean)>(z0);
+
+        staticinvoke <android.provider.Settings$Global: boolean putInt(android.content.ContentResolver,java.lang.String,int)>(r2, r1, $i0);
+
+        return;
+    }
+
+    private void unregisterSettingsObserver()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.content.Context $r1;
+        android.content.ContentResolver $r2;
+        com.android.server.hdmi.HdmiControlService$SettingsObserver $r3;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.content.Context getContext()>();
+
+        $r2 = virtualinvoke $r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r3 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$SettingsObserver mSettingsObserver>;
+
+        virtualinvoke $r2.<android.content.ContentResolver: void unregisterContentObserver(android.database.ContentObserver)>($r3);
+
+        return;
+    }
+
+    private void initializeCec(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        com.android.server.hdmi.HdmiCecController $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        virtualinvoke $r1.<com.android.server.hdmi.HdmiCecController: void setOption(int,int)>(3, 1);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void initializeLocalDevices(int)>(i0);
+
+        return;
+    }
+
+    private void initializeLocalDevices(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1;
+        java.util.ArrayList r1, $r4;
+        java.util.Iterator r2;
+        com.android.server.hdmi.HdmiCecLocalDevice r3;
+        java.util.List $r5;
+        boolean $z0;
+        java.lang.Object $r6;
+        java.lang.Integer $r7;
+        com.android.server.hdmi.HdmiCecController $r8;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r4;
+
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: java.util.List mLocalDevices>;
+
+        r2 = interfaceinvoke $r5.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r6 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        $r7 = (java.lang.Integer) $r6;
+
+        i1 = virtualinvoke $r7.<java.lang.Integer: int intValue()>();
+
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        r3 = virtualinvoke $r8.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecLocalDevice getLocalDevice(int)>(i1);
+
+        if r3 != null goto label2;
+
+        r3 = staticinvoke <com.android.server.hdmi.HdmiCecLocalDevice: com.android.server.hdmi.HdmiCecLocalDevice create(com.android.server.hdmi.HdmiControlService,int)>(r0, i1);
+
+     label2:
+        virtualinvoke r3.<com.android.server.hdmi.HdmiCecLocalDevice: void init()>();
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>(r3);
+
+        goto label1;
+
+     label3:
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void clearLocalDevices()>();
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void allocateLogicalAddress(java.util.ArrayList,int)>(r1, i0);
+
+        return;
+    }
+
+    private void allocateLogicalAddress(java.util.ArrayList, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.ArrayList r1, r2, $r7;
+        int i0, $i1, $i2;
+        int[] r3;
+        java.util.Iterator r4;
+        com.android.server.hdmi.HdmiCecLocalDevice r5;
+        com.android.server.hdmi.HdmiCecController $r6, $r9;
+        boolean $z0;
+        java.lang.Object $r8;
+        com.android.server.hdmi.HdmiControlService$1 $r10;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: java.util.ArrayList;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        virtualinvoke $r6.<com.android.server.hdmi.HdmiCecController: void clearLogicalAddress()>();
+
+        $r7 = new java.util.ArrayList;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>()>();
+
+        r2 = $r7;
+
+        r3 = newarray (int)[1];
+
+        r4 = virtualinvoke r1.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r8 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (com.android.server.hdmi.HdmiCecLocalDevice) $r8;
+
+        $r9 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $i1 = virtualinvoke r5.<com.android.server.hdmi.HdmiCecLocalDevice: int getType()>();
+
+        $i2 = virtualinvoke r5.<com.android.server.hdmi.HdmiCecLocalDevice: int getPreferredAddress()>();
+
+        $r10 = new com.android.server.hdmi.HdmiControlService$1;
+
+        specialinvoke $r10.<com.android.server.hdmi.HdmiControlService$1: void <init>(com.android.server.hdmi.HdmiControlService,com.android.server.hdmi.HdmiCecLocalDevice,java.util.ArrayList,java.util.ArrayList,int[],int)>(r0, r5, r2, r1, r3, i0);
+
+        virtualinvoke $r9.<com.android.server.hdmi.HdmiCecController: void allocateLogicalAddress(int,int,com.android.server.hdmi.HdmiCecController$AllocateAddressCallback)>($i1, $i2, $r10);
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void notifyAddressAllocated(java.util.ArrayList, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.ArrayList r1;
+        int i0, i1;
+        java.util.Iterator r2;
+        com.android.server.hdmi.HdmiCecLocalDevice r3;
+        boolean $z0;
+        java.lang.Object $r4;
+        android.hardware.hdmi.HdmiDeviceInfo $r5;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: java.util.ArrayList;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r2 = virtualinvoke r1.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r4 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.server.hdmi.HdmiCecLocalDevice) $r4;
+
+        $r5 = virtualinvoke r3.<com.android.server.hdmi.HdmiCecLocalDevice: android.hardware.hdmi.HdmiDeviceInfo getDeviceInfo()>();
+
+        i1 = virtualinvoke $r5.<android.hardware.hdmi.HdmiDeviceInfo: int getLogicalAddress()>();
+
+        virtualinvoke r3.<com.android.server.hdmi.HdmiCecLocalDevice: void handleAddressAllocated(int,int)>(i1, i0);
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void initPortInfo()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.HdmiPortInfo[] r1, r5, r27, r29, r31;
+        android.util.SparseArray r2, r4, $r10, $r12;
+        android.util.SparseIntArray r3, $r11;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, i16, i17, i18;
+        android.hardware.hdmi.HdmiPortInfo r6, r7, r8, $r21;
+        com.android.server.hdmi.HdmiCecController $r9, $r26;
+        com.android.server.hdmi.UnmodifiableSparseArray $r13, $r16;
+        com.android.server.hdmi.UnmodifiableSparseIntArray $r14;
+        com.android.server.hdmi.HdmiMhlControllerStub $r15;
+        android.util.ArraySet $r17, r28;
+        boolean $z0, $z1, $z3, $z5, $z6;
+        java.util.ArrayList $r18, r30;
+        java.util.List $r19, $r22, $r24;
+        java.lang.Integer $r20, $r23;
+        android.hardware.hdmi.HdmiDeviceInfo $r25;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r1 = null;
+
+        $r9 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        if $r9 == null goto label01;
+
+        $r26 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        r1 = virtualinvoke $r26.<com.android.server.hdmi.HdmiCecController: android.hardware.hdmi.HdmiPortInfo[] getPortInfos()>();
+
+     label01:
+        if r1 != null goto label02;
+
+        return;
+
+     label02:
+        $r10 = new android.util.SparseArray;
+
+        specialinvoke $r10.<android.util.SparseArray: void <init>()>();
+
+        r2 = $r10;
+
+        $r11 = new android.util.SparseIntArray;
+
+        specialinvoke $r11.<android.util.SparseIntArray: void <init>()>();
+
+        r3 = $r11;
+
+        $r12 = new android.util.SparseArray;
+
+        specialinvoke $r12.<android.util.SparseArray: void <init>()>();
+
+        r4 = $r12;
+
+        r5 = r1;
+
+        i0 = lengthof r5;
+
+        i1 = 0;
+
+     label03:
+        if i1 >= i0 goto label04;
+
+        r6 = r5[i1];
+
+        $i12 = virtualinvoke r6.<android.hardware.hdmi.HdmiPortInfo: int getAddress()>();
+
+        $i10 = virtualinvoke r6.<android.hardware.hdmi.HdmiPortInfo: int getId()>();
+
+        virtualinvoke r3.<android.util.SparseIntArray: void put(int,int)>($i12, $i10);
+
+        $i11 = virtualinvoke r6.<android.hardware.hdmi.HdmiPortInfo: int getId()>();
+
+        virtualinvoke r2.<android.util.SparseArray: void put(int,java.lang.Object)>($i11, r6);
+
+        $i15 = virtualinvoke r6.<android.hardware.hdmi.HdmiPortInfo: int getId()>();
+
+        $r25 = new android.hardware.hdmi.HdmiDeviceInfo;
+
+        $i14 = virtualinvoke r6.<android.hardware.hdmi.HdmiPortInfo: int getAddress()>();
+
+        $i13 = virtualinvoke r6.<android.hardware.hdmi.HdmiPortInfo: int getId()>();
+
+        specialinvoke $r25.<android.hardware.hdmi.HdmiDeviceInfo: void <init>(int,int)>($i14, $i13);
+
+        virtualinvoke r4.<android.util.SparseArray: void put(int,java.lang.Object)>($i15, $r25);
+
+        i1 = i1 + 1;
+
+        goto label03;
+
+     label04:
+        $r14 = new com.android.server.hdmi.UnmodifiableSparseIntArray;
+
+        specialinvoke $r14.<com.android.server.hdmi.UnmodifiableSparseIntArray: void <init>(android.util.SparseIntArray)>(r3);
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.UnmodifiableSparseIntArray mPortIdMap> = $r14;
+
+        $r13 = new com.android.server.hdmi.UnmodifiableSparseArray;
+
+        specialinvoke $r13.<com.android.server.hdmi.UnmodifiableSparseArray: void <init>(android.util.SparseArray)>(r2);
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.UnmodifiableSparseArray mPortInfoMap> = $r13;
+
+        $r16 = new com.android.server.hdmi.UnmodifiableSparseArray;
+
+        specialinvoke $r16.<com.android.server.hdmi.UnmodifiableSparseArray: void <init>(android.util.SparseArray)>(r4);
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.UnmodifiableSparseArray mPortDeviceMap> = $r16;
+
+        $r15 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        r27 = virtualinvoke $r15.<com.android.server.hdmi.HdmiMhlControllerStub: android.hardware.hdmi.HdmiPortInfo[] getPortInfos()>();
+
+        $r17 = new android.util.ArraySet;
+
+        $i3 = lengthof r27;
+
+        specialinvoke $r17.<android.util.ArraySet: void <init>(int)>($i3);
+
+        r28 = $r17;
+
+        r29 = r27;
+
+        i16 = lengthof r29;
+
+        i2 = 0;
+
+     label05:
+        if i2 >= i16 goto label07;
+
+        r7 = r29[i2];
+
+        $z6 = virtualinvoke r7.<android.hardware.hdmi.HdmiPortInfo: boolean isMhlSupported()>();
+
+        if $z6 == 0 goto label06;
+
+        $i9 = virtualinvoke r7.<android.hardware.hdmi.HdmiPortInfo: int getId()>();
+
+        $r23 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i9);
+
+        virtualinvoke r28.<android.util.ArraySet: boolean add(java.lang.Object)>($r23);
+
+     label06:
+        i2 = i2 + 1;
+
+        goto label05;
+
+     label07:
+        $z0 = virtualinvoke r28.<android.util.ArraySet: boolean isEmpty()>();
+
+        if $z0 == 0 goto label08;
+
+        $r22 = staticinvoke <java.util.Arrays: java.util.List asList(java.lang.Object[])>(r1);
+
+        $r24 = staticinvoke <java.util.Collections: java.util.List unmodifiableList(java.util.List)>($r22);
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.util.List mPortInfo> = $r24;
+
+        return;
+
+     label08:
+        $r18 = new java.util.ArrayList;
+
+        $i4 = lengthof r1;
+
+        specialinvoke $r18.<java.util.ArrayList: void <init>(int)>($i4);
+
+        r30 = $r18;
+
+        r31 = r1;
+
+        i17 = lengthof r31;
+
+        i18 = 0;
+
+     label09:
+        if i18 >= i17 goto label12;
+
+        r8 = r31[i18];
+
+        $i5 = virtualinvoke r8.<android.hardware.hdmi.HdmiPortInfo: int getId()>();
+
+        $r20 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i5);
+
+        $z1 = virtualinvoke r28.<android.util.ArraySet: boolean contains(java.lang.Object)>($r20);
+
+        if $z1 == 0 goto label10;
+
+        $r21 = new android.hardware.hdmi.HdmiPortInfo;
+
+        $i7 = virtualinvoke r8.<android.hardware.hdmi.HdmiPortInfo: int getId()>();
+
+        $i8 = virtualinvoke r8.<android.hardware.hdmi.HdmiPortInfo: int getType()>();
+
+        $i6 = virtualinvoke r8.<android.hardware.hdmi.HdmiPortInfo: int getAddress()>();
+
+        $z3 = virtualinvoke r8.<android.hardware.hdmi.HdmiPortInfo: boolean isCecSupported()>();
+
+        $z5 = virtualinvoke r8.<android.hardware.hdmi.HdmiPortInfo: boolean isArcSupported()>();
+
+        specialinvoke $r21.<android.hardware.hdmi.HdmiPortInfo: void <init>(int,int,int,boolean,boolean,boolean)>($i7, $i8, $i6, $z3, 1, $z5);
+
+        virtualinvoke r30.<java.util.ArrayList: boolean add(java.lang.Object)>($r21);
+
+        goto label11;
+
+     label10:
+        virtualinvoke r30.<java.util.ArrayList: boolean add(java.lang.Object)>(r8);
+
+     label11:
+        i18 = i18 + 1;
+
+        goto label09;
+
+     label12:
+        $r19 = staticinvoke <java.util.Collections: java.util.List unmodifiableList(java.util.List)>(r30);
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.util.List mPortInfo> = $r19;
+
+        return;
+    }
+
+    java.util.List getPortInfo()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.List $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.util.List mPortInfo>;
+
+        return $r1;
+    }
+
+    android.hardware.hdmi.HdmiPortInfo getPortInfo(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        com.android.server.hdmi.UnmodifiableSparseArray $r1;
+        java.lang.Object $r2;
+        android.hardware.hdmi.HdmiPortInfo $r3;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.UnmodifiableSparseArray mPortInfoMap>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.hdmi.UnmodifiableSparseArray: java.lang.Object get(int,java.lang.Object)>(i0, null);
+
+        $r3 = (android.hardware.hdmi.HdmiPortInfo) $r2;
+
+        return $r3;
+    }
+
+    int portIdToPath(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, $i1;
+        android.hardware.hdmi.HdmiPortInfo r1;
+        java.lang.StringBuilder $r2, $r3, $r4;
+        java.lang.String $r5;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        r1 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.hardware.hdmi.HdmiPortInfo getPortInfo(int)>(i0);
+
+        if r1 != null goto label1;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Cannot find the port info: ");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("HdmiControlService", $r5);
+
+        return 65535;
+
+     label1:
+        $i1 = virtualinvoke r1.<android.hardware.hdmi.HdmiPortInfo: int getAddress()>();
+
+        return $i1;
+    }
+
+    int pathToPortId(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1, $i2;
+        com.android.server.hdmi.UnmodifiableSparseIntArray $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        i1 = i0 & 61440;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.UnmodifiableSparseIntArray mPortIdMap>;
+
+        $i2 = virtualinvoke $r1.<com.android.server.hdmi.UnmodifiableSparseIntArray: int get(int,int)>(i1, -1);
+
+        return $i2;
+    }
+
+    boolean isValidPortId(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        android.hardware.hdmi.HdmiPortInfo $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        $r1 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.hardware.hdmi.HdmiPortInfo getPortInfo(int)>(i0);
+
+        if $r1 == null goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    android.os.Looper getIoLooper()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.os.HandlerThread $r1;
+        android.os.Looper $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: android.os.HandlerThread mIoThread>;
+
+        $r2 = virtualinvoke $r1.<android.os.HandlerThread: android.os.Looper getLooper()>();
+
+        return $r2;
+    }
+
+    android.os.Looper getServiceLooper()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.os.Handler $r1;
+        android.os.Looper $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: android.os.Handler mHandler>;
+
+        $r2 = virtualinvoke $r1.<android.os.Handler: android.os.Looper getLooper()>();
+
+        return $r2;
+    }
+
+    int getPhysicalAddress()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecController $r1;
+        int $i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $i0 = virtualinvoke $r1.<com.android.server.hdmi.HdmiCecController: int getPhysicalAddress()>();
+
+        return $i0;
+    }
+
+    int getVendorId()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecController $r1;
+        int $i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $i0 = virtualinvoke $r1.<com.android.server.hdmi.HdmiCecController: int getVendorId()>();
+
+        return $i0;
+    }
+
+    android.hardware.hdmi.HdmiDeviceInfo getDeviceInfo(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        com.android.server.hdmi.HdmiCecLocalDeviceTv r1;
+        android.hardware.hdmi.HdmiDeviceInfo $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r1 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecLocalDeviceTv tv()>();
+
+        if r1 != null goto label1;
+
+        return null;
+
+     label1:
+        $r2 = virtualinvoke r1.<com.android.server.hdmi.HdmiCecLocalDeviceTv: android.hardware.hdmi.HdmiDeviceInfo getCecDeviceInfo(int)>(i0);
+
+        return $r2;
+    }
+
+    int getCecVersion()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecController $r1;
+        int $i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $i0 = virtualinvoke $r1.<com.android.server.hdmi.HdmiCecController: int getVersion()>();
+
+        return $i0;
+    }
+
+    boolean isConnectedToArcPort(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1;
+        com.android.server.hdmi.UnmodifiableSparseArray $r1;
+        java.lang.Object $r2;
+        android.hardware.hdmi.HdmiPortInfo $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        i1 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: int pathToPortId(int)>(i0);
+
+        if i1 == -1 goto label1;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.UnmodifiableSparseArray mPortInfoMap>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.hdmi.UnmodifiableSparseArray: java.lang.Object get(int)>(i1);
+
+        $r3 = (android.hardware.hdmi.HdmiPortInfo) $r2;
+
+        $z0 = virtualinvoke $r3.<android.hardware.hdmi.HdmiPortInfo: boolean isArcSupported()>();
+
+        return $z0;
+
+     label1:
+        return 0;
+    }
+
+    void runOnServiceThread(java.lang.Runnable)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.Runnable r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: java.lang.Runnable;
+
+        $r2 = r0.<com.android.server.hdmi.HdmiControlService: android.os.Handler mHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>(r1);
+
+        return;
+    }
+
+    void runOnServiceThreadAtFrontOfQueue(java.lang.Runnable)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.Runnable r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: java.lang.Runnable;
+
+        $r2 = r0.<com.android.server.hdmi.HdmiControlService: android.os.Handler mHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: boolean postAtFrontOfQueue(java.lang.Runnable)>(r1);
+
+        return;
+    }
+
+    private void assertRunOnServiceThread()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.os.Looper $r1, $r3;
+        android.os.Handler $r2;
+        java.lang.IllegalStateException $r4;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = staticinvoke <android.os.Looper: android.os.Looper myLooper()>();
+
+        $r2 = r0.<com.android.server.hdmi.HdmiControlService: android.os.Handler mHandler>;
+
+        $r3 = virtualinvoke $r2.<android.os.Handler: android.os.Looper getLooper()>();
+
+        if $r1 == $r3 goto label1;
+
+        $r4 = new java.lang.IllegalStateException;
+
+        specialinvoke $r4.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Should run on service thread.");
+
+        throw $r4;
+
+     label1:
+        return;
+    }
+
+    void sendCecCommand(com.android.server.hdmi.HdmiCecMessage, com.android.server.hdmi.HdmiControlService$SendMessageCallback)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecMessage r1;
+        com.android.server.hdmi.HdmiControlService$SendMessageCallback r2;
+        com.android.server.hdmi.HdmiCecMessageValidator $r3;
+        int $i0;
+        java.lang.StringBuilder $r4, $r5, $r6;
+        java.lang.String $r7;
+        java.lang.Object[] $r8;
+        com.android.server.hdmi.HdmiCecController $r9;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecMessage;
+
+        r2 := @parameter1: com.android.server.hdmi.HdmiControlService$SendMessageCallback;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r3 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecMessageValidator mMessageValidator>;
+
+        $i0 = virtualinvoke $r3.<com.android.server.hdmi.HdmiCecMessageValidator: int isValid(com.android.server.hdmi.HdmiCecMessage)>(r1);
+
+        if $i0 != 0 goto label1;
+
+        $r9 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        virtualinvoke $r9.<com.android.server.hdmi.HdmiCecController: void sendCommand(com.android.server.hdmi.HdmiCecMessage,com.android.server.hdmi.HdmiControlService$SendMessageCallback)>(r1, r2);
+
+        goto label2;
+
+     label1:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid message type:");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r8 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.server.hdmi.HdmiLogger: void error(java.lang.String,java.lang.Object[])>($r7, $r8);
+
+        if r2 == null goto label2;
+
+        interfaceinvoke r2.<com.android.server.hdmi.HdmiControlService$SendMessageCallback: void onSendCompleted(int)>(3);
+
+     label2:
+        return;
+    }
+
+    void sendCecCommand(com.android.server.hdmi.HdmiCecMessage)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecMessage r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecMessage;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: void sendCecCommand(com.android.server.hdmi.HdmiCecMessage,com.android.server.hdmi.HdmiControlService$SendMessageCallback)>(r1, null);
+
+        return;
+    }
+
+    void maySendFeatureAbortCommand(com.android.server.hdmi.HdmiCecMessage, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecMessage r1;
+        int i0;
+        com.android.server.hdmi.HdmiCecController $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecMessage;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r2 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        virtualinvoke $r2.<com.android.server.hdmi.HdmiCecController: void maySendFeatureAbortCommand(com.android.server.hdmi.HdmiCecMessage,int)>(r1, i0);
+
+        return;
+    }
+
+    boolean handleCecCommand(com.android.server.hdmi.HdmiCecMessage)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecMessage r1;
+        int i0;
+        com.android.server.hdmi.HdmiCecMessageValidator $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecMessage;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r2 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecMessageValidator mMessageValidator>;
+
+        i0 = virtualinvoke $r2.<com.android.server.hdmi.HdmiCecMessageValidator: int isValid(com.android.server.hdmi.HdmiCecMessage)>(r1);
+
+        if i0 == 0 goto label2;
+
+        if i0 != 3 goto label1;
+
+        virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: void maySendFeatureAbortCommand(com.android.server.hdmi.HdmiCecMessage,int)>(r1, 3);
+
+     label1:
+        return 1;
+
+     label2:
+        $z0 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: boolean dispatchMessageToLocalDevice(com.android.server.hdmi.HdmiCecMessage)>(r1);
+
+        return $z0;
+    }
+
+    void setAudioReturnChannel(boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        boolean z0;
+        com.android.server.hdmi.HdmiCecController $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        virtualinvoke $r1.<com.android.server.hdmi.HdmiCecController: void setAudioReturnChannel(boolean)>(z0);
+
+        return;
+    }
+
+    private boolean dispatchMessageToLocalDevice(com.android.server.hdmi.HdmiCecMessage)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecMessage r1;
+        java.util.Iterator r2;
+        com.android.server.hdmi.HdmiCecLocalDevice r3;
+        com.android.server.hdmi.HdmiCecController $r4;
+        java.util.List $r5;
+        boolean $z0, $z1;
+        int $i0, $i1;
+        java.lang.StringBuilder $r6, $r7, $r8;
+        java.lang.String $r9;
+        java.lang.Object[] $r10;
+        java.lang.Object $r11;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecMessage;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r4 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $r5 = virtualinvoke $r4.<com.android.server.hdmi.HdmiCecController: java.util.List getLocalDeviceList()>();
+
+        r2 = interfaceinvoke $r5.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r11 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.server.hdmi.HdmiCecLocalDevice) $r11;
+
+        $z1 = virtualinvoke r3.<com.android.server.hdmi.HdmiCecLocalDevice: boolean dispatchMessage(com.android.server.hdmi.HdmiCecMessage)>(r1);
+
+        if $z1 == 0 goto label2;
+
+        $i1 = virtualinvoke r1.<com.android.server.hdmi.HdmiCecMessage: int getDestination()>();
+
+        if $i1 == 15 goto label2;
+
+        return 1;
+
+     label2:
+        goto label1;
+
+     label3:
+        $i0 = virtualinvoke r1.<com.android.server.hdmi.HdmiCecMessage: int getDestination()>();
+
+        if $i0 == 15 goto label4;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unhandled cec command:");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r10 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.server.hdmi.HdmiLogger: void warning(java.lang.String,java.lang.Object[])>($r9, $r10);
+
+     label4:
+        return 0;
+    }
+
+    void onHotplug(int, boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1;
+        boolean z0, $z1, $z2;
+        java.util.ArrayList r1, $r4;
+        java.util.Iterator r2, r12;
+        com.android.server.hdmi.HdmiCecLocalDevice r3, r13;
+        java.util.List $r5, $r7;
+        com.android.server.hdmi.HdmiCecController $r6, $r11;
+        java.lang.Object $r8, $r10;
+        java.lang.Integer $r9;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r4;
+
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: java.util.List mLocalDevices>;
+
+        r2 = interfaceinvoke $r5.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z1 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label4;
+
+        $r10 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        $r9 = (java.lang.Integer) $r10;
+
+        i1 = virtualinvoke $r9.<java.lang.Integer: int intValue()>();
+
+        if i1 != 0 goto label2;
+
+        goto label1;
+
+     label2:
+        $r11 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        r3 = virtualinvoke $r11.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecLocalDevice getLocalDevice(int)>(i1);
+
+        if r3 != null goto label3;
+
+        r3 = staticinvoke <com.android.server.hdmi.HdmiCecLocalDevice: com.android.server.hdmi.HdmiCecLocalDevice create(com.android.server.hdmi.HdmiControlService,int)>(r0, i1);
+
+        virtualinvoke r3.<com.android.server.hdmi.HdmiCecLocalDevice: void init()>();
+
+     label3:
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>(r3);
+
+        goto label1;
+
+     label4:
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void allocateLogicalAddress(java.util.ArrayList,int)>(r1, 4);
+
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $r7 = virtualinvoke $r6.<com.android.server.hdmi.HdmiCecController: java.util.List getLocalDeviceList()>();
+
+        r12 = interfaceinvoke $r7.<java.util.List: java.util.Iterator iterator()>();
+
+     label5:
+        $z2 = interfaceinvoke r12.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label6;
+
+        $r8 = interfaceinvoke r12.<java.util.Iterator: java.lang.Object next()>();
+
+        r13 = (com.android.server.hdmi.HdmiCecLocalDevice) $r8;
+
+        virtualinvoke r13.<com.android.server.hdmi.HdmiCecLocalDevice: void onHotplug(int,boolean)>(i0, z0);
+
+        goto label5;
+
+     label6:
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void announceHotplugEvent(int,boolean)>(i0, z0);
+
+        return;
+    }
+
+    void pollDevices(com.android.server.hdmi.HdmiControlService$DevicePollingCallback, int, int, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiControlService$DevicePollingCallback r1;
+        int i0, i1, i2, $i3;
+        com.android.server.hdmi.HdmiCecController $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiControlService$DevicePollingCallback;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r2 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $i3 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: int checkPollStrategy(int)>(i1);
+
+        virtualinvoke $r2.<com.android.server.hdmi.HdmiCecController: void pollDevices(com.android.server.hdmi.HdmiControlService$DevicePollingCallback,int,int,int)>(r1, i0, $i3, i2);
+
+        return;
+    }
+
+    private int checkPollStrategy(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1, i2, $i3;
+        java.lang.IllegalArgumentException $r1, $r6;
+        java.lang.StringBuilder $r2, $r3, $r4, $r7, $r8, $r9;
+        java.lang.String $r5, $r10;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        i1 = i0 & 3;
+
+        if i1 != 0 goto label1;
+
+        $r6 = new java.lang.IllegalArgumentException;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid poll strategy:");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r6.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r10);
+
+        throw $r6;
+
+     label1:
+        i2 = i0 & 196608;
+
+        if i2 != 0 goto label2;
+
+        $r1 = new java.lang.IllegalArgumentException;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid iteration strategy:");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r1.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r5);
+
+        throw $r1;
+
+     label2:
+        $i3 = i1 | i2;
+
+        return $i3;
+    }
+
+    java.util.List getAllLocalDevices()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecController $r1;
+        java.util.List $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.hdmi.HdmiCecController: java.util.List getLocalDeviceList()>();
+
+        return $r2;
+    }
+
+    java.lang.Object getServiceLock()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.Object $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    void setAudioStatus(boolean, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        boolean z0, z1;
+        int i0;
+        android.media.AudioManager r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        z0 := @parameter0: boolean;
+
+        i0 := @parameter1: int;
+
+        r1 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.media.AudioManager getAudioManager()>();
+
+        z1 = virtualinvoke r1.<android.media.AudioManager: boolean isStreamMute(int)>(3);
+
+        if z0 == 0 goto label1;
+
+        if z1 != 0 goto label3;
+
+        virtualinvoke r1.<android.media.AudioManager: void setStreamMute(int,boolean)>(3, 1);
+
+        goto label3;
+
+     label1:
+        if z1 == 0 goto label2;
+
+        virtualinvoke r1.<android.media.AudioManager: void setStreamMute(int,boolean)>(3, 0);
+
+     label2:
+        virtualinvoke r1.<android.media.AudioManager: void setStreamVolume(int,int,int)>(3, i0, 257);
+
+     label3:
+        return;
+    }
+
+    void announceSystemAudioModeChange(boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        boolean z0, $z1;
+        java.lang.Object r1, $r5, $r7;
+        java.util.Iterator r2;
+        com.android.server.hdmi.HdmiControlService$SystemAudioModeChangeListenerRecord r3;
+        java.lang.Throwable r4, $r9;
+        java.util.ArrayList $r6;
+        android.hardware.hdmi.IHdmiSystemAudioModeChangeListener $r8;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        z0 := @parameter0: boolean;
+
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r1 = $r5;
+
+        entermonitor $r5;
+
+     label1:
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mSystemAudioModeChangeListenerRecords>;
+
+        r2 = virtualinvoke $r6.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label2:
+        $z1 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label3;
+
+        $r7 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.server.hdmi.HdmiControlService$SystemAudioModeChangeListenerRecord) $r7;
+
+        $r8 = staticinvoke <com.android.server.hdmi.HdmiControlService$SystemAudioModeChangeListenerRecord: android.hardware.hdmi.IHdmiSystemAudioModeChangeListener access$1400(com.android.server.hdmi.HdmiControlService$SystemAudioModeChangeListenerRecord)>(r3);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void invokeSystemAudioModeChangeLocked(android.hardware.hdmi.IHdmiSystemAudioModeChangeListener,boolean)>($r8, z0);
+
+        goto label2;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r9 := @caughtexception;
+
+        r4 = $r9;
+
+        exitmonitor r1;
+
+     label6:
+        throw r4;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private android.hardware.hdmi.HdmiDeviceInfo createDeviceInfo(int, int, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1, i2, $i3, $i4, $i5, $i6;
+        java.lang.String r1;
+        android.hardware.hdmi.HdmiDeviceInfo $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        r1 = <android.os.Build: java.lang.String MODEL>;
+
+        $r2 = new android.hardware.hdmi.HdmiDeviceInfo;
+
+        $i3 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: int getPhysicalAddress()>();
+
+        $i4 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: int getPhysicalAddress()>();
+
+        $i5 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: int pathToPortId(int)>($i4);
+
+        $i6 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: int getVendorId()>();
+
+        specialinvoke $r2.<android.hardware.hdmi.HdmiDeviceInfo: void <init>(int,int,int,int,int,java.lang.String)>(i0, $i3, $i5, i1, $i6, r1);
+
+        return $r2;
+    }
+
+    void handleMhlHotplugEvent(int, boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        boolean z0;
+        com.android.server.hdmi.HdmiMhlLocalDeviceStub r1, r2, $r8, r15;
+        com.android.server.hdmi.HdmiMhlControllerStub $r3, $r9;
+        java.lang.StringBuilder $r4, $r5, $r6, $r10, $r11, $r12, $r13;
+        java.lang.String $r7, $r14;
+        android.hardware.hdmi.HdmiDeviceInfo r16;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        if z0 == 0 goto label2;
+
+        $r8 = new com.android.server.hdmi.HdmiMhlLocalDeviceStub;
+
+        specialinvoke $r8.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: void <init>(com.android.server.hdmi.HdmiControlService,int)>(r0, i0);
+
+        r1 = $r8;
+
+        $r9 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        r2 = virtualinvoke $r9.<com.android.server.hdmi.HdmiMhlControllerStub: com.android.server.hdmi.HdmiMhlLocalDeviceStub addLocalDevice(com.android.server.hdmi.HdmiMhlLocalDeviceStub)>(r1);
+
+        if r2 == null goto label1;
+
+        virtualinvoke r2.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: void onDeviceRemoved()>();
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Old device of port ");
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is removed");
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("HdmiControlService", $r14);
+
+     label1:
+        goto label5;
+
+     label2:
+        $r3 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        r15 = virtualinvoke $r3.<com.android.server.hdmi.HdmiMhlControllerStub: com.android.server.hdmi.HdmiMhlLocalDeviceStub removeLocalDevice(int)>(i0);
+
+        if r15 == null goto label4;
+
+        virtualinvoke r15.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: void onDeviceRemoved()>();
+
+        r16 = virtualinvoke r15.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: android.hardware.hdmi.HdmiDeviceInfo getInfo()>();
+
+        if r16 == null goto label3;
+
+        virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: void invokeDeviceEventListeners(android.hardware.hdmi.HdmiDeviceInfo,int)>(r16, 2);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void updateSafeMhlInput()>();
+
+     label3:
+        goto label5;
+
+     label4:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("No device to remove:[portId=");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", $r7);
+
+     label5:
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void announceHotplugEvent(int,boolean)>(i0, z0);
+
+        return;
+    }
+
+    void handleMhlBusModeChanged(int, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1;
+        com.android.server.hdmi.HdmiMhlLocalDeviceStub r1;
+        com.android.server.hdmi.HdmiMhlControllerStub $r2;
+        java.lang.StringBuilder $r3, $r4, $r5, $r6, $r7, $r8;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r2 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        r1 = virtualinvoke $r2.<com.android.server.hdmi.HdmiMhlControllerStub: com.android.server.hdmi.HdmiMhlLocalDeviceStub getLocalDevice(int)>(i0);
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: void setBusMode(int)>(i1);
+
+        goto label2;
+
+     label1:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("No mhl device exists for bus mode change[portId:");
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", busmode:");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", $r9);
+
+     label2:
+        return;
+    }
+
+    void handleMhlBusOvercurrent(int, boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        boolean z0;
+        com.android.server.hdmi.HdmiMhlLocalDeviceStub r1;
+        com.android.server.hdmi.HdmiMhlControllerStub $r2;
+        java.lang.StringBuilder $r3, $r4, $r5, $r6;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r2 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        r1 = virtualinvoke $r2.<com.android.server.hdmi.HdmiMhlControllerStub: com.android.server.hdmi.HdmiMhlLocalDeviceStub getLocalDevice(int)>(i0);
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: void onBusOvercurrentDetected(boolean)>(z0);
+
+        goto label2;
+
+     label1:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("No mhl device exists for bus overcurrent event[portId:");
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", $r7);
+
+     label2:
+        return;
+    }
+
+    void handleMhlDeviceStatusChanged(int, int, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1, i2;
+        com.android.server.hdmi.HdmiMhlLocalDeviceStub r1;
+        com.android.server.hdmi.HdmiMhlControllerStub $r2;
+        java.lang.StringBuilder $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10;
+        java.lang.String $r11;
+        android.hardware.hdmi.HdmiDeviceInfo $r12;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r2 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        r1 = virtualinvoke $r2.<com.android.server.hdmi.HdmiMhlControllerStub: com.android.server.hdmi.HdmiMhlLocalDeviceStub getLocalDevice(int)>(i0);
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: void setDeviceStatusChange(int,int)>(i1, i2);
+
+        $r12 = virtualinvoke r1.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: android.hardware.hdmi.HdmiDeviceInfo getInfo()>();
+
+        virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: void invokeDeviceEventListeners(android.hardware.hdmi.HdmiDeviceInfo,int)>($r12, 1);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void updateSafeMhlInput()>();
+
+        goto label2;
+
+     label1:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("No mhl device exists for device status event[portId:");
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", adopterId:");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", deviceId:");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", $r11);
+
+     label2:
+        return;
+    }
+
+    private void updateSafeMhlInput()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.List r1;
+        android.util.SparseArray r2;
+        int i0, $i1;
+        com.android.server.hdmi.HdmiMhlLocalDeviceStub r3;
+        android.hardware.hdmi.HdmiDeviceInfo r4, $r9;
+        java.lang.Throwable r5, $r10;
+        com.android.server.hdmi.HdmiMhlControllerStub $r6;
+        java.lang.Object $r7, $r8, r12;
+        boolean $z0;
+        java.util.ArrayList $r11;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r1 = staticinvoke <java.util.Collections: java.util.List emptyList()>();
+
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        r2 = virtualinvoke $r6.<com.android.server.hdmi.HdmiMhlControllerStub: android.util.SparseArray getAllLocalDevices()>();
+
+        i0 = 0;
+
+     label1:
+        $i1 = virtualinvoke r2.<android.util.SparseArray: int size()>();
+
+        if i0 >= $i1 goto label4;
+
+        $r8 = virtualinvoke r2.<android.util.SparseArray: java.lang.Object valueAt(int)>(i0);
+
+        r3 = (com.android.server.hdmi.HdmiMhlLocalDeviceStub) $r8;
+
+        r4 = virtualinvoke r3.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: android.hardware.hdmi.HdmiDeviceInfo getInfo()>();
+
+        if r4 == null goto label3;
+
+        $z0 = interfaceinvoke r1.<java.util.List: boolean isEmpty()>();
+
+        if $z0 == 0 goto label2;
+
+        $r11 = new java.util.ArrayList;
+
+        specialinvoke $r11.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r11;
+
+     label2:
+        $r9 = virtualinvoke r3.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: android.hardware.hdmi.HdmiDeviceInfo getInfo()>();
+
+        interfaceinvoke r1.<java.util.List: boolean add(java.lang.Object)>($r9);
+
+     label3:
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label4:
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r12 = $r7;
+
+        entermonitor $r7;
+
+     label5:
+        r0.<com.android.server.hdmi.HdmiControlService: java.util.List mMhlDevices> = r1;
+
+        exitmonitor r12;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r10 := @caughtexception;
+
+        r5 = $r10;
+
+        exitmonitor r12;
+
+     label8:
+        throw r5;
+
+     label9:
+        return;
+
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    private java.util.List getMhlDevicesLocked()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.List $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.util.List mMhlDevices>;
+
+        return $r1;
+    }
+
+    private void enforceAccessPermission()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.content.Context $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.content.Context getContext()>();
+
+        virtualinvoke $r1.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.HDMI_CEC", "HdmiControlService");
+
+        return;
+    }
+
+    private void oneTouchPlay(android.hardware.hdmi.IHdmiControlCallback)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiControlCallback r1;
+        com.android.server.hdmi.HdmiCecLocalDevicePlayback r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiControlCallback;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r2 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecLocalDevicePlayback playback()>();
+
+        if r2 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", "Local playback device not available");
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void invokeCallback(android.hardware.hdmi.IHdmiControlCallback,int)>(r1, 2);
+
+        return;
+
+     label1:
+        virtualinvoke r2.<com.android.server.hdmi.HdmiCecLocalDevicePlayback: void oneTouchPlay(android.hardware.hdmi.IHdmiControlCallback)>(r1);
+
+        return;
+    }
+
+    private void queryDisplayStatus(android.hardware.hdmi.IHdmiControlCallback)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiControlCallback r1;
+        com.android.server.hdmi.HdmiCecLocalDevicePlayback r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiControlCallback;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r2 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecLocalDevicePlayback playback()>();
+
+        if r2 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", "Local playback device not available");
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void invokeCallback(android.hardware.hdmi.IHdmiControlCallback,int)>(r1, 2);
+
+        return;
+
+     label1:
+        virtualinvoke r2.<com.android.server.hdmi.HdmiCecLocalDevicePlayback: void queryDisplayStatus(android.hardware.hdmi.IHdmiControlCallback)>(r1);
+
+        return;
+    }
+
+    private void addHotplugEventListener(android.hardware.hdmi.IHdmiHotplugEventListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiHotplugEventListener r1;
+        com.android.server.hdmi.HdmiControlService$HotplugEventListenerRecord r2, $r5;
+        java.lang.Throwable r4, $r9;
+        android.os.IBinder $r6;
+        java.lang.Object $r7, r11;
+        java.util.ArrayList $r8;
+        android.os.RemoteException $r10;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiHotplugEventListener;
+
+        $r5 = new com.android.server.hdmi.HdmiControlService$HotplugEventListenerRecord;
+
+        specialinvoke $r5.<com.android.server.hdmi.HdmiControlService$HotplugEventListenerRecord: void <init>(com.android.server.hdmi.HdmiControlService,android.hardware.hdmi.IHdmiHotplugEventListener)>(r0, r1);
+
+        r2 = $r5;
+
+     label1:
+        $r6 = interfaceinvoke r1.<android.hardware.hdmi.IHdmiHotplugEventListener: android.os.IBinder asBinder()>();
+
+        interfaceinvoke $r6.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>(r2, 0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r10 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", "Listener already died");
+
+        return;
+
+     label4:
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r11 = $r7;
+
+        entermonitor $r7;
+
+     label5:
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mHotplugEventListenerRecords>;
+
+        virtualinvoke $r8.<java.util.ArrayList: boolean add(java.lang.Object)>(r2);
+
+        exitmonitor r11;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r9 := @caughtexception;
+
+        r4 = $r9;
+
+        exitmonitor r11;
+
+     label8:
+        throw r4;
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    private void removeHotplugEventListener(android.hardware.hdmi.IHdmiHotplugEventListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiHotplugEventListener r1, $r9;
+        java.lang.Object r2, $r6, $r8;
+        java.util.Iterator r3;
+        com.android.server.hdmi.HdmiControlService$HotplugEventListenerRecord r4;
+        java.lang.Throwable r5, $r14;
+        java.util.ArrayList $r7, $r13;
+        boolean $z0;
+        android.os.IBinder $r10, $r11, $r12;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiHotplugEventListener;
+
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r2 = $r6;
+
+        entermonitor $r6;
+
+     label1:
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mHotplugEventListenerRecords>;
+
+        r3 = virtualinvoke $r7.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r8 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.server.hdmi.HdmiControlService$HotplugEventListenerRecord) $r8;
+
+        $r9 = staticinvoke <com.android.server.hdmi.HdmiControlService$HotplugEventListenerRecord: android.hardware.hdmi.IHdmiHotplugEventListener access$4200(com.android.server.hdmi.HdmiControlService$HotplugEventListenerRecord)>(r4);
+
+        $r10 = interfaceinvoke $r9.<android.hardware.hdmi.IHdmiHotplugEventListener: android.os.IBinder asBinder()>();
+
+        $r11 = interfaceinvoke r1.<android.hardware.hdmi.IHdmiHotplugEventListener: android.os.IBinder asBinder()>();
+
+        if $r10 != $r11 goto label3;
+
+        $r12 = interfaceinvoke r1.<android.hardware.hdmi.IHdmiHotplugEventListener: android.os.IBinder asBinder()>();
+
+        interfaceinvoke $r12.<android.os.IBinder: boolean unlinkToDeath(android.os.IBinder$DeathRecipient,int)>(r4, 0);
+
+        $r13 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mHotplugEventListenerRecords>;
+
+        virtualinvoke $r13.<java.util.ArrayList: boolean remove(java.lang.Object)>(r4);
+
+        goto label4;
+
+     label3:
+        goto label2;
+
+     label4:
+        exitmonitor r2;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r14 := @caughtexception;
+
+        r5 = $r14;
+
+        exitmonitor r2;
+
+     label7:
+        throw r5;
+
+     label8:
+        return;
+
+        catch java.lang.Throwable from label1 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    private void addDeviceEventListener(android.hardware.hdmi.IHdmiDeviceEventListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiDeviceEventListener r1;
+        com.android.server.hdmi.HdmiControlService$DeviceEventListenerRecord r2, $r5;
+        java.lang.Throwable r4, $r10;
+        android.os.IBinder $r6;
+        java.lang.Object $r7, r11;
+        java.util.ArrayList $r8;
+        android.os.RemoteException $r9;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiDeviceEventListener;
+
+        $r5 = new com.android.server.hdmi.HdmiControlService$DeviceEventListenerRecord;
+
+        specialinvoke $r5.<com.android.server.hdmi.HdmiControlService$DeviceEventListenerRecord: void <init>(com.android.server.hdmi.HdmiControlService,android.hardware.hdmi.IHdmiDeviceEventListener)>(r0, r1);
+
+        r2 = $r5;
+
+     label1:
+        $r6 = interfaceinvoke r1.<android.hardware.hdmi.IHdmiDeviceEventListener: android.os.IBinder asBinder()>();
+
+        interfaceinvoke $r6.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>(r2, 0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r9 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", "Listener already died");
+
+        return;
+
+     label4:
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r11 = $r7;
+
+        entermonitor $r7;
+
+     label5:
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mDeviceEventListenerRecords>;
+
+        virtualinvoke $r8.<java.util.ArrayList: boolean add(java.lang.Object)>(r2);
+
+        exitmonitor r11;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r10 := @caughtexception;
+
+        r4 = $r10;
+
+        exitmonitor r11;
+
+     label8:
+        throw r4;
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    void invokeDeviceEventListeners(android.hardware.hdmi.HdmiDeviceInfo, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.HdmiDeviceInfo r1;
+        int i0;
+        java.lang.Object r2, $r7, $r9;
+        java.util.Iterator r3;
+        com.android.server.hdmi.HdmiControlService$DeviceEventListenerRecord r4;
+        android.os.RemoteException r5, $r11;
+        java.lang.Throwable r6, $r16;
+        java.util.ArrayList $r8;
+        boolean $z0;
+        android.hardware.hdmi.IHdmiDeviceEventListener $r10;
+        java.lang.StringBuilder $r12, $r13, $r14;
+        java.lang.String $r15;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.HdmiDeviceInfo;
+
+        i0 := @parameter1: int;
+
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r2 = $r7;
+
+        entermonitor $r7;
+
+     label01:
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mDeviceEventListenerRecords>;
+
+        r3 = virtualinvoke $r8.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label02:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label07;
+
+        $r9 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.server.hdmi.HdmiControlService$DeviceEventListenerRecord) $r9;
+
+     label03:
+        $r10 = staticinvoke <com.android.server.hdmi.HdmiControlService$DeviceEventListenerRecord: android.hardware.hdmi.IHdmiDeviceEventListener access$4300(com.android.server.hdmi.HdmiControlService$DeviceEventListenerRecord)>(r4);
+
+        interfaceinvoke $r10.<android.hardware.hdmi.IHdmiDeviceEventListener: void onStatusChanged(android.hardware.hdmi.HdmiDeviceInfo,int)>(r1, i0);
+
+     label04:
+        goto label06;
+
+     label05:
+        $r11 := @caughtexception;
+
+        r5 = $r11;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to report device event:");
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r5);
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("HdmiControlService", $r15);
+
+     label06:
+        goto label02;
+
+     label07:
+        exitmonitor r2;
+
+     label08:
+        goto label11;
+
+     label09:
+        $r16 := @caughtexception;
+
+        r6 = $r16;
+
+        exitmonitor r2;
+
+     label10:
+        throw r6;
+
+     label11:
+        return;
+
+        catch android.os.RemoteException from label03 to label04 with label05;
+        catch java.lang.Throwable from label01 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    private void addSystemAudioModeChangeListner(android.hardware.hdmi.IHdmiSystemAudioModeChangeListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiSystemAudioModeChangeListener r1;
+        com.android.server.hdmi.HdmiControlService$SystemAudioModeChangeListenerRecord r2, $r5;
+        java.lang.Throwable r4, $r10;
+        android.os.IBinder $r6;
+        java.lang.Object $r7, r11;
+        java.util.ArrayList $r8;
+        android.os.RemoteException $r9;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiSystemAudioModeChangeListener;
+
+        $r5 = new com.android.server.hdmi.HdmiControlService$SystemAudioModeChangeListenerRecord;
+
+        specialinvoke $r5.<com.android.server.hdmi.HdmiControlService$SystemAudioModeChangeListenerRecord: void <init>(com.android.server.hdmi.HdmiControlService,android.hardware.hdmi.IHdmiSystemAudioModeChangeListener)>(r0, r1);
+
+        r2 = $r5;
+
+     label1:
+        $r6 = interfaceinvoke r1.<android.hardware.hdmi.IHdmiSystemAudioModeChangeListener: android.os.IBinder asBinder()>();
+
+        interfaceinvoke $r6.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>(r2, 0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r9 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", "Listener already died");
+
+        return;
+
+     label4:
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r11 = $r7;
+
+        entermonitor $r7;
+
+     label5:
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mSystemAudioModeChangeListenerRecords>;
+
+        virtualinvoke $r8.<java.util.ArrayList: boolean add(java.lang.Object)>(r2);
+
+        exitmonitor r11;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r10 := @caughtexception;
+
+        r4 = $r10;
+
+        exitmonitor r11;
+
+     label8:
+        throw r4;
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    private void removeSystemAudioModeChangeListener(android.hardware.hdmi.IHdmiSystemAudioModeChangeListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiSystemAudioModeChangeListener r1, $r9;
+        java.lang.Object r2, $r6, $r8;
+        java.util.Iterator r3;
+        com.android.server.hdmi.HdmiControlService$SystemAudioModeChangeListenerRecord r4;
+        java.lang.Throwable r5, $r13;
+        java.util.ArrayList $r7, $r12;
+        boolean $z0;
+        android.os.IBinder $r10, $r11;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiSystemAudioModeChangeListener;
+
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r2 = $r6;
+
+        entermonitor $r6;
+
+     label1:
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mSystemAudioModeChangeListenerRecords>;
+
+        r3 = virtualinvoke $r7.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r8 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.server.hdmi.HdmiControlService$SystemAudioModeChangeListenerRecord) $r8;
+
+        $r9 = staticinvoke <com.android.server.hdmi.HdmiControlService$SystemAudioModeChangeListenerRecord: android.hardware.hdmi.IHdmiSystemAudioModeChangeListener access$1400(com.android.server.hdmi.HdmiControlService$SystemAudioModeChangeListenerRecord)>(r4);
+
+        $r10 = interfaceinvoke $r9.<android.hardware.hdmi.IHdmiSystemAudioModeChangeListener: android.os.IBinder asBinder()>();
+
+        if $r10 != r1 goto label3;
+
+        $r11 = interfaceinvoke r1.<android.hardware.hdmi.IHdmiSystemAudioModeChangeListener: android.os.IBinder asBinder()>();
+
+        interfaceinvoke $r11.<android.os.IBinder: boolean unlinkToDeath(android.os.IBinder$DeathRecipient,int)>(r4, 0);
+
+        $r12 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mSystemAudioModeChangeListenerRecords>;
+
+        virtualinvoke $r12.<java.util.ArrayList: boolean remove(java.lang.Object)>(r4);
+
+        goto label4;
+
+     label3:
+        goto label2;
+
+     label4:
+        exitmonitor r2;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r13 := @caughtexception;
+
+        r5 = $r13;
+
+        exitmonitor r2;
+
+     label7:
+        throw r5;
+
+     label8:
+        return;
+
+        catch java.lang.Throwable from label1 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    private void setInputChangeListener(android.hardware.hdmi.IHdmiInputChangeListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiInputChangeListener r1;
+        java.lang.Object r2, $r5;
+        java.lang.Throwable r4, $r10;
+        com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord $r6, $r8;
+        android.os.IBinder $r7;
+        android.os.RemoteException $r9;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiInputChangeListener;
+
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r2 = $r5;
+
+        entermonitor $r5;
+
+     label01:
+        $r6 = new com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord;
+
+        specialinvoke $r6.<com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord: void <init>(com.android.server.hdmi.HdmiControlService,android.hardware.hdmi.IHdmiInputChangeListener)>(r0, r1);
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord mInputChangeListenerRecord> = $r6;
+
+     label02:
+        $r7 = interfaceinvoke r1.<android.hardware.hdmi.IHdmiInputChangeListener: android.os.IBinder asBinder()>();
+
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord mInputChangeListenerRecord>;
+
+        interfaceinvoke $r7.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>($r8, 0);
+
+     label03:
+        goto label06;
+
+     label04:
+        $r9 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", "Listener already died");
+
+        exitmonitor r2;
+
+     label05:
+        return;
+
+     label06:
+        exitmonitor r2;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r10 := @caughtexception;
+
+        r4 = $r10;
+
+        exitmonitor r2;
+
+     label09:
+        throw r4;
+
+     label10:
+        return;
+
+        catch android.os.RemoteException from label02 to label03 with label04;
+        catch java.lang.Throwable from label01 to label05 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+    }
+
+    void invokeInputChangeListener(android.hardware.hdmi.HdmiDeviceInfo)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.HdmiDeviceInfo r1;
+        java.lang.Object r2, $r5;
+        android.os.RemoteException r3, $r9;
+        java.lang.Throwable r4, $r14;
+        com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord $r6, $r7;
+        android.hardware.hdmi.IHdmiInputChangeListener $r8;
+        java.lang.StringBuilder $r10, $r11, $r12;
+        java.lang.String $r13;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.HdmiDeviceInfo;
+
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r2 = $r5;
+
+        entermonitor $r5;
+
+     label1:
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord mInputChangeListenerRecord>;
+
+        if $r6 == null goto label5;
+
+     label2:
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord mInputChangeListenerRecord>;
+
+        $r8 = staticinvoke <com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord: android.hardware.hdmi.IHdmiInputChangeListener access$4500(com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord)>($r7);
+
+        interfaceinvoke $r8.<android.hardware.hdmi.IHdmiInputChangeListener: void onChanged(android.hardware.hdmi.HdmiDeviceInfo)>(r1);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Exception thrown by IHdmiInputChangeListener: ");
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", $r13);
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r14 := @caughtexception;
+
+        r4 = $r14;
+
+        exitmonitor r2;
+
+     label8:
+        throw r4;
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    private void setHdmiRecordListener(android.hardware.hdmi.IHdmiRecordListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiRecordListener r1;
+        java.lang.Object r2, $r5;
+        android.os.RemoteException r3, $r9;
+        java.lang.Throwable r4, $r10;
+        com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord $r6, $r8;
+        android.os.IBinder $r7;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiRecordListener;
+
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r2 = $r5;
+
+        entermonitor $r5;
+
+     label1:
+        $r6 = new com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord;
+
+        specialinvoke $r6.<com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord: void <init>(com.android.server.hdmi.HdmiControlService,android.hardware.hdmi.IHdmiRecordListener)>(r0, r1);
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord> = $r6;
+
+     label2:
+        $r7 = interfaceinvoke r1.<android.hardware.hdmi.IHdmiRecordListener: android.os.IBinder asBinder()>();
+
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord>;
+
+        interfaceinvoke $r7.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>($r8, 0);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("HdmiControlService", "Listener already died.", r3);
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r10 := @caughtexception;
+
+        r4 = $r10;
+
+        exitmonitor r2;
+
+     label8:
+        throw r4;
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    byte[] invokeRecordRequestListener(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        java.lang.Object r1, $r4;
+        android.os.RemoteException r2, $r11;
+        java.lang.Throwable r3, $r10;
+        com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord $r5, $r7;
+        byte[] $r6, $r9;
+        android.hardware.hdmi.IHdmiRecordListener $r8;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        $r4 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r1 = $r4;
+
+        entermonitor $r4;
+
+     label1:
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord>;
+
+        if $r5 == null goto label6;
+
+     label2:
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord>;
+
+        $r8 = staticinvoke <com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord: android.hardware.hdmi.IHdmiRecordListener access$4600(com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord)>($r7);
+
+        $r9 = interfaceinvoke $r8.<android.hardware.hdmi.IHdmiRecordListener: byte[] getOneTouchRecordSource(int)>(i0);
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        return $r9;
+
+     label5:
+        $r11 := @caughtexception;
+
+        r2 = $r11;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("HdmiControlService", "Failed to start record.", r2);
+
+     label6:
+        $r6 = <libcore.util.EmptyArray: byte[] BYTE>;
+
+        exitmonitor r1;
+
+     label7:
+        return $r6;
+
+     label8:
+        $r10 := @caughtexception;
+
+        r3 = $r10;
+
+        exitmonitor r1;
+
+     label9:
+        throw r3;
+
+        catch android.os.RemoteException from label2 to label3 with label5;
+        catch java.lang.Throwable from label1 to label4 with label8;
+        catch java.lang.Throwable from label5 to label7 with label8;
+        catch java.lang.Throwable from label8 to label9 with label8;
+    }
+
+    void invokeOneTouchRecordResult(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        java.lang.Object r1, $r4;
+        android.os.RemoteException r2, $r8;
+        java.lang.Throwable r3, $r9;
+        com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord $r5, $r6;
+        android.hardware.hdmi.IHdmiRecordListener $r7;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        $r4 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r1 = $r4;
+
+        entermonitor $r4;
+
+     label1:
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord>;
+
+        if $r5 == null goto label5;
+
+     label2:
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord>;
+
+        $r7 = staticinvoke <com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord: android.hardware.hdmi.IHdmiRecordListener access$4600(com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord)>($r6);
+
+        interfaceinvoke $r7.<android.hardware.hdmi.IHdmiRecordListener: void onOneTouchRecordResult(int)>(i0);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("HdmiControlService", "Failed to call onOneTouchRecordResult.", r2);
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+        exitmonitor r1;
+
+     label8:
+        throw r3;
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    void invokeTimerRecordingResult(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        java.lang.Object r1, $r4;
+        android.os.RemoteException r2, $r8;
+        java.lang.Throwable r3, $r9;
+        com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord $r5, $r6;
+        android.hardware.hdmi.IHdmiRecordListener $r7;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        $r4 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r1 = $r4;
+
+        entermonitor $r4;
+
+     label1:
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord>;
+
+        if $r5 == null goto label5;
+
+     label2:
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord>;
+
+        $r7 = staticinvoke <com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord: android.hardware.hdmi.IHdmiRecordListener access$4600(com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord)>($r6);
+
+        interfaceinvoke $r7.<android.hardware.hdmi.IHdmiRecordListener: void onTimerRecordingResult(int)>(i0);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("HdmiControlService", "Failed to call onTimerRecordingResult.", r2);
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+        exitmonitor r1;
+
+     label8:
+        throw r3;
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    void invokeClearTimerRecordingResult(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        java.lang.Object r1, $r4;
+        android.os.RemoteException r2, $r8;
+        java.lang.Throwable r3, $r9;
+        com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord $r5, $r6;
+        android.hardware.hdmi.IHdmiRecordListener $r7;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        $r4 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r1 = $r4;
+
+        entermonitor $r4;
+
+     label1:
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord>;
+
+        if $r5 == null goto label5;
+
+     label2:
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord>;
+
+        $r7 = staticinvoke <com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord: android.hardware.hdmi.IHdmiRecordListener access$4600(com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord)>($r6);
+
+        interfaceinvoke $r7.<android.hardware.hdmi.IHdmiRecordListener: void onClearTimerRecordingResult(int)>(i0);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("HdmiControlService", "Failed to call onClearTimerRecordingResult.", r2);
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r9 := @caughtexception;
+
+        r3 = $r9;
+
+        exitmonitor r1;
+
+     label8:
+        throw r3;
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    private void invokeCallback(android.hardware.hdmi.IHdmiControlCallback, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiControlCallback r1;
+        int i0;
+        android.os.RemoteException r2, $r3;
+        java.lang.StringBuilder $r4, $r5, $r6;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiControlCallback;
+
+        i0 := @parameter1: int;
+
+     label1:
+        interfaceinvoke r1.<android.hardware.hdmi.IHdmiControlCallback: void onComplete(int)>(i0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r3 := @caughtexception;
+
+        r2 = $r3;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invoking callback failed:");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("HdmiControlService", $r7);
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private void invokeSystemAudioModeChangeLocked(android.hardware.hdmi.IHdmiSystemAudioModeChangeListener, boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiSystemAudioModeChangeListener r1;
+        boolean z0;
+        android.os.RemoteException r2, $r3;
+        java.lang.StringBuilder $r4, $r5, $r6;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiSystemAudioModeChangeListener;
+
+        z0 := @parameter1: boolean;
+
+     label1:
+        interfaceinvoke r1.<android.hardware.hdmi.IHdmiSystemAudioModeChangeListener: void onStatusChanged(boolean)>(z0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r3 := @caughtexception;
+
+        r2 = $r3;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invoking callback failed:");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("HdmiControlService", $r7);
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private void announceHotplugEvent(int, boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        boolean z0, $z1;
+        android.hardware.hdmi.HdmiHotplugEvent r1, $r6;
+        java.lang.Object r2, $r7, $r9;
+        java.util.Iterator r3;
+        com.android.server.hdmi.HdmiControlService$HotplugEventListenerRecord r4;
+        java.lang.Throwable r5, $r11;
+        java.util.ArrayList $r8;
+        android.hardware.hdmi.IHdmiHotplugEventListener $r10;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        $r6 = new android.hardware.hdmi.HdmiHotplugEvent;
+
+        specialinvoke $r6.<android.hardware.hdmi.HdmiHotplugEvent: void <init>(int,boolean)>(i0, z0);
+
+        r1 = $r6;
+
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r2 = $r7;
+
+        entermonitor $r7;
+
+     label1:
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mHotplugEventListenerRecords>;
+
+        r3 = virtualinvoke $r8.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label2:
+        $z1 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label3;
+
+        $r9 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.server.hdmi.HdmiControlService$HotplugEventListenerRecord) $r9;
+
+        $r10 = staticinvoke <com.android.server.hdmi.HdmiControlService$HotplugEventListenerRecord: android.hardware.hdmi.IHdmiHotplugEventListener access$4200(com.android.server.hdmi.HdmiControlService$HotplugEventListenerRecord)>(r4);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void invokeHotplugEventListenerLocked(android.hardware.hdmi.IHdmiHotplugEventListener,android.hardware.hdmi.HdmiHotplugEvent)>($r10, r1);
+
+        goto label2;
+
+     label3:
+        exitmonitor r2;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r11 := @caughtexception;
+
+        r5 = $r11;
+
+        exitmonitor r2;
+
+     label6:
+        throw r5;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private void invokeHotplugEventListenerLocked(android.hardware.hdmi.IHdmiHotplugEventListener, android.hardware.hdmi.HdmiHotplugEvent)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiHotplugEventListener r1;
+        android.hardware.hdmi.HdmiHotplugEvent r2;
+        android.os.RemoteException r3, $r4;
+        java.lang.StringBuilder $r5, $r6, $r8;
+        java.lang.String $r7, $r9;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiHotplugEventListener;
+
+        r2 := @parameter1: android.hardware.hdmi.HdmiHotplugEvent;
+
+     label1:
+        interfaceinvoke r1.<android.hardware.hdmi.IHdmiHotplugEventListener: void onReceived(android.hardware.hdmi.HdmiHotplugEvent)>(r2);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r3 = $r4;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to report hotplug event:");
+
+        $r7 = virtualinvoke r2.<java.lang.Object: java.lang.String toString()>();
+
+        $r8 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("HdmiControlService", $r9, r3);
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private com.android.server.hdmi.HdmiCecLocalDeviceTv tv()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecController $r1;
+        com.android.server.hdmi.HdmiCecLocalDevice $r2;
+        com.android.server.hdmi.HdmiCecLocalDeviceTv $r3;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecLocalDevice getLocalDevice(int)>(0);
+
+        $r3 = (com.android.server.hdmi.HdmiCecLocalDeviceTv) $r2;
+
+        return $r3;
+    }
+
+    boolean isTvDevice()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecLocalDeviceTv $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecLocalDeviceTv tv()>();
+
+        if $r1 == null goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    private com.android.server.hdmi.HdmiCecLocalDevicePlayback playback()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecController $r1;
+        com.android.server.hdmi.HdmiCecLocalDevice $r2;
+        com.android.server.hdmi.HdmiCecLocalDevicePlayback $r3;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecLocalDevice getLocalDevice(int)>(4);
+
+        $r3 = (com.android.server.hdmi.HdmiCecLocalDevicePlayback) $r2;
+
+        return $r3;
+    }
+
+    android.media.AudioManager getAudioManager()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.content.Context $r1;
+        java.lang.Object $r2;
+        android.media.AudioManager $r3;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.content.Context getContext()>();
+
+        $r2 = virtualinvoke $r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("audio");
+
+        $r3 = (android.media.AudioManager) $r2;
+
+        return $r3;
+    }
+
+    boolean isControlEnabled()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r3 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $z0 = r0.<com.android.server.hdmi.HdmiControlService: boolean mHdmiControlEnabled>;
+
+        exitmonitor r1;
+
+     label2:
+        return $z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    int getPowerStatus()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int $i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $i0 = r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus>;
+
+        return $i0;
+    }
+
+    boolean isPowerOnOrTransient()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int $i0, $i1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $i0 = r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus>;
+
+        if $i0 == 0 goto label1;
+
+        $i1 = r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus>;
+
+        if $i1 != 2 goto label2;
+
+     label1:
+        $z0 = 1;
+
+        goto label3;
+
+     label2:
+        $z0 = 0;
+
+     label3:
+        return $z0;
+    }
+
+    boolean isPowerStandbyOrTransient()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int $i0, $i1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $i0 = r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus>;
+
+        if $i0 == 1 goto label1;
+
+        $i1 = r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus>;
+
+        if $i1 != 3 goto label2;
+
+     label1:
+        $z0 = 1;
+
+        goto label3;
+
+     label2:
+        $z0 = 0;
+
+     label3:
+        return $z0;
+    }
+
+    boolean isPowerStandby()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $i0 = r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus>;
+
+        if $i0 != 1 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    void wakeUp()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.os.PowerManager r1;
+        android.content.Context $r2;
+        java.lang.Object $r3;
+        long $l0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mWakeUpMessageReceived> = 1;
+
+        $r2 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.content.Context getContext()>();
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        r1 = (android.os.PowerManager) $r3;
+
+        $l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        virtualinvoke r1.<android.os.PowerManager: void wakeUp(long)>($l0);
+
+        return;
+    }
+
+    void standby()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.os.PowerManager r1;
+        android.content.Context $r2;
+        java.lang.Object $r3;
+        long $l0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mStandbyMessageReceived> = 1;
+
+        $r2 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.content.Context getContext()>();
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        r1 = (android.os.PowerManager) $r3;
+
+        $l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        virtualinvoke r1.<android.os.PowerManager: void goToSleep(long,int,int)>($l0, 5, 0);
+
+        return;
+    }
+
+    private void onWakeUp()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        byte b0;
+        com.android.server.hdmi.HdmiCecController $r1;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus> = 2;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        if $r1 == null goto label2;
+
+        $z0 = r0.<com.android.server.hdmi.HdmiControlService: boolean mHdmiControlEnabled>;
+
+        if $z0 == 0 goto label3;
+
+        b0 = 2;
+
+        $z1 = r0.<com.android.server.hdmi.HdmiControlService: boolean mWakeUpMessageReceived>;
+
+        if $z1 == 0 goto label1;
+
+        b0 = 3;
+
+     label1:
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void initializeCec(int)>(b0);
+
+        goto label3;
+
+     label2:
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("HdmiControlService", "Device does not support HDMI-CEC.");
+
+     label3:
+        return;
+    }
+
+    private void onStandby()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.List r1;
+        com.android.server.hdmi.HdmiControlService$2 $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus> = 3;
+
+        r1 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: java.util.List getAllLocalDevices()>();
+
+        $r2 = new com.android.server.hdmi.HdmiControlService$2;
+
+        specialinvoke $r2.<com.android.server.hdmi.HdmiControlService$2: void <init>(com.android.server.hdmi.HdmiControlService,java.util.List)>(r0, r1);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void disableDevices(com.android.server.hdmi.HdmiCecLocalDevice$PendingActionClearedCallback)>($r2);
+
+        return;
+    }
+
+    private void onLanguageChanged(java.lang.String)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.String r1;
+        boolean $z0;
+        com.android.server.hdmi.HdmiCecLocalDeviceTv $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: java.lang.String mLanguage> = r1;
+
+        $z0 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: boolean isTvDevice()>();
+
+        if $z0 == 0 goto label1;
+
+        $r2 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecLocalDeviceTv tv()>();
+
+        virtualinvoke $r2.<com.android.server.hdmi.HdmiCecLocalDeviceTv: boolean broadcastMenuLanguage(java.lang.String)>(r1);
+
+     label1:
+        return;
+    }
+
+    java.lang.String getLanguage()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.String $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.String mLanguage>;
+
+        return $r1;
+    }
+
+    private void disableDevices(com.android.server.hdmi.HdmiCecLocalDevice$PendingActionClearedCallback)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecLocalDevice$PendingActionClearedCallback r1;
+        java.util.Iterator r2;
+        com.android.server.hdmi.HdmiCecLocalDevice r3;
+        com.android.server.hdmi.HdmiCecController $r4, $r6;
+        com.android.server.hdmi.HdmiMhlControllerStub $r5;
+        java.util.List $r7;
+        boolean $z0, $z1, $z2;
+        java.lang.Object $r8;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecLocalDevice$PendingActionClearedCallback;
+
+        $r4 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        if $r4 == null goto label3;
+
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $r7 = virtualinvoke $r6.<com.android.server.hdmi.HdmiCecController: java.util.List getLocalDeviceList()>();
+
+        r2 = interfaceinvoke $r7.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r8 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.server.hdmi.HdmiCecLocalDevice) $r8;
+
+        $z2 = r0.<com.android.server.hdmi.HdmiControlService: boolean mStandbyMessageReceived>;
+
+        virtualinvoke r3.<com.android.server.hdmi.HdmiCecLocalDevice: void disableDevice(boolean,com.android.server.hdmi.HdmiCecLocalDevice$PendingActionClearedCallback)>($z2, r1);
+
+        goto label1;
+
+     label2:
+        $z1 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: boolean isTvDevice()>();
+
+        if $z1 == 0 goto label3;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void unregisterSettingsObserver()>();
+
+     label3:
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        virtualinvoke $r5.<com.android.server.hdmi.HdmiMhlControllerStub: void clearAllLocalDevices()>();
+
+        return;
+    }
+
+    private void clearLocalDevices()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecController $r1, $r2, $r3;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        if $r1 != null goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        virtualinvoke $r2.<com.android.server.hdmi.HdmiCecController: void clearLogicalAddress()>();
+
+        $r3 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        virtualinvoke $r3.<com.android.server.hdmi.HdmiCecController: void clearLocalDevices()>();
+
+        return;
+    }
+
+    private void onStandbyCompleted()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.Iterator r1;
+        com.android.server.hdmi.HdmiCecLocalDevice r2;
+        int $i1;
+        com.android.server.hdmi.HdmiCecController $r3, $r5;
+        java.util.List $r4;
+        boolean $z0, $z1;
+        java.lang.Object $r6;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("HdmiControlService", "onStandbyCompleted");
+
+        $i1 = r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus>;
+
+        if $i1 == 3 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus> = 1;
+
+        $r3 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        $r4 = virtualinvoke $r3.<com.android.server.hdmi.HdmiCecController: java.util.List getLocalDeviceList()>();
+
+        r1 = interfaceinvoke $r4.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r6 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.server.hdmi.HdmiCecLocalDevice) $r6;
+
+        $z1 = r0.<com.android.server.hdmi.HdmiControlService: boolean mStandbyMessageReceived>;
+
+        virtualinvoke r2.<com.android.server.hdmi.HdmiCecLocalDevice: void onStandby(boolean)>($z1);
+
+        goto label2;
+
+     label3:
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mStandbyMessageReceived> = 0;
+
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        virtualinvoke $r5.<com.android.server.hdmi.HdmiCecController: void setOption(int,int)>(3, 0);
+
+        return;
+    }
+
+    private void addVendorCommandListener(android.hardware.hdmi.IHdmiVendorCommandListener, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiVendorCommandListener r1;
+        int i0;
+        com.android.server.hdmi.HdmiControlService$VendorCommandListenerRecord r2, $r5;
+        java.lang.Throwable r4, $r9;
+        android.os.IBinder $r6;
+        java.lang.Object $r7, r11;
+        java.util.ArrayList $r8;
+        android.os.RemoteException $r10;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiVendorCommandListener;
+
+        i0 := @parameter1: int;
+
+        $r5 = new com.android.server.hdmi.HdmiControlService$VendorCommandListenerRecord;
+
+        specialinvoke $r5.<com.android.server.hdmi.HdmiControlService$VendorCommandListenerRecord: void <init>(com.android.server.hdmi.HdmiControlService,android.hardware.hdmi.IHdmiVendorCommandListener,int)>(r0, r1, i0);
+
+        r2 = $r5;
+
+     label1:
+        $r6 = interfaceinvoke r1.<android.hardware.hdmi.IHdmiVendorCommandListener: android.os.IBinder asBinder()>();
+
+        interfaceinvoke $r6.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>(r2, 0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r10 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", "Listener already died");
+
+        return;
+
+     label4:
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r11 = $r7;
+
+        entermonitor $r7;
+
+     label5:
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mVendorCommandListenerRecords>;
+
+        virtualinvoke $r8.<java.util.ArrayList: boolean add(java.lang.Object)>(r2);
+
+        exitmonitor r11;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r9 := @caughtexception;
+
+        r4 = $r9;
+
+        exitmonitor r11;
+
+     label8:
+        throw r4;
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    boolean invokeVendorCommandListeners(int, int, byte[], boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1, $i2;
+        byte[] r1;
+        boolean z0, $z1, $z2;
+        java.lang.Object r2, $r7, $r10;
+        java.util.Iterator r3;
+        com.android.server.hdmi.HdmiControlService$VendorCommandListenerRecord r4;
+        android.os.RemoteException r5, $r13;
+        java.lang.Throwable r6, $r12;
+        java.util.ArrayList $r8, $r9;
+        android.hardware.hdmi.IHdmiVendorCommandListener $r11;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 := @parameter2: byte[];
+
+        z0 := @parameter3: boolean;
+
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r2 = $r7;
+
+        entermonitor $r7;
+
+     label01:
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mVendorCommandListenerRecords>;
+
+        $z1 = virtualinvoke $r8.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z1 == 0 goto label03;
+
+        exitmonitor r2;
+
+     label02:
+        return 0;
+
+     label03:
+        $r9 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mVendorCommandListenerRecords>;
+
+        r3 = virtualinvoke $r9.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label04:
+        $z2 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label09;
+
+        $r10 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.server.hdmi.HdmiControlService$VendorCommandListenerRecord) $r10;
+
+        $i2 = staticinvoke <com.android.server.hdmi.HdmiControlService$VendorCommandListenerRecord: int access$4800(com.android.server.hdmi.HdmiControlService$VendorCommandListenerRecord)>(r4);
+
+        if $i2 == i0 goto label05;
+
+        goto label04;
+
+     label05:
+        $r11 = staticinvoke <com.android.server.hdmi.HdmiControlService$VendorCommandListenerRecord: android.hardware.hdmi.IHdmiVendorCommandListener access$4900(com.android.server.hdmi.HdmiControlService$VendorCommandListenerRecord)>(r4);
+
+        interfaceinvoke $r11.<android.hardware.hdmi.IHdmiVendorCommandListener: void onReceived(int,byte[],boolean)>(i1, r1, z0);
+
+     label06:
+        goto label08;
+
+     label07:
+        $r13 := @caughtexception;
+
+        r5 = $r13;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("HdmiControlService", "Failed to notify vendor command reception", r5);
+
+     label08:
+        goto label04;
+
+     label09:
+        exitmonitor r2;
+
+     label10:
+        return 1;
+
+     label11:
+        $r12 := @caughtexception;
+
+        r6 = $r12;
+
+        exitmonitor r2;
+
+     label12:
+        throw r6;
+
+        catch android.os.RemoteException from label05 to label06 with label07;
+        catch java.lang.Throwable from label01 to label02 with label11;
+        catch java.lang.Throwable from label03 to label10 with label11;
+        catch java.lang.Throwable from label11 to label12 with label11;
+    }
+
+    private void addHdmiMhlVendorCommandListener(android.hardware.hdmi.IHdmiMhlVendorCommandListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiMhlVendorCommandListener r1;
+        com.android.server.hdmi.HdmiControlService$HdmiMhlVendorCommandListenerRecord r2, $r5;
+        java.lang.Throwable r4, $r10;
+        android.os.IBinder $r6;
+        java.lang.Object $r7, r11;
+        java.util.ArrayList $r8;
+        android.os.RemoteException $r9;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter0: android.hardware.hdmi.IHdmiMhlVendorCommandListener;
+
+        $r5 = new com.android.server.hdmi.HdmiControlService$HdmiMhlVendorCommandListenerRecord;
+
+        specialinvoke $r5.<com.android.server.hdmi.HdmiControlService$HdmiMhlVendorCommandListenerRecord: void <init>(com.android.server.hdmi.HdmiControlService,android.hardware.hdmi.IHdmiMhlVendorCommandListener)>(r0, r1);
+
+        r2 = $r5;
+
+     label1:
+        $r6 = interfaceinvoke r1.<android.hardware.hdmi.IHdmiMhlVendorCommandListener: android.os.IBinder asBinder()>();
+
+        interfaceinvoke $r6.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>(r2, 0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r9 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("HdmiControlService", "Listener already died.");
+
+        return;
+
+     label4:
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r11 = $r7;
+
+        entermonitor $r7;
+
+     label5:
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mMhlVendorCommandListenerRecords>;
+
+        virtualinvoke $r8.<java.util.ArrayList: boolean add(java.lang.Object)>(r2);
+
+        exitmonitor r11;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r10 := @caughtexception;
+
+        r4 = $r10;
+
+        exitmonitor r11;
+
+     label8:
+        throw r4;
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    void invokeMhlVendorCommandListeners(int, int, int, byte[])
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1, i2;
+        byte[] r1;
+        java.lang.Object r2, $r7, $r9;
+        java.util.Iterator r3;
+        com.android.server.hdmi.HdmiControlService$HdmiMhlVendorCommandListenerRecord r4;
+        android.os.RemoteException r5, $r10;
+        java.lang.Throwable r6, $r12;
+        java.util.ArrayList $r8;
+        boolean $z0;
+        android.hardware.hdmi.IHdmiMhlVendorCommandListener $r11;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        r1 := @parameter3: byte[];
+
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r2 = $r7;
+
+        entermonitor $r7;
+
+     label01:
+        $r8 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mMhlVendorCommandListenerRecords>;
+
+        r3 = virtualinvoke $r8.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label02:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label07;
+
+        $r9 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.server.hdmi.HdmiControlService$HdmiMhlVendorCommandListenerRecord) $r9;
+
+     label03:
+        $r11 = staticinvoke <com.android.server.hdmi.HdmiControlService$HdmiMhlVendorCommandListenerRecord: android.hardware.hdmi.IHdmiMhlVendorCommandListener access$5000(com.android.server.hdmi.HdmiControlService$HdmiMhlVendorCommandListenerRecord)>(r4);
+
+        interfaceinvoke $r11.<android.hardware.hdmi.IHdmiMhlVendorCommandListener: void onReceived(int,int,int,byte[])>(i0, i1, i2, r1);
+
+     label04:
+        goto label06;
+
+     label05:
+        $r10 := @caughtexception;
+
+        r5 = $r10;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("HdmiControlService", "Failed to notify MHL vendor command", r5);
+
+     label06:
+        goto label02;
+
+     label07:
+        exitmonitor r2;
+
+     label08:
+        goto label11;
+
+     label09:
+        $r12 := @caughtexception;
+
+        r6 = $r12;
+
+        exitmonitor r2;
+
+     label10:
+        throw r6;
+
+     label11:
+        return;
+
+        catch android.os.RemoteException from label03 to label04 with label05;
+        catch java.lang.Throwable from label01 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    boolean isProhibitMode()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r3 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $z0 = r0.<com.android.server.hdmi.HdmiControlService: boolean mProhibitMode>;
+
+        exitmonitor r1;
+
+     label2:
+        return $z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    void setProhibitMode(boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        boolean z0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        z0 := @parameter0: boolean;
+
+        $r3 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mProhibitMode> = z0;
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    void setCecOption(int, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1;
+        com.android.server.hdmi.HdmiCecController $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        virtualinvoke $r1.<com.android.server.hdmi.HdmiCecController: void setOption(int,int)>(i0, i1);
+
+        return;
+    }
+
+    void setControlEnabled(boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        boolean z0;
+        int i0;
+        java.lang.Object r1, $r5;
+        java.lang.Throwable r2, $r7;
+        com.android.server.hdmi.HdmiCecController $r3;
+        com.android.server.hdmi.HdmiMhlControllerStub $r4;
+        com.android.server.hdmi.HdmiControlService$3 $r6;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        z0 := @parameter0: boolean;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        i0 = staticinvoke <com.android.server.hdmi.HdmiControlService: int toInt(boolean)>(z0);
+
+        $r3 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        virtualinvoke $r3.<com.android.server.hdmi.HdmiCecController: void setOption(int,int)>(2, i0);
+
+        $r4 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        virtualinvoke $r4.<com.android.server.hdmi.HdmiMhlControllerStub: void setOption(int,int)>(103, i0);
+
+        $r5 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r1 = $r5;
+
+        entermonitor $r5;
+
+     label1:
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mHdmiControlEnabled> = z0;
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r2 = $r7;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        if z0 == 0 goto label6;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void initializeCec(int)>(0);
+
+        goto label7;
+
+     label6:
+        $r6 = new com.android.server.hdmi.HdmiControlService$3;
+
+        specialinvoke $r6.<com.android.server.hdmi.HdmiControlService$3: void <init>(com.android.server.hdmi.HdmiControlService)>(r0);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void disableDevices(com.android.server.hdmi.HdmiCecLocalDevice$PendingActionClearedCallback)>($r6);
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    void setActivePortId(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: int mActivePortId> = i0;
+
+        virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: void setLastInputForMhl(int)>(-1);
+
+        return;
+    }
+
+    void setLastInputForMhl(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        r0.<com.android.server.hdmi.HdmiControlService: int mLastInputMhl> = i0;
+
+        return;
+    }
+
+    int getLastInputForMhl()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int $i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $i0 = r0.<com.android.server.hdmi.HdmiControlService: int mLastInputMhl>;
+
+        return $i0;
+    }
+
+    void changeInputForMhl(int, boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1, $i2;
+        boolean z0;
+        com.android.server.hdmi.HdmiMhlLocalDeviceStub r1;
+        android.hardware.hdmi.HdmiDeviceInfo r2, $r9, $r10;
+        com.android.server.hdmi.HdmiCecLocalDeviceTv $r3, $r5, $r11;
+        com.android.server.hdmi.HdmiControlService$4 $r4;
+        com.android.server.hdmi.HdmiMhlControllerStub $r6;
+        com.android.server.hdmi.UnmodifiableSparseArray $r7;
+        java.lang.Object $r8;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        if z0 == 0 goto label1;
+
+        $r11 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecLocalDeviceTv tv()>();
+
+        $i2 = virtualinvoke $r11.<com.android.server.hdmi.HdmiCecLocalDeviceTv: int getActivePortId()>();
+
+        goto label2;
+
+     label1:
+        $i2 = -1;
+
+     label2:
+        i1 = $i2;
+
+        $r3 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecLocalDeviceTv tv()>();
+
+        $r4 = new com.android.server.hdmi.HdmiControlService$4;
+
+        specialinvoke $r4.<com.android.server.hdmi.HdmiControlService$4: void <init>(com.android.server.hdmi.HdmiControlService,int)>(r0, i1);
+
+        virtualinvoke $r3.<com.android.server.hdmi.HdmiCecLocalDeviceTv: void doManualPortSwitching(int,android.hardware.hdmi.IHdmiControlCallback)>(i0, $r4);
+
+        $r5 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecLocalDeviceTv tv()>();
+
+        virtualinvoke $r5.<com.android.server.hdmi.HdmiCecLocalDeviceTv: void setActivePortId(int)>(i0);
+
+        $r6 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        r1 = virtualinvoke $r6.<com.android.server.hdmi.HdmiMhlControllerStub: com.android.server.hdmi.HdmiMhlLocalDeviceStub getLocalDevice(int)>(i0);
+
+        if r1 == null goto label3;
+
+        $r9 = virtualinvoke r1.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: android.hardware.hdmi.HdmiDeviceInfo getInfo()>();
+
+        if $r9 == null goto label3;
+
+        $r10 = virtualinvoke r1.<com.android.server.hdmi.HdmiMhlLocalDeviceStub: android.hardware.hdmi.HdmiDeviceInfo getInfo()>();
+
+        goto label4;
+
+     label3:
+        $r7 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.UnmodifiableSparseArray mPortDeviceMap>;
+
+        $r8 = virtualinvoke $r7.<com.android.server.hdmi.UnmodifiableSparseArray: java.lang.Object get(int)>(i0);
+
+        $r10 = (android.hardware.hdmi.HdmiDeviceInfo) $r8;
+
+     label4:
+        r2 = $r10;
+
+        virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: void invokeInputChangeListener(android.hardware.hdmi.HdmiDeviceInfo)>(r2);
+
+        return;
+    }
+
+    void setMhlInputChangeEnabled(boolean)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        boolean z0;
+        java.lang.Object r1, $r4;
+        java.lang.Throwable r2, $r5;
+        com.android.server.hdmi.HdmiMhlControllerStub $r3;
+        int $i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        z0 := @parameter0: boolean;
+
+        $r3 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        $i0 = staticinvoke <com.android.server.hdmi.HdmiControlService: int toInt(boolean)>(z0);
+
+        virtualinvoke $r3.<com.android.server.hdmi.HdmiMhlControllerStub: void setOption(int,int)>(101, $i0);
+
+        $r4 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r1 = $r4;
+
+        entermonitor $r4;
+
+     label1:
+        r0.<com.android.server.hdmi.HdmiControlService: boolean mMhlInputChangeEnabled> = z0;
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    boolean isMhlInputChangeEnabled()
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        $r3 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $z0 = r0.<com.android.server.hdmi.HdmiControlService: boolean mMhlInputChangeEnabled>;
+
+        exitmonitor r1;
+
+     label2:
+        return $z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    void displayOsd(int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0;
+        android.content.Intent r1, $r2;
+        android.content.Context $r4;
+        android.os.UserHandle $r5;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("android.hardware.hdmi.action.OSD_MESSAGE");
+
+        r1 = $r2;
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("android.hardware.hdmi.extra.MESSAGE_ID", i0);
+
+        $r4 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.content.Context getContext()>();
+
+        $r5 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r4.<android.content.Context: void sendBroadcastAsUser(android.content.Intent,android.os.UserHandle,java.lang.String)>(r1, $r5, "android.permission.HDMI_CEC");
+
+        return;
+    }
+
+    void displayOsd(int, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1;
+        android.content.Intent r1, $r2;
+        android.content.Context $r5;
+        android.os.UserHandle $r6;
+
+        r0 := @this: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("android.hardware.hdmi.action.OSD_MESSAGE");
+
+        r1 = $r2;
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("android.hardware.hdmi.extra.MESSAGE_ID", i0);
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("android.hardware.hdmi.extra.MESSAGE_EXTRA_PARAM1", i1);
+
+        $r5 = virtualinvoke r0.<com.android.server.hdmi.HdmiControlService: android.content.Context getContext()>();
+
+        $r6 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r5.<android.content.Context: void sendBroadcastAsUser(android.content.Intent,android.os.UserHandle,java.lang.String)>(r1, $r6, "android.permission.HDMI_CEC");
+
+        return;
+    }
+
+    static void access$000(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void assertRunOnServiceThread()>();
+
+        return;
+    }
+
+    static void access$100(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void onStandby()>();
+
+        return;
+    }
+
+    static void access$200(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void onWakeUp()>();
+
+        return;
+    }
+
+    static java.lang.String access$300(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.String $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.String mLanguage>;
+
+        return $r1;
+    }
+
+    static void access$400(com.android.server.hdmi.HdmiControlService, java.lang.String)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: java.lang.String;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void onLanguageChanged(java.lang.String)>(r1);
+
+        return;
+    }
+
+    static com.android.server.hdmi.HdmiCecLocalDeviceTv access$700(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecLocalDeviceTv $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecLocalDeviceTv tv()>();
+
+        return $r1;
+    }
+
+    static int access$800(boolean)
+    {
+        boolean z0;
+        int $i0;
+
+        z0 := @parameter0: boolean;
+
+        $i0 = staticinvoke <com.android.server.hdmi.HdmiControlService: int toInt(boolean)>(z0);
+
+        return $i0;
+    }
+
+    static com.android.server.hdmi.HdmiMhlControllerStub access$900(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiMhlControllerStub $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiMhlControllerStub mMhlController>;
+
+        return $r1;
+    }
+
+    static android.hardware.hdmi.HdmiDeviceInfo access$1000(com.android.server.hdmi.HdmiControlService, int, int, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int i0, i1, i2;
+        android.hardware.hdmi.HdmiDeviceInfo $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        $r1 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: android.hardware.hdmi.HdmiDeviceInfo createDeviceInfo(int,int,int)>(i0, i1, i2);
+
+        return $r1;
+    }
+
+    static com.android.server.hdmi.HdmiCecController access$1100(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecController $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiCecController mCecController>;
+
+        return $r1;
+    }
+
+    static void access$1200(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void onInitializeCecComplete()>();
+
+        return;
+    }
+
+    static void access$1300(com.android.server.hdmi.HdmiControlService, java.util.ArrayList, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.ArrayList r1;
+        int i0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: java.util.ArrayList;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void notifyAddressAllocated(java.util.ArrayList,int)>(r1, i0);
+
+        return;
+    }
+
+    static java.util.ArrayList access$1500(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.ArrayList $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mMhlVendorCommandListenerRecords>;
+
+        return $r1;
+    }
+
+    static java.lang.Object access$1600(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static java.util.ArrayList access$1700(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.ArrayList $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mHotplugEventListenerRecords>;
+
+        return $r1;
+    }
+
+    static java.util.ArrayList access$1800(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.ArrayList $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mDeviceEventListenerRecords>;
+
+        return $r1;
+    }
+
+    static java.util.ArrayList access$1900(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.ArrayList $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mSystemAudioModeChangeListenerRecords>;
+
+        return $r1;
+    }
+
+    static java.util.ArrayList access$2000(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.ArrayList $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.util.ArrayList mVendorCommandListenerRecords>;
+
+        return $r1;
+    }
+
+    static com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord access$2102(com.android.server.hdmi.HdmiControlService, com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord;
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$HdmiRecordListenerRecord mRecordListenerRecord> = r1;
+
+        return r1;
+    }
+
+    static void access$2200(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void enforceAccessPermission()>();
+
+        return;
+    }
+
+    static java.util.List access$2300(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.List $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.util.List mLocalDevices>;
+
+        return $r1;
+    }
+
+    static void access$2400(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiControlCallback, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiControlCallback r1;
+        int i0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiControlCallback;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void invokeCallback(android.hardware.hdmi.IHdmiControlCallback,int)>(r1, i0);
+
+        return;
+    }
+
+    static int access$2500(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $i0 = r0.<com.android.server.hdmi.HdmiControlService: int mActivePortId>;
+
+        return $i0;
+    }
+
+    static void access$2600(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiControlCallback)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiControlCallback r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiControlCallback;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void oneTouchPlay(android.hardware.hdmi.IHdmiControlCallback)>(r1);
+
+        return;
+    }
+
+    static void access$2700(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiControlCallback)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiControlCallback r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiControlCallback;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void queryDisplayStatus(android.hardware.hdmi.IHdmiControlCallback)>(r1);
+
+        return;
+    }
+
+    static void access$2800(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiHotplugEventListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiHotplugEventListener r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiHotplugEventListener;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void addHotplugEventListener(android.hardware.hdmi.IHdmiHotplugEventListener)>(r1);
+
+        return;
+    }
+
+    static void access$2900(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiHotplugEventListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiHotplugEventListener r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiHotplugEventListener;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void removeHotplugEventListener(android.hardware.hdmi.IHdmiHotplugEventListener)>(r1);
+
+        return;
+    }
+
+    static void access$3000(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiDeviceEventListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiDeviceEventListener r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiDeviceEventListener;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void addDeviceEventListener(android.hardware.hdmi.IHdmiDeviceEventListener)>(r1);
+
+        return;
+    }
+
+    static void access$3100(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiSystemAudioModeChangeListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiSystemAudioModeChangeListener r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiSystemAudioModeChangeListener;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void addSystemAudioModeChangeListner(android.hardware.hdmi.IHdmiSystemAudioModeChangeListener)>(r1);
+
+        return;
+    }
+
+    static void access$3200(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiSystemAudioModeChangeListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiSystemAudioModeChangeListener r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiSystemAudioModeChangeListener;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void removeSystemAudioModeChangeListener(android.hardware.hdmi.IHdmiSystemAudioModeChangeListener)>(r1);
+
+        return;
+    }
+
+    static void access$3300(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiInputChangeListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiInputChangeListener r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiInputChangeListener;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void setInputChangeListener(android.hardware.hdmi.IHdmiInputChangeListener)>(r1);
+
+        return;
+    }
+
+    static java.util.List access$3400(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.List $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = specialinvoke r0.<com.android.server.hdmi.HdmiControlService: java.util.List getMhlDevicesLocked()>();
+
+        return $r1;
+    }
+
+    static void access$3500(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiVendorCommandListener, int)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiVendorCommandListener r1;
+        int i0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiVendorCommandListener;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void addVendorCommandListener(android.hardware.hdmi.IHdmiVendorCommandListener,int)>(r1, i0);
+
+        return;
+    }
+
+    static void access$3600(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiRecordListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiRecordListener r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiRecordListener;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void setHdmiRecordListener(android.hardware.hdmi.IHdmiRecordListener)>(r1);
+
+        return;
+    }
+
+    static void access$3700(com.android.server.hdmi.HdmiControlService, android.hardware.hdmi.IHdmiMhlVendorCommandListener)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        android.hardware.hdmi.IHdmiMhlVendorCommandListener r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: android.hardware.hdmi.IHdmiMhlVendorCommandListener;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void addHdmiMhlVendorCommandListener(android.hardware.hdmi.IHdmiMhlVendorCommandListener)>(r1);
+
+        return;
+    }
+
+    static boolean access$3800(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $z0 = r0.<com.android.server.hdmi.HdmiControlService: boolean mHdmiControlEnabled>;
+
+        return $z0;
+    }
+
+    static boolean access$3900(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $z0 = r0.<com.android.server.hdmi.HdmiControlService: boolean mProhibitMode>;
+
+        return $z0;
+    }
+
+    static java.util.List access$4000(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        java.util.List $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiControlService: java.util.List mPortInfo>;
+
+        return $r1;
+    }
+
+    static int access$4100(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $i0 = r0.<com.android.server.hdmi.HdmiControlService: int mPowerStatus>;
+
+        return $i0;
+    }
+
+    static com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord access$4402(com.android.server.hdmi.HdmiControlService, com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r1 := @parameter1: com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord;
+
+        r0.<com.android.server.hdmi.HdmiControlService: com.android.server.hdmi.HdmiControlService$InputChangeListenerRecord mInputChangeListenerRecord> = r1;
+
+        return r1;
+    }
+
+    static void access$4700(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void onStandbyCompleted()>();
+
+        return;
+    }
+
+    static void access$5100(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiControlService: void clearLocalDevices()>();
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.hdmi.HdmiControlService: int INITIATED_BY_HOTPLUG> = 4;
+
+        <com.android.server.hdmi.HdmiControlService: int INITIATED_BY_WAKE_UP_MESSAGE> = 3;
+
+        <com.android.server.hdmi.HdmiControlService: int INITIATED_BY_SCREEN_ON> = 2;
+
+        <com.android.server.hdmi.HdmiControlService: int INITIATED_BY_BOOT_UP> = 1;
+
+        <com.android.server.hdmi.HdmiControlService: int INITIATED_BY_ENABLE_CEC> = 0;
+
+        <com.android.server.hdmi.HdmiControlService: java.lang.String PERMISSION> = "android.permission.HDMI_CEC";
+
+        <com.android.server.hdmi.HdmiControlService: java.lang.String TAG> = "HdmiControlService";
+
+        return;
+    }
+}

@@ -1,0 +1,1021 @@
+class com.android.server.CommonTimeManagementService extends android.os.Binder
+{
+    private static final java.lang.String TAG;
+    private static final int NATIVE_SERVICE_RECONNECT_TIMEOUT;
+    private static final java.lang.String AUTO_DISABLE_PROP;
+    private static final java.lang.String ALLOW_WIFI_PROP;
+    private static final java.lang.String SERVER_PRIO_PROP;
+    private static final java.lang.String NO_INTERFACE_TIMEOUT_PROP;
+    private static final boolean AUTO_DISABLE;
+    private static final boolean ALLOW_WIFI;
+    private static final byte BASE_SERVER_PRIO;
+    private static final int NO_INTERFACE_TIMEOUT;
+    private static final com.android.server.CommonTimeManagementService$InterfaceScoreRule[] IFACE_SCORE_RULES;
+    private final android.content.Context mContext;
+    private android.os.INetworkManagementService mNetMgr;
+    private android.os.CommonTimeConfig mCTConfig;
+    private java.lang.String mCurIface;
+    private android.os.Handler mReconnectHandler;
+    private android.os.Handler mNoInterfaceHandler;
+    private java.lang.Object mLock;
+    private boolean mDetectedAtStartup;
+    private byte mEffectivePrio;
+    private android.net.INetworkManagementEventObserver mIfaceObserver;
+    private android.content.BroadcastReceiver mConnectivityMangerObserver;
+    private android.os.CommonTimeConfig$OnServerDiedListener mCTServerDiedListener;
+    private java.lang.Runnable mReconnectRunnable;
+    private java.lang.Runnable mNoInterfaceRunnable;
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.CommonTimeManagementService r0;
+        android.content.Context r1;
+        android.os.Handler $r2, $r3;
+        java.lang.Object $r4;
+        byte $b0;
+        com.android.server.CommonTimeManagementService$1 $r5;
+        com.android.server.CommonTimeManagementService$2 $r6;
+        com.android.server.CommonTimeManagementService$3 $r7;
+        com.android.server.CommonTimeManagementService$4 $r8;
+        com.android.server.CommonTimeManagementService$5 $r9;
+
+        r0 := @this: com.android.server.CommonTimeManagementService;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<android.os.Binder: void <init>()>();
+
+        $r2 = new android.os.Handler;
+
+        specialinvoke $r2.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.server.CommonTimeManagementService: android.os.Handler mReconnectHandler> = $r2;
+
+        $r3 = new android.os.Handler;
+
+        specialinvoke $r3.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.server.CommonTimeManagementService: android.os.Handler mNoInterfaceHandler> = $r3;
+
+        $r4 = new java.lang.Object;
+
+        specialinvoke $r4.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.CommonTimeManagementService: java.lang.Object mLock> = $r4;
+
+        r0.<com.android.server.CommonTimeManagementService: boolean mDetectedAtStartup> = 0;
+
+        $b0 = <com.android.server.CommonTimeManagementService: byte BASE_SERVER_PRIO>;
+
+        r0.<com.android.server.CommonTimeManagementService: byte mEffectivePrio> = $b0;
+
+        $r5 = new com.android.server.CommonTimeManagementService$1;
+
+        specialinvoke $r5.<com.android.server.CommonTimeManagementService$1: void <init>(com.android.server.CommonTimeManagementService)>(r0);
+
+        r0.<com.android.server.CommonTimeManagementService: android.net.INetworkManagementEventObserver mIfaceObserver> = $r5;
+
+        $r6 = new com.android.server.CommonTimeManagementService$2;
+
+        specialinvoke $r6.<com.android.server.CommonTimeManagementService$2: void <init>(com.android.server.CommonTimeManagementService)>(r0);
+
+        r0.<com.android.server.CommonTimeManagementService: android.content.BroadcastReceiver mConnectivityMangerObserver> = $r6;
+
+        $r7 = new com.android.server.CommonTimeManagementService$3;
+
+        specialinvoke $r7.<com.android.server.CommonTimeManagementService$3: void <init>(com.android.server.CommonTimeManagementService)>(r0);
+
+        r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig$OnServerDiedListener mCTServerDiedListener> = $r7;
+
+        $r8 = new com.android.server.CommonTimeManagementService$4;
+
+        specialinvoke $r8.<com.android.server.CommonTimeManagementService$4: void <init>(com.android.server.CommonTimeManagementService)>(r0);
+
+        r0.<com.android.server.CommonTimeManagementService: java.lang.Runnable mReconnectRunnable> = $r8;
+
+        $r9 = new com.android.server.CommonTimeManagementService$5;
+
+        specialinvoke $r9.<com.android.server.CommonTimeManagementService$5: void <init>(com.android.server.CommonTimeManagementService)>(r0);
+
+        r0.<com.android.server.CommonTimeManagementService: java.lang.Runnable mNoInterfaceRunnable> = $r9;
+
+        r0.<com.android.server.CommonTimeManagementService: android.content.Context mContext> = r1;
+
+        return;
+    }
+
+    void systemRunning()
+    {
+        com.android.server.CommonTimeManagementService r0;
+        android.os.IBinder r1, $r3;
+        android.os.INetworkManagementService $r4, $r6;
+        android.net.INetworkManagementEventObserver $r5;
+        android.content.IntentFilter $r7, r13;
+        android.content.BroadcastReceiver $r8;
+        android.content.Context $r9;
+        java.lang.String $r11;
+        android.os.RemoteException $r12;
+
+        r0 := @this: com.android.server.CommonTimeManagementService;
+
+        $r3 = staticinvoke <android.os.ServiceManager: android.os.IBinder checkService(java.lang.String)>("common_time.config");
+
+        if $r3 != null goto label1;
+
+        $r11 = <com.android.server.CommonTimeManagementService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>($r11, "No common time service detected on this platform.  Common time services will be unavailable.");
+
+        return;
+
+     label1:
+        r0.<com.android.server.CommonTimeManagementService: boolean mDetectedAtStartup> = 1;
+
+        r1 = staticinvoke <android.os.ServiceManager: android.os.IBinder getService(java.lang.String)>("network_management");
+
+        $r4 = staticinvoke <android.os.INetworkManagementService$Stub: android.os.INetworkManagementService asInterface(android.os.IBinder)>(r1);
+
+        r0.<com.android.server.CommonTimeManagementService: android.os.INetworkManagementService mNetMgr> = $r4;
+
+     label2:
+        $r6 = r0.<com.android.server.CommonTimeManagementService: android.os.INetworkManagementService mNetMgr>;
+
+        $r5 = r0.<com.android.server.CommonTimeManagementService: android.net.INetworkManagementEventObserver mIfaceObserver>;
+
+        interfaceinvoke $r6.<android.os.INetworkManagementService: void registerObserver(android.net.INetworkManagementEventObserver)>($r5);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r12 := @caughtexception;
+
+     label5:
+        $r7 = new android.content.IntentFilter;
+
+        specialinvoke $r7.<android.content.IntentFilter: void <init>()>();
+
+        r13 = $r7;
+
+        virtualinvoke r13.<android.content.IntentFilter: void addAction(java.lang.String)>("android.net.conn.CONNECTIVITY_CHANGE");
+
+        $r9 = r0.<com.android.server.CommonTimeManagementService: android.content.Context mContext>;
+
+        $r8 = r0.<com.android.server.CommonTimeManagementService: android.content.BroadcastReceiver mConnectivityMangerObserver>;
+
+        virtualinvoke $r9.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r8, r13);
+
+        specialinvoke r0.<com.android.server.CommonTimeManagementService: void connectToTimeConfig()>();
+
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    protected void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.server.CommonTimeManagementService r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        java.lang.Object r4, $r7;
+        java.lang.Throwable r5, $r32;
+        android.content.Context $r6;
+        int $i0, $i2, $i3, $i4;
+        boolean $z0, $z1, $z2;
+        java.lang.Object[] $r8, $r11, $r14, $r17, $r18, $r21, $r26;
+        android.os.CommonTimeConfig $r9;
+        java.lang.String $r10, $r12, $r13, $r15, $r16, $r19, $r22, $r23, $r25, $r27, $r28, $r31;
+        byte $b1;
+        java.lang.Byte $r20;
+        java.lang.Integer $r24, $r29, $r30;
+
+        r0 := @this: com.android.server.CommonTimeManagementService;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        $r6 = r0.<com.android.server.CommonTimeManagementService: android.content.Context mContext>;
+
+        $i0 = virtualinvoke $r6.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.DUMP");
+
+        if $i0 == 0 goto label01;
+
+        $r26 = newarray (java.lang.Object)[2];
+
+        $i3 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        $r29 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i3);
+
+        $r26[0] = $r29;
+
+        $i4 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $r30 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i4);
+
+        $r26[1] = $r30;
+
+        $r31 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("Permission Denial: can\'t dump CommonTimeManagement service from from pid=%d, uid=%d", $r26);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r31);
+
+        return;
+
+     label01:
+        $z0 = r0.<com.android.server.CommonTimeManagementService: boolean mDetectedAtStartup>;
+
+        if $z0 != 0 goto label02;
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("Native Common Time service was not detected at startup.  Service is unavailable");
+
+        return;
+
+     label02:
+        $r7 = r0.<com.android.server.CommonTimeManagementService: java.lang.Object mLock>;
+
+        r4 = $r7;
+
+        entermonitor $r7;
+
+     label03:
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>("Current Common Time Management Service Config:");
+
+        $r8 = newarray (java.lang.Object)[1];
+
+        $r9 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        if null != $r9 goto label04;
+
+        $r25 = "reconnecting";
+
+        goto label05;
+
+     label04:
+        $r25 = "alive";
+
+     label05:
+        $r8[0] = $r25;
+
+        $r10 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Native service     : %s", $r8);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r10);
+
+        $r11 = newarray (java.lang.Object)[1];
+
+        $r12 = r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface>;
+
+        if null != $r12 goto label06;
+
+        $r13 = "unbound";
+
+        goto label07;
+
+     label06:
+        $r13 = r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface>;
+
+     label07:
+        $r11[0] = $r13;
+
+        $r15 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Bound interface    : %s", $r11);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r15);
+
+        $r14 = newarray (java.lang.Object)[1];
+
+        $z1 = <com.android.server.CommonTimeManagementService: boolean ALLOW_WIFI>;
+
+        if $z1 == 0 goto label08;
+
+        $r28 = "yes";
+
+        goto label09;
+
+     label08:
+        $r28 = "no";
+
+     label09:
+        $r14[0] = $r28;
+
+        $r16 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Allow WiFi         : %s", $r14);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r16);
+
+        $r17 = newarray (java.lang.Object)[1];
+
+        $z2 = <com.android.server.CommonTimeManagementService: boolean AUTO_DISABLE>;
+
+        if $z2 == 0 goto label10;
+
+        $r27 = "yes";
+
+        goto label11;
+
+     label10:
+        $r27 = "no";
+
+     label11:
+        $r17[0] = $r27;
+
+        $r19 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Allow Auto Disable : %s", $r17);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r19);
+
+        $r18 = newarray (java.lang.Object)[1];
+
+        $b1 = r0.<com.android.server.CommonTimeManagementService: byte mEffectivePrio>;
+
+        $r20 = staticinvoke <java.lang.Byte: java.lang.Byte valueOf(byte)>($b1);
+
+        $r18[0] = $r20;
+
+        $r22 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Server Priority    : %d", $r18);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r22);
+
+        $r21 = newarray (java.lang.Object)[1];
+
+        $i2 = <com.android.server.CommonTimeManagementService: int NO_INTERFACE_TIMEOUT>;
+
+        $r24 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        $r21[0] = $r24;
+
+        $r23 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  No iface timeout   : %d", $r21);
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r23);
+
+        exitmonitor r4;
+
+     label12:
+        goto label15;
+
+     label13:
+        $r32 := @caughtexception;
+
+        r5 = $r32;
+
+        exitmonitor r4;
+
+     label14:
+        throw r5;
+
+     label15:
+        return;
+
+        catch java.lang.Throwable from label03 to label12 with label13;
+        catch java.lang.Throwable from label13 to label14 with label13;
+    }
+
+    private void cleanupTimeConfig()
+    {
+        com.android.server.CommonTimeManagementService r0;
+        java.lang.Runnable $r1, $r3;
+        android.os.Handler $r2, $r4;
+        android.os.CommonTimeConfig $r5, $r6;
+
+        r0 := @this: com.android.server.CommonTimeManagementService;
+
+        $r2 = r0.<com.android.server.CommonTimeManagementService: android.os.Handler mReconnectHandler>;
+
+        $r1 = r0.<com.android.server.CommonTimeManagementService: java.lang.Runnable mReconnectRunnable>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r1);
+
+        $r4 = r0.<com.android.server.CommonTimeManagementService: android.os.Handler mNoInterfaceHandler>;
+
+        $r3 = r0.<com.android.server.CommonTimeManagementService: java.lang.Runnable mNoInterfaceRunnable>;
+
+        virtualinvoke $r4.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r3);
+
+        $r5 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        if null == $r5 goto label1;
+
+        $r6 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        virtualinvoke $r6.<android.os.CommonTimeConfig: void release()>();
+
+        r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig> = null;
+
+     label1:
+        return;
+    }
+
+    private void connectToTimeConfig()
+    {
+        com.android.server.CommonTimeManagementService r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r13;
+        android.os.CommonTimeConfig $r4, $r6, $r7, $r9, $r10;
+        android.os.CommonTimeConfig$OnServerDiedListener $r5;
+        java.lang.String $r8;
+        boolean $z0;
+        byte $b1;
+        int $i3, $i4;
+        java.lang.Runnable $r11;
+        long $l5;
+        android.os.Handler $r12;
+        android.os.RemoteException $r14;
+
+        r0 := @this: com.android.server.CommonTimeManagementService;
+
+        specialinvoke r0.<com.android.server.CommonTimeManagementService: void cleanupTimeConfig()>();
+
+     label01:
+        $r3 = r0.<com.android.server.CommonTimeManagementService: java.lang.Object mLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label02:
+        $r4 = new android.os.CommonTimeConfig;
+
+        specialinvoke $r4.<android.os.CommonTimeConfig: void <init>()>();
+
+        r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig> = $r4;
+
+        $r6 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        $r5 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig$OnServerDiedListener mCTServerDiedListener>;
+
+        virtualinvoke $r6.<android.os.CommonTimeConfig: void setServerDiedListener(android.os.CommonTimeConfig$OnServerDiedListener)>($r5);
+
+        $r7 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        $r8 = virtualinvoke $r7.<android.os.CommonTimeConfig: java.lang.String getInterfaceBinding()>();
+
+        r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface> = $r8;
+
+        $r9 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        $z0 = <com.android.server.CommonTimeManagementService: boolean AUTO_DISABLE>;
+
+        virtualinvoke $r9.<android.os.CommonTimeConfig: int setAutoDisable(boolean)>($z0);
+
+        $r10 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        $b1 = r0.<com.android.server.CommonTimeManagementService: byte mEffectivePrio>;
+
+        virtualinvoke $r10.<android.os.CommonTimeConfig: int setMasterElectionPriority(byte)>($b1);
+
+        exitmonitor r1;
+
+     label03:
+        goto label06;
+
+     label04:
+        $r13 := @caughtexception;
+
+        r2 = $r13;
+
+        exitmonitor r1;
+
+     label05:
+        throw r2;
+
+     label06:
+        $i4 = <com.android.server.CommonTimeManagementService: int NO_INTERFACE_TIMEOUT>;
+
+        if $i4 < 0 goto label07;
+
+        $r12 = r0.<com.android.server.CommonTimeManagementService: android.os.Handler mNoInterfaceHandler>;
+
+        $r11 = r0.<com.android.server.CommonTimeManagementService: java.lang.Runnable mNoInterfaceRunnable>;
+
+        $i3 = <com.android.server.CommonTimeManagementService: int NO_INTERFACE_TIMEOUT>;
+
+        $l5 = (long) $i3;
+
+        virtualinvoke $r12.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r11, $l5);
+
+     label07:
+        specialinvoke r0.<com.android.server.CommonTimeManagementService: void reevaluateServiceState()>();
+
+     label08:
+        goto label10;
+
+     label09:
+        $r14 := @caughtexception;
+
+        specialinvoke r0.<com.android.server.CommonTimeManagementService: void scheduleTimeConfigReconnect()>();
+
+     label10:
+        return;
+
+        catch java.lang.Throwable from label02 to label03 with label04;
+        catch java.lang.Throwable from label04 to label05 with label04;
+        catch android.os.RemoteException from label01 to label08 with label09;
+    }
+
+    private void scheduleTimeConfigReconnect()
+    {
+        com.android.server.CommonTimeManagementService r0;
+        java.lang.Object[] $r1;
+        java.lang.String $r2, $r4;
+        java.lang.Integer $r3;
+        java.lang.Runnable $r5;
+        android.os.Handler $r6;
+
+        r0 := @this: com.android.server.CommonTimeManagementService;
+
+        specialinvoke r0.<com.android.server.CommonTimeManagementService: void cleanupTimeConfig()>();
+
+        $r2 = <com.android.server.CommonTimeManagementService: java.lang.String TAG>;
+
+        $r1 = newarray (java.lang.Object)[1];
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(5000);
+
+        $r1[0] = $r3;
+
+        $r4 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("Native service died, will reconnect in %d mSec", $r1);
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>($r2, $r4);
+
+        $r6 = r0.<com.android.server.CommonTimeManagementService: android.os.Handler mReconnectHandler>;
+
+        $r5 = r0.<com.android.server.CommonTimeManagementService: java.lang.Runnable mReconnectRunnable>;
+
+        virtualinvoke $r6.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r5, 5000L);
+
+        return;
+    }
+
+    private void handleNoInterfaceTimeout()
+    {
+        com.android.server.CommonTimeManagementService r0;
+        android.os.CommonTimeConfig $r1, $r3;
+        java.lang.String $r2;
+        int $i1;
+
+        r0 := @this: com.android.server.CommonTimeManagementService;
+
+        $r1 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        if null == $r1 goto label1;
+
+        $r2 = <com.android.server.CommonTimeManagementService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>($r2, "Timeout waiting for interface to come up.  Forcing networkless master mode.");
+
+        $r3 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        $i1 = virtualinvoke $r3.<android.os.CommonTimeConfig: int forceNetworklessMasterMode()>();
+
+        if -7 != $i1 goto label1;
+
+        specialinvoke r0.<com.android.server.CommonTimeManagementService: void scheduleTimeConfigReconnect()>();
+
+     label1:
+        return;
+    }
+
+    private void reevaluateServiceState()
+    {
+        com.android.server.CommonTimeManagementService r0;
+        java.lang.String r1, r4, $r12, $r15, $r19, $r20, $r21, $r22, $r24, $r25, $r26, $r27, $r29, $r31, $r33;
+        byte b0, b3, $b6, $b11, $b12, $b14, b18;
+        java.lang.String[] r2, r3;
+        int i1, i2, i4, i5, $i7, $i8, $i13, i19;
+        com.android.server.CommonTimeManagementService$InterfaceScoreRule[] r5;
+        com.android.server.CommonTimeManagementService$InterfaceScoreRule r6;
+        java.lang.Throwable r7, $r34;
+        android.os.INetworkManagementService $r8, $r30;
+        java.lang.Object $r9, r37;
+        android.os.CommonTimeConfig $r10, $r11, $r18;
+        android.os.Handler $r13, $r17;
+        java.lang.Runnable $r14, $r16;
+        long $l9;
+        boolean $z1, $z2, $z3, z4;
+        java.lang.Object[] $r23, $r28;
+        android.os.RemoteException $r32;
+        android.net.InterfaceConfiguration r35;
+
+        r0 := @this: com.android.server.CommonTimeManagementService;
+
+        r1 = null;
+
+        b0 = -1;
+
+     label01:
+        $r8 = r0.<com.android.server.CommonTimeManagementService: android.os.INetworkManagementService mNetMgr>;
+
+        r2 = interfaceinvoke $r8.<android.os.INetworkManagementService: java.lang.String[] listInterfaces()>();
+
+        if null == r2 goto label09;
+
+        r3 = r2;
+
+        i1 = lengthof r3;
+
+        i2 = 0;
+
+     label02:
+        if i2 >= i1 goto label09;
+
+        r4 = r3[i2];
+
+        b3 = -1;
+
+        r5 = <com.android.server.CommonTimeManagementService: com.android.server.CommonTimeManagementService$InterfaceScoreRule[] IFACE_SCORE_RULES>;
+
+        i4 = lengthof r5;
+
+        i5 = 0;
+
+     label03:
+        if i5 >= i4 goto label05;
+
+        r6 = r5[i5];
+
+        $r33 = r6.<com.android.server.CommonTimeManagementService$InterfaceScoreRule: java.lang.String mPrefix>;
+
+        $z2 = virtualinvoke r4.<java.lang.String: boolean contains(java.lang.CharSequence)>($r33);
+
+        if $z2 == 0 goto label04;
+
+        b3 = r6.<com.android.server.CommonTimeManagementService$InterfaceScoreRule: byte mScore>;
+
+        goto label05;
+
+     label04:
+        i5 = i5 + 1;
+
+        goto label03;
+
+     label05:
+        if b3 > b0 goto label06;
+
+        goto label08;
+
+     label06:
+        $r30 = r0.<com.android.server.CommonTimeManagementService: android.os.INetworkManagementService mNetMgr>;
+
+        r35 = interfaceinvoke $r30.<android.os.INetworkManagementService: android.net.InterfaceConfiguration getInterfaceConfig(java.lang.String)>(r4);
+
+        if null != r35 goto label07;
+
+        goto label08;
+
+     label07:
+        $z3 = virtualinvoke r35.<android.net.InterfaceConfiguration: boolean isActive()>();
+
+        if $z3 == 0 goto label08;
+
+        r1 = r4;
+
+        b0 = b3;
+
+     label08:
+        i2 = i2 + 1;
+
+        goto label02;
+
+     label09:
+        goto label11;
+
+     label10:
+        $r32 := @caughtexception;
+
+        r1 = null;
+
+     label11:
+        z4 = 1;
+
+        $r9 = r0.<com.android.server.CommonTimeManagementService: java.lang.Object mLock>;
+
+        r37 = $r9;
+
+        entermonitor $r9;
+
+     label12:
+        if null == r1 goto label13;
+
+        $r29 = r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface>;
+
+        if null != $r29 goto label13;
+
+        $r27 = <com.android.server.CommonTimeManagementService: java.lang.String TAG>;
+
+        $r28 = newarray (java.lang.Object)[1];
+
+        $r28[0] = r1;
+
+        $r31 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("Binding common time service to %s.", $r28);
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r27, $r31);
+
+        r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface> = r1;
+
+        goto label16;
+
+     label13:
+        if null != r1 goto label14;
+
+        $r24 = r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface>;
+
+        if null == $r24 goto label14;
+
+        $r25 = <com.android.server.CommonTimeManagementService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r25, "Unbinding common time service.");
+
+        r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface> = null;
+
+        goto label16;
+
+     label14:
+        if null == r1 goto label15;
+
+        $r19 = r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface>;
+
+        if null == $r19 goto label15;
+
+        $r20 = r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface>;
+
+        $z1 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r20);
+
+        if $z1 != 0 goto label15;
+
+        $r22 = <com.android.server.CommonTimeManagementService: java.lang.String TAG>;
+
+        $r23 = newarray (java.lang.Object)[2];
+
+        $r21 = r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface>;
+
+        $r23[0] = $r21;
+
+        $r23[1] = r1;
+
+        $r26 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("Switching common time service binding from %s to %s.", $r23);
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r22, $r26);
+
+        r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface> = r1;
+
+        goto label16;
+
+     label15:
+        z4 = 0;
+
+     label16:
+        exitmonitor r37;
+
+     label17:
+        goto label20;
+
+     label18:
+        $r34 := @caughtexception;
+
+        r7 = $r34;
+
+        exitmonitor r37;
+
+     label19:
+        throw r7;
+
+     label20:
+        if z4 == 0 goto label25;
+
+        $r10 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        if null == $r10 goto label25;
+
+        if b0 <= 0 goto label21;
+
+        $b11 = <com.android.server.CommonTimeManagementService: byte BASE_SERVER_PRIO>;
+
+        $i13 = b0 * $b11;
+
+        $b14 = (byte) $i13;
+
+        goto label22;
+
+     label21:
+        $b14 = <com.android.server.CommonTimeManagementService: byte BASE_SERVER_PRIO>;
+
+     label22:
+        b18 = $b14;
+
+        $b6 = r0.<com.android.server.CommonTimeManagementService: byte mEffectivePrio>;
+
+        if b18 == $b6 goto label23;
+
+        r0.<com.android.server.CommonTimeManagementService: byte mEffectivePrio> = b18;
+
+        $r18 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        $b12 = r0.<com.android.server.CommonTimeManagementService: byte mEffectivePrio>;
+
+        virtualinvoke $r18.<android.os.CommonTimeConfig: int setMasterElectionPriority(byte)>($b12);
+
+     label23:
+        $r11 = r0.<com.android.server.CommonTimeManagementService: android.os.CommonTimeConfig mCTConfig>;
+
+        $r12 = r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface>;
+
+        i19 = virtualinvoke $r11.<android.os.CommonTimeConfig: int setNetworkBinding(java.lang.String)>($r12);
+
+        if i19 == 0 goto label24;
+
+        specialinvoke r0.<com.android.server.CommonTimeManagementService: void scheduleTimeConfigReconnect()>();
+
+        goto label25;
+
+     label24:
+        $i7 = <com.android.server.CommonTimeManagementService: int NO_INTERFACE_TIMEOUT>;
+
+        if $i7 < 0 goto label25;
+
+        $r13 = r0.<com.android.server.CommonTimeManagementService: android.os.Handler mNoInterfaceHandler>;
+
+        $r14 = r0.<com.android.server.CommonTimeManagementService: java.lang.Runnable mNoInterfaceRunnable>;
+
+        virtualinvoke $r13.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r14);
+
+        $r15 = r0.<com.android.server.CommonTimeManagementService: java.lang.String mCurIface>;
+
+        if null != $r15 goto label25;
+
+        $r17 = r0.<com.android.server.CommonTimeManagementService: android.os.Handler mNoInterfaceHandler>;
+
+        $r16 = r0.<com.android.server.CommonTimeManagementService: java.lang.Runnable mNoInterfaceRunnable>;
+
+        $i8 = <com.android.server.CommonTimeManagementService: int NO_INTERFACE_TIMEOUT>;
+
+        $l9 = (long) $i8;
+
+        virtualinvoke $r17.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r16, $l9);
+
+     label25:
+        return;
+
+        catch android.os.RemoteException from label01 to label09 with label10;
+        catch java.lang.Throwable from label12 to label17 with label18;
+        catch java.lang.Throwable from label18 to label19 with label18;
+    }
+
+    static void access$000(com.android.server.CommonTimeManagementService)
+    {
+        com.android.server.CommonTimeManagementService r0;
+
+        r0 := @parameter0: com.android.server.CommonTimeManagementService;
+
+        specialinvoke r0.<com.android.server.CommonTimeManagementService: void reevaluateServiceState()>();
+
+        return;
+    }
+
+    static void access$100(com.android.server.CommonTimeManagementService)
+    {
+        com.android.server.CommonTimeManagementService r0;
+
+        r0 := @parameter0: com.android.server.CommonTimeManagementService;
+
+        specialinvoke r0.<com.android.server.CommonTimeManagementService: void scheduleTimeConfigReconnect()>();
+
+        return;
+    }
+
+    static void access$200(com.android.server.CommonTimeManagementService)
+    {
+        com.android.server.CommonTimeManagementService r0;
+
+        r0 := @parameter0: com.android.server.CommonTimeManagementService;
+
+        specialinvoke r0.<com.android.server.CommonTimeManagementService: void connectToTimeConfig()>();
+
+        return;
+    }
+
+    static void access$300(com.android.server.CommonTimeManagementService)
+    {
+        com.android.server.CommonTimeManagementService r0;
+
+        r0 := @parameter0: com.android.server.CommonTimeManagementService;
+
+        specialinvoke r0.<com.android.server.CommonTimeManagementService: void handleNoInterfaceTimeout()>();
+
+        return;
+    }
+
+    static void <clinit>()
+    {
+        int i0, $i1, $i2, $i3;
+        java.lang.Class $r0;
+        java.lang.String $r1;
+        byte $b4;
+        boolean $z0, $z1, $z2;
+        com.android.server.CommonTimeManagementService$InterfaceScoreRule[] $r2, $r4;
+        com.android.server.CommonTimeManagementService$InterfaceScoreRule $r3, $r5, $r6;
+
+        <com.android.server.CommonTimeManagementService: java.lang.String NO_INTERFACE_TIMEOUT_PROP> = "ro.common_time.no_iface_timeout";
+
+        <com.android.server.CommonTimeManagementService: java.lang.String SERVER_PRIO_PROP> = "ro.common_time.server_prio";
+
+        <com.android.server.CommonTimeManagementService: java.lang.String ALLOW_WIFI_PROP> = "ro.common_time.allow_wifi";
+
+        <com.android.server.CommonTimeManagementService: java.lang.String AUTO_DISABLE_PROP> = "ro.common_time.auto_disable";
+
+        <com.android.server.CommonTimeManagementService: int NATIVE_SERVICE_RECONNECT_TIMEOUT> = 5000;
+
+        $r0 = class "com/android/server/CommonTimeManagementService";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.server.CommonTimeManagementService: java.lang.String TAG> = $r1;
+
+        $i1 = staticinvoke <android.os.SystemProperties: int getInt(java.lang.String,int)>("ro.common_time.auto_disable", 1);
+
+        if 0 == $i1 goto label1;
+
+        $z2 = 1;
+
+        goto label2;
+
+     label1:
+        $z2 = 0;
+
+     label2:
+        <com.android.server.CommonTimeManagementService: boolean AUTO_DISABLE> = $z2;
+
+        $i2 = staticinvoke <android.os.SystemProperties: int getInt(java.lang.String,int)>("ro.common_time.allow_wifi", 0);
+
+        if 0 == $i2 goto label3;
+
+        $z1 = 1;
+
+        goto label4;
+
+     label3:
+        $z1 = 0;
+
+     label4:
+        <com.android.server.CommonTimeManagementService: boolean ALLOW_WIFI> = $z1;
+
+        i0 = staticinvoke <android.os.SystemProperties: int getInt(java.lang.String,int)>("ro.common_time.server_prio", 1);
+
+        $i3 = staticinvoke <android.os.SystemProperties: int getInt(java.lang.String,int)>("ro.common_time.no_iface_timeout", 60000);
+
+        <com.android.server.CommonTimeManagementService: int NO_INTERFACE_TIMEOUT> = $i3;
+
+        if i0 >= 1 goto label5;
+
+        <com.android.server.CommonTimeManagementService: byte BASE_SERVER_PRIO> = 1;
+
+        goto label7;
+
+     label5:
+        if i0 <= 30 goto label6;
+
+        <com.android.server.CommonTimeManagementService: byte BASE_SERVER_PRIO> = 30;
+
+        goto label7;
+
+     label6:
+        $b4 = (byte) i0;
+
+        <com.android.server.CommonTimeManagementService: byte BASE_SERVER_PRIO> = $b4;
+
+     label7:
+        $z0 = <com.android.server.CommonTimeManagementService: boolean ALLOW_WIFI>;
+
+        if $z0 == 0 goto label8;
+
+        $r4 = newarray (com.android.server.CommonTimeManagementService$InterfaceScoreRule)[2];
+
+        $r5 = new com.android.server.CommonTimeManagementService$InterfaceScoreRule;
+
+        specialinvoke $r5.<com.android.server.CommonTimeManagementService$InterfaceScoreRule: void <init>(java.lang.String,byte)>("wlan", 1);
+
+        $r4[0] = $r5;
+
+        $r6 = new com.android.server.CommonTimeManagementService$InterfaceScoreRule;
+
+        specialinvoke $r6.<com.android.server.CommonTimeManagementService$InterfaceScoreRule: void <init>(java.lang.String,byte)>("eth", 2);
+
+        $r4[1] = $r6;
+
+        <com.android.server.CommonTimeManagementService: com.android.server.CommonTimeManagementService$InterfaceScoreRule[] IFACE_SCORE_RULES> = $r4;
+
+        goto label9;
+
+     label8:
+        $r2 = newarray (com.android.server.CommonTimeManagementService$InterfaceScoreRule)[1];
+
+        $r3 = new com.android.server.CommonTimeManagementService$InterfaceScoreRule;
+
+        specialinvoke $r3.<com.android.server.CommonTimeManagementService$InterfaceScoreRule: void <init>(java.lang.String,byte)>("eth", 2);
+
+        $r2[0] = $r3;
+
+        <com.android.server.CommonTimeManagementService: com.android.server.CommonTimeManagementService$InterfaceScoreRule[] IFACE_SCORE_RULES> = $r2;
+
+     label9:
+        return;
+    }
+}

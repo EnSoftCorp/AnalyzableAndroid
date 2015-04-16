@@ -1,0 +1,1085 @@
+public class com.android.gallery3d.glrenderer.TiledTexture extends java.lang.Object implements com.android.gallery3d.glrenderer.Texture
+{
+    private static final int CONTENT_SIZE;
+    private static final int BORDER_SIZE;
+    private static final int TILE_SIZE;
+    private static final int INIT_CAPACITY;
+    private static final long UPLOAD_TILE_LIMIT;
+    private static com.android.gallery3d.glrenderer.TiledTexture$Tile sFreeTileHead;
+    private static final java.lang.Object sFreeTileLock;
+    private static android.graphics.Bitmap sUploadBitmap;
+    private static android.graphics.Canvas sCanvas;
+    private static android.graphics.Paint sBitmapPaint;
+    private static android.graphics.Paint sPaint;
+    private int mUploadIndex;
+    private final com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles;
+    private final int mWidth;
+    private final int mHeight;
+    private final android.graphics.RectF mSrcRect;
+    private final android.graphics.RectF mDestRect;
+
+    private static void freeTile(com.android.gallery3d.glrenderer.TiledTexture$Tile)
+    {
+        com.android.gallery3d.glrenderer.TiledTexture$Tile r0, $r4;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r5;
+
+        r0 := @parameter0: com.android.gallery3d.glrenderer.TiledTexture$Tile;
+
+        virtualinvoke r0.<com.android.gallery3d.glrenderer.TiledTexture$Tile: void invalidateContent()>();
+
+        r0.<com.android.gallery3d.glrenderer.TiledTexture$Tile: android.graphics.Bitmap bitmap> = null;
+
+        $r3 = <com.android.gallery3d.glrenderer.TiledTexture: java.lang.Object sFreeTileLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $r4 = <com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile sFreeTileHead>;
+
+        r0.<com.android.gallery3d.glrenderer.TiledTexture$Tile: com.android.gallery3d.glrenderer.TiledTexture$Tile nextFreeTile> = $r4;
+
+        <com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile sFreeTileHead> = r0;
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private static com.android.gallery3d.glrenderer.TiledTexture$Tile obtainTile()
+    {
+        java.lang.Object r0, $r3;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile r1, $r4, $r5;
+        java.lang.Throwable r2, $r6;
+
+        $r3 = <com.android.gallery3d.glrenderer.TiledTexture: java.lang.Object sFreeTileLock>;
+
+        r0 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        r1 = <com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile sFreeTileHead>;
+
+        if r1 != null goto label3;
+
+        $r5 = new com.android.gallery3d.glrenderer.TiledTexture$Tile;
+
+        specialinvoke $r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: void <init>(com.android.gallery3d.glrenderer.TiledTexture$1)>(null);
+
+        exitmonitor r0;
+
+     label2:
+        return $r5;
+
+     label3:
+        $r4 = r1.<com.android.gallery3d.glrenderer.TiledTexture$Tile: com.android.gallery3d.glrenderer.TiledTexture$Tile nextFreeTile>;
+
+        <com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile sFreeTileHead> = $r4;
+
+        r1.<com.android.gallery3d.glrenderer.TiledTexture$Tile: com.android.gallery3d.glrenderer.TiledTexture$Tile nextFreeTile> = null;
+
+        exitmonitor r0;
+
+     label4:
+        return r1;
+
+     label5:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+        exitmonitor r0;
+
+     label6:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private boolean uploadNextTile(com.android.gallery3d.glrenderer.GLCanvas)
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+        com.android.gallery3d.glrenderer.GLCanvas r1;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile[] r2, $r5, $r6, $r7, $r9;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile r3;
+        boolean z0, $z1;
+        java.lang.Throwable r4, $r10;
+        int $i0, $i1, $i2, $i3, $i4, $i5;
+        android.graphics.Bitmap $r8;
+
+        r0 := @this: com.android.gallery3d.glrenderer.TiledTexture;
+
+        r1 := @parameter0: com.android.gallery3d.glrenderer.GLCanvas;
+
+        $i1 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mUploadIndex>;
+
+        $r5 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        $i0 = lengthof $r5;
+
+        if $i1 != $i0 goto label1;
+
+        return 1;
+
+     label1:
+        $r6 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        r2 = $r6;
+
+        entermonitor $r6;
+
+     label2:
+        $r7 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        $i2 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mUploadIndex>;
+
+        $i3 = $i2 + 1;
+
+        r0.<com.android.gallery3d.glrenderer.TiledTexture: int mUploadIndex> = $i3;
+
+        r3 = $r7[$i2];
+
+        $r8 = r3.<com.android.gallery3d.glrenderer.TiledTexture$Tile: android.graphics.Bitmap bitmap>;
+
+        if $r8 == null goto label3;
+
+        z0 = virtualinvoke r3.<com.android.gallery3d.glrenderer.TiledTexture$Tile: boolean isLoaded()>();
+
+        virtualinvoke r3.<com.android.gallery3d.glrenderer.TiledTexture$Tile: void updateContent(com.android.gallery3d.glrenderer.GLCanvas)>(r1);
+
+        if z0 != 0 goto label3;
+
+        virtualinvoke r3.<com.android.gallery3d.glrenderer.TiledTexture$Tile: void draw(com.android.gallery3d.glrenderer.GLCanvas,int,int)>(r1, 0, 0);
+
+     label3:
+        exitmonitor r2;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r10 := @caughtexception;
+
+        r4 = $r10;
+
+        exitmonitor r2;
+
+     label6:
+        throw r4;
+
+     label7:
+        $i4 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mUploadIndex>;
+
+        $r9 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        $i5 = lengthof $r9;
+
+        if $i4 != $i5 goto label8;
+
+        $z1 = 1;
+
+        goto label9;
+
+     label8:
+        $z1 = 0;
+
+     label9:
+        return $z1;
+
+        catch java.lang.Throwable from label2 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public void <init>(android.graphics.Bitmap)
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+        android.graphics.Bitmap r1;
+        java.util.ArrayList r2, $r6;
+        int i0, i1, i2, i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile r3;
+        android.graphics.RectF $r4, $r5;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile[] $r7, $r9;
+        java.lang.Object[] $r8;
+
+        r0 := @this: com.android.gallery3d.glrenderer.TiledTexture;
+
+        r1 := @parameter0: android.graphics.Bitmap;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.gallery3d.glrenderer.TiledTexture: int mUploadIndex> = 0;
+
+        $r4 = new android.graphics.RectF;
+
+        specialinvoke $r4.<android.graphics.RectF: void <init>()>();
+
+        r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mSrcRect> = $r4;
+
+        $r5 = new android.graphics.RectF;
+
+        specialinvoke $r5.<android.graphics.RectF: void <init>()>();
+
+        r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mDestRect> = $r5;
+
+        $i4 = virtualinvoke r1.<android.graphics.Bitmap: int getWidth()>();
+
+        r0.<com.android.gallery3d.glrenderer.TiledTexture: int mWidth> = $i4;
+
+        $i5 = virtualinvoke r1.<android.graphics.Bitmap: int getHeight()>();
+
+        r0.<com.android.gallery3d.glrenderer.TiledTexture: int mHeight> = $i5;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>()>();
+
+        r2 = $r6;
+
+        i0 = 0;
+
+        i1 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mWidth>;
+
+     label1:
+        if i0 >= i1 goto label4;
+
+        i2 = 0;
+
+        i3 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mHeight>;
+
+     label2:
+        if i2 >= i3 goto label3;
+
+        r3 = staticinvoke <com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile obtainTile()>();
+
+        r3.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetX> = i0;
+
+        r3.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetY> = i2;
+
+        r3.<com.android.gallery3d.glrenderer.TiledTexture$Tile: android.graphics.Bitmap bitmap> = r1;
+
+        $i8 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mWidth>;
+
+        $i7 = $i8 - i0;
+
+        $i10 = staticinvoke <java.lang.Math: int min(int,int)>(254, $i7);
+
+        $i9 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mHeight>;
+
+        $i12 = $i9 - i2;
+
+        $i11 = staticinvoke <java.lang.Math: int min(int,int)>(254, $i12);
+
+        virtualinvoke r3.<com.android.gallery3d.glrenderer.TiledTexture$Tile: void setSize(int,int)>($i10, $i11);
+
+        virtualinvoke r2.<java.util.ArrayList: boolean add(java.lang.Object)>(r3);
+
+        i2 = i2 + 254;
+
+        goto label2;
+
+     label3:
+        i0 = i0 + 254;
+
+        goto label1;
+
+     label4:
+        $i6 = virtualinvoke r2.<java.util.ArrayList: int size()>();
+
+        $r7 = newarray (com.android.gallery3d.glrenderer.TiledTexture$Tile)[$i6];
+
+        $r8 = virtualinvoke r2.<java.util.ArrayList: java.lang.Object[] toArray(java.lang.Object[])>($r7);
+
+        $r9 = (com.android.gallery3d.glrenderer.TiledTexture$Tile[]) $r8;
+
+        r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles> = $r9;
+
+        return;
+    }
+
+    public boolean isReady()
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile[] $r1;
+        int $i0, $i1;
+        boolean $z0;
+
+        r0 := @this: com.android.gallery3d.glrenderer.TiledTexture;
+
+        $i1 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mUploadIndex>;
+
+        $r1 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        $i0 = lengthof $r1;
+
+        if $i1 != $i0 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    public void recycle()
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile[] r1, $r3, $r4, $r5;
+        int i0, i1;
+        java.lang.Throwable r2, $r7;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile $r6;
+
+        r0 := @this: com.android.gallery3d.glrenderer.TiledTexture;
+
+        $r3 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        i0 = 0;
+
+        $r4 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        i1 = lengthof $r4;
+
+     label2:
+        if i0 >= i1 goto label3;
+
+        $r5 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        $r6 = $r5[i0];
+
+        staticinvoke <com.android.gallery3d.glrenderer.TiledTexture: void freeTile(com.android.gallery3d.glrenderer.TiledTexture$Tile)>($r6);
+
+        i0 = i0 + 1;
+
+        goto label2;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r7 := @caughtexception;
+
+        r2 = $r7;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public static void freeResources()
+    {
+        <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Bitmap sUploadBitmap> = null;
+
+        <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Canvas sCanvas> = null;
+
+        <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Paint sBitmapPaint> = null;
+
+        <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Paint sPaint> = null;
+
+        return;
+    }
+
+    public static void prepareResources()
+    {
+        android.graphics.Bitmap$Config $r0;
+        android.graphics.Bitmap $r1, $r3;
+        android.graphics.Canvas $r2;
+        android.graphics.Paint $r4, $r7, $r9, $r12, $r14;
+        android.graphics.PorterDuffXfermode $r5, $r10;
+        android.graphics.PorterDuff$Mode $r6, $r11;
+
+        $r0 = <android.graphics.Bitmap$Config: android.graphics.Bitmap$Config ARGB_8888>;
+
+        $r1 = staticinvoke <android.graphics.Bitmap: android.graphics.Bitmap createBitmap(int,int,android.graphics.Bitmap$Config)>(256, 256, $r0);
+
+        <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Bitmap sUploadBitmap> = $r1;
+
+        $r2 = new android.graphics.Canvas;
+
+        $r3 = <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Bitmap sUploadBitmap>;
+
+        specialinvoke $r2.<android.graphics.Canvas: void <init>(android.graphics.Bitmap)>($r3);
+
+        <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Canvas sCanvas> = $r2;
+
+        $r4 = new android.graphics.Paint;
+
+        specialinvoke $r4.<android.graphics.Paint: void <init>(int)>(2);
+
+        <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Paint sBitmapPaint> = $r4;
+
+        $r7 = <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Paint sBitmapPaint>;
+
+        $r5 = new android.graphics.PorterDuffXfermode;
+
+        $r6 = <android.graphics.PorterDuff$Mode: android.graphics.PorterDuff$Mode SRC>;
+
+        specialinvoke $r5.<android.graphics.PorterDuffXfermode: void <init>(android.graphics.PorterDuff$Mode)>($r6);
+
+        virtualinvoke $r7.<android.graphics.Paint: android.graphics.Xfermode setXfermode(android.graphics.Xfermode)>($r5);
+
+        $r9 = new android.graphics.Paint;
+
+        specialinvoke $r9.<android.graphics.Paint: void <init>()>();
+
+        <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Paint sPaint> = $r9;
+
+        $r12 = <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Paint sPaint>;
+
+        $r10 = new android.graphics.PorterDuffXfermode;
+
+        $r11 = <android.graphics.PorterDuff$Mode: android.graphics.PorterDuff$Mode SRC>;
+
+        specialinvoke $r10.<android.graphics.PorterDuffXfermode: void <init>(android.graphics.PorterDuff$Mode)>($r11);
+
+        virtualinvoke $r12.<android.graphics.Paint: android.graphics.Xfermode setXfermode(android.graphics.Xfermode)>($r10);
+
+        $r14 = <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Paint sPaint>;
+
+        virtualinvoke $r14.<android.graphics.Paint: void setColor(int)>(0);
+
+        return;
+    }
+
+    private static void mapRect(android.graphics.RectF, android.graphics.RectF, float, float, float, float, float, float)
+    {
+        android.graphics.RectF r0, r1;
+        float f0, f1, f2, f3, f4, f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20, $f21;
+
+        r0 := @parameter0: android.graphics.RectF;
+
+        r1 := @parameter1: android.graphics.RectF;
+
+        f0 := @parameter2: float;
+
+        f1 := @parameter3: float;
+
+        f2 := @parameter4: float;
+
+        f3 := @parameter5: float;
+
+        f4 := @parameter6: float;
+
+        f5 := @parameter7: float;
+
+        $f6 = r1.<android.graphics.RectF: float left>;
+
+        $f7 = $f6 - f0;
+
+        $f8 = $f7 * f4;
+
+        $f20 = f2 + $f8;
+
+        $f9 = r1.<android.graphics.RectF: float top>;
+
+        $f10 = $f9 - f1;
+
+        $f11 = $f10 * f5;
+
+        $f21 = f3 + $f11;
+
+        $f12 = r1.<android.graphics.RectF: float right>;
+
+        $f13 = $f12 - f0;
+
+        $f15 = $f13 * f4;
+
+        $f18 = f2 + $f15;
+
+        $f14 = r1.<android.graphics.RectF: float bottom>;
+
+        $f17 = $f14 - f1;
+
+        $f16 = $f17 * f5;
+
+        $f19 = f3 + $f16;
+
+        virtualinvoke r0.<android.graphics.RectF: void set(float,float,float,float)>($f20, $f21, $f18, $f19);
+
+        return;
+    }
+
+    public void drawMixed(com.android.gallery3d.glrenderer.GLCanvas, int, float, int, int, int, int)
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+        com.android.gallery3d.glrenderer.GLCanvas r1;
+        int i0, i1, i2, i3, i4, i5, i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16;
+        float f0, f1, f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14;
+        android.graphics.RectF r2, r3, $r10, $r11;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile[] r4, $r7, $r8, $r9;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile r5;
+        java.lang.Throwable r6, $r12;
+
+        r0 := @this: com.android.gallery3d.glrenderer.TiledTexture;
+
+        r1 := @parameter0: com.android.gallery3d.glrenderer.GLCanvas;
+
+        i0 := @parameter1: int;
+
+        f0 := @parameter2: float;
+
+        i1 := @parameter3: int;
+
+        i2 := @parameter4: int;
+
+        i3 := @parameter5: int;
+
+        i4 := @parameter6: int;
+
+        r2 = r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mSrcRect>;
+
+        r3 = r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mDestRect>;
+
+        $f3 = (float) i3;
+
+        $i7 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mWidth>;
+
+        $f4 = (float) $i7;
+
+        f1 = $f3 / $f4;
+
+        $f6 = (float) i4;
+
+        $i8 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mHeight>;
+
+        $f5 = (float) $i8;
+
+        f2 = $f6 / $f5;
+
+        $r7 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        r4 = $r7;
+
+        entermonitor $r7;
+
+     label1:
+        i5 = 0;
+
+        $r8 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        i6 = lengthof $r8;
+
+     label2:
+        if i5 >= i6 goto label3;
+
+        $r9 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        r5 = $r9[i5];
+
+        $i9 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int contentWidth>;
+
+        $f8 = (float) $i9;
+
+        $i10 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int contentHeight>;
+
+        $f7 = (float) $i10;
+
+        virtualinvoke r2.<android.graphics.RectF: void set(float,float,float,float)>(0.0F, 0.0F, $f8, $f7);
+
+        $i11 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetX>;
+
+        $f9 = (float) $i11;
+
+        $i12 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetY>;
+
+        $f11 = (float) $i12;
+
+        virtualinvoke r2.<android.graphics.RectF: void offset(float,float)>($f9, $f11);
+
+        $f12 = (float) i1;
+
+        $f10 = (float) i2;
+
+        staticinvoke <com.android.gallery3d.glrenderer.TiledTexture: void mapRect(android.graphics.RectF,android.graphics.RectF,float,float,float,float,float,float)>(r3, r2, 0.0F, 0.0F, $f12, $f10, f1, f2);
+
+        $i15 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetX>;
+
+        $i13 = 1 - $i15;
+
+        $f13 = (float) $i13;
+
+        $i14 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetY>;
+
+        $i16 = 1 - $i14;
+
+        $f14 = (float) $i16;
+
+        virtualinvoke r2.<android.graphics.RectF: void offset(float,float)>($f13, $f14);
+
+        $r11 = r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mSrcRect>;
+
+        $r10 = r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mDestRect>;
+
+        interfaceinvoke r1.<com.android.gallery3d.glrenderer.GLCanvas: void drawMixed(com.android.gallery3d.glrenderer.BasicTexture,int,float,android.graphics.RectF,android.graphics.RectF)>(r5, i0, f0, $r11, $r10);
+
+        i5 = i5 + 1;
+
+        goto label2;
+
+     label3:
+        exitmonitor r4;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r12 := @caughtexception;
+
+        r6 = $r12;
+
+        exitmonitor r4;
+
+     label6:
+        throw r6;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public void draw(com.android.gallery3d.glrenderer.GLCanvas, int, int, int, int)
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+        com.android.gallery3d.glrenderer.GLCanvas r1;
+        int i0, i1, i2, i3, i4, i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15;
+        android.graphics.RectF r2, r3, $r10, $r12;
+        float f0, f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile[] r4, $r7, $r8, $r9;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile r5;
+        java.lang.Throwable r6, $r11;
+
+        r0 := @this: com.android.gallery3d.glrenderer.TiledTexture;
+
+        r1 := @parameter0: com.android.gallery3d.glrenderer.GLCanvas;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        i3 := @parameter4: int;
+
+        r2 = r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mSrcRect>;
+
+        r3 = r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mDestRect>;
+
+        $f2 = (float) i2;
+
+        $i6 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mWidth>;
+
+        $f3 = (float) $i6;
+
+        f0 = $f2 / $f3;
+
+        $f5 = (float) i3;
+
+        $i7 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mHeight>;
+
+        $f4 = (float) $i7;
+
+        f1 = $f5 / $f4;
+
+        $r7 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        r4 = $r7;
+
+        entermonitor $r7;
+
+     label1:
+        i4 = 0;
+
+        $r8 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        i5 = lengthof $r8;
+
+     label2:
+        if i4 >= i5 goto label3;
+
+        $r9 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        r5 = $r9[i4];
+
+        $i8 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int contentWidth>;
+
+        $f7 = (float) $i8;
+
+        $i9 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int contentHeight>;
+
+        $f6 = (float) $i9;
+
+        virtualinvoke r2.<android.graphics.RectF: void set(float,float,float,float)>(0.0F, 0.0F, $f7, $f6);
+
+        $i10 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetX>;
+
+        $f10 = (float) $i10;
+
+        $i11 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetY>;
+
+        $f8 = (float) $i11;
+
+        virtualinvoke r2.<android.graphics.RectF: void offset(float,float)>($f10, $f8);
+
+        $f9 = (float) i0;
+
+        $f11 = (float) i1;
+
+        staticinvoke <com.android.gallery3d.glrenderer.TiledTexture: void mapRect(android.graphics.RectF,android.graphics.RectF,float,float,float,float,float,float)>(r3, r2, 0.0F, 0.0F, $f9, $f11, f0, f1);
+
+        $i12 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetX>;
+
+        $i14 = 1 - $i12;
+
+        $f13 = (float) $i14;
+
+        $i15 = r5.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetY>;
+
+        $i13 = 1 - $i15;
+
+        $f12 = (float) $i13;
+
+        virtualinvoke r2.<android.graphics.RectF: void offset(float,float)>($f13, $f12);
+
+        $r10 = r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mSrcRect>;
+
+        $r12 = r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mDestRect>;
+
+        interfaceinvoke r1.<com.android.gallery3d.glrenderer.GLCanvas: void drawTexture(com.android.gallery3d.glrenderer.BasicTexture,android.graphics.RectF,android.graphics.RectF)>(r5, $r10, $r12);
+
+        i4 = i4 + 1;
+
+        goto label2;
+
+     label3:
+        exitmonitor r4;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r11 := @caughtexception;
+
+        r6 = $r11;
+
+        exitmonitor r4;
+
+     label6:
+        throw r6;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public void draw(com.android.gallery3d.glrenderer.GLCanvas, android.graphics.RectF, android.graphics.RectF)
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+        com.android.gallery3d.glrenderer.GLCanvas r1;
+        android.graphics.RectF r2, r3, r4, r5;
+        float f0, f1, f2, f3, f4, f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile[] r6, $r9, $r10, $r11;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9;
+        com.android.gallery3d.glrenderer.TiledTexture$Tile r7;
+        java.lang.Throwable r8, $r12;
+        boolean $z0;
+
+        r0 := @this: com.android.gallery3d.glrenderer.TiledTexture;
+
+        r1 := @parameter0: com.android.gallery3d.glrenderer.GLCanvas;
+
+        r2 := @parameter1: android.graphics.RectF;
+
+        r3 := @parameter2: android.graphics.RectF;
+
+        r4 = r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mSrcRect>;
+
+        r5 = r0.<com.android.gallery3d.glrenderer.TiledTexture: android.graphics.RectF mDestRect>;
+
+        f0 = r2.<android.graphics.RectF: float left>;
+
+        f1 = r2.<android.graphics.RectF: float top>;
+
+        f2 = r3.<android.graphics.RectF: float left>;
+
+        f3 = r3.<android.graphics.RectF: float top>;
+
+        $f6 = virtualinvoke r3.<android.graphics.RectF: float width()>();
+
+        $f8 = virtualinvoke r2.<android.graphics.RectF: float width()>();
+
+        f4 = $f6 / $f8;
+
+        $f7 = virtualinvoke r3.<android.graphics.RectF: float height()>();
+
+        $f9 = virtualinvoke r2.<android.graphics.RectF: float height()>();
+
+        f5 = $f7 / $f9;
+
+        $r9 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        r6 = $r9;
+
+        entermonitor $r9;
+
+     label1:
+        i0 = 0;
+
+        $r10 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        i1 = lengthof $r10;
+
+     label2:
+        if i0 >= i1 goto label5;
+
+        $r11 = r0.<com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile[] mTiles>;
+
+        r7 = $r11[i0];
+
+        $i2 = r7.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int contentWidth>;
+
+        $f11 = (float) $i2;
+
+        $i3 = r7.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int contentHeight>;
+
+        $f10 = (float) $i3;
+
+        virtualinvoke r4.<android.graphics.RectF: void set(float,float,float,float)>(0.0F, 0.0F, $f11, $f10);
+
+        $i4 = r7.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetX>;
+
+        $f13 = (float) $i4;
+
+        $i5 = r7.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetY>;
+
+        $f12 = (float) $i5;
+
+        virtualinvoke r4.<android.graphics.RectF: void offset(float,float)>($f13, $f12);
+
+        $z0 = virtualinvoke r4.<android.graphics.RectF: boolean intersect(android.graphics.RectF)>(r2);
+
+        if $z0 != 0 goto label3;
+
+        goto label4;
+
+     label3:
+        staticinvoke <com.android.gallery3d.glrenderer.TiledTexture: void mapRect(android.graphics.RectF,android.graphics.RectF,float,float,float,float,float,float)>(r5, r4, f0, f1, f2, f3, f4, f5);
+
+        $i6 = r7.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetX>;
+
+        $i7 = 1 - $i6;
+
+        $f15 = (float) $i7;
+
+        $i8 = r7.<com.android.gallery3d.glrenderer.TiledTexture$Tile: int offsetY>;
+
+        $i9 = 1 - $i8;
+
+        $f14 = (float) $i9;
+
+        virtualinvoke r4.<android.graphics.RectF: void offset(float,float)>($f15, $f14);
+
+        interfaceinvoke r1.<com.android.gallery3d.glrenderer.GLCanvas: void drawTexture(com.android.gallery3d.glrenderer.BasicTexture,android.graphics.RectF,android.graphics.RectF)>(r7, r4, r5);
+
+     label4:
+        i0 = i0 + 1;
+
+        goto label2;
+
+     label5:
+        exitmonitor r6;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r12 := @caughtexception;
+
+        r8 = $r12;
+
+        exitmonitor r6;
+
+     label8:
+        throw r8;
+
+     label9:
+        return;
+
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    public int getWidth()
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+        int $i0;
+
+        r0 := @this: com.android.gallery3d.glrenderer.TiledTexture;
+
+        $i0 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mWidth>;
+
+        return $i0;
+    }
+
+    public int getHeight()
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+        int $i0;
+
+        r0 := @this: com.android.gallery3d.glrenderer.TiledTexture;
+
+        $i0 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mHeight>;
+
+        return $i0;
+    }
+
+    public void draw(com.android.gallery3d.glrenderer.GLCanvas, int, int)
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+        com.android.gallery3d.glrenderer.GLCanvas r1;
+        int i0, i1, $i2, $i3;
+
+        r0 := @this: com.android.gallery3d.glrenderer.TiledTexture;
+
+        r1 := @parameter0: com.android.gallery3d.glrenderer.GLCanvas;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $i3 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mWidth>;
+
+        $i2 = r0.<com.android.gallery3d.glrenderer.TiledTexture: int mHeight>;
+
+        virtualinvoke r0.<com.android.gallery3d.glrenderer.TiledTexture: void draw(com.android.gallery3d.glrenderer.GLCanvas,int,int,int,int)>(r1, i0, i1, $i3, $i2);
+
+        return;
+    }
+
+    public boolean isOpaque()
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+
+        r0 := @this: com.android.gallery3d.glrenderer.TiledTexture;
+
+        return 0;
+    }
+
+    static boolean access$000(com.android.gallery3d.glrenderer.TiledTexture, com.android.gallery3d.glrenderer.GLCanvas)
+    {
+        com.android.gallery3d.glrenderer.TiledTexture r0;
+        com.android.gallery3d.glrenderer.GLCanvas r1;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.gallery3d.glrenderer.TiledTexture;
+
+        r1 := @parameter1: com.android.gallery3d.glrenderer.GLCanvas;
+
+        $z0 = specialinvoke r0.<com.android.gallery3d.glrenderer.TiledTexture: boolean uploadNextTile(com.android.gallery3d.glrenderer.GLCanvas)>(r1);
+
+        return $z0;
+    }
+
+    static android.graphics.Paint access$100()
+    {
+        android.graphics.Paint $r0;
+
+        $r0 = <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Paint sBitmapPaint>;
+
+        return $r0;
+    }
+
+    static android.graphics.Canvas access$200()
+    {
+        android.graphics.Canvas $r0;
+
+        $r0 = <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Canvas sCanvas>;
+
+        return $r0;
+    }
+
+    static android.graphics.Paint access$300()
+    {
+        android.graphics.Paint $r0;
+
+        $r0 = <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Paint sPaint>;
+
+        return $r0;
+    }
+
+    static android.graphics.Bitmap access$400()
+    {
+        android.graphics.Bitmap $r0;
+
+        $r0 = <com.android.gallery3d.glrenderer.TiledTexture: android.graphics.Bitmap sUploadBitmap>;
+
+        return $r0;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.Object $r0;
+
+        <com.android.gallery3d.glrenderer.TiledTexture: long UPLOAD_TILE_LIMIT> = 4L;
+
+        <com.android.gallery3d.glrenderer.TiledTexture: int INIT_CAPACITY> = 8;
+
+        <com.android.gallery3d.glrenderer.TiledTexture: int TILE_SIZE> = 256;
+
+        <com.android.gallery3d.glrenderer.TiledTexture: int BORDER_SIZE> = 1;
+
+        <com.android.gallery3d.glrenderer.TiledTexture: int CONTENT_SIZE> = 254;
+
+        <com.android.gallery3d.glrenderer.TiledTexture: com.android.gallery3d.glrenderer.TiledTexture$Tile sFreeTileHead> = null;
+
+        $r0 = new java.lang.Object;
+
+        specialinvoke $r0.<java.lang.Object: void <init>()>();
+
+        <com.android.gallery3d.glrenderer.TiledTexture: java.lang.Object sFreeTileLock> = $r0;
+
+        return;
+    }
+}

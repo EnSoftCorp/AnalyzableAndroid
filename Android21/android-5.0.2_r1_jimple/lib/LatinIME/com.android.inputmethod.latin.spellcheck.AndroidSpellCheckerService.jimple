@@ -1,0 +1,831 @@
+public final class com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService extends android.service.textservice.SpellCheckerService implements android.content.SharedPreferences$OnSharedPreferenceChangeListener
+{
+    private static final java.lang.String TAG;
+    private static final boolean DBG;
+    public static final java.lang.String PREF_USE_CONTACTS_KEY;
+    private static final int SPELLCHECKER_DUMMY_KEYBOARD_WIDTH;
+    private static final int SPELLCHECKER_DUMMY_KEYBOARD_HEIGHT;
+    private static final java.lang.String DICTIONARY_NAME_PREFIX;
+    private static final int WAIT_FOR_LOADING_MAIN_DICT_IN_MILLISECONDS;
+    private static final int MAX_RETRY_COUNT_FOR_WAITING_FOR_LOADING_DICT;
+    private static final java.lang.String[] EMPTY_STRING_ARRAY;
+    private final java.util.HashSet mCachedLocales;
+    private final int MAX_NUM_OF_THREADS_READ_DICTIONARY;
+    private final java.util.concurrent.Semaphore mSemaphore;
+    private final java.util.concurrent.ConcurrentLinkedQueue mSessionIdPool;
+    private static final int MAX_DICTIONARY_FACILITATOR_COUNT;
+    private final android.util.LruCache mDictionaryFacilitatorCache;
+    private final java.util.concurrent.ConcurrentHashMap mKeyboardCache;
+    private float mRecommendedThreshold;
+    private boolean mUseContactsDictionary;
+    private final com.android.inputmethod.latin.settings.SettingsValuesForSuggestion mSettingsValuesForSuggestion;
+    private final java.lang.Object mDictionaryLock;
+    public static final java.lang.String SINGLE_QUOTE;
+    public static final java.lang.String APOSTROPHE;
+
+    public void <init>()
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        int i0;
+        java.util.HashSet $r1, $r5;
+        java.util.concurrent.Semaphore $r2;
+        java.util.concurrent.ConcurrentLinkedQueue $r3, $r9;
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService$DictionaryFacilitatorLruCache $r4;
+        java.util.concurrent.ConcurrentHashMap $r6;
+        com.android.inputmethod.latin.settings.SettingsValuesForSuggestion $r7;
+        java.lang.Object $r8;
+        java.lang.Integer $r10;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        specialinvoke r0.<android.service.textservice.SpellCheckerService: void <init>()>();
+
+        $r1 = new java.util.HashSet;
+
+        specialinvoke $r1.<java.util.HashSet: void <init>()>();
+
+        r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.HashSet mCachedLocales> = $r1;
+
+        r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: int MAX_NUM_OF_THREADS_READ_DICTIONARY> = 2;
+
+        $r2 = new java.util.concurrent.Semaphore;
+
+        specialinvoke $r2.<java.util.concurrent.Semaphore: void <init>(int,boolean)>(2, 1);
+
+        r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore> = $r2;
+
+        $r3 = new java.util.concurrent.ConcurrentLinkedQueue;
+
+        specialinvoke $r3.<java.util.concurrent.ConcurrentLinkedQueue: void <init>()>();
+
+        r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.ConcurrentLinkedQueue mSessionIdPool> = $r3;
+
+        $r4 = new com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService$DictionaryFacilitatorLruCache;
+
+        $r5 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.HashSet mCachedLocales>;
+
+        specialinvoke $r4.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService$DictionaryFacilitatorLruCache: void <init>(java.util.HashSet,int)>($r5, 3);
+
+        r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: android.util.LruCache mDictionaryFacilitatorCache> = $r4;
+
+        $r6 = new java.util.concurrent.ConcurrentHashMap;
+
+        specialinvoke $r6.<java.util.concurrent.ConcurrentHashMap: void <init>()>();
+
+        r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.ConcurrentHashMap mKeyboardCache> = $r6;
+
+        $r7 = new com.android.inputmethod.latin.settings.SettingsValuesForSuggestion;
+
+        specialinvoke $r7.<com.android.inputmethod.latin.settings.SettingsValuesForSuggestion: void <init>(boolean,boolean,int[])>(1, 1, null);
+
+        r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: com.android.inputmethod.latin.settings.SettingsValuesForSuggestion mSettingsValuesForSuggestion> = $r7;
+
+        $r8 = new java.lang.Object;
+
+        specialinvoke $r8.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.Object mDictionaryLock> = $r8;
+
+        i0 = 0;
+
+     label1:
+        if i0 >= 2 goto label2;
+
+        $r9 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.ConcurrentLinkedQueue mSessionIdPool>;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        virtualinvoke $r9.<java.util.concurrent.ConcurrentLinkedQueue: boolean add(java.lang.Object)>($r10);
+
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    public void onCreate()
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        android.content.SharedPreferences r1;
+        java.lang.String $r2;
+        float $f0;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        specialinvoke r0.<android.service.textservice.SpellCheckerService: void onCreate()>();
+
+        $r2 = virtualinvoke r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String getString(int)>(2131361796);
+
+        $f0 = staticinvoke <java.lang.Float: float parseFloat(java.lang.String)>($r2);
+
+        r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: float mRecommendedThreshold> = $f0;
+
+        r1 = staticinvoke <android.preference.PreferenceManager: android.content.SharedPreferences getDefaultSharedPreferences(android.content.Context)>(r0);
+
+        interfaceinvoke r1.<android.content.SharedPreferences: void registerOnSharedPreferenceChangeListener(android.content.SharedPreferences$OnSharedPreferenceChangeListener)>(r0);
+
+        virtualinvoke r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: void onSharedPreferenceChanged(android.content.SharedPreferences,java.lang.String)>(r1, "pref_spellcheck_use_contacts");
+
+        return;
+    }
+
+    public float getRecommendedThreshold()
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        float $f0;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        $f0 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: float mRecommendedThreshold>;
+
+        return $f0;
+    }
+
+    private static java.lang.String getKeyboardLayoutNameForScript(int)
+    {
+        int i0;
+        java.lang.RuntimeException $r0;
+        java.lang.StringBuilder $r1, $r2, $r3;
+        java.lang.String $r4;
+
+        i0 := @parameter0: int;
+
+        lookupswitch(i0)
+        {
+            case 3: goto label2;
+            case 6: goto label3;
+            case 11: goto label1;
+            default: goto label4;
+        };
+
+     label1:
+        return "qwerty";
+
+     label2:
+        return "east_slavic";
+
+     label3:
+        return "greek";
+
+     label4:
+        $r0 = new java.lang.RuntimeException;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Wrong script supplied: ");
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r0.<java.lang.RuntimeException: void <init>(java.lang.String)>($r4);
+
+        throw $r0;
+    }
+
+    public void onSharedPreferenceChanged(android.content.SharedPreferences, java.lang.String)
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        android.content.SharedPreferences r1;
+        java.lang.String r2, $r7;
+        boolean z0, $z1, $z2, $z3, $z4;
+        java.util.Iterator r3;
+        java.util.Locale r4;
+        com.android.inputmethod.latin.DictionaryFacilitator r5;
+        java.lang.Throwable r6, $r14;
+        java.util.concurrent.Semaphore $r8, $r11, $r15;
+        java.util.HashSet $r9;
+        java.lang.Object $r10, $r12;
+        android.util.LruCache $r13;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        r1 := @parameter0: android.content.SharedPreferences;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r7 = "pref_spellcheck_use_contacts";
+
+        $z1 = virtualinvoke $r7.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z1 != 0 goto label1;
+
+        return;
+
+     label1:
+        z0 = interfaceinvoke r1.<android.content.SharedPreferences: boolean getBoolean(java.lang.String,boolean)>("pref_spellcheck_use_contacts", 1);
+
+        $z2 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: boolean mUseContactsDictionary>;
+
+        if z0 == $z2 goto label7;
+
+        $r8 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r8.<java.util.concurrent.Semaphore: void acquireUninterruptibly(int)>(2);
+
+     label2:
+        r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: boolean mUseContactsDictionary> = z0;
+
+        $r9 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.HashSet mCachedLocales>;
+
+        r3 = virtualinvoke $r9.<java.util.HashSet: java.util.Iterator iterator()>();
+
+     label3:
+        $z3 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label4;
+
+        $r10 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (java.util.Locale) $r10;
+
+        $r13 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: android.util.LruCache mDictionaryFacilitatorCache>;
+
+        $r12 = virtualinvoke $r13.<android.util.LruCache: java.lang.Object get(java.lang.Object)>(r4);
+
+        r5 = (com.android.inputmethod.latin.DictionaryFacilitator) $r12;
+
+        $z4 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: boolean mUseContactsDictionary>;
+
+        staticinvoke <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: void resetDictionariesForLocale(android.content.Context,com.android.inputmethod.latin.DictionaryFacilitator,java.util.Locale,boolean)>(r0, r5, r4, $z4);
+
+        goto label3;
+
+     label4:
+        $r11 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r11.<java.util.concurrent.Semaphore: void release(int)>(2);
+
+        goto label7;
+
+     label5:
+        $r14 := @caughtexception;
+
+        r6 = $r14;
+
+     label6:
+        $r15 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r15.<java.util.concurrent.Semaphore: void release(int)>(2);
+
+        throw r6;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label2 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public android.service.textservice.SpellCheckerService$Session createSession()
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        android.service.textservice.SpellCheckerService$Session $r1;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        $r1 = staticinvoke <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerSessionFactory: android.service.textservice.SpellCheckerService$Session newInstance(com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService)>(r0);
+
+        return $r1;
+    }
+
+    public static android.view.textservice.SuggestionsInfo getNotInDictEmptySuggestions(boolean)
+    {
+        boolean z0;
+        android.view.textservice.SuggestionsInfo $r0;
+        java.lang.String[] $r1;
+        byte $b0;
+
+        z0 := @parameter0: boolean;
+
+        $r0 = new android.view.textservice.SuggestionsInfo;
+
+        if z0 == 0 goto label1;
+
+        $b0 = 2;
+
+        goto label2;
+
+     label1:
+        $b0 = 0;
+
+     label2:
+        $r1 = <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String[] EMPTY_STRING_ARRAY>;
+
+        specialinvoke $r0.<android.view.textservice.SuggestionsInfo: void <init>(int,java.lang.String[])>($b0, $r1);
+
+        return $r0;
+    }
+
+    public static android.view.textservice.SuggestionsInfo getInDictEmptySuggestions()
+    {
+        android.view.textservice.SuggestionsInfo $r0;
+        java.lang.String[] $r1;
+
+        $r0 = new android.view.textservice.SuggestionsInfo;
+
+        $r1 = <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String[] EMPTY_STRING_ARRAY>;
+
+        specialinvoke $r0.<android.view.textservice.SuggestionsInfo: void <init>(int,java.lang.String[])>(1, $r1);
+
+        return $r0;
+    }
+
+    public boolean isValidWord(java.util.Locale, java.lang.String)
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        java.util.Locale r1;
+        java.lang.String r2;
+        com.android.inputmethod.latin.DictionaryFacilitator r3;
+        boolean z0;
+        java.lang.Throwable r4, $r7;
+        java.util.concurrent.Semaphore $r5, $r6, $r8;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        r1 := @parameter0: java.util.Locale;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r5 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r5.<java.util.concurrent.Semaphore: void acquireUninterruptibly()>();
+
+     label1:
+        r3 = specialinvoke r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: com.android.inputmethod.latin.DictionaryFacilitator getDictionaryFacilitatorForLocaleLocked(java.util.Locale)>(r1);
+
+        z0 = virtualinvoke r3.<com.android.inputmethod.latin.DictionaryFacilitator: boolean isValidWord(java.lang.String,boolean)>(r2, 0);
+
+     label2:
+        $r6 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r6.<java.util.concurrent.Semaphore: void release()>();
+
+        return z0;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r4 = $r7;
+
+     label4:
+        $r8 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r8.<java.util.concurrent.Semaphore: void release()>();
+
+        throw r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public com.android.inputmethod.latin.utils.SuggestionResults getSuggestionResults(java.util.Locale, com.android.inputmethod.latin.WordComposer, com.android.inputmethod.latin.PrevWordsInfo, com.android.inputmethod.keyboard.ProximityInfo)
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        java.util.Locale r1;
+        com.android.inputmethod.latin.WordComposer r2;
+        com.android.inputmethod.latin.PrevWordsInfo r3;
+        com.android.inputmethod.keyboard.ProximityInfo r4;
+        java.lang.Integer r5;
+        com.android.inputmethod.latin.DictionaryFacilitator r6;
+        com.android.inputmethod.latin.utils.SuggestionResults r7;
+        java.lang.Throwable r8, $r15;
+        java.util.concurrent.Semaphore $r9, $r14, $r17;
+        java.util.concurrent.ConcurrentLinkedQueue $r10, $r13, $r16;
+        java.lang.Object $r11;
+        com.android.inputmethod.latin.settings.SettingsValuesForSuggestion $r12;
+        int $i0;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        r1 := @parameter0: java.util.Locale;
+
+        r2 := @parameter1: com.android.inputmethod.latin.WordComposer;
+
+        r3 := @parameter2: com.android.inputmethod.latin.PrevWordsInfo;
+
+        r4 := @parameter3: com.android.inputmethod.keyboard.ProximityInfo;
+
+        r5 = null;
+
+        $r9 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r9.<java.util.concurrent.Semaphore: void acquireUninterruptibly()>();
+
+     label1:
+        $r10 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.ConcurrentLinkedQueue mSessionIdPool>;
+
+        $r11 = virtualinvoke $r10.<java.util.concurrent.ConcurrentLinkedQueue: java.lang.Object poll()>();
+
+        r5 = (java.lang.Integer) $r11;
+
+        r6 = specialinvoke r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: com.android.inputmethod.latin.DictionaryFacilitator getDictionaryFacilitatorForLocaleLocked(java.util.Locale)>(r1);
+
+        $r12 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: com.android.inputmethod.latin.settings.SettingsValuesForSuggestion mSettingsValuesForSuggestion>;
+
+        $i0 = virtualinvoke r5.<java.lang.Integer: int intValue()>();
+
+        r7 = virtualinvoke r6.<com.android.inputmethod.latin.DictionaryFacilitator: com.android.inputmethod.latin.utils.SuggestionResults getSuggestionResults(com.android.inputmethod.latin.WordComposer,com.android.inputmethod.latin.PrevWordsInfo,com.android.inputmethod.keyboard.ProximityInfo,com.android.inputmethod.latin.settings.SettingsValuesForSuggestion,int)>(r2, r3, r4, $r12, $i0);
+
+     label2:
+        if r5 == null goto label3;
+
+        $r13 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.ConcurrentLinkedQueue mSessionIdPool>;
+
+        virtualinvoke $r13.<java.util.concurrent.ConcurrentLinkedQueue: boolean add(java.lang.Object)>(r5);
+
+     label3:
+        $r14 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r14.<java.util.concurrent.Semaphore: void release()>();
+
+        return r7;
+
+     label4:
+        $r15 := @caughtexception;
+
+        r8 = $r15;
+
+     label5:
+        if r5 == null goto label6;
+
+        $r16 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.ConcurrentLinkedQueue mSessionIdPool>;
+
+        virtualinvoke $r16.<java.util.concurrent.ConcurrentLinkedQueue: boolean add(java.lang.Object)>(r5);
+
+     label6:
+        $r17 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r17.<java.util.concurrent.Semaphore: void release()>();
+
+        throw r8;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public boolean hasMainDictionaryForLocale(java.util.Locale)
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        java.util.Locale r1;
+        com.android.inputmethod.latin.DictionaryFacilitator r2;
+        boolean z0;
+        java.lang.Throwable r3, $r6;
+        java.util.concurrent.Semaphore $r4, $r5, $r7;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        r1 := @parameter0: java.util.Locale;
+
+        $r4 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r4.<java.util.concurrent.Semaphore: void acquireUninterruptibly()>();
+
+     label1:
+        r2 = specialinvoke r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: com.android.inputmethod.latin.DictionaryFacilitator getDictionaryFacilitatorForLocaleLocked(java.util.Locale)>(r1);
+
+        z0 = virtualinvoke r2.<com.android.inputmethod.latin.DictionaryFacilitator: boolean hasInitializedMainDictionary()>();
+
+     label2:
+        $r5 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r5.<java.util.concurrent.Semaphore: void release()>();
+
+        return z0;
+
+     label3:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+     label4:
+        $r7 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r7.<java.util.concurrent.Semaphore: void release()>();
+
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private com.android.inputmethod.latin.DictionaryFacilitator getDictionaryFacilitatorForLocaleLocked(java.util.Locale)
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        java.util.Locale r1;
+        com.android.inputmethod.latin.DictionaryFacilitator r2, $r5;
+        android.util.LruCache $r3, $r6;
+        java.lang.Object $r4;
+        java.util.HashSet $r8;
+        boolean $z1;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        r1 := @parameter0: java.util.Locale;
+
+        $r3 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: android.util.LruCache mDictionaryFacilitatorCache>;
+
+        $r4 = virtualinvoke $r3.<android.util.LruCache: java.lang.Object get(java.lang.Object)>(r1);
+
+        r2 = (com.android.inputmethod.latin.DictionaryFacilitator) $r4;
+
+        if r2 != null goto label1;
+
+        $r5 = new com.android.inputmethod.latin.DictionaryFacilitator;
+
+        specialinvoke $r5.<com.android.inputmethod.latin.DictionaryFacilitator: void <init>()>();
+
+        r2 = $r5;
+
+        $r6 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: android.util.LruCache mDictionaryFacilitatorCache>;
+
+        virtualinvoke $r6.<android.util.LruCache: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, r2);
+
+        $r8 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.HashSet mCachedLocales>;
+
+        virtualinvoke $r8.<java.util.HashSet: boolean add(java.lang.Object)>(r1);
+
+        $z1 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: boolean mUseContactsDictionary>;
+
+        staticinvoke <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: void resetDictionariesForLocale(android.content.Context,com.android.inputmethod.latin.DictionaryFacilitator,java.util.Locale,boolean)>(r0, r2, r1, $z1);
+
+     label1:
+        return r2;
+    }
+
+    private static void resetDictionariesForLocale(android.content.Context, com.android.inputmethod.latin.DictionaryFacilitator, java.util.Locale, boolean)
+    {
+        android.content.Context r0;
+        com.android.inputmethod.latin.DictionaryFacilitator r1;
+        java.util.Locale r2;
+        boolean z0;
+        int i0;
+        java.lang.InterruptedException r3, $r5;
+        java.util.concurrent.TimeUnit $r4;
+        java.lang.String $r6, $r7, $r8;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: com.android.inputmethod.latin.DictionaryFacilitator;
+
+        r2 := @parameter2: java.util.Locale;
+
+        z0 := @parameter3: boolean;
+
+        virtualinvoke r1.<com.android.inputmethod.latin.DictionaryFacilitator: void resetDictionariesWithDictNamePrefix(android.content.Context,java.util.Locale,boolean,boolean,boolean,com.android.inputmethod.latin.DictionaryFacilitator$DictionaryInitializationListener,java.lang.String)>(r0, r2, z0, 0, 0, null, "spellcheck_");
+
+        i0 = 0;
+
+     label1:
+        if i0 >= 5 goto label7;
+
+     label2:
+        $r4 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit MILLISECONDS>;
+
+        virtualinvoke r1.<com.android.inputmethod.latin.DictionaryFacilitator: void waitForLoadingMainDictionary(long,java.util.concurrent.TimeUnit)>(1000L, $r4);
+
+     label3:
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+        r3 = $r5;
+
+        $r6 = <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String,java.lang.Throwable)>($r6, "Interrupted during waiting for loading main dictionary.", r3);
+
+        if i0 >= 4 goto label5;
+
+        $r8 = <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String,java.lang.Throwable)>($r8, "Retry", r3);
+
+        goto label6;
+
+     label5:
+        $r7 = <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>($r7, "Give up retrying. Retried 5 times.", r3);
+
+     label6:
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label7:
+        return;
+
+        catch java.lang.InterruptedException from label2 to label3 with label4;
+    }
+
+    public boolean onUnbind(android.content.Intent)
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        android.content.Intent r1;
+        java.lang.Throwable r2, $r8;
+        java.util.concurrent.Semaphore $r3, $r6, $r9;
+        android.util.LruCache $r4;
+        java.util.HashSet $r5;
+        java.util.concurrent.ConcurrentHashMap $r7;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        r1 := @parameter0: android.content.Intent;
+
+        $r3 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r3.<java.util.concurrent.Semaphore: void acquireUninterruptibly(int)>(2);
+
+     label1:
+        $r4 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: android.util.LruCache mDictionaryFacilitatorCache>;
+
+        virtualinvoke $r4.<android.util.LruCache: void evictAll()>();
+
+        $r5 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.HashSet mCachedLocales>;
+
+        virtualinvoke $r5.<java.util.HashSet: void clear()>();
+
+     label2:
+        $r6 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r6.<java.util.concurrent.Semaphore: void release(int)>(2);
+
+        goto label5;
+
+     label3:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+     label4:
+        $r9 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.Semaphore mSemaphore>;
+
+        virtualinvoke $r9.<java.util.concurrent.Semaphore: void release(int)>(2);
+
+        throw r2;
+
+     label5:
+        $r7 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.ConcurrentHashMap mKeyboardCache>;
+
+        virtualinvoke $r7.<java.util.concurrent.ConcurrentHashMap: void clear()>();
+
+        return 0;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public com.android.inputmethod.keyboard.Keyboard getKeyboardForLocale(java.util.Locale)
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        java.util.Locale r1;
+        com.android.inputmethod.keyboard.Keyboard r2;
+        java.util.concurrent.ConcurrentHashMap $r3, $r5;
+        java.lang.Object $r4;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        r1 := @parameter0: java.util.Locale;
+
+        $r3 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.ConcurrentHashMap mKeyboardCache>;
+
+        $r4 = virtualinvoke $r3.<java.util.concurrent.ConcurrentHashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r2 = (com.android.inputmethod.keyboard.Keyboard) $r4;
+
+        if r2 != null goto label1;
+
+        r2 = specialinvoke r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: com.android.inputmethod.keyboard.Keyboard createKeyboardForLocale(java.util.Locale)>(r1);
+
+        if r2 == null goto label1;
+
+        $r5 = r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.util.concurrent.ConcurrentHashMap mKeyboardCache>;
+
+        virtualinvoke $r5.<java.util.concurrent.ConcurrentHashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, r2);
+
+     label1:
+        return r2;
+    }
+
+    private com.android.inputmethod.keyboard.Keyboard createKeyboardForLocale(java.util.Locale)
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        java.util.Locale r1;
+        int i0;
+        java.lang.String r2, $r5;
+        android.view.inputmethod.InputMethodSubtype r3;
+        com.android.inputmethod.keyboard.KeyboardLayoutSet r4;
+        com.android.inputmethod.keyboard.Keyboard $r6;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        r1 := @parameter0: java.util.Locale;
+
+        i0 = staticinvoke <com.android.inputmethod.latin.utils.ScriptUtils: int getScriptFromSpellCheckerLocale(java.util.Locale)>(r1);
+
+        r2 = staticinvoke <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String getKeyboardLayoutNameForScript(int)>(i0);
+
+        $r5 = virtualinvoke r1.<java.util.Locale: java.lang.String toString()>();
+
+        r3 = staticinvoke <com.android.inputmethod.latin.utils.AdditionalSubtypeUtils: android.view.inputmethod.InputMethodSubtype createDummyAdditionalSubtype(java.lang.String,java.lang.String)>($r5, r2);
+
+        r4 = specialinvoke r0.<com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: com.android.inputmethod.keyboard.KeyboardLayoutSet createKeyboardSetForSpellChecker(android.view.inputmethod.InputMethodSubtype)>(r3);
+
+        $r6 = virtualinvoke r4.<com.android.inputmethod.keyboard.KeyboardLayoutSet: com.android.inputmethod.keyboard.Keyboard getKeyboard(int)>(0);
+
+        return $r6;
+    }
+
+    private com.android.inputmethod.keyboard.KeyboardLayoutSet createKeyboardSetForSpellChecker(android.view.inputmethod.InputMethodSubtype)
+    {
+        com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService r0;
+        android.view.inputmethod.InputMethodSubtype r1;
+        android.view.inputmethod.EditorInfo r2, $r4;
+        com.android.inputmethod.keyboard.KeyboardLayoutSet$Builder r3, $r5;
+        com.android.inputmethod.keyboard.KeyboardLayoutSet $r9;
+
+        r0 := @this: com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService;
+
+        r1 := @parameter0: android.view.inputmethod.InputMethodSubtype;
+
+        $r4 = new android.view.inputmethod.EditorInfo;
+
+        specialinvoke $r4.<android.view.inputmethod.EditorInfo: void <init>()>();
+
+        r2 = $r4;
+
+        r2.<android.view.inputmethod.EditorInfo: int inputType> = 1;
+
+        $r5 = new com.android.inputmethod.keyboard.KeyboardLayoutSet$Builder;
+
+        specialinvoke $r5.<com.android.inputmethod.keyboard.KeyboardLayoutSet$Builder: void <init>(android.content.Context,android.view.inputmethod.EditorInfo)>(r0, r2);
+
+        r3 = $r5;
+
+        virtualinvoke r3.<com.android.inputmethod.keyboard.KeyboardLayoutSet$Builder: com.android.inputmethod.keyboard.KeyboardLayoutSet$Builder setKeyboardGeometry(int,int)>(480, 368);
+
+        virtualinvoke r3.<com.android.inputmethod.keyboard.KeyboardLayoutSet$Builder: com.android.inputmethod.keyboard.KeyboardLayoutSet$Builder setSubtype(android.view.inputmethod.InputMethodSubtype)>(r1);
+
+        virtualinvoke r3.<com.android.inputmethod.keyboard.KeyboardLayoutSet$Builder: com.android.inputmethod.keyboard.KeyboardLayoutSet$Builder setIsSpellChecker(boolean)>(1);
+
+        virtualinvoke r3.<com.android.inputmethod.keyboard.KeyboardLayoutSet$Builder: void disableTouchPositionCorrectionData()>();
+
+        $r9 = virtualinvoke r3.<com.android.inputmethod.keyboard.KeyboardLayoutSet$Builder: com.android.inputmethod.keyboard.KeyboardLayoutSet build()>();
+
+        return $r9;
+    }
+
+    static java.lang.String access$000()
+    {
+        java.lang.String $r0;
+
+        $r0 = <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String TAG>;
+
+        return $r0;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+        java.lang.String[] $r2;
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String APOSTROPHE> = "\u2019";
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String SINGLE_QUOTE> = "\'";
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: int MAX_DICTIONARY_FACILITATOR_COUNT> = 3;
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: int MAX_RETRY_COUNT_FOR_WAITING_FOR_LOADING_DICT> = 5;
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: int WAIT_FOR_LOADING_MAIN_DICT_IN_MILLISECONDS> = 1000;
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String DICTIONARY_NAME_PREFIX> = "spellcheck_";
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: int SPELLCHECKER_DUMMY_KEYBOARD_HEIGHT> = 368;
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: int SPELLCHECKER_DUMMY_KEYBOARD_WIDTH> = 480;
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String PREF_USE_CONTACTS_KEY> = "pref_spellcheck_use_contacts";
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: boolean DBG> = 0;
+
+        $r0 = class "com/android/inputmethod/latin/spellcheck/AndroidSpellCheckerService";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String TAG> = $r1;
+
+        $r2 = newarray (java.lang.String)[0];
+
+        <com.android.inputmethod.latin.spellcheck.AndroidSpellCheckerService: java.lang.String[] EMPTY_STRING_ARRAY> = $r2;
+
+        return;
+    }
+}

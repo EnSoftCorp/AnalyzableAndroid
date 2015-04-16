@@ -1,0 +1,1483 @@
+public class com.android.internal.telephony.test.ModelInterpreter extends java.lang.Object implements java.lang.Runnable, com.android.internal.telephony.test.SimulatedRadioControl
+{
+    static final int MAX_CALLS;
+    static final int CONNECTING_PAUSE_MSEC;
+    static final java.lang.String LOG_TAG;
+    java.io.InputStream mIn;
+    java.io.OutputStream mOut;
+    com.android.internal.telephony.test.LineReader mLineReader;
+    java.net.ServerSocket mSS;
+    private java.lang.String mFinalResponse;
+    com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState;
+    android.os.HandlerThread mHandlerThread;
+    int mPausedResponseCount;
+    java.lang.Object mPausedResponseMonitor;
+    static final int PROGRESS_CALL_STATE;
+    static final java.lang.String[][] sDefaultResponses;
+
+    public void <init>(java.io.InputStream, java.io.OutputStream)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.io.InputStream r1;
+        java.io.OutputStream r2;
+        java.lang.Object $r3;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.io.InputStream;
+
+        r2 := @parameter1: java.io.OutputStream;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r3 = new java.lang.Object;
+
+        specialinvoke $r3.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: java.lang.Object mPausedResponseMonitor> = $r3;
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: java.io.InputStream mIn> = r1;
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: java.io.OutputStream mOut> = r2;
+
+        specialinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void init()>();
+
+        return;
+    }
+
+    public void <init>(java.net.InetSocketAddress) throws java.io.IOException
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.net.InetSocketAddress r1;
+        java.lang.Object $r2;
+        java.net.ServerSocket $r3, $r4, $r5;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.net.InetSocketAddress;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: java.lang.Object mPausedResponseMonitor> = $r2;
+
+        $r3 = new java.net.ServerSocket;
+
+        specialinvoke $r3.<java.net.ServerSocket: void <init>()>();
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: java.net.ServerSocket mSS> = $r3;
+
+        $r4 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.net.ServerSocket mSS>;
+
+        virtualinvoke $r4.<java.net.ServerSocket: void setReuseAddress(boolean)>(1);
+
+        $r5 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.net.ServerSocket mSS>;
+
+        virtualinvoke $r5.<java.net.ServerSocket: void bind(java.net.SocketAddress)>(r1);
+
+        specialinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void init()>();
+
+        return;
+    }
+
+    private void init()
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        android.os.Looper r1;
+        java.lang.Thread $r2;
+        android.os.HandlerThread $r3, $r4, $r5;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r6;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r2 = new java.lang.Thread;
+
+        specialinvoke $r2.<java.lang.Thread: void <init>(java.lang.Runnable,java.lang.String)>(r0, "ModelInterpreter");
+
+        virtualinvoke $r2.<java.lang.Thread: void start()>();
+
+        $r3 = new android.os.HandlerThread;
+
+        specialinvoke $r3.<android.os.HandlerThread: void <init>(java.lang.String)>("ModelInterpreter");
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: android.os.HandlerThread mHandlerThread> = $r3;
+
+        $r4 = r0.<com.android.internal.telephony.test.ModelInterpreter: android.os.HandlerThread mHandlerThread>;
+
+        virtualinvoke $r4.<android.os.HandlerThread: void start()>();
+
+        $r5 = r0.<com.android.internal.telephony.test.ModelInterpreter: android.os.HandlerThread mHandlerThread>;
+
+        r1 = virtualinvoke $r5.<android.os.HandlerThread: android.os.Looper getLooper()>();
+
+        $r6 = new com.android.internal.telephony.test.SimulatedGsmCallState;
+
+        specialinvoke $r6.<com.android.internal.telephony.test.SimulatedGsmCallState: void <init>(android.os.Looper)>(r1);
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState> = $r6;
+
+        return;
+    }
+
+    public void run()
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0, r29;
+        java.net.Socket r1;
+        java.io.IOException r2, $r18, $r21, r26;
+        java.lang.Throwable r4, r5, $r19, $r20;
+        java.net.ServerSocket $r6, $r14, $r15;
+        com.android.internal.telephony.test.LineReader $r7, $r9;
+        java.io.InputStream $r8, $r17;
+        java.lang.Object $r10, $r13, r28;
+        int $i0;
+        java.lang.String $r12, $r25, r27;
+        java.io.OutputStream $r16;
+        java.lang.RuntimeException $r22, r31;
+        com.android.internal.telephony.test.InterpreterEx $r23, r30;
+        java.lang.InterruptedException $r24;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+     label01:
+        $r6 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.net.ServerSocket mSS>;
+
+        if $r6 == null goto label09;
+
+     label02:
+        $r15 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.net.ServerSocket mSS>;
+
+        r1 = virtualinvoke $r15.<java.net.ServerSocket: java.net.Socket accept()>();
+
+     label03:
+        goto label05;
+
+     label04:
+        $r21 := @caughtexception;
+
+        r2 = $r21;
+
+        staticinvoke <android.telephony.Rlog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("ModelInterpreter", "IOException on socket.accept(); stopping", r2);
+
+        return;
+
+     label05:
+        $r17 = virtualinvoke r1.<java.net.Socket: java.io.InputStream getInputStream()>();
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: java.io.InputStream mIn> = $r17;
+
+        $r16 = virtualinvoke r1.<java.net.Socket: java.io.OutputStream getOutputStream()>();
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: java.io.OutputStream mOut> = $r16;
+
+     label06:
+        goto label08;
+
+     label07:
+        $r18 := @caughtexception;
+
+        r26 = $r18;
+
+        staticinvoke <android.telephony.Rlog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("ModelInterpreter", "IOException on accepted socket(); re-listening", r26);
+
+        goto label01;
+
+     label08:
+        staticinvoke <android.telephony.Rlog: int i(java.lang.String,java.lang.String)>("ModelInterpreter", "New connection accepted");
+
+     label09:
+        $r7 = new com.android.internal.telephony.test.LineReader;
+
+        $r8 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.io.InputStream mIn>;
+
+        specialinvoke $r7.<com.android.internal.telephony.test.LineReader: void <init>(java.io.InputStream)>($r8);
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.LineReader mLineReader> = $r7;
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>("Welcome");
+
+     label10:
+        $r9 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.LineReader mLineReader>;
+
+        r27 = virtualinvoke $r9.<com.android.internal.telephony.test.LineReader: java.lang.String getNextLine()>();
+
+        if r27 != null goto label11;
+
+        goto label30;
+
+     label11:
+        $r10 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.lang.Object mPausedResponseMonitor>;
+
+        r28 = $r10;
+
+        entermonitor $r10;
+
+     label12:
+        $i0 = r0.<com.android.internal.telephony.test.ModelInterpreter: int mPausedResponseCount>;
+
+        if $i0 <= 0 goto label16;
+
+     label13:
+        $r13 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.lang.Object mPausedResponseMonitor>;
+
+        virtualinvoke $r13.<java.lang.Object: void wait()>();
+
+     label14:
+        goto label12;
+
+     label15:
+        $r24 := @caughtexception;
+
+        goto label12;
+
+     label16:
+        exitmonitor r28;
+
+     label17:
+        goto label20;
+
+     label18:
+        $r19 := @caughtexception;
+
+        r4 = $r19;
+
+        exitmonitor r28;
+
+     label19:
+        throw r4;
+
+     label20:
+        r29 = r0;
+
+        entermonitor r0;
+
+     label21:
+        r0.<com.android.internal.telephony.test.ModelInterpreter: java.lang.String mFinalResponse> = "OK";
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void processLine(java.lang.String)>(r27);
+
+        $r12 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.lang.String mFinalResponse>;
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>($r12);
+
+     label22:
+        goto label25;
+
+     label23:
+        $r23 := @caughtexception;
+
+        r30 = $r23;
+
+        $r25 = r30.<com.android.internal.telephony.test.InterpreterEx: java.lang.String mResult>;
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>($r25);
+
+        goto label25;
+
+     label24:
+        $r22 := @caughtexception;
+
+        r31 = $r22;
+
+        virtualinvoke r31.<java.lang.RuntimeException: void printStackTrace()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>("ERROR");
+
+     label25:
+        exitmonitor r29;
+
+     label26:
+        goto label29;
+
+     label27:
+        $r20 := @caughtexception;
+
+        r5 = $r20;
+
+        exitmonitor r29;
+
+     label28:
+        throw r5;
+
+     label29:
+        goto label10;
+
+     label30:
+        staticinvoke <android.telephony.Rlog: int i(java.lang.String,java.lang.String)>("ModelInterpreter", "Disconnected");
+
+        $r14 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.net.ServerSocket mSS>;
+
+        if $r14 != null goto label01;
+
+        goto label31;
+
+     label31:
+        return;
+
+        catch java.io.IOException from label02 to label03 with label04;
+        catch java.io.IOException from label05 to label06 with label07;
+        catch java.lang.InterruptedException from label13 to label14 with label15;
+        catch java.lang.Throwable from label12 to label17 with label18;
+        catch java.lang.Throwable from label18 to label19 with label18;
+        catch com.android.internal.telephony.test.InterpreterEx from label21 to label22 with label23;
+        catch java.lang.RuntimeException from label21 to label22 with label24;
+        catch java.lang.Throwable from label21 to label26 with label27;
+        catch java.lang.Throwable from label27 to label28 with label27;
+    }
+
+    public void triggerRing(java.lang.String)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0, r2;
+        java.lang.String r1;
+        boolean z0;
+        java.lang.Throwable r3, $r6;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r5;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r5 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        z0 = virtualinvoke $r5.<com.android.internal.telephony.test.SimulatedGsmCallState: boolean triggerRing(java.lang.String)>(r1);
+
+        if z0 == 0 goto label2;
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>("RING");
+
+     label2:
+        exitmonitor r2;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+        exitmonitor r2;
+
+     label5:
+        throw r3;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public void progressConnectingCallState()
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r1;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r1 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.test.SimulatedGsmCallState: void progressConnectingCallState()>();
+
+        return;
+    }
+
+    public void progressConnectingToActive()
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r1;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r1 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.test.SimulatedGsmCallState: void progressConnectingToActive()>();
+
+        return;
+    }
+
+    public void setAutoProgressConnectingCall(boolean)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        boolean z0;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r1;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.test.SimulatedGsmCallState: void setAutoProgressConnectingCall(boolean)>(z0);
+
+        return;
+    }
+
+    public void setNextDialFailImmediately(boolean)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        boolean z0;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r1;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.test.SimulatedGsmCallState: void setNextDialFailImmediately(boolean)>(z0);
+
+        return;
+    }
+
+    public void setNextCallFailCause(int)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        int i0;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        i0 := @parameter0: int;
+
+        return;
+    }
+
+    public void triggerHangupForeground()
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        boolean z0;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r1;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r1 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        z0 = virtualinvoke $r1.<com.android.internal.telephony.test.SimulatedGsmCallState: boolean triggerHangupForeground()>();
+
+        if z0 == 0 goto label1;
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>("NO CARRIER");
+
+     label1:
+        return;
+    }
+
+    public void triggerHangupBackground()
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        boolean z0;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r1;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r1 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        z0 = virtualinvoke $r1.<com.android.internal.telephony.test.SimulatedGsmCallState: boolean triggerHangupBackground()>();
+
+        if z0 == 0 goto label1;
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>("NO CARRIER");
+
+     label1:
+        return;
+    }
+
+    public void triggerHangupAll()
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        boolean z0;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r1;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r1 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        z0 = virtualinvoke $r1.<com.android.internal.telephony.test.SimulatedGsmCallState: boolean triggerHangupAll()>();
+
+        if z0 == 0 goto label1;
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>("NO CARRIER");
+
+     label1:
+        return;
+    }
+
+    public void sendUnsolicited(java.lang.String)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0, r2;
+        java.lang.String r1;
+        java.lang.Throwable r3, $r5;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label1:
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>(r1);
+
+        exitmonitor r2;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r3 = $r5;
+
+        exitmonitor r2;
+
+     label4:
+        throw r3;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public void triggerSsn(int, int)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        int i0, i1;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        return;
+    }
+
+    public void triggerIncomingUssd(java.lang.String, java.lang.String)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.lang.String r1, r2;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        return;
+    }
+
+    public void triggerIncomingSMS(java.lang.String)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.lang.String;
+
+        return;
+    }
+
+    public void pauseResponses()
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r4;
+        int $i0, $i1;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r3 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.lang.Object mPausedResponseMonitor>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $i0 = r0.<com.android.internal.telephony.test.ModelInterpreter: int mPausedResponseCount>;
+
+        $i1 = $i0 + 1;
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: int mPausedResponseCount> = $i1;
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public void resumeResponses()
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.lang.Object r1, $r3, $r4;
+        java.lang.Throwable r2, $r5;
+        int $i0, $i1, $i2;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r3 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.lang.Object mPausedResponseMonitor>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $i0 = r0.<com.android.internal.telephony.test.ModelInterpreter: int mPausedResponseCount>;
+
+        $i1 = $i0 - 1;
+
+        r0.<com.android.internal.telephony.test.ModelInterpreter: int mPausedResponseCount> = $i1;
+
+        $i2 = r0.<com.android.internal.telephony.test.ModelInterpreter: int mPausedResponseCount>;
+
+        if $i2 != 0 goto label2;
+
+        $r4 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.lang.Object mPausedResponseMonitor>;
+
+        virtualinvoke $r4.<java.lang.Object: void notifyAll()>();
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    private void onAnswer() throws com.android.internal.telephony.test.InterpreterEx
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        boolean z0;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r1;
+        com.android.internal.telephony.test.InterpreterEx $r2;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r1 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        z0 = virtualinvoke $r1.<com.android.internal.telephony.test.SimulatedGsmCallState: boolean onAnswer()>();
+
+        if z0 != 0 goto label1;
+
+        $r2 = new com.android.internal.telephony.test.InterpreterEx;
+
+        specialinvoke $r2.<com.android.internal.telephony.test.InterpreterEx: void <init>(java.lang.String)>("ERROR");
+
+        throw $r2;
+
+     label1:
+        return;
+    }
+
+    private void onHangup() throws com.android.internal.telephony.test.InterpreterEx
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r1;
+        com.android.internal.telephony.test.InterpreterEx $r2;
+        boolean z1;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r1 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        z1 = virtualinvoke $r1.<com.android.internal.telephony.test.SimulatedGsmCallState: boolean onAnswer()>();
+
+        if z1 != 0 goto label1;
+
+        $r2 = new com.android.internal.telephony.test.InterpreterEx;
+
+        specialinvoke $r2.<com.android.internal.telephony.test.InterpreterEx: void <init>(java.lang.String)>("ERROR");
+
+        throw $r2;
+
+     label1:
+        r0.<com.android.internal.telephony.test.ModelInterpreter: java.lang.String mFinalResponse> = "NO CARRIER";
+
+        return;
+    }
+
+    private void onCHLD(java.lang.String) throws com.android.internal.telephony.test.InterpreterEx
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.lang.String r1;
+        char c0, c1;
+        boolean z0;
+        int $i2;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r2;
+        com.android.internal.telephony.test.InterpreterEx $r3;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.lang.String;
+
+        c1 = 0;
+
+        c0 = virtualinvoke r1.<java.lang.String: char charAt(int)>(6);
+
+        $i2 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i2 < 8 goto label1;
+
+        c1 = virtualinvoke r1.<java.lang.String: char charAt(int)>(7);
+
+     label1:
+        $r2 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        z0 = virtualinvoke $r2.<com.android.internal.telephony.test.SimulatedGsmCallState: boolean onChld(char,char)>(c0, c1);
+
+        if z0 != 0 goto label2;
+
+        $r3 = new com.android.internal.telephony.test.InterpreterEx;
+
+        specialinvoke $r3.<com.android.internal.telephony.test.InterpreterEx: void <init>(java.lang.String)>("ERROR");
+
+        throw $r3;
+
+     label2:
+        return;
+    }
+
+    private void onDial(java.lang.String) throws com.android.internal.telephony.test.InterpreterEx
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.lang.String r1, $r3;
+        boolean z0;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r2;
+        com.android.internal.telephony.test.InterpreterEx $r4;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        $r3 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int)>(1);
+
+        z0 = virtualinvoke $r2.<com.android.internal.telephony.test.SimulatedGsmCallState: boolean onDial(java.lang.String)>($r3);
+
+        if z0 != 0 goto label1;
+
+        $r4 = new com.android.internal.telephony.test.InterpreterEx;
+
+        specialinvoke $r4.<com.android.internal.telephony.test.InterpreterEx: void <init>(java.lang.String)>("ERROR");
+
+        throw $r4;
+
+     label1:
+        return;
+    }
+
+    private void onCLCC()
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.util.List r1;
+        int i0, i1;
+        com.android.internal.telephony.test.SimulatedGsmCallState $r2;
+        java.lang.Object $r3;
+        java.lang.String $r4;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r2 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.SimulatedGsmCallState mSimulatedCallState>;
+
+        r1 = virtualinvoke $r2.<com.android.internal.telephony.test.SimulatedGsmCallState: java.util.List getClccLines()>();
+
+        i0 = 0;
+
+        i1 = interfaceinvoke r1.<java.util.List: int size()>();
+
+     label1:
+        if i0 >= i1 goto label2;
+
+        $r3 = interfaceinvoke r1.<java.util.List: java.lang.Object get(int)>(i0);
+
+        $r4 = (java.lang.String) $r3;
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>($r4);
+
+        i0 = i0 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void onSMSSend(java.lang.String)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.lang.String r1;
+        com.android.internal.telephony.test.LineReader $r3;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.lang.String;
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void print(java.lang.String)>("> ");
+
+        $r3 = r0.<com.android.internal.telephony.test.ModelInterpreter: com.android.internal.telephony.test.LineReader mLineReader>;
+
+        virtualinvoke $r3.<com.android.internal.telephony.test.LineReader: java.lang.String getNextLineCtrlZ()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>("+CMGS: 1");
+
+        return;
+    }
+
+    void processLine(java.lang.String) throws com.android.internal.telephony.test.InterpreterEx
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.lang.String r1, r3, r4, $r8;
+        java.lang.String[] r2, $r9, $r11;
+        int i0, i1, $i2, $i3;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7;
+        java.lang.String[][] $r5, $r6, $r10;
+        com.android.internal.telephony.test.InterpreterEx $r7;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: java.lang.String[] splitCommands(java.lang.String)>(r1);
+
+        i0 = 0;
+
+     label01:
+        $i2 = lengthof r2;
+
+        if i0 >= $i2 goto label13;
+
+        r3 = r2[i0];
+
+        $z1 = virtualinvoke r3.<java.lang.String: boolean equals(java.lang.Object)>("A");
+
+        if $z1 == 0 goto label02;
+
+        specialinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void onAnswer()>();
+
+        goto label12;
+
+     label02:
+        $z2 = virtualinvoke r3.<java.lang.String: boolean equals(java.lang.Object)>("H");
+
+        if $z2 == 0 goto label03;
+
+        specialinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void onHangup()>();
+
+        goto label12;
+
+     label03:
+        $z3 = virtualinvoke r3.<java.lang.String: boolean startsWith(java.lang.String)>("+CHLD=");
+
+        if $z3 == 0 goto label04;
+
+        specialinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void onCHLD(java.lang.String)>(r3);
+
+        goto label12;
+
+     label04:
+        $z4 = virtualinvoke r3.<java.lang.String: boolean equals(java.lang.Object)>("+CLCC");
+
+        if $z4 == 0 goto label05;
+
+        specialinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void onCLCC()>();
+
+        goto label12;
+
+     label05:
+        $z5 = virtualinvoke r3.<java.lang.String: boolean startsWith(java.lang.String)>("D");
+
+        if $z5 == 0 goto label06;
+
+        specialinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void onDial(java.lang.String)>(r3);
+
+        goto label12;
+
+     label06:
+        $z6 = virtualinvoke r3.<java.lang.String: boolean startsWith(java.lang.String)>("+CMGS=");
+
+        if $z6 == 0 goto label07;
+
+        specialinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void onSMSSend(java.lang.String)>(r3);
+
+        goto label12;
+
+     label07:
+        z0 = 0;
+
+        i1 = 0;
+
+     label08:
+        $r5 = <com.android.internal.telephony.test.ModelInterpreter: java.lang.String[][] sDefaultResponses>;
+
+        $i3 = lengthof $r5;
+
+        if i1 >= $i3 goto label11;
+
+        $r6 = <com.android.internal.telephony.test.ModelInterpreter: java.lang.String[][] sDefaultResponses>;
+
+        $r9 = $r6[i1];
+
+        $r8 = $r9[0];
+
+        $z7 = virtualinvoke r3.<java.lang.String: boolean equals(java.lang.Object)>($r8);
+
+        if $z7 == 0 goto label10;
+
+        $r10 = <com.android.internal.telephony.test.ModelInterpreter: java.lang.String[][] sDefaultResponses>;
+
+        $r11 = $r10[i1];
+
+        r4 = $r11[1];
+
+        if r4 == null goto label09;
+
+        virtualinvoke r0.<com.android.internal.telephony.test.ModelInterpreter: void println(java.lang.String)>(r4);
+
+     label09:
+        z0 = 1;
+
+        goto label11;
+
+     label10:
+        i1 = i1 + 1;
+
+        goto label08;
+
+     label11:
+        if z0 != 0 goto label12;
+
+        $r7 = new com.android.internal.telephony.test.InterpreterEx;
+
+        specialinvoke $r7.<com.android.internal.telephony.test.InterpreterEx: void <init>(java.lang.String)>("ERROR");
+
+        throw $r7;
+
+     label12:
+        i0 = i0 + 1;
+
+        goto label01;
+
+     label13:
+        return;
+    }
+
+    java.lang.String[] splitCommands(java.lang.String) throws com.android.internal.telephony.test.InterpreterEx
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        java.lang.String r1, $r3;
+        java.lang.String[] r2, $r4;
+        boolean $z0;
+        int $i0;
+        com.android.internal.telephony.test.InterpreterEx $r5;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.lang.String;
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean startsWith(java.lang.String)>("AT");
+
+        if $z0 != 0 goto label1;
+
+        $r5 = new com.android.internal.telephony.test.InterpreterEx;
+
+        specialinvoke $r5.<com.android.internal.telephony.test.InterpreterEx: void <init>(java.lang.String)>("ERROR");
+
+        throw $r5;
+
+     label1:
+        $i0 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i0 != 2 goto label2;
+
+        $r4 = newarray (java.lang.String)[0];
+
+        return $r4;
+
+     label2:
+        r2 = newarray (java.lang.String)[1];
+
+        $r3 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int)>(2);
+
+        r2[0] = $r3;
+
+        return r2;
+    }
+
+    void println(java.lang.String)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0, r2;
+        java.lang.String r1;
+        byte[] r3;
+        java.lang.Throwable r4, $r8;
+        java.io.OutputStream $r6, $r7;
+        java.io.IOException $r9, r10;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label1:
+        r3 = virtualinvoke r1.<java.lang.String: byte[] getBytes(java.lang.String)>("US-ASCII");
+
+        $r6 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.io.OutputStream mOut>;
+
+        virtualinvoke $r6.<java.io.OutputStream: void write(byte[])>(r3);
+
+        $r7 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.io.OutputStream mOut>;
+
+        virtualinvoke $r7.<java.io.OutputStream: void write(int)>(13);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r9 := @caughtexception;
+
+        r10 = $r9;
+
+        virtualinvoke r10.<java.io.IOException: void printStackTrace()>();
+
+     label4:
+        exitmonitor r2;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r8 := @caughtexception;
+
+        r4 = $r8;
+
+        exitmonitor r2;
+
+     label7:
+        throw r4;
+
+     label8:
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+        catch java.lang.Throwable from label1 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    void print(java.lang.String)
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0, r2;
+        java.lang.String r1;
+        byte[] r3;
+        java.lang.Throwable r4, $r7;
+        java.io.OutputStream $r6;
+        java.io.IOException $r8, r9;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label1:
+        r3 = virtualinvoke r1.<java.lang.String: byte[] getBytes(java.lang.String)>("US-ASCII");
+
+        $r6 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.io.OutputStream mOut>;
+
+        virtualinvoke $r6.<java.io.OutputStream: void write(byte[])>(r3);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r8 := @caughtexception;
+
+        r9 = $r8;
+
+        virtualinvoke r9.<java.io.IOException: void printStackTrace()>();
+
+     label4:
+        exitmonitor r2;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r7 := @caughtexception;
+
+        r4 = $r7;
+
+        exitmonitor r2;
+
+     label7:
+        throw r4;
+
+     label8:
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+        catch java.lang.Throwable from label1 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    public void shutdown()
+    {
+        com.android.internal.telephony.test.ModelInterpreter r0;
+        android.os.Looper r1;
+        android.os.HandlerThread $r3;
+        java.io.InputStream $r4;
+        java.io.OutputStream $r5;
+        java.io.IOException $r6, $r7;
+
+        r0 := @this: com.android.internal.telephony.test.ModelInterpreter;
+
+        $r3 = r0.<com.android.internal.telephony.test.ModelInterpreter: android.os.HandlerThread mHandlerThread>;
+
+        r1 = virtualinvoke $r3.<android.os.HandlerThread: android.os.Looper getLooper()>();
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<android.os.Looper: void quit()>();
+
+     label1:
+        $r4 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.io.InputStream mIn>;
+
+        virtualinvoke $r4.<java.io.InputStream: void close()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r6 := @caughtexception;
+
+     label4:
+        $r5 = r0.<com.android.internal.telephony.test.ModelInterpreter: java.io.OutputStream mOut>;
+
+        virtualinvoke $r5.<java.io.OutputStream: void close()>();
+
+     label5:
+        goto label7;
+
+     label6:
+        $r7 := @caughtexception;
+
+     label7:
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+        catch java.io.IOException from label4 to label5 with label6;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.String[][] $r0;
+        java.lang.String[] $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r11, $r12, $r13, $r14, $r15, $r16, $r17, $r18, $r19, $r20, $r21, $r22, $r23, $r24, $r25, $r26, $r27, $r28, $r29, $r30, $r31;
+
+        <com.android.internal.telephony.test.ModelInterpreter: int PROGRESS_CALL_STATE> = 1;
+
+        <com.android.internal.telephony.test.ModelInterpreter: java.lang.String LOG_TAG> = "ModelInterpreter";
+
+        <com.android.internal.telephony.test.ModelInterpreter: int CONNECTING_PAUSE_MSEC> = 500;
+
+        <com.android.internal.telephony.test.ModelInterpreter: int MAX_CALLS> = 6;
+
+        $r0 = newarray (java.lang.String[])[31];
+
+        $r1 = newarray (java.lang.String)[2];
+
+        $r1[0] = "E0Q0V1";
+
+        $r1[1] = null;
+
+        $r0[0] = $r1;
+
+        $r2 = newarray (java.lang.String)[2];
+
+        $r2[0] = "+CMEE=2";
+
+        $r2[1] = null;
+
+        $r0[1] = $r2;
+
+        $r3 = newarray (java.lang.String)[2];
+
+        $r3[0] = "+CREG=2";
+
+        $r3[1] = null;
+
+        $r0[2] = $r3;
+
+        $r4 = newarray (java.lang.String)[2];
+
+        $r4[0] = "+CGREG=2";
+
+        $r4[1] = null;
+
+        $r0[3] = $r4;
+
+        $r5 = newarray (java.lang.String)[2];
+
+        $r5[0] = "+CCWA=1";
+
+        $r5[1] = null;
+
+        $r0[4] = $r5;
+
+        $r6 = newarray (java.lang.String)[2];
+
+        $r6[0] = "+COPS=0";
+
+        $r6[1] = null;
+
+        $r0[5] = $r6;
+
+        $r7 = newarray (java.lang.String)[2];
+
+        $r7[0] = "+CFUN=1";
+
+        $r7[1] = null;
+
+        $r0[6] = $r7;
+
+        $r8 = newarray (java.lang.String)[2];
+
+        $r8[0] = "+CGMI";
+
+        $r8[1] = "+CGMI: Android Model AT Interpreter\r";
+
+        $r0[7] = $r8;
+
+        $r9 = newarray (java.lang.String)[2];
+
+        $r9[0] = "+CGMM";
+
+        $r9[1] = "+CGMM: Android Model AT Interpreter\r";
+
+        $r0[8] = $r9;
+
+        $r10 = newarray (java.lang.String)[2];
+
+        $r10[0] = "+CGMR";
+
+        $r10[1] = "+CGMR: 1.0\r";
+
+        $r0[9] = $r10;
+
+        $r11 = newarray (java.lang.String)[2];
+
+        $r11[0] = "+CGSN";
+
+        $r11[1] = "000000000000000\r";
+
+        $r0[10] = $r11;
+
+        $r12 = newarray (java.lang.String)[2];
+
+        $r12[0] = "+CIMI";
+
+        $r12[1] = "320720000000000\r";
+
+        $r0[11] = $r12;
+
+        $r13 = newarray (java.lang.String)[2];
+
+        $r13[0] = "+CSCS=?";
+
+        $r13[1] = "+CSCS: (\"HEX\",\"UCS2\")\r";
+
+        $r0[12] = $r13;
+
+        $r14 = newarray (java.lang.String)[2];
+
+        $r14[0] = "+CFUN?";
+
+        $r14[1] = "+CFUN: 1\r";
+
+        $r0[13] = $r14;
+
+        $r15 = newarray (java.lang.String)[2];
+
+        $r15[0] = "+COPS=3,0;+COPS?;+COPS=3,1;+COPS?;+COPS=3,2;+COPS?";
+
+        $r15[1] = "+COPS: 0,0,\"Android\"\r+COPS: 0,1,\"Android\"\r+COPS: 0,2,\"310995\"\r";
+
+        $r0[14] = $r15;
+
+        $r17 = newarray (java.lang.String)[2];
+
+        $r17[0] = "+CREG?";
+
+        $r17[1] = "+CREG: 2,5, \"0113\", \"6614\"\r";
+
+        $r0[15] = $r17;
+
+        $r16 = newarray (java.lang.String)[2];
+
+        $r16[0] = "+CGREG?";
+
+        $r16[1] = "+CGREG: 2,0\r";
+
+        $r0[16] = $r16;
+
+        $r19 = newarray (java.lang.String)[2];
+
+        $r19[0] = "+CSQ";
+
+        $r19[1] = "+CSQ: 16,99\r";
+
+        $r0[17] = $r19;
+
+        $r18 = newarray (java.lang.String)[2];
+
+        $r18[0] = "+CNMI?";
+
+        $r18[1] = "+CNMI: 1,2,2,1,1\r";
+
+        $r0[18] = $r18;
+
+        $r21 = newarray (java.lang.String)[2];
+
+        $r21[0] = "+CLIR?";
+
+        $r21[1] = "+CLIR: 1,3\r";
+
+        $r0[19] = $r21;
+
+        $r20 = newarray (java.lang.String)[2];
+
+        $r20[0] = "%CPVWI=2";
+
+        $r20[1] = "%CPVWI: 0\r";
+
+        $r0[20] = $r20;
+
+        $r23 = newarray (java.lang.String)[2];
+
+        $r23[0] = "+CUSD=1,\"#646#\"";
+
+        $r23[1] = "+CUSD=0,\"You have used 23 minutes\"\r";
+
+        $r0[21] = $r23;
+
+        $r22 = newarray (java.lang.String)[2];
+
+        $r22[0] = "+CRSM=176,12258,0,0,10";
+
+        $r22[1] = "+CRSM: 144,0,981062200050259429F6\r";
+
+        $r0[22] = $r22;
+
+        $r25 = newarray (java.lang.String)[2];
+
+        $r25[0] = "+CRSM=192,12258,0,0,15";
+
+        $r25[1] = "+CRSM: 144,0,0000000A2FE204000FF55501020000\r";
+
+        $r0[23] = $r25;
+
+        $r24 = newarray (java.lang.String)[2];
+
+        $r24[0] = "+CRSM=192,28474,0,0,15";
+
+        $r24[1] = "+CRSM: 144,0,0000005a6f3a040011f5220102011e\r";
+
+        $r0[24] = $r24;
+
+        $r27 = newarray (java.lang.String)[2];
+
+        $r27[0] = "+CRSM=178,28474,1,4,30";
+
+        $r27[1] = "+CRSM: 144,0,437573746f6d65722043617265ffffff07818100398799f7ffffffffffff\r";
+
+        $r0[25] = $r27;
+
+        $r26 = newarray (java.lang.String)[2];
+
+        $r26[0] = "+CRSM=178,28474,2,4,30";
+
+        $r26[1] = "+CRSM: 144,0,566f696365204d61696cffffffffffff07918150367742f3ffffffffffff\r";
+
+        $r0[26] = $r26;
+
+        $r29 = newarray (java.lang.String)[2];
+
+        $r29[0] = "+CRSM=178,28474,3,4,30";
+
+        $r29[1] = "+CRSM: 144,0,4164676a6dffffffffffffffffffffff0b918188551512c221436587ff01\r";
+
+        $r0[27] = $r29;
+
+        $r28 = newarray (java.lang.String)[2];
+
+        $r28[0] = "+CRSM=178,28474,4,4,30";
+
+        $r28[1] = "+CRSM: 144,0,810101c1ffffffffffffffffffffffff068114455245f8ffffffffffffff\r";
+
+        $r0[28] = $r28;
+
+        $r31 = newarray (java.lang.String)[2];
+
+        $r31[0] = "+CRSM=192,28490,0,0,15";
+
+        $r31[1] = "+CRSM: 144,0,000000416f4a040011f5550102010d\r";
+
+        $r0[29] = $r31;
+
+        $r30 = newarray (java.lang.String)[2];
+
+        $r30[0] = "+CRSM=178,28490,1,4,13";
+
+        $r30[1] = "+CRSM: 144,0,0206092143658709ffffffffff\r";
+
+        $r0[30] = $r30;
+
+        <com.android.internal.telephony.test.ModelInterpreter: java.lang.String[][] sDefaultResponses> = $r0;
+
+        return;
+    }
+}

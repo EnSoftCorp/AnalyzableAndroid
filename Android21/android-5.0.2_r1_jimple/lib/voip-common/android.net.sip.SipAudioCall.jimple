@@ -1,0 +1,2906 @@
+public class android.net.sip.SipAudioCall extends java.lang.Object
+{
+    private static final java.lang.String LOG_TAG;
+    private static final boolean DBG;
+    private static final boolean RELEASE_SOCKET;
+    private static final boolean DONT_RELEASE_SOCKET;
+    private static final int SESSION_TIMEOUT;
+    private static final int TRANSFER_TIMEOUT;
+    private android.content.Context mContext;
+    private android.net.sip.SipProfile mLocalProfile;
+    private android.net.sip.SipAudioCall$Listener mListener;
+    private android.net.sip.SipSession mSipSession;
+    private android.net.sip.SipSession mTransferringSession;
+    private long mSessionId;
+    private java.lang.String mPeerSd;
+    private android.net.rtp.AudioStream mAudioStream;
+    private android.net.rtp.AudioGroup mAudioGroup;
+    private boolean mInCall;
+    private boolean mMuted;
+    private boolean mHold;
+    private android.net.wifi.WifiManager mWm;
+    private android.net.wifi.WifiManager$WifiLock mWifiHighPerfLock;
+    private int mErrorCode;
+    private java.lang.String mErrorMessage;
+
+    public void <init>(android.content.Context, android.net.sip.SipProfile)
+    {
+        android.net.sip.SipAudioCall r0;
+        android.content.Context r1;
+        android.net.sip.SipProfile r2;
+        long $l0;
+        java.lang.Object $r3;
+        android.net.wifi.WifiManager $r4;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.net.sip.SipProfile;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        r0.<android.net.sip.SipAudioCall: long mSessionId> = $l0;
+
+        r0.<android.net.sip.SipAudioCall: boolean mInCall> = 0;
+
+        r0.<android.net.sip.SipAudioCall: boolean mMuted> = 0;
+
+        r0.<android.net.sip.SipAudioCall: boolean mHold> = 0;
+
+        r0.<android.net.sip.SipAudioCall: int mErrorCode> = 0;
+
+        r0.<android.net.sip.SipAudioCall: android.content.Context mContext> = r1;
+
+        r0.<android.net.sip.SipAudioCall: android.net.sip.SipProfile mLocalProfile> = r2;
+
+        $r3 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("wifi");
+
+        $r4 = (android.net.wifi.WifiManager) $r3;
+
+        r0.<android.net.sip.SipAudioCall: android.net.wifi.WifiManager mWm> = $r4;
+
+        return;
+    }
+
+    public void setListener(android.net.sip.SipAudioCall$Listener)
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SipAudioCall$Listener r1;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 := @parameter0: android.net.sip.SipAudioCall$Listener;
+
+        virtualinvoke r0.<android.net.sip.SipAudioCall: void setListener(android.net.sip.SipAudioCall$Listener,boolean)>(r1, 0);
+
+        return;
+    }
+
+    public void setListener(android.net.sip.SipAudioCall$Listener, boolean)
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SipAudioCall$Listener r1;
+        boolean z0, $z1, $z2;
+        int i0, $i1, $i2;
+        android.net.sip.SipProfile $r2;
+        java.lang.String $r3;
+        java.lang.Throwable $r4, r5;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 := @parameter0: android.net.sip.SipAudioCall$Listener;
+
+        z0 := @parameter1: boolean;
+
+        r0.<android.net.sip.SipAudioCall: android.net.sip.SipAudioCall$Listener mListener> = r1;
+
+     label01:
+        if r1 == null goto label10;
+
+        if z0 != 0 goto label02;
+
+        goto label10;
+
+     label02:
+        $i1 = r0.<android.net.sip.SipAudioCall: int mErrorCode>;
+
+        if $i1 == 0 goto label03;
+
+        $i2 = r0.<android.net.sip.SipAudioCall: int mErrorCode>;
+
+        $r3 = r0.<android.net.sip.SipAudioCall: java.lang.String mErrorMessage>;
+
+        virtualinvoke r1.<android.net.sip.SipAudioCall$Listener: void onError(android.net.sip.SipAudioCall,int,java.lang.String)>(r0, $i2, $r3);
+
+        goto label10;
+
+     label03:
+        $z1 = r0.<android.net.sip.SipAudioCall: boolean mInCall>;
+
+        if $z1 == 0 goto label05;
+
+        $z2 = r0.<android.net.sip.SipAudioCall: boolean mHold>;
+
+        if $z2 == 0 goto label04;
+
+        virtualinvoke r1.<android.net.sip.SipAudioCall$Listener: void onCallHeld(android.net.sip.SipAudioCall)>(r0);
+
+        goto label10;
+
+     label04:
+        virtualinvoke r1.<android.net.sip.SipAudioCall$Listener: void onCallEstablished(android.net.sip.SipAudioCall)>(r0);
+
+        goto label10;
+
+     label05:
+        i0 = virtualinvoke r0.<android.net.sip.SipAudioCall: int getState()>();
+
+        tableswitch(i0)
+        {
+            case 0: goto label06;
+            case 1: goto label10;
+            case 2: goto label10;
+            case 3: goto label07;
+            case 4: goto label10;
+            case 5: goto label08;
+            case 6: goto label09;
+            default: goto label10;
+        };
+
+     label06:
+        virtualinvoke r1.<android.net.sip.SipAudioCall$Listener: void onReadyToCall(android.net.sip.SipAudioCall)>(r0);
+
+        goto label10;
+
+     label07:
+        $r2 = virtualinvoke r0.<android.net.sip.SipAudioCall: android.net.sip.SipProfile getPeerProfile()>();
+
+        virtualinvoke r1.<android.net.sip.SipAudioCall$Listener: void onRinging(android.net.sip.SipAudioCall,android.net.sip.SipProfile)>(r0, $r2);
+
+        goto label10;
+
+     label08:
+        virtualinvoke r1.<android.net.sip.SipAudioCall$Listener: void onCalling(android.net.sip.SipAudioCall)>(r0);
+
+        goto label10;
+
+     label09:
+        virtualinvoke r1.<android.net.sip.SipAudioCall$Listener: void onRingingBack(android.net.sip.SipAudioCall)>(r0);
+
+     label10:
+        goto label12;
+
+     label11:
+        $r4 := @caughtexception;
+
+        r5 = $r4;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void loge(java.lang.String,java.lang.Throwable)>("setListener()", r5);
+
+     label12:
+        return;
+
+        catch java.lang.Throwable from label01 to label10 with label11;
+    }
+
+    public boolean isInCall()
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        java.lang.Throwable r2, $r4;
+        boolean $z0;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $z0 = r0.<android.net.sip.SipAudioCall: boolean mInCall>;
+
+        exitmonitor r1;
+
+     label2:
+        return $z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public boolean isOnHold()
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        java.lang.Throwable r2, $r4;
+        boolean $z0;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $z0 = r0.<android.net.sip.SipAudioCall: boolean mHold>;
+
+        exitmonitor r1;
+
+     label2:
+        return $z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public void close()
+    {
+        android.net.sip.SipAudioCall r0;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void close(boolean)>(1);
+
+        return;
+    }
+
+    private synchronized void close(boolean)
+    {
+        android.net.sip.SipAudioCall r0;
+        boolean z0;
+        long $l0;
+        android.net.sip.SipSession $r1, $r2;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        z0 := @parameter0: boolean;
+
+        if z0 == 0 goto label1;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void stopCall(boolean)>(1);
+
+     label1:
+        r0.<android.net.sip.SipAudioCall: boolean mInCall> = 0;
+
+        r0.<android.net.sip.SipAudioCall: boolean mHold> = 0;
+
+        $l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        r0.<android.net.sip.SipAudioCall: long mSessionId> = $l0;
+
+        r0.<android.net.sip.SipAudioCall: int mErrorCode> = 0;
+
+        r0.<android.net.sip.SipAudioCall: java.lang.String mErrorMessage> = null;
+
+        $r1 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        if $r1 == null goto label2;
+
+        $r2 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        virtualinvoke $r2.<android.net.sip.SipSession: void setListener(android.net.sip.SipSession$Listener)>(null);
+
+        r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession> = null;
+
+     label2:
+        return;
+    }
+
+    public android.net.sip.SipProfile getLocalProfile()
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        java.lang.Throwable r2, $r5;
+        android.net.sip.SipProfile $r4;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipProfile mLocalProfile>;
+
+        exitmonitor r1;
+
+     label2:
+        return $r4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public android.net.sip.SipProfile getPeerProfile()
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        java.lang.Throwable r2, $r7;
+        android.net.sip.SipSession $r4, $r5;
+        android.net.sip.SipProfile $r6;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        if $r4 != null goto label2;
+
+        $r6 = null;
+
+        goto label3;
+
+     label2:
+        $r5 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        $r6 = virtualinvoke $r5.<android.net.sip.SipSession: android.net.sip.SipProfile getPeerProfile()>();
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        return $r6;
+
+     label5:
+        $r7 := @caughtexception;
+
+        r2 = $r7;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public int getState()
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        java.lang.Throwable r2, $r6;
+        android.net.sip.SipSession $r4, $r5;
+        int $i0;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        if $r4 != null goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return 0;
+
+     label3:
+        $r5 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        $i0 = virtualinvoke $r5.<android.net.sip.SipSession: int getState()>();
+
+        exitmonitor r1;
+
+     label4:
+        return $i0;
+
+     label5:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public android.net.sip.SipSession getSipSession()
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        java.lang.Throwable r2, $r5;
+        android.net.sip.SipSession $r4;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        exitmonitor r1;
+
+     label2:
+        return $r4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private synchronized void transferToNewSession()
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SipSession r1, $r3, $r4;
+        java.lang.Throwable r2, $r10;
+        android.net.rtp.AudioStream $r5, $r6, $r9;
+        java.lang.String $r7;
+        java.net.InetAddress $r8;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        $r3 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mTransferringSession>;
+
+        if $r3 != null goto label1;
+
+        return;
+
+     label1:
+        r1 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        $r4 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mTransferringSession>;
+
+        r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession> = $r4;
+
+        r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mTransferringSession> = null;
+
+        $r5 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        if $r5 == null goto label2;
+
+        $r9 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        virtualinvoke $r9.<android.net.rtp.AudioStream: void join(android.net.rtp.AudioGroup)>(null);
+
+        goto label5;
+
+     label2:
+        $r6 = new android.net.rtp.AudioStream;
+
+        $r7 = specialinvoke r0.<android.net.sip.SipAudioCall: java.lang.String getLocalIp()>();
+
+        $r8 = staticinvoke <java.net.InetAddress: java.net.InetAddress getByName(java.lang.String)>($r7);
+
+        specialinvoke $r6.<android.net.rtp.AudioStream: void <init>(java.net.InetAddress)>($r8);
+
+        r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream> = $r6;
+
+     label3:
+        goto label5;
+
+     label4:
+        $r10 := @caughtexception;
+
+        r2 = $r10;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void loge(java.lang.String,java.lang.Throwable)>("transferToNewSession():", r2);
+
+     label5:
+        if r1 == null goto label6;
+
+        virtualinvoke r1.<android.net.sip.SipSession: void endCall()>();
+
+     label6:
+        virtualinvoke r0.<android.net.sip.SipAudioCall: void startAudio()>();
+
+        return;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+    }
+
+    private android.net.sip.SipSession$Listener createListener()
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SipAudioCall$1 $r1;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        $r1 = new android.net.sip.SipAudioCall$1;
+
+        specialinvoke $r1.<android.net.sip.SipAudioCall$1: void <init>(android.net.sip.SipAudioCall)>(r0);
+
+        return $r1;
+    }
+
+    private void onError(int, java.lang.String)
+    {
+        android.net.sip.SipAudioCall r0, r15;
+        int i0;
+        java.lang.String r1, $r7, $r11;
+        android.net.sip.SipAudioCall$Listener r2;
+        java.lang.Throwable r3, r4, $r13, $r14;
+        java.lang.StringBuilder $r5, $r6, $r8, $r9, $r10;
+        boolean $z0;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onError: ");
+
+        $r7 = staticinvoke <android.net.sip.SipErrorCode: java.lang.String toString(int)>(i0);
+
+        $r8 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r11);
+
+        r0.<android.net.sip.SipAudioCall: int mErrorCode> = i0;
+
+        r0.<android.net.sip.SipAudioCall: java.lang.String mErrorMessage> = r1;
+
+        r2 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipAudioCall$Listener mListener>;
+
+        if r2 == null goto label04;
+
+     label01:
+        virtualinvoke r2.<android.net.sip.SipAudioCall$Listener: void onError(android.net.sip.SipAudioCall,int,java.lang.String)>(r0, i0, r1);
+
+     label02:
+        goto label04;
+
+     label03:
+        $r14 := @caughtexception;
+
+        r3 = $r14;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void loge(java.lang.String,java.lang.Throwable)>("onError():", r3);
+
+     label04:
+        r15 = r0;
+
+        entermonitor r0;
+
+     label05:
+        if i0 == -10 goto label06;
+
+        $z0 = virtualinvoke r0.<android.net.sip.SipAudioCall: boolean isInCall()>();
+
+        if $z0 != 0 goto label07;
+
+     label06:
+        specialinvoke r0.<android.net.sip.SipAudioCall: void close(boolean)>(1);
+
+     label07:
+        exitmonitor r15;
+
+     label08:
+        goto label11;
+
+     label09:
+        $r13 := @caughtexception;
+
+        r4 = $r13;
+
+        exitmonitor r15;
+
+     label10:
+        throw r4;
+
+     label11:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label03;
+        catch java.lang.Throwable from label05 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    public void attachCall(android.net.sip.SipSession, java.lang.String) throws android.net.sip.SipException
+    {
+        android.net.sip.SipAudioCall r0, r3;
+        android.net.sip.SipSession r1;
+        java.lang.String r2, $r10, $r12;
+        java.lang.Throwable r4, r5, $r14, $r16;
+        android.content.Context $r6;
+        boolean $z0;
+        java.lang.StringBuilder $r8, $r9, $r11;
+        android.net.sip.SipSession$Listener $r13;
+        android.net.sip.SipException $r15;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 := @parameter0: android.net.sip.SipSession;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r6 = r0.<android.net.sip.SipAudioCall: android.content.Context mContext>;
+
+        $z0 = staticinvoke <android.net.sip.SipManager: boolean isVoipSupported(android.content.Context)>($r6);
+
+        if $z0 != 0 goto label01;
+
+        $r15 = new android.net.sip.SipException;
+
+        specialinvoke $r15.<android.net.sip.SipException: void <init>(java.lang.String)>("VOIP API is not supported");
+
+        throw $r15;
+
+     label01:
+        r3 = r0;
+
+        entermonitor r0;
+
+     label02:
+        r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession> = r1;
+
+        r0.<android.net.sip.SipAudioCall: java.lang.String mPeerSd> = r2;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("attachCall(): ");
+
+        $r10 = r0.<android.net.sip.SipAudioCall: java.lang.String mPeerSd>;
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r12);
+
+     label03:
+        $r13 = specialinvoke r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession$Listener createListener()>();
+
+        virtualinvoke r1.<android.net.sip.SipSession: void setListener(android.net.sip.SipSession$Listener)>($r13);
+
+     label04:
+        goto label06;
+
+     label05:
+        $r14 := @caughtexception;
+
+        r4 = $r14;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void loge(java.lang.String,java.lang.Throwable)>("attachCall()", r4);
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void throwSipException(java.lang.Throwable)>(r4);
+
+     label06:
+        exitmonitor r3;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r16 := @caughtexception;
+
+        r5 = $r16;
+
+        exitmonitor r3;
+
+     label09:
+        throw r5;
+
+     label10:
+        return;
+
+        catch java.lang.Throwable from label03 to label04 with label05;
+        catch java.lang.Throwable from label02 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+    }
+
+    public void makeCall(android.net.sip.SipProfile, android.net.sip.SipSession, int) throws android.net.sip.SipException
+    {
+        android.net.sip.SipAudioCall r0, r3;
+        android.net.sip.SipProfile r1;
+        android.net.sip.SipSession r2;
+        int i0;
+        java.io.IOException r4, $r24;
+        java.lang.Throwable r5, $r25;
+        java.lang.StringBuilder $r6, $r7, $r8, $r9, $r10, $r11, $r12;
+        java.lang.String $r13, $r16, $r20;
+        android.content.Context $r14;
+        boolean $z0;
+        android.net.rtp.AudioStream $r17;
+        android.net.sip.SipSession$Listener $r18;
+        java.net.InetAddress $r19;
+        android.net.sip.SimpleSessionDescription $r21;
+        android.net.sip.SipException $r22, $r23;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 := @parameter0: android.net.sip.SipProfile;
+
+        r2 := @parameter1: android.net.sip.SipSession;
+
+        i0 := @parameter2: int;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("makeCall: ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" session=");
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" timeout=");
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r13);
+
+        $r14 = r0.<android.net.sip.SipAudioCall: android.content.Context mContext>;
+
+        $z0 = staticinvoke <android.net.sip.SipManager: boolean isVoipSupported(android.content.Context)>($r14);
+
+        if $z0 != 0 goto label01;
+
+        $r22 = new android.net.sip.SipException;
+
+        specialinvoke $r22.<android.net.sip.SipException: void <init>(java.lang.String)>("VOIP API is not supported");
+
+        throw $r22;
+
+     label01:
+        r3 = r0;
+
+        entermonitor r0;
+
+     label02:
+        r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession> = r2;
+
+     label03:
+        $r17 = new android.net.rtp.AudioStream;
+
+        $r16 = specialinvoke r0.<android.net.sip.SipAudioCall: java.lang.String getLocalIp()>();
+
+        $r19 = staticinvoke <java.net.InetAddress: java.net.InetAddress getByName(java.lang.String)>($r16);
+
+        specialinvoke $r17.<android.net.rtp.AudioStream: void <init>(java.net.InetAddress)>($r19);
+
+        r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream> = $r17;
+
+        $r18 = specialinvoke r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession$Listener createListener()>();
+
+        virtualinvoke r2.<android.net.sip.SipSession: void setListener(android.net.sip.SipSession$Listener)>($r18);
+
+        $r21 = specialinvoke r0.<android.net.sip.SipAudioCall: android.net.sip.SimpleSessionDescription createOffer()>();
+
+        $r20 = virtualinvoke $r21.<android.net.sip.SimpleSessionDescription: java.lang.String encode()>();
+
+        virtualinvoke r2.<android.net.sip.SipSession: void makeCall(android.net.sip.SipProfile,java.lang.String,int)>(r1, $r20, i0);
+
+     label04:
+        goto label06;
+
+     label05:
+        $r24 := @caughtexception;
+
+        r4 = $r24;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void loge(java.lang.String,java.lang.Throwable)>("makeCall:", r4);
+
+        $r23 = new android.net.sip.SipException;
+
+        specialinvoke $r23.<android.net.sip.SipException: void <init>(java.lang.String,java.lang.Throwable)>("makeCall()", r4);
+
+        throw $r23;
+
+     label06:
+        exitmonitor r3;
+
+     label07:
+        goto label10;
+
+     label08:
+        $r25 := @caughtexception;
+
+        r5 = $r25;
+
+        exitmonitor r3;
+
+     label09:
+        throw r5;
+
+     label10:
+        return;
+
+        catch java.io.IOException from label03 to label04 with label05;
+        catch java.lang.Throwable from label02 to label07 with label08;
+        catch java.lang.Throwable from label08 to label09 with label08;
+    }
+
+    public void endCall() throws android.net.sip.SipException
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        java.lang.Throwable r2, $r11;
+        java.lang.StringBuilder $r3, $r4, $r6;
+        android.net.sip.SipSession $r5, $r9, $r10;
+        java.lang.String $r7;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("endCall: mSipSession");
+
+        $r5 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        $r6 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r7);
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        specialinvoke r0.<android.net.sip.SipAudioCall: void stopCall(boolean)>(1);
+
+        r0.<android.net.sip.SipAudioCall: boolean mInCall> = 0;
+
+        $r9 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        if $r9 == null goto label2;
+
+        $r10 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        virtualinvoke $r10.<android.net.sip.SipSession: void endCall()>();
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r11 := @caughtexception;
+
+        r2 = $r11;
+
+        exitmonitor r1;
+
+     label5:
+        throw r2;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public void holdCall(int) throws android.net.sip.SipException
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        int i0;
+        java.lang.Throwable r2, $r16;
+        java.lang.StringBuilder $r3, $r4, $r6, $r7, $r8;
+        android.net.sip.SipSession $r5, $r11, $r12;
+        java.lang.String $r9, $r14;
+        boolean $z0;
+        android.net.sip.SimpleSessionDescription $r13;
+        android.net.sip.SipException $r15;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        i0 := @parameter0: int;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("holdCall: mSipSession");
+
+        $r5 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        $r6 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" timeout=");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r9);
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $z0 = r0.<android.net.sip.SipAudioCall: boolean mHold>;
+
+        if $z0 == 0 goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r11 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        if $r11 != null goto label4;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void loge(java.lang.String)>("holdCall:");
+
+        $r15 = new android.net.sip.SipException;
+
+        specialinvoke $r15.<android.net.sip.SipException: void <init>(java.lang.String)>("Not in a call to hold call");
+
+        throw $r15;
+
+     label4:
+        $r12 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        $r13 = specialinvoke r0.<android.net.sip.SipAudioCall: android.net.sip.SimpleSessionDescription createHoldOffer()>();
+
+        $r14 = virtualinvoke $r13.<android.net.sip.SimpleSessionDescription: java.lang.String encode()>();
+
+        virtualinvoke $r12.<android.net.sip.SipSession: void changeCall(java.lang.String,int)>($r14, i0);
+
+        r0.<android.net.sip.SipAudioCall: boolean mHold> = 1;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void setAudioGroupMode()>();
+
+        exitmonitor r1;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r16 := @caughtexception;
+
+        r2 = $r16;
+
+        exitmonitor r1;
+
+     label7:
+        throw r2;
+
+     label8:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    public void answerCall(int) throws android.net.sip.SipException
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        int i0;
+        java.io.IOException r2, $r22;
+        java.lang.Throwable r3, $r20;
+        java.lang.StringBuilder $r4, $r5, $r7, $r8, $r9;
+        android.net.sip.SipSession $r6, $r12, $r18;
+        java.lang.String $r10, $r14, $r15, $r19;
+        android.net.rtp.AudioStream $r13;
+        java.net.InetAddress $r16;
+        android.net.sip.SimpleSessionDescription $r17;
+        android.net.sip.SipException $r21, $r23;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        i0 := @parameter0: int;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("answerCall: mSipSession");
+
+        $r6 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        $r7 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r6);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" timeout=");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r10);
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r12 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        if $r12 != null goto label2;
+
+        $r21 = new android.net.sip.SipException;
+
+        specialinvoke $r21.<android.net.sip.SipException: void <init>(java.lang.String)>("No call to answer");
+
+        throw $r21;
+
+     label2:
+        $r13 = new android.net.rtp.AudioStream;
+
+        $r14 = specialinvoke r0.<android.net.sip.SipAudioCall: java.lang.String getLocalIp()>();
+
+        $r16 = staticinvoke <java.net.InetAddress: java.net.InetAddress getByName(java.lang.String)>($r14);
+
+        specialinvoke $r13.<android.net.rtp.AudioStream: void <init>(java.net.InetAddress)>($r16);
+
+        r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream> = $r13;
+
+        $r18 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        $r15 = r0.<android.net.sip.SipAudioCall: java.lang.String mPeerSd>;
+
+        $r17 = specialinvoke r0.<android.net.sip.SipAudioCall: android.net.sip.SimpleSessionDescription createAnswer(java.lang.String)>($r15);
+
+        $r19 = virtualinvoke $r17.<android.net.sip.SimpleSessionDescription: java.lang.String encode()>();
+
+        virtualinvoke $r18.<android.net.sip.SipSession: void answerCall(java.lang.String,int)>($r19, i0);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r22 := @caughtexception;
+
+        r2 = $r22;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void loge(java.lang.String,java.lang.Throwable)>("answerCall:", r2);
+
+        $r23 = new android.net.sip.SipException;
+
+        specialinvoke $r23.<android.net.sip.SipException: void <init>(java.lang.String,java.lang.Throwable)>("answerCall()", r2);
+
+        throw $r23;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        goto label9;
+
+     label7:
+        $r20 := @caughtexception;
+
+        r3 = $r20;
+
+        exitmonitor r1;
+
+     label8:
+        throw r3;
+
+     label9:
+        return;
+
+        catch java.io.IOException from label2 to label3 with label4;
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    public void continueCall(int) throws android.net.sip.SipException
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        int i0;
+        java.lang.Throwable r2, $r14;
+        java.lang.StringBuilder $r3, $r4, $r6, $r7, $r8;
+        android.net.sip.SipSession $r5, $r11;
+        java.lang.String $r9, $r13;
+        boolean $z0;
+        android.net.sip.SimpleSessionDescription $r12;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        i0 := @parameter0: int;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("continueCall: mSipSession");
+
+        $r5 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        $r6 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" timeout=");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r9);
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $z0 = r0.<android.net.sip.SipAudioCall: boolean mHold>;
+
+        if $z0 != 0 goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r11 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        $r12 = specialinvoke r0.<android.net.sip.SipAudioCall: android.net.sip.SimpleSessionDescription createContinueOffer()>();
+
+        $r13 = virtualinvoke $r12.<android.net.sip.SimpleSessionDescription: java.lang.String encode()>();
+
+        virtualinvoke $r11.<android.net.sip.SipSession: void changeCall(java.lang.String,int)>($r13, i0);
+
+        r0.<android.net.sip.SipAudioCall: boolean mHold> = 0;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void setAudioGroupMode()>();
+
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r14 := @caughtexception;
+
+        r2 = $r14;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private android.net.sip.SimpleSessionDescription createOffer()
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SimpleSessionDescription r1, $r6;
+        android.net.sip.SimpleSessionDescription$Media r3;
+        android.net.rtp.AudioCodec[] r4;
+        int i0, i1, $i3, $i4;
+        android.net.rtp.AudioCodec r5;
+        long $l2;
+        java.lang.String $r7, $r12, $r13, $r14;
+        android.net.rtp.AudioStream $r8;
+        java.lang.StringBuilder $r9, $r10, $r11;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        $r6 = new android.net.sip.SimpleSessionDescription;
+
+        $l2 = r0.<android.net.sip.SipAudioCall: long mSessionId>;
+
+        $r7 = specialinvoke r0.<android.net.sip.SipAudioCall: java.lang.String getLocalIp()>();
+
+        specialinvoke $r6.<android.net.sip.SimpleSessionDescription: void <init>(long,java.lang.String)>($l2, $r7);
+
+        r1 = $r6;
+
+        staticinvoke <android.net.rtp.AudioCodec: android.net.rtp.AudioCodec[] getCodecs()>();
+
+        $r8 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        $i3 = virtualinvoke $r8.<android.net.rtp.AudioStream: int getLocalPort()>();
+
+        r3 = virtualinvoke r1.<android.net.sip.SimpleSessionDescription: android.net.sip.SimpleSessionDescription$Media newMedia(java.lang.String,int,int,java.lang.String)>("audio", $i3, 1, "RTP/AVP");
+
+        r4 = staticinvoke <android.net.rtp.AudioCodec: android.net.rtp.AudioCodec[] getCodecs()>();
+
+        i0 = lengthof r4;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        r5 = r4[i1];
+
+        $i4 = r5.<android.net.rtp.AudioCodec: int type>;
+
+        $r14 = r5.<android.net.rtp.AudioCodec: java.lang.String rtpmap>;
+
+        $r12 = r5.<android.net.rtp.AudioCodec: java.lang.String fmtp>;
+
+        virtualinvoke r3.<android.net.sip.SimpleSessionDescription$Media: void setRtpPayload(int,java.lang.String,java.lang.String)>($i4, $r14, $r12);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        virtualinvoke r3.<android.net.sip.SimpleSessionDescription$Media: void setRtpPayload(int,java.lang.String,java.lang.String)>(127, "telephone-event/8000", "0-15");
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("createOffer: offer=");
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r13);
+
+        return r1;
+    }
+
+    private android.net.sip.SimpleSessionDescription createAnswer(java.lang.String)
+    {
+        android.net.sip.SipAudioCall r0;
+        java.lang.String r1, r8, $r11, $r16, $r17, $r18, $r19, $r20, $r21, $r22, $r24, $r25, $r26, $r27, $r28, $r29, $r30, $r32, $r33, r38;
+        android.net.sip.SimpleSessionDescription r2, r3, $r9, $r10, $r31;
+        android.net.rtp.AudioCodec r4;
+        android.net.sip.SimpleSessionDescription$Media[] r5;
+        int i0, i1, i2, i3, i4, i5, $i7, $i8, $i9, $i10, i11, i12, i13, i14;
+        android.net.sip.SimpleSessionDescription$Media r6, r34, r36;
+        int[] r7, r35;
+        boolean $z0, $z1, $z2, $z3;
+        long $l6;
+        java.lang.StringBuilder $r12, $r13, $r14;
+        java.lang.IllegalStateException $r15;
+        android.net.rtp.AudioStream $r23;
+        java.lang.String[] r37;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 := @parameter0: java.lang.String;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 == 0 goto label01;
+
+        $r31 = specialinvoke r0.<android.net.sip.SipAudioCall: android.net.sip.SimpleSessionDescription createOffer()>();
+
+        return $r31;
+
+     label01:
+        $r10 = new android.net.sip.SimpleSessionDescription;
+
+        specialinvoke $r10.<android.net.sip.SimpleSessionDescription: void <init>(java.lang.String)>(r1);
+
+        r2 = $r10;
+
+        $r9 = new android.net.sip.SimpleSessionDescription;
+
+        $l6 = r0.<android.net.sip.SipAudioCall: long mSessionId>;
+
+        $r11 = specialinvoke r0.<android.net.sip.SipAudioCall: java.lang.String getLocalIp()>();
+
+        specialinvoke $r9.<android.net.sip.SimpleSessionDescription: void <init>(long,java.lang.String)>($l6, $r11);
+
+        r3 = $r9;
+
+        r4 = null;
+
+        r5 = virtualinvoke r2.<android.net.sip.SimpleSessionDescription: android.net.sip.SimpleSessionDescription$Media[] getMedia()>();
+
+        i0 = lengthof r5;
+
+        i1 = 0;
+
+     label02:
+        if i1 >= i0 goto label15;
+
+        r6 = r5[i1];
+
+        if r4 != null goto label12;
+
+        $i7 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: int getPort()>();
+
+        if $i7 <= 0 goto label12;
+
+        $r20 = "audio";
+
+        $r19 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getType()>();
+
+        $z1 = virtualinvoke $r20.<java.lang.String: boolean equals(java.lang.Object)>($r19);
+
+        if $z1 == 0 goto label12;
+
+        $r21 = "RTP/AVP";
+
+        $r22 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getProtocol()>();
+
+        $z2 = virtualinvoke $r21.<java.lang.String: boolean equals(java.lang.Object)>($r22);
+
+        if $z2 == 0 goto label12;
+
+        r7 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: int[] getRtpPayloadTypes()>();
+
+        i2 = lengthof r7;
+
+        i3 = 0;
+
+     label03:
+        if i3 >= i2 goto label05;
+
+        i4 = r7[i3];
+
+        $r33 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getRtpmap(int)>(i4);
+
+        $r32 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getFmtp(int)>(i4);
+
+        r4 = staticinvoke <android.net.rtp.AudioCodec: android.net.rtp.AudioCodec getCodec(int,java.lang.String,java.lang.String)>(i4, $r33, $r32);
+
+        if r4 == null goto label04;
+
+        goto label05;
+
+     label04:
+        i3 = i3 + 1;
+
+        goto label03;
+
+     label05:
+        if r4 == null goto label12;
+
+        $r23 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        $i8 = virtualinvoke $r23.<android.net.rtp.AudioStream: int getLocalPort()>();
+
+        r34 = virtualinvoke r3.<android.net.sip.SimpleSessionDescription: android.net.sip.SimpleSessionDescription$Media newMedia(java.lang.String,int,int,java.lang.String)>("audio", $i8, 1, "RTP/AVP");
+
+        $i9 = r4.<android.net.rtp.AudioCodec: int type>;
+
+        $r25 = r4.<android.net.rtp.AudioCodec: java.lang.String rtpmap>;
+
+        $r24 = r4.<android.net.rtp.AudioCodec: java.lang.String fmtp>;
+
+        virtualinvoke r34.<android.net.sip.SimpleSessionDescription$Media: void setRtpPayload(int,java.lang.String,java.lang.String)>($i9, $r25, $r24);
+
+        r35 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: int[] getRtpPayloadTypes()>();
+
+        i11 = lengthof r35;
+
+        i12 = 0;
+
+     label06:
+        if i12 >= i11 goto label08;
+
+        i5 = r35[i12];
+
+        r8 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getRtpmap(int)>(i5);
+
+        $i10 = r4.<android.net.rtp.AudioCodec: int type>;
+
+        if i5 == $i10 goto label07;
+
+        if r8 == null goto label07;
+
+        $z3 = virtualinvoke r8.<java.lang.String: boolean startsWith(java.lang.String)>("telephone-event");
+
+        if $z3 == 0 goto label07;
+
+        $r30 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getFmtp(int)>(i5);
+
+        virtualinvoke r34.<android.net.sip.SimpleSessionDescription$Media: void setRtpPayload(int,java.lang.String,java.lang.String)>(i5, r8, $r30);
+
+     label07:
+        i12 = i12 + 1;
+
+        goto label06;
+
+     label08:
+        $r29 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getAttribute(java.lang.String)>("recvonly");
+
+        if $r29 == null goto label09;
+
+        virtualinvoke r3.<android.net.sip.SimpleSessionDescription: void setAttribute(java.lang.String,java.lang.String)>("sendonly", "");
+
+        goto label14;
+
+     label09:
+        $r28 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getAttribute(java.lang.String)>("sendonly");
+
+        if $r28 == null goto label10;
+
+        virtualinvoke r3.<android.net.sip.SimpleSessionDescription: void setAttribute(java.lang.String,java.lang.String)>("recvonly", "");
+
+        goto label14;
+
+     label10:
+        $r27 = virtualinvoke r2.<android.net.sip.SimpleSessionDescription: java.lang.String getAttribute(java.lang.String)>("recvonly");
+
+        if $r27 == null goto label11;
+
+        virtualinvoke r3.<android.net.sip.SimpleSessionDescription: void setAttribute(java.lang.String,java.lang.String)>("sendonly", "");
+
+        goto label14;
+
+     label11:
+        $r26 = virtualinvoke r2.<android.net.sip.SimpleSessionDescription: java.lang.String getAttribute(java.lang.String)>("sendonly");
+
+        if $r26 == null goto label14;
+
+        virtualinvoke r3.<android.net.sip.SimpleSessionDescription: void setAttribute(java.lang.String,java.lang.String)>("recvonly", "");
+
+        goto label14;
+
+     label12:
+        $r17 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getType()>();
+
+        $r18 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getProtocol()>();
+
+        r36 = virtualinvoke r3.<android.net.sip.SimpleSessionDescription: android.net.sip.SimpleSessionDescription$Media newMedia(java.lang.String,int,int,java.lang.String)>($r17, 0, 1, $r18);
+
+        r37 = virtualinvoke r6.<android.net.sip.SimpleSessionDescription$Media: java.lang.String[] getFormats()>();
+
+        i13 = lengthof r37;
+
+        i14 = 0;
+
+     label13:
+        if i14 >= i13 goto label14;
+
+        r38 = r37[i14];
+
+        virtualinvoke r36.<android.net.sip.SimpleSessionDescription$Media: void setFormat(java.lang.String,java.lang.String)>(r38, null);
+
+        i14 = i14 + 1;
+
+        goto label13;
+
+     label14:
+        i1 = i1 + 1;
+
+        goto label02;
+
+     label15:
+        if r4 != null goto label16;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void loge(java.lang.String)>("createAnswer: no suitable codes");
+
+        $r15 = new java.lang.IllegalStateException;
+
+        specialinvoke $r15.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Reject SDP: no suitable codecs");
+
+        throw $r15;
+
+     label16:
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("createAnswer: answer=");
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r16);
+
+        return r3;
+    }
+
+    private android.net.sip.SimpleSessionDescription createHoldOffer()
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SimpleSessionDescription r1;
+        java.lang.StringBuilder $r2, $r3, $r4;
+        java.lang.String $r5;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = specialinvoke r0.<android.net.sip.SipAudioCall: android.net.sip.SimpleSessionDescription createContinueOffer()>();
+
+        virtualinvoke r1.<android.net.sip.SimpleSessionDescription: void setAttribute(java.lang.String,java.lang.String)>("sendonly", "");
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("createHoldOffer: offer=");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r5);
+
+        return r1;
+    }
+
+    private android.net.sip.SimpleSessionDescription createContinueOffer()
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SimpleSessionDescription r1, $r4;
+        android.net.sip.SimpleSessionDescription$Media r2;
+        android.net.rtp.AudioCodec r3;
+        int i0, $i2, $i3;
+        long $l1;
+        java.lang.String $r5, $r8, $r9;
+        android.net.rtp.AudioStream $r6, $r7, $r10;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>("createContinueOffer");
+
+        $r4 = new android.net.sip.SimpleSessionDescription;
+
+        $l1 = r0.<android.net.sip.SipAudioCall: long mSessionId>;
+
+        $r5 = specialinvoke r0.<android.net.sip.SipAudioCall: java.lang.String getLocalIp()>();
+
+        specialinvoke $r4.<android.net.sip.SimpleSessionDescription: void <init>(long,java.lang.String)>($l1, $r5);
+
+        r1 = $r4;
+
+        $r6 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        $i2 = virtualinvoke $r6.<android.net.rtp.AudioStream: int getLocalPort()>();
+
+        r2 = virtualinvoke r1.<android.net.sip.SimpleSessionDescription: android.net.sip.SimpleSessionDescription$Media newMedia(java.lang.String,int,int,java.lang.String)>("audio", $i2, 1, "RTP/AVP");
+
+        $r7 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        r3 = virtualinvoke $r7.<android.net.rtp.AudioStream: android.net.rtp.AudioCodec getCodec()>();
+
+        $i3 = r3.<android.net.rtp.AudioCodec: int type>;
+
+        $r9 = r3.<android.net.rtp.AudioCodec: java.lang.String rtpmap>;
+
+        $r8 = r3.<android.net.rtp.AudioCodec: java.lang.String fmtp>;
+
+        virtualinvoke r2.<android.net.sip.SimpleSessionDescription$Media: void setRtpPayload(int,java.lang.String,java.lang.String)>($i3, $r9, $r8);
+
+        $r10 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        i0 = virtualinvoke $r10.<android.net.rtp.AudioStream: int getDtmfType()>();
+
+        if i0 == -1 goto label1;
+
+        virtualinvoke r2.<android.net.sip.SimpleSessionDescription$Media: void setRtpPayload(int,java.lang.String,java.lang.String)>(i0, "telephone-event/8000", "0-15");
+
+     label1:
+        return r1;
+    }
+
+    private void grabWifiHighPerfLock()
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.wifi.WifiManager$WifiLock $r1, $r6, $r7;
+        android.content.Context $r2;
+        java.lang.Object $r3;
+        java.lang.String $r4;
+        android.net.wifi.WifiManager $r5;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        $r1 = r0.<android.net.sip.SipAudioCall: android.net.wifi.WifiManager$WifiLock mWifiHighPerfLock>;
+
+        if $r1 != null goto label1;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>("grabWifiHighPerfLock:");
+
+        $r2 = r0.<android.net.sip.SipAudioCall: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("wifi");
+
+        $r5 = (android.net.wifi.WifiManager) $r3;
+
+        $r4 = <android.net.sip.SipAudioCall: java.lang.String LOG_TAG>;
+
+        $r6 = virtualinvoke $r5.<android.net.wifi.WifiManager: android.net.wifi.WifiManager$WifiLock createWifiLock(int,java.lang.String)>(3, $r4);
+
+        r0.<android.net.sip.SipAudioCall: android.net.wifi.WifiManager$WifiLock mWifiHighPerfLock> = $r6;
+
+        $r7 = r0.<android.net.sip.SipAudioCall: android.net.wifi.WifiManager$WifiLock mWifiHighPerfLock>;
+
+        virtualinvoke $r7.<android.net.wifi.WifiManager$WifiLock: void acquire()>();
+
+     label1:
+        return;
+    }
+
+    private void releaseWifiHighPerfLock()
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.wifi.WifiManager$WifiLock $r1, $r2;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        $r1 = r0.<android.net.sip.SipAudioCall: android.net.wifi.WifiManager$WifiLock mWifiHighPerfLock>;
+
+        if $r1 == null goto label1;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>("releaseWifiHighPerfLock:");
+
+        $r2 = r0.<android.net.sip.SipAudioCall: android.net.wifi.WifiManager$WifiLock mWifiHighPerfLock>;
+
+        virtualinvoke $r2.<android.net.wifi.WifiManager$WifiLock: void release()>();
+
+        r0.<android.net.sip.SipAudioCall: android.net.wifi.WifiManager$WifiLock mWifiHighPerfLock> = null;
+
+     label1:
+        return;
+    }
+
+    private boolean isWifiOn()
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.wifi.WifiManager $r1;
+        android.net.wifi.WifiInfo $r2;
+        java.lang.String $r3;
+        boolean $z0;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        $r1 = r0.<android.net.sip.SipAudioCall: android.net.wifi.WifiManager mWm>;
+
+        $r2 = virtualinvoke $r1.<android.net.wifi.WifiManager: android.net.wifi.WifiInfo getConnectionInfo()>();
+
+        $r3 = virtualinvoke $r2.<android.net.wifi.WifiInfo: java.lang.String getBSSID()>();
+
+        if $r3 != null goto label1;
+
+        $z0 = 0;
+
+        goto label2;
+
+     label1:
+        $z0 = 1;
+
+     label2:
+        return $z0;
+    }
+
+    public void toggleMute()
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        java.lang.Throwable r2, $r4;
+        boolean $z0, $z1;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $z0 = r0.<android.net.sip.SipAudioCall: boolean mMuted>;
+
+        if $z0 != 0 goto label2;
+
+        $z1 = 1;
+
+        goto label3;
+
+     label2:
+        $z1 = 0;
+
+     label3:
+        r0.<android.net.sip.SipAudioCall: boolean mMuted> = $z1;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void setAudioGroupMode()>();
+
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public boolean isMuted()
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        java.lang.Throwable r2, $r4;
+        boolean $z0;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $z0 = r0.<android.net.sip.SipAudioCall: boolean mMuted>;
+
+        exitmonitor r1;
+
+     label2:
+        return $z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r2 = $r4;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public void setSpeakerMode(boolean)
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        boolean z0;
+        java.lang.Throwable r2, $r7;
+        android.content.Context $r4;
+        java.lang.Object $r5;
+        android.media.AudioManager $r6;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<android.net.sip.SipAudioCall: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("audio");
+
+        $r6 = (android.media.AudioManager) $r5;
+
+        virtualinvoke $r6.<android.media.AudioManager: void setSpeakerphoneOn(boolean)>(z0);
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void setAudioGroupMode()>();
+
+        exitmonitor r1;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r2 = $r7;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private boolean isSpeakerOn()
+    {
+        android.net.sip.SipAudioCall r0;
+        android.content.Context $r1;
+        java.lang.Object $r2;
+        android.media.AudioManager $r3;
+        boolean $z0;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        $r1 = r0.<android.net.sip.SipAudioCall: android.content.Context mContext>;
+
+        $r2 = virtualinvoke $r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("audio");
+
+        $r3 = (android.media.AudioManager) $r2;
+
+        $z0 = virtualinvoke $r3.<android.media.AudioManager: boolean isSpeakerphoneOn()>();
+
+        return $z0;
+    }
+
+    public void sendDtmf(int)
+    {
+        android.net.sip.SipAudioCall r0;
+        int i0;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        i0 := @parameter0: int;
+
+        virtualinvoke r0.<android.net.sip.SipAudioCall: void sendDtmf(int,android.os.Message)>(i0, null);
+
+        return;
+    }
+
+    public void sendDtmf(int, android.os.Message)
+    {
+        android.net.sip.SipAudioCall r0, r2;
+        int i0, $i1;
+        android.os.Message r1;
+        android.net.rtp.AudioGroup r3;
+        java.lang.Throwable r4, $r13;
+        android.net.sip.SipSession $r6;
+        java.lang.StringBuilder $r7, $r8, $r9, $r10, $r12;
+        java.lang.String $r11;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.os.Message;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label1:
+        r3 = virtualinvoke r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioGroup getAudioGroup()>();
+
+        if r3 == null goto label2;
+
+        $r6 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        if $r6 == null goto label2;
+
+        $i1 = virtualinvoke r0.<android.net.sip.SipAudioCall: int getState()>();
+
+        if 8 != $i1 goto label2;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sendDtmf: code=");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" result=");
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r11);
+
+        virtualinvoke r3.<android.net.rtp.AudioGroup: void sendDtmf(int)>(i0);
+
+     label2:
+        if r1 == null goto label3;
+
+        virtualinvoke r1.<android.os.Message: void sendToTarget()>();
+
+     label3:
+        exitmonitor r2;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r13 := @caughtexception;
+
+        r4 = $r13;
+
+        exitmonitor r2;
+
+     label6:
+        throw r4;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public android.net.rtp.AudioStream getAudioStream()
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        java.lang.Throwable r2, $r5;
+        android.net.rtp.AudioStream $r4;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        exitmonitor r1;
+
+     label2:
+        return $r4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        exitmonitor r1;
+
+     label4:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    public android.net.rtp.AudioGroup getAudioGroup()
+    {
+        android.net.sip.SipAudioCall r0, r1;
+        java.lang.Throwable r2, $r9;
+        android.net.rtp.AudioGroup $r4, $r7, $r8;
+        android.net.rtp.AudioStream $r5, $r6;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r4 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioGroup mAudioGroup>;
+
+        if $r4 == null goto label3;
+
+        $r8 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioGroup mAudioGroup>;
+
+        exitmonitor r1;
+
+     label2:
+        return $r8;
+
+     label3:
+        $r5 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        if $r5 != null goto label4;
+
+        $r7 = null;
+
+        goto label5;
+
+     label4:
+        $r6 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        $r7 = virtualinvoke $r6.<android.net.rtp.AudioStream: android.net.rtp.AudioGroup getGroup()>();
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return $r7;
+
+     label7:
+        $r9 := @caughtexception;
+
+        r2 = $r9;
+
+        exitmonitor r1;
+
+     label8:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    public void setAudioGroup(android.net.rtp.AudioGroup)
+    {
+        android.net.sip.SipAudioCall r0, r2;
+        android.net.rtp.AudioGroup r1, $r11;
+        java.lang.Throwable r3, $r13;
+        java.lang.StringBuilder $r5, $r6, $r7;
+        java.lang.String $r8;
+        android.net.rtp.AudioStream $r9, $r10, $r12;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 := @parameter0: android.net.rtp.AudioGroup;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("setAudioGroup: group=");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r8);
+
+        $r9 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        if $r9 == null goto label2;
+
+        $r10 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        $r11 = virtualinvoke $r10.<android.net.rtp.AudioStream: android.net.rtp.AudioGroup getGroup()>();
+
+        if $r11 == null goto label2;
+
+        $r12 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        virtualinvoke $r12.<android.net.rtp.AudioStream: void join(android.net.rtp.AudioGroup)>(r1);
+
+     label2:
+        r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioGroup mAudioGroup> = r1;
+
+        exitmonitor r2;
+
+     label3:
+        goto label6;
+
+     label4:
+        $r13 := @caughtexception;
+
+        r3 = $r13;
+
+        exitmonitor r2;
+
+     label5:
+        throw r3;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label3 with label4;
+        catch java.lang.Throwable from label4 to label5 with label4;
+    }
+
+    public void startAudio()
+    {
+        android.net.sip.SipAudioCall r0;
+        java.net.UnknownHostException r1, $r2;
+        java.lang.String $r3, $r5;
+        java.lang.Throwable $r4, r6;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+     label1:
+        specialinvoke r0.<android.net.sip.SipAudioCall: void startAudioInternal()>();
+
+     label2:
+        goto label5;
+
+     label3:
+        $r2 := @caughtexception;
+
+        r1 = $r2;
+
+        $r3 = virtualinvoke r1.<java.net.UnknownHostException: java.lang.String getMessage()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void onError(int,java.lang.String)>(-7, $r3);
+
+        goto label5;
+
+     label4:
+        $r4 := @caughtexception;
+
+        r6 = $r4;
+
+        $r5 = virtualinvoke r6.<java.lang.Throwable: java.lang.String getMessage()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void onError(int,java.lang.String)>(-4, $r5);
+
+     label5:
+        return;
+
+        catch java.net.UnknownHostException from label1 to label2 with label3;
+        catch java.lang.Throwable from label1 to label2 with label4;
+    }
+
+    private synchronized void startAudioInternal() throws java.net.UnknownHostException
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SimpleSessionDescription r1, $r15;
+        android.net.rtp.AudioStream r2;
+        android.net.rtp.AudioCodec r3;
+        android.net.sip.SimpleSessionDescription$Media[] r4;
+        int i0, i1, i2, i3, i4, i5, $i6, $i7, $i8, i9, i10;
+        android.net.sip.SimpleSessionDescription$Media r5;
+        int[] r6, r31;
+        java.lang.String r7, $r11, $r12, $r13, $r14, $r18, $r19, $r20, $r21, $r23, $r24, $r25, $r26, $r27, $r28, r30;
+        java.lang.StringBuilder $r8, $r9, $r10;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        java.lang.IllegalStateException $r16, $r29;
+        android.net.rtp.AudioGroup $r17, r32;
+        java.net.InetAddress $r22;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("startAudioInternal: mPeerSd=");
+
+        $r11 = r0.<android.net.sip.SipAudioCall: java.lang.String mPeerSd>;
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void loge(java.lang.String)>($r13);
+
+        $r12 = r0.<android.net.sip.SipAudioCall: java.lang.String mPeerSd>;
+
+        if $r12 != null goto label01;
+
+        $r29 = new java.lang.IllegalStateException;
+
+        specialinvoke $r29.<java.lang.IllegalStateException: void <init>(java.lang.String)>("mPeerSd = null");
+
+        throw $r29;
+
+     label01:
+        specialinvoke r0.<android.net.sip.SipAudioCall: void stopCall(boolean)>(0);
+
+        r0.<android.net.sip.SipAudioCall: boolean mInCall> = 1;
+
+        $r15 = new android.net.sip.SimpleSessionDescription;
+
+        $r14 = r0.<android.net.sip.SipAudioCall: java.lang.String mPeerSd>;
+
+        specialinvoke $r15.<android.net.sip.SimpleSessionDescription: void <init>(java.lang.String)>($r14);
+
+        r1 = $r15;
+
+        r2 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        r3 = null;
+
+        r4 = virtualinvoke r1.<android.net.sip.SimpleSessionDescription: android.net.sip.SimpleSessionDescription$Media[] getMedia()>();
+
+        i0 = lengthof r4;
+
+        i1 = 0;
+
+     label02:
+        if i1 >= i0 goto label16;
+
+        r5 = r4[i1];
+
+        if r3 != null goto label15;
+
+        $i6 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: int getPort()>();
+
+        if $i6 <= 0 goto label15;
+
+        $r18 = "audio";
+
+        $r19 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getType()>();
+
+        $z2 = virtualinvoke $r18.<java.lang.String: boolean equals(java.lang.Object)>($r19);
+
+        if $z2 == 0 goto label15;
+
+        $r20 = "RTP/AVP";
+
+        $r21 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getProtocol()>();
+
+        $z3 = virtualinvoke $r20.<java.lang.String: boolean equals(java.lang.Object)>($r21);
+
+        if $z3 == 0 goto label15;
+
+        r6 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: int[] getRtpPayloadTypes()>();
+
+        i2 = lengthof r6;
+
+        i3 = 0;
+
+     label03:
+        if i3 >= i2 goto label05;
+
+        i4 = r6[i3];
+
+        $r28 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getRtpmap(int)>(i4);
+
+        $r27 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getFmtp(int)>(i4);
+
+        r3 = staticinvoke <android.net.rtp.AudioCodec: android.net.rtp.AudioCodec getCodec(int,java.lang.String,java.lang.String)>(i4, $r28, $r27);
+
+        if r3 == null goto label04;
+
+        goto label05;
+
+     label04:
+        i3 = i3 + 1;
+
+        goto label03;
+
+     label05:
+        if r3 == null goto label15;
+
+        r30 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getAddress()>();
+
+        if r30 != null goto label06;
+
+        r30 = virtualinvoke r1.<android.net.sip.SimpleSessionDescription: java.lang.String getAddress()>();
+
+     label06:
+        $r22 = staticinvoke <java.net.InetAddress: java.net.InetAddress getByName(java.lang.String)>(r30);
+
+        $i7 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: int getPort()>();
+
+        virtualinvoke r2.<android.net.rtp.AudioStream: void associate(java.net.InetAddress,int)>($r22, $i7);
+
+        virtualinvoke r2.<android.net.rtp.AudioStream: void setDtmfType(int)>(-1);
+
+        virtualinvoke r2.<android.net.rtp.AudioStream: void setCodec(android.net.rtp.AudioCodec)>(r3);
+
+        r31 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: int[] getRtpPayloadTypes()>();
+
+        i9 = lengthof r31;
+
+        i10 = 0;
+
+     label07:
+        if i10 >= i9 goto label09;
+
+        i5 = r31[i10];
+
+        r7 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getRtpmap(int)>(i5);
+
+        $i8 = r3.<android.net.rtp.AudioCodec: int type>;
+
+        if i5 == $i8 goto label08;
+
+        if r7 == null goto label08;
+
+        $z5 = virtualinvoke r7.<java.lang.String: boolean startsWith(java.lang.String)>("telephone-event");
+
+        if $z5 == 0 goto label08;
+
+        virtualinvoke r2.<android.net.rtp.AudioStream: void setDtmfType(int)>(i5);
+
+     label08:
+        i10 = i10 + 1;
+
+        goto label07;
+
+     label09:
+        $z4 = r0.<android.net.sip.SipAudioCall: boolean mHold>;
+
+        if $z4 == 0 goto label10;
+
+        virtualinvoke r2.<android.net.rtp.AudioStream: void setMode(int)>(0);
+
+        goto label16;
+
+     label10:
+        $r25 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getAttribute(java.lang.String)>("recvonly");
+
+        if $r25 == null goto label11;
+
+        virtualinvoke r2.<android.net.rtp.AudioStream: void setMode(int)>(1);
+
+        goto label16;
+
+     label11:
+        $r23 = virtualinvoke r5.<android.net.sip.SimpleSessionDescription$Media: java.lang.String getAttribute(java.lang.String)>("sendonly");
+
+        if $r23 == null goto label12;
+
+        virtualinvoke r2.<android.net.rtp.AudioStream: void setMode(int)>(2);
+
+        goto label16;
+
+     label12:
+        $r24 = virtualinvoke r1.<android.net.sip.SimpleSessionDescription: java.lang.String getAttribute(java.lang.String)>("recvonly");
+
+        if $r24 == null goto label13;
+
+        virtualinvoke r2.<android.net.rtp.AudioStream: void setMode(int)>(1);
+
+        goto label16;
+
+     label13:
+        $r26 = virtualinvoke r1.<android.net.sip.SimpleSessionDescription: java.lang.String getAttribute(java.lang.String)>("sendonly");
+
+        if $r26 == null goto label14;
+
+        virtualinvoke r2.<android.net.rtp.AudioStream: void setMode(int)>(2);
+
+        goto label16;
+
+     label14:
+        virtualinvoke r2.<android.net.rtp.AudioStream: void setMode(int)>(0);
+
+        goto label16;
+
+     label15:
+        i1 = i1 + 1;
+
+        goto label02;
+
+     label16:
+        if r3 != null goto label17;
+
+        $r16 = new java.lang.IllegalStateException;
+
+        specialinvoke $r16.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Reject SDP: no suitable codecs");
+
+        throw $r16;
+
+     label17:
+        $z0 = specialinvoke r0.<android.net.sip.SipAudioCall: boolean isWifiOn()>();
+
+        if $z0 == 0 goto label18;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void grabWifiHighPerfLock()>();
+
+     label18:
+        r32 = virtualinvoke r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioGroup getAudioGroup()>();
+
+        $z1 = r0.<android.net.sip.SipAudioCall: boolean mHold>;
+
+        if $z1 == 0 goto label19;
+
+        goto label21;
+
+     label19:
+        if r32 != null goto label20;
+
+        $r17 = new android.net.rtp.AudioGroup;
+
+        specialinvoke $r17.<android.net.rtp.AudioGroup: void <init>()>();
+
+        r32 = $r17;
+
+     label20:
+        virtualinvoke r2.<android.net.rtp.AudioStream: void join(android.net.rtp.AudioGroup)>(r32);
+
+     label21:
+        specialinvoke r0.<android.net.sip.SipAudioCall: void setAudioGroupMode()>();
+
+        return;
+    }
+
+    private void setAudioGroupMode()
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.rtp.AudioGroup r1;
+        java.lang.StringBuilder $r2, $r3, $r4;
+        java.lang.String $r5;
+        boolean $z0, $z1, $z2;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 = virtualinvoke r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioGroup getAudioGroup()>();
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("setAudioGroupMode: audioGroup=");
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r5);
+
+        if r1 == null goto label4;
+
+        $z0 = r0.<android.net.sip.SipAudioCall: boolean mHold>;
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r1.<android.net.rtp.AudioGroup: void setMode(int)>(0);
+
+        goto label4;
+
+     label1:
+        $z1 = r0.<android.net.sip.SipAudioCall: boolean mMuted>;
+
+        if $z1 == 0 goto label2;
+
+        virtualinvoke r1.<android.net.rtp.AudioGroup: void setMode(int)>(1);
+
+        goto label4;
+
+     label2:
+        $z2 = specialinvoke r0.<android.net.sip.SipAudioCall: boolean isSpeakerOn()>();
+
+        if $z2 == 0 goto label3;
+
+        virtualinvoke r1.<android.net.rtp.AudioGroup: void setMode(int)>(3);
+
+        goto label4;
+
+     label3:
+        virtualinvoke r1.<android.net.rtp.AudioGroup: void setMode(int)>(2);
+
+     label4:
+        return;
+    }
+
+    private void stopCall(boolean)
+    {
+        android.net.sip.SipAudioCall r0;
+        boolean z0;
+        java.lang.StringBuilder $r1, $r2, $r3;
+        java.lang.String $r4;
+        android.net.rtp.AudioStream $r5, $r6, $r7;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("stopCall: releaseSocket=");
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>($r4);
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void releaseWifiHighPerfLock()>();
+
+        $r5 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        if $r5 == null goto label1;
+
+        $r6 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        virtualinvoke $r6.<android.net.rtp.AudioStream: void join(android.net.rtp.AudioGroup)>(null);
+
+        if z0 == 0 goto label1;
+
+        $r7 = r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream>;
+
+        virtualinvoke $r7.<android.net.rtp.AudioStream: void release()>();
+
+        r0.<android.net.sip.SipAudioCall: android.net.rtp.AudioStream mAudioStream> = null;
+
+     label1:
+        return;
+    }
+
+    private java.lang.String getLocalIp()
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SipSession $r1;
+        java.lang.String $r2;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        $r1 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        $r2 = virtualinvoke $r1.<android.net.sip.SipSession: java.lang.String getLocalIp()>();
+
+        return $r2;
+    }
+
+    private void throwSipException(java.lang.Throwable) throws android.net.sip.SipException
+    {
+        android.net.sip.SipAudioCall r0;
+        java.lang.Throwable r1;
+        boolean $z0;
+        android.net.sip.SipException $r2, $r3;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 := @parameter0: java.lang.Throwable;
+
+        $z0 = r1 instanceof android.net.sip.SipException;
+
+        if $z0 == 0 goto label1;
+
+        $r3 = (android.net.sip.SipException) r1;
+
+        throw $r3;
+
+     label1:
+        $r2 = new android.net.sip.SipException;
+
+        specialinvoke $r2.<android.net.sip.SipException: void <init>(java.lang.String,java.lang.Throwable)>("", r1);
+
+        throw $r2;
+    }
+
+    private void log(java.lang.String)
+    {
+        android.net.sip.SipAudioCall r0;
+        java.lang.String r1, $r2;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = <android.net.sip.SipAudioCall: java.lang.String LOG_TAG>;
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>($r2, r1);
+
+        return;
+    }
+
+    private void loge(java.lang.String)
+    {
+        android.net.sip.SipAudioCall r0;
+        java.lang.String r1, $r2;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = <android.net.sip.SipAudioCall: java.lang.String LOG_TAG>;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>($r2, r1);
+
+        return;
+    }
+
+    private void loge(java.lang.String, java.lang.Throwable)
+    {
+        android.net.sip.SipAudioCall r0;
+        java.lang.String r1, $r3;
+        java.lang.Throwable r2;
+
+        r0 := @this: android.net.sip.SipAudioCall;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.Throwable;
+
+        $r3 = <android.net.sip.SipAudioCall: java.lang.String LOG_TAG>;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r3, r1, r2);
+
+        return;
+    }
+
+    static void access$000(android.net.sip.SipAudioCall, java.lang.String)
+    {
+        android.net.sip.SipAudioCall r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        r1 := @parameter1: java.lang.String;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void log(java.lang.String)>(r1);
+
+        return;
+    }
+
+    static android.net.sip.SipAudioCall$Listener access$100(android.net.sip.SipAudioCall)
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SipAudioCall$Listener $r1;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        $r1 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipAudioCall$Listener mListener>;
+
+        return $r1;
+    }
+
+    static void access$200(android.net.sip.SipAudioCall, java.lang.String, java.lang.Throwable)
+    {
+        android.net.sip.SipAudioCall r0;
+        java.lang.String r1;
+        java.lang.Throwable r2;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.Throwable;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void loge(java.lang.String,java.lang.Throwable)>(r1, r2);
+
+        return;
+    }
+
+    static android.net.sip.SipSession access$300(android.net.sip.SipAudioCall)
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SipSession $r1;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        $r1 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mSipSession>;
+
+        return $r1;
+    }
+
+    static boolean access$400(android.net.sip.SipAudioCall)
+    {
+        android.net.sip.SipAudioCall r0;
+        boolean $z0;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        $z0 = r0.<android.net.sip.SipAudioCall: boolean mInCall>;
+
+        return $z0;
+    }
+
+    static android.net.sip.SimpleSessionDescription access$500(android.net.sip.SipAudioCall, java.lang.String)
+    {
+        android.net.sip.SipAudioCall r0;
+        java.lang.String r1;
+        android.net.sip.SimpleSessionDescription $r2;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r2 = specialinvoke r0.<android.net.sip.SipAudioCall: android.net.sip.SimpleSessionDescription createAnswer(java.lang.String)>(r1);
+
+        return $r2;
+    }
+
+    static java.lang.String access$602(android.net.sip.SipAudioCall, java.lang.String)
+    {
+        android.net.sip.SipAudioCall r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        r1 := @parameter1: java.lang.String;
+
+        r0.<android.net.sip.SipAudioCall: java.lang.String mPeerSd> = r1;
+
+        return r1;
+    }
+
+    static java.lang.String access$600(android.net.sip.SipAudioCall)
+    {
+        android.net.sip.SipAudioCall r0;
+        java.lang.String $r1;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        $r1 = r0.<android.net.sip.SipAudioCall: java.lang.String mPeerSd>;
+
+        return $r1;
+    }
+
+    static android.net.sip.SipSession access$700(android.net.sip.SipAudioCall)
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SipSession $r1;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        $r1 = r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mTransferringSession>;
+
+        return $r1;
+    }
+
+    static void access$800(android.net.sip.SipAudioCall)
+    {
+        android.net.sip.SipAudioCall r0;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void transferToNewSession()>();
+
+        return;
+    }
+
+    static boolean access$900(android.net.sip.SipAudioCall)
+    {
+        android.net.sip.SipAudioCall r0;
+        boolean $z0;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        $z0 = r0.<android.net.sip.SipAudioCall: boolean mHold>;
+
+        return $z0;
+    }
+
+    static android.net.sip.SipSession access$702(android.net.sip.SipAudioCall, android.net.sip.SipSession)
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SipSession r1;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        r1 := @parameter1: android.net.sip.SipSession;
+
+        r0.<android.net.sip.SipAudioCall: android.net.sip.SipSession mTransferringSession> = r1;
+
+        return r1;
+    }
+
+    static void access$1000(android.net.sip.SipAudioCall, boolean)
+    {
+        android.net.sip.SipAudioCall r0;
+        boolean z0;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void close(boolean)>(z0);
+
+        return;
+    }
+
+    static int access$1102(android.net.sip.SipAudioCall, int)
+    {
+        android.net.sip.SipAudioCall r0;
+        int i0;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        i0 := @parameter1: int;
+
+        r0.<android.net.sip.SipAudioCall: int mErrorCode> = i0;
+
+        return i0;
+    }
+
+    static java.lang.String access$1202(android.net.sip.SipAudioCall, java.lang.String)
+    {
+        android.net.sip.SipAudioCall r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        r1 := @parameter1: java.lang.String;
+
+        r0.<android.net.sip.SipAudioCall: java.lang.String mErrorMessage> = r1;
+
+        return r1;
+    }
+
+    static int access$1100(android.net.sip.SipAudioCall)
+    {
+        android.net.sip.SipAudioCall r0;
+        int $i0;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        $i0 = r0.<android.net.sip.SipAudioCall: int mErrorCode>;
+
+        return $i0;
+    }
+
+    static void access$1300(android.net.sip.SipAudioCall, int, java.lang.String)
+    {
+        android.net.sip.SipAudioCall r0;
+        int i0;
+        java.lang.String r1;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        specialinvoke r0.<android.net.sip.SipAudioCall: void onError(int,java.lang.String)>(i0, r1);
+
+        return;
+    }
+
+    static android.net.sip.SimpleSessionDescription access$1400(android.net.sip.SipAudioCall)
+    {
+        android.net.sip.SipAudioCall r0;
+        android.net.sip.SimpleSessionDescription $r1;
+
+        r0 := @parameter0: android.net.sip.SipAudioCall;
+
+        $r1 = specialinvoke r0.<android.net.sip.SipAudioCall: android.net.sip.SimpleSessionDescription createOffer()>();
+
+        return $r1;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+
+        <android.net.sip.SipAudioCall: int TRANSFER_TIMEOUT> = 15;
+
+        <android.net.sip.SipAudioCall: int SESSION_TIMEOUT> = 5;
+
+        <android.net.sip.SipAudioCall: boolean DONT_RELEASE_SOCKET> = 0;
+
+        <android.net.sip.SipAudioCall: boolean RELEASE_SOCKET> = 1;
+
+        <android.net.sip.SipAudioCall: boolean DBG> = 1;
+
+        $r0 = class "android/net/sip/SipAudioCall";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <android.net.sip.SipAudioCall: java.lang.String LOG_TAG> = $r1;
+
+        return;
+    }
+}

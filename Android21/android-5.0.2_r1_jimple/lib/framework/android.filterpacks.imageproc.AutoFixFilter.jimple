@@ -1,0 +1,2641 @@
+public class android.filterpacks.imageproc.AutoFixFilter extends android.filterfw.core.Filter
+{
+    private int mTileSize;
+    private float mScale;
+    private static final int[] normal_cdf;
+    private final java.lang.String mAutoFixShader;
+    private android.filterfw.core.Program mShaderProgram;
+    private android.filterfw.core.Program mNativeProgram;
+    private int mWidth;
+    private int mHeight;
+    private int mTarget;
+    private android.filterfw.core.Frame mHistFrame;
+    private android.filterfw.core.Frame mDensityFrame;
+
+    public void <init>(java.lang.String)
+    {
+        android.filterpacks.imageproc.AutoFixFilter r0;
+        java.lang.String r1;
+
+        r0 := @this: android.filterpacks.imageproc.AutoFixFilter;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<android.filterfw.core.Filter: void <init>(java.lang.String)>(r1);
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: int mTileSize> = 640;
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: java.lang.String mAutoFixShader> = "precision mediump float;\nuniform sampler2D tex_sampler_0;\nuniform sampler2D tex_sampler_1;\nuniform sampler2D tex_sampler_2;\nuniform float scale;\nuniform float shift_scale;\nuniform float hist_offset;\nuniform float hist_scale;\nuniform float density_offset;\nuniform float density_scale;\nvarying vec2 v_texcoord;\nvoid main() {\n  const vec3 weights = vec3(0.33333, 0.33333, 0.33333);\n  vec4 color = texture2D(tex_sampler_0, v_texcoord);\n  float energy = dot(color.rgb, weights);\n  float mask_value = energy - 0.5;\n  float alpha;\n  if (mask_value > 0.0) {\n    alpha = (pow(2.0 * mask_value, 1.5) - 1.0) * scale + 1.0;\n  } else { \n    alpha = (pow(2.0 * mask_value, 2.0) - 1.0) * scale + 1.0;\n  }\n  float index = energy * hist_scale + hist_offset;\n  vec4 temp = texture2D(tex_sampler_1, vec2(index, 0.5));\n  float value = temp.g + temp.r * shift_scale;\n  index = value * density_scale + density_offset;\n  temp = texture2D(tex_sampler_2, vec2(index, 0.5));\n  value = temp.g + temp.r * shift_scale;\n  float dst_energy = energy * alpha + value * (1.0 - alpha);\n  float max_energy = energy / max(color.r, max(color.g, color.b));\n  if (dst_energy > max_energy) {\n    dst_energy = max_energy;\n  }\n  if (energy == 0.0) {\n    gl_FragColor = color;\n  } else {\n    gl_FragColor = vec4(color.rgb * dst_energy / energy, color.a);\n  }\n}\n";
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: int mWidth> = 0;
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: int mHeight> = 0;
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: int mTarget> = 0;
+
+        return;
+    }
+
+    public void setupPorts()
+    {
+        android.filterpacks.imageproc.AutoFixFilter r0;
+        android.filterfw.core.MutableFrameFormat $r1;
+
+        r0 := @this: android.filterpacks.imageproc.AutoFixFilter;
+
+        $r1 = staticinvoke <android.filterfw.format.ImageFormat: android.filterfw.core.MutableFrameFormat create(int)>(3);
+
+        virtualinvoke r0.<android.filterpacks.imageproc.AutoFixFilter: void addMaskedInputPort(java.lang.String,android.filterfw.core.FrameFormat)>("image", $r1);
+
+        virtualinvoke r0.<android.filterpacks.imageproc.AutoFixFilter: void addOutputBasedOnInput(java.lang.String,java.lang.String)>("image", "image");
+
+        return;
+    }
+
+    public android.filterfw.core.FrameFormat getOutputFormat(java.lang.String, android.filterfw.core.FrameFormat)
+    {
+        android.filterpacks.imageproc.AutoFixFilter r0;
+        java.lang.String r1;
+        android.filterfw.core.FrameFormat r2;
+
+        r0 := @this: android.filterpacks.imageproc.AutoFixFilter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: android.filterfw.core.FrameFormat;
+
+        return r2;
+    }
+
+    public void initProgram(android.filterfw.core.FilterContext, int)
+    {
+        android.filterpacks.imageproc.AutoFixFilter r0;
+        android.filterfw.core.FilterContext r1;
+        int i0, $i1;
+        android.filterfw.core.ShaderProgram r2, $r3;
+        java.lang.RuntimeException $r4;
+        java.lang.StringBuilder $r5, $r6, $r7, $r8;
+        java.lang.String $r9;
+
+        r0 := @this: android.filterpacks.imageproc.AutoFixFilter;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        i0 := @parameter1: int;
+
+        lookupswitch(i0)
+        {
+            case 3: goto label1;
+            default: goto label2;
+        };
+
+     label1:
+        $r3 = new android.filterfw.core.ShaderProgram;
+
+        specialinvoke $r3.<android.filterfw.core.ShaderProgram: void <init>(android.filterfw.core.FilterContext,java.lang.String)>(r1, "precision mediump float;\nuniform sampler2D tex_sampler_0;\nuniform sampler2D tex_sampler_1;\nuniform sampler2D tex_sampler_2;\nuniform float scale;\nuniform float shift_scale;\nuniform float hist_offset;\nuniform float hist_scale;\nuniform float density_offset;\nuniform float density_scale;\nvarying vec2 v_texcoord;\nvoid main() {\n  const vec3 weights = vec3(0.33333, 0.33333, 0.33333);\n  vec4 color = texture2D(tex_sampler_0, v_texcoord);\n  float energy = dot(color.rgb, weights);\n  float mask_value = energy - 0.5;\n  float alpha;\n  if (mask_value > 0.0) {\n    alpha = (pow(2.0 * mask_value, 1.5) - 1.0) * scale + 1.0;\n  } else { \n    alpha = (pow(2.0 * mask_value, 2.0) - 1.0) * scale + 1.0;\n  }\n  float index = energy * hist_scale + hist_offset;\n  vec4 temp = texture2D(tex_sampler_1, vec2(index, 0.5));\n  float value = temp.g + temp.r * shift_scale;\n  index = value * density_scale + density_offset;\n  temp = texture2D(tex_sampler_2, vec2(index, 0.5));\n  value = temp.g + temp.r * shift_scale;\n  float dst_energy = energy * alpha + value * (1.0 - alpha);\n  float max_energy = energy / max(color.r, max(color.g, color.b));\n  if (dst_energy > max_energy) {\n    dst_energy = max_energy;\n  }\n  if (energy == 0.0) {\n    gl_FragColor = color;\n  } else {\n    gl_FragColor = vec4(color.rgb * dst_energy / energy, color.a);\n  }\n}\n");
+
+        r2 = $r3;
+
+        $i1 = r0.<android.filterpacks.imageproc.AutoFixFilter: int mTileSize>;
+
+        virtualinvoke r2.<android.filterfw.core.ShaderProgram: void setMaximumTileSize(int)>($i1);
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Program mShaderProgram> = r2;
+
+        goto label3;
+
+     label2:
+        $r4 = new java.lang.RuntimeException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Filter Sharpen does not support frames of target ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("!");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.lang.RuntimeException: void <init>(java.lang.String)>($r9);
+
+        throw $r4;
+
+     label3:
+        r0.<android.filterpacks.imageproc.AutoFixFilter: int mTarget> = i0;
+
+        return;
+    }
+
+    private void initParameters()
+    {
+        android.filterpacks.imageproc.AutoFixFilter r0;
+        android.filterfw.core.Program $r1, $r3, $r5, $r7, $r9, $r11;
+        java.lang.Float $r2, $r4, $r6, $r8, $r10, $r12;
+        float $f0;
+
+        r0 := @this: android.filterpacks.imageproc.AutoFixFilter;
+
+        $r1 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Program mShaderProgram>;
+
+        $r2 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>(0.00390625F);
+
+        virtualinvoke $r1.<android.filterfw.core.Program: void setHostValue(java.lang.String,java.lang.Object)>("shift_scale", $r2);
+
+        $r3 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Program mShaderProgram>;
+
+        $r4 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>(6.527415E-4F);
+
+        virtualinvoke $r3.<android.filterfw.core.Program: void setHostValue(java.lang.String,java.lang.Object)>("hist_offset", $r4);
+
+        $r5 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Program mShaderProgram>;
+
+        $r6 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>(0.99869454F);
+
+        virtualinvoke $r5.<android.filterfw.core.Program: void setHostValue(java.lang.String,java.lang.Object)>("hist_scale", $r6);
+
+        $r7 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Program mShaderProgram>;
+
+        $r8 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>(4.8828125E-4F);
+
+        virtualinvoke $r7.<android.filterfw.core.Program: void setHostValue(java.lang.String,java.lang.Object)>("density_offset", $r8);
+
+        $r9 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Program mShaderProgram>;
+
+        $r10 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>(0.99902344F);
+
+        virtualinvoke $r9.<android.filterfw.core.Program: void setHostValue(java.lang.String,java.lang.Object)>("density_scale", $r10);
+
+        $r11 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Program mShaderProgram>;
+
+        $f0 = r0.<android.filterpacks.imageproc.AutoFixFilter: float mScale>;
+
+        $r12 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>($f0);
+
+        virtualinvoke $r11.<android.filterfw.core.Program: void setHostValue(java.lang.String,java.lang.Object)>("scale", $r12);
+
+        return;
+    }
+
+    protected void prepare(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.imageproc.AutoFixFilter r0;
+        android.filterfw.core.FilterContext r1;
+        short s0, s1;
+        long l2, l4, $l6, $l7, $l9;
+        int[] r2, $r6;
+        int i3, $i5, $i8;
+        android.filterfw.core.FrameManager $r3;
+        android.filterfw.core.Frame $r4, $r5;
+        android.filterfw.core.MutableFrameFormat r7;
+
+        r0 := @this: android.filterpacks.imageproc.AutoFixFilter;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        s0 = 1024;
+
+        s1 = 766;
+
+        l2 = 65535L;
+
+        r2 = newarray (int)[s0];
+
+        i3 = 0;
+
+     label1:
+        if i3 >= s0 goto label2;
+
+        $r6 = <android.filterpacks.imageproc.AutoFixFilter: int[] normal_cdf>;
+
+        $i5 = $r6[i3];
+
+        $l7 = (long) $i5;
+
+        $l9 = $l7 * l2;
+
+        $l6 = (long) s1;
+
+        l4 = $l9 / $l6;
+
+        $i8 = (int) l4;
+
+        r2[i3] = $i8;
+
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label2:
+        r7 = staticinvoke <android.filterfw.format.ImageFormat: android.filterfw.core.MutableFrameFormat create(int,int,int,int)>(s0, 1, 3, 3);
+
+        $r3 = virtualinvoke r1.<android.filterfw.core.FilterContext: android.filterfw.core.FrameManager getFrameManager()>();
+
+        $r4 = virtualinvoke $r3.<android.filterfw.core.FrameManager: android.filterfw.core.Frame newFrame(android.filterfw.core.FrameFormat)>(r7);
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mDensityFrame> = $r4;
+
+        $r5 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mDensityFrame>;
+
+        virtualinvoke $r5.<android.filterfw.core.Frame: void setInts(int[])>(r2);
+
+        return;
+    }
+
+    public void tearDown(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.imageproc.AutoFixFilter r0;
+        android.filterfw.core.FilterContext r1;
+        android.filterfw.core.Frame $r2, $r3, $r4, $r6;
+
+        r0 := @this: android.filterpacks.imageproc.AutoFixFilter;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        $r2 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mDensityFrame>;
+
+        if $r2 == null goto label1;
+
+        $r6 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mDensityFrame>;
+
+        virtualinvoke $r6.<android.filterfw.core.Frame: android.filterfw.core.Frame release()>();
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mDensityFrame> = null;
+
+     label1:
+        $r3 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mHistFrame>;
+
+        if $r3 == null goto label2;
+
+        $r4 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mHistFrame>;
+
+        virtualinvoke $r4.<android.filterfw.core.Frame: android.filterfw.core.Frame release()>();
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mHistFrame> = null;
+
+     label2:
+        return;
+    }
+
+    public void fieldPortValueUpdated(java.lang.String, android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.imageproc.AutoFixFilter r0;
+        java.lang.String r1;
+        android.filterfw.core.FilterContext r2;
+        android.filterfw.core.Program $r3, $r4;
+        float $f0;
+        java.lang.Float $r5;
+
+        r0 := @this: android.filterpacks.imageproc.AutoFixFilter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: android.filterfw.core.FilterContext;
+
+        $r3 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Program mShaderProgram>;
+
+        if $r3 == null goto label1;
+
+        $r4 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Program mShaderProgram>;
+
+        $f0 = r0.<android.filterpacks.imageproc.AutoFixFilter: float mScale>;
+
+        $r5 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>($f0);
+
+        virtualinvoke $r4.<android.filterfw.core.Program: void setHostValue(java.lang.String,java.lang.Object)>("scale", $r5);
+
+     label1:
+        return;
+    }
+
+    public void process(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.imageproc.AutoFixFilter r0;
+        android.filterfw.core.FilterContext r1;
+        android.filterfw.core.Frame r2, r4, $r10, $r11;
+        android.filterfw.core.FrameFormat r3;
+        android.filterfw.core.Frame[] r5, $r9;
+        android.filterfw.core.Program $r6, $r13;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10;
+        android.filterfw.core.FrameManager $r7;
+        int[] $r8;
+
+        r0 := @this: android.filterpacks.imageproc.AutoFixFilter;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        r2 = virtualinvoke r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame pullInput(java.lang.String)>("image");
+
+        r3 = virtualinvoke r2.<android.filterfw.core.Frame: android.filterfw.core.FrameFormat getFormat()>();
+
+        $r6 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Program mShaderProgram>;
+
+        if $r6 == null goto label1;
+
+        $i10 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getTarget()>();
+
+        $i9 = r0.<android.filterpacks.imageproc.AutoFixFilter: int mTarget>;
+
+        if $i10 == $i9 goto label2;
+
+     label1:
+        $i0 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getTarget()>();
+
+        virtualinvoke r0.<android.filterpacks.imageproc.AutoFixFilter: void initProgram(android.filterfw.core.FilterContext,int)>(r1, $i0);
+
+        specialinvoke r0.<android.filterpacks.imageproc.AutoFixFilter: void initParameters()>();
+
+     label2:
+        $i1 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getWidth()>();
+
+        $i2 = r0.<android.filterpacks.imageproc.AutoFixFilter: int mWidth>;
+
+        if $i1 != $i2 goto label3;
+
+        $i8 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getHeight()>();
+
+        $i7 = r0.<android.filterpacks.imageproc.AutoFixFilter: int mHeight>;
+
+        if $i8 == $i7 goto label4;
+
+     label3:
+        $i3 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getWidth()>();
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: int mWidth> = $i3;
+
+        $i4 = virtualinvoke r3.<android.filterfw.core.FrameFormat: int getHeight()>();
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: int mHeight> = $i4;
+
+        $i5 = r0.<android.filterpacks.imageproc.AutoFixFilter: int mWidth>;
+
+        $i6 = r0.<android.filterpacks.imageproc.AutoFixFilter: int mHeight>;
+
+        $r8 = virtualinvoke r2.<android.filterfw.core.Frame: int[] getInts()>();
+
+        specialinvoke r0.<android.filterpacks.imageproc.AutoFixFilter: void createHistogramFrame(android.filterfw.core.FilterContext,int,int,int[])>(r1, $i5, $i6, $r8);
+
+     label4:
+        $r7 = virtualinvoke r1.<android.filterfw.core.FilterContext: android.filterfw.core.FrameManager getFrameManager()>();
+
+        r4 = virtualinvoke $r7.<android.filterfw.core.FrameManager: android.filterfw.core.Frame newFrame(android.filterfw.core.FrameFormat)>(r3);
+
+        $r9 = newarray (android.filterfw.core.Frame)[3];
+
+        $r9[0] = r2;
+
+        $r11 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mHistFrame>;
+
+        $r9[1] = $r11;
+
+        $r10 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mDensityFrame>;
+
+        $r9[2] = $r10;
+
+        r5 = $r9;
+
+        $r13 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Program mShaderProgram>;
+
+        virtualinvoke $r13.<android.filterfw.core.Program: void process(android.filterfw.core.Frame[],android.filterfw.core.Frame)>(r5, r4);
+
+        virtualinvoke r0.<android.filterpacks.imageproc.AutoFixFilter: void pushOutput(java.lang.String,android.filterfw.core.Frame)>("image", r4);
+
+        virtualinvoke r4.<android.filterfw.core.Frame: android.filterfw.core.Frame release()>();
+
+        return;
+    }
+
+    private void createHistogramFrame(android.filterfw.core.FilterContext, int, int, int[])
+    {
+        android.filterpacks.imageproc.AutoFixFilter r0;
+        android.filterfw.core.FilterContext r1;
+        int i0, i1, i3, i4, i5, i6, i7, i8, i9, $i10, $i11, $i12, $i13, $i14, $i17, $i19, $i20, $i21, $i22, $i23, $i24, $i25, $i26, $i27, $i28, $i29, $i30, $i31, $i32, $i33, $i34, $i35, $i36, i37, i38;
+        int[] r2, r3;
+        short s2;
+        float f0, $f2, $f3, $f4, $f5;
+        android.filterfw.core.FrameManager $r4;
+        android.filterfw.core.Frame $r5, $r6, $r7, $r9;
+        long $l15, $l16, $l18, l39;
+        android.filterfw.core.MutableFrameFormat r10;
+
+        r0 := @this: android.filterpacks.imageproc.AutoFixFilter;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: int[];
+
+        s2 = 766;
+
+        r3 = newarray (int)[s2];
+
+        f0 = 0.05F;
+
+        $f3 = (float) i1;
+
+        $f2 = $f3 * f0;
+
+        i3 = (int) $f2;
+
+        $f5 = (float) i0;
+
+        $f4 = $f5 * f0;
+
+        i4 = (int) $f4;
+
+        $i11 = 2 * i4;
+
+        $i12 = i0 - $i11;
+
+        $i10 = 2 * i3;
+
+        $i13 = i1 - $i10;
+
+        i5 = $i12 * $i13;
+
+        i6 = i3;
+
+     label1:
+        $i14 = i1 - i3;
+
+        if i6 >= $i14 goto label4;
+
+        i7 = i4;
+
+     label2:
+        $i26 = i0 - i4;
+
+        if i7 >= $i26 goto label3;
+
+        $i23 = i6 * i0;
+
+        i8 = $i23 + i7;
+
+        $i24 = r2[i8];
+
+        $i28 = $i24 & 255;
+
+        $i29 = r2[i8];
+
+        $i30 = $i29 >> 8;
+
+        $i27 = $i30 & 255;
+
+        $i31 = $i28 + $i27;
+
+        $i34 = r2[i8];
+
+        $i33 = $i34 >> 16;
+
+        $i32 = $i33 & 255;
+
+        i9 = $i31 + $i32;
+
+        $i36 = r3[i9];
+
+        $i35 = $i36 + 1;
+
+        r3[i9] = $i35;
+
+        i7 = i7 + 1;
+
+        goto label2;
+
+     label3:
+        i6 = i6 + 1;
+
+        goto label1;
+
+     label4:
+        i37 = 1;
+
+     label5:
+        if i37 >= s2 goto label6;
+
+        $i20 = r3[i37];
+
+        $i22 = i37 - 1;
+
+        $i19 = r3[$i22];
+
+        $i25 = $i20 + $i19;
+
+        r3[i37] = $i25;
+
+        i37 = i37 + 1;
+
+        goto label5;
+
+     label6:
+        i38 = 0;
+
+     label7:
+        if i38 >= s2 goto label8;
+
+        $i17 = r3[i38];
+
+        $l18 = (long) $i17;
+
+        $l16 = 65535L * $l18;
+
+        $l15 = (long) i5;
+
+        l39 = $l16 / $l15;
+
+        $i21 = (int) l39;
+
+        r3[i38] = $i21;
+
+        i38 = i38 + 1;
+
+        goto label7;
+
+     label8:
+        r10 = staticinvoke <android.filterfw.format.ImageFormat: android.filterfw.core.MutableFrameFormat create(int,int,int,int)>(s2, 1, 3, 3);
+
+        $r5 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mHistFrame>;
+
+        if $r5 == null goto label9;
+
+        $r9 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mHistFrame>;
+
+        virtualinvoke $r9.<android.filterfw.core.Frame: android.filterfw.core.Frame release()>();
+
+     label9:
+        $r4 = virtualinvoke r1.<android.filterfw.core.FilterContext: android.filterfw.core.FrameManager getFrameManager()>();
+
+        $r7 = virtualinvoke $r4.<android.filterfw.core.FrameManager: android.filterfw.core.Frame newFrame(android.filterfw.core.FrameFormat)>(r10);
+
+        r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mHistFrame> = $r7;
+
+        $r6 = r0.<android.filterpacks.imageproc.AutoFixFilter: android.filterfw.core.Frame mHistFrame>;
+
+        virtualinvoke $r6.<android.filterfw.core.Frame: void setInts(int[])>(r3);
+
+        return;
+    }
+
+    static void <clinit>()
+    {
+        int[] $r0;
+
+        $r0 = newarray (int)[1024];
+
+        $r0[0] = 9;
+
+        $r0[1] = 33;
+
+        $r0[2] = 50;
+
+        $r0[3] = 64;
+
+        $r0[4] = 75;
+
+        $r0[5] = 84;
+
+        $r0[6] = 92;
+
+        $r0[7] = 99;
+
+        $r0[8] = 106;
+
+        $r0[9] = 112;
+
+        $r0[10] = 117;
+
+        $r0[11] = 122;
+
+        $r0[12] = 126;
+
+        $r0[13] = 130;
+
+        $r0[14] = 134;
+
+        $r0[15] = 138;
+
+        $r0[16] = 142;
+
+        $r0[17] = 145;
+
+        $r0[18] = 148;
+
+        $r0[19] = 150;
+
+        $r0[20] = 154;
+
+        $r0[21] = 157;
+
+        $r0[22] = 159;
+
+        $r0[23] = 162;
+
+        $r0[24] = 164;
+
+        $r0[25] = 166;
+
+        $r0[26] = 169;
+
+        $r0[27] = 170;
+
+        $r0[28] = 173;
+
+        $r0[29] = 175;
+
+        $r0[30] = 177;
+
+        $r0[31] = 179;
+
+        $r0[32] = 180;
+
+        $r0[33] = 182;
+
+        $r0[34] = 184;
+
+        $r0[35] = 186;
+
+        $r0[36] = 188;
+
+        $r0[37] = 189;
+
+        $r0[38] = 190;
+
+        $r0[39] = 192;
+
+        $r0[40] = 194;
+
+        $r0[41] = 195;
+
+        $r0[42] = 197;
+
+        $r0[43] = 198;
+
+        $r0[44] = 199;
+
+        $r0[45] = 200;
+
+        $r0[46] = 202;
+
+        $r0[47] = 203;
+
+        $r0[48] = 205;
+
+        $r0[49] = 206;
+
+        $r0[50] = 207;
+
+        $r0[51] = 208;
+
+        $r0[52] = 209;
+
+        $r0[53] = 210;
+
+        $r0[54] = 212;
+
+        $r0[55] = 213;
+
+        $r0[56] = 214;
+
+        $r0[57] = 215;
+
+        $r0[58] = 216;
+
+        $r0[59] = 217;
+
+        $r0[60] = 218;
+
+        $r0[61] = 219;
+
+        $r0[62] = 220;
+
+        $r0[63] = 221;
+
+        $r0[64] = 222;
+
+        $r0[65] = 223;
+
+        $r0[66] = 224;
+
+        $r0[67] = 225;
+
+        $r0[68] = 226;
+
+        $r0[69] = 227;
+
+        $r0[70] = 228;
+
+        $r0[71] = 229;
+
+        $r0[72] = 229;
+
+        $r0[73] = 230;
+
+        $r0[74] = 231;
+
+        $r0[75] = 232;
+
+        $r0[76] = 233;
+
+        $r0[77] = 234;
+
+        $r0[78] = 235;
+
+        $r0[79] = 236;
+
+        $r0[80] = 236;
+
+        $r0[81] = 237;
+
+        $r0[82] = 238;
+
+        $r0[83] = 239;
+
+        $r0[84] = 239;
+
+        $r0[85] = 240;
+
+        $r0[86] = 240;
+
+        $r0[87] = 242;
+
+        $r0[88] = 242;
+
+        $r0[89] = 243;
+
+        $r0[90] = 244;
+
+        $r0[91] = 245;
+
+        $r0[92] = 245;
+
+        $r0[93] = 246;
+
+        $r0[94] = 247;
+
+        $r0[95] = 247;
+
+        $r0[96] = 248;
+
+        $r0[97] = 249;
+
+        $r0[98] = 249;
+
+        $r0[99] = 250;
+
+        $r0[100] = 250;
+
+        $r0[101] = 251;
+
+        $r0[102] = 252;
+
+        $r0[103] = 253;
+
+        $r0[104] = 253;
+
+        $r0[105] = 254;
+
+        $r0[106] = 255;
+
+        $r0[107] = 255;
+
+        $r0[108] = 256;
+
+        $r0[109] = 256;
+
+        $r0[110] = 257;
+
+        $r0[111] = 258;
+
+        $r0[112] = 258;
+
+        $r0[113] = 259;
+
+        $r0[114] = 259;
+
+        $r0[115] = 259;
+
+        $r0[116] = 260;
+
+        $r0[117] = 261;
+
+        $r0[118] = 262;
+
+        $r0[119] = 262;
+
+        $r0[120] = 263;
+
+        $r0[121] = 263;
+
+        $r0[122] = 264;
+
+        $r0[123] = 264;
+
+        $r0[124] = 265;
+
+        $r0[125] = 265;
+
+        $r0[126] = 266;
+
+        $r0[127] = 267;
+
+        $r0[128] = 267;
+
+        $r0[129] = 268;
+
+        $r0[130] = 268;
+
+        $r0[131] = 269;
+
+        $r0[132] = 269;
+
+        $r0[133] = 269;
+
+        $r0[134] = 270;
+
+        $r0[135] = 270;
+
+        $r0[136] = 271;
+
+        $r0[137] = 272;
+
+        $r0[138] = 272;
+
+        $r0[139] = 273;
+
+        $r0[140] = 273;
+
+        $r0[141] = 274;
+
+        $r0[142] = 274;
+
+        $r0[143] = 275;
+
+        $r0[144] = 275;
+
+        $r0[145] = 276;
+
+        $r0[146] = 276;
+
+        $r0[147] = 277;
+
+        $r0[148] = 277;
+
+        $r0[149] = 277;
+
+        $r0[150] = 278;
+
+        $r0[151] = 278;
+
+        $r0[152] = 279;
+
+        $r0[153] = 279;
+
+        $r0[154] = 279;
+
+        $r0[155] = 280;
+
+        $r0[156] = 280;
+
+        $r0[157] = 281;
+
+        $r0[158] = 282;
+
+        $r0[159] = 282;
+
+        $r0[160] = 282;
+
+        $r0[161] = 283;
+
+        $r0[162] = 283;
+
+        $r0[163] = 284;
+
+        $r0[164] = 284;
+
+        $r0[165] = 285;
+
+        $r0[166] = 285;
+
+        $r0[167] = 285;
+
+        $r0[168] = 286;
+
+        $r0[169] = 286;
+
+        $r0[170] = 287;
+
+        $r0[171] = 287;
+
+        $r0[172] = 288;
+
+        $r0[173] = 288;
+
+        $r0[174] = 288;
+
+        $r0[175] = 289;
+
+        $r0[176] = 289;
+
+        $r0[177] = 289;
+
+        $r0[178] = 290;
+
+        $r0[179] = 290;
+
+        $r0[180] = 290;
+
+        $r0[181] = 291;
+
+        $r0[182] = 292;
+
+        $r0[183] = 292;
+
+        $r0[184] = 292;
+
+        $r0[185] = 293;
+
+        $r0[186] = 293;
+
+        $r0[187] = 294;
+
+        $r0[188] = 294;
+
+        $r0[189] = 294;
+
+        $r0[190] = 295;
+
+        $r0[191] = 295;
+
+        $r0[192] = 296;
+
+        $r0[193] = 296;
+
+        $r0[194] = 296;
+
+        $r0[195] = 297;
+
+        $r0[196] = 297;
+
+        $r0[197] = 297;
+
+        $r0[198] = 298;
+
+        $r0[199] = 298;
+
+        $r0[200] = 298;
+
+        $r0[201] = 299;
+
+        $r0[202] = 299;
+
+        $r0[203] = 299;
+
+        $r0[204] = 299;
+
+        $r0[205] = 300;
+
+        $r0[206] = 300;
+
+        $r0[207] = 301;
+
+        $r0[208] = 301;
+
+        $r0[209] = 302;
+
+        $r0[210] = 302;
+
+        $r0[211] = 302;
+
+        $r0[212] = 303;
+
+        $r0[213] = 303;
+
+        $r0[214] = 304;
+
+        $r0[215] = 304;
+
+        $r0[216] = 304;
+
+        $r0[217] = 305;
+
+        $r0[218] = 305;
+
+        $r0[219] = 305;
+
+        $r0[220] = 306;
+
+        $r0[221] = 306;
+
+        $r0[222] = 306;
+
+        $r0[223] = 307;
+
+        $r0[224] = 307;
+
+        $r0[225] = 307;
+
+        $r0[226] = 308;
+
+        $r0[227] = 308;
+
+        $r0[228] = 308;
+
+        $r0[229] = 309;
+
+        $r0[230] = 309;
+
+        $r0[231] = 309;
+
+        $r0[232] = 309;
+
+        $r0[233] = 310;
+
+        $r0[234] = 310;
+
+        $r0[235] = 310;
+
+        $r0[236] = 310;
+
+        $r0[237] = 311;
+
+        $r0[238] = 312;
+
+        $r0[239] = 312;
+
+        $r0[240] = 312;
+
+        $r0[241] = 313;
+
+        $r0[242] = 313;
+
+        $r0[243] = 313;
+
+        $r0[244] = 314;
+
+        $r0[245] = 314;
+
+        $r0[246] = 314;
+
+        $r0[247] = 315;
+
+        $r0[248] = 315;
+
+        $r0[249] = 315;
+
+        $r0[250] = 315;
+
+        $r0[251] = 316;
+
+        $r0[252] = 316;
+
+        $r0[253] = 316;
+
+        $r0[254] = 317;
+
+        $r0[255] = 317;
+
+        $r0[256] = 317;
+
+        $r0[257] = 318;
+
+        $r0[258] = 318;
+
+        $r0[259] = 318;
+
+        $r0[260] = 319;
+
+        $r0[261] = 319;
+
+        $r0[262] = 319;
+
+        $r0[263] = 319;
+
+        $r0[264] = 319;
+
+        $r0[265] = 320;
+
+        $r0[266] = 320;
+
+        $r0[267] = 320;
+
+        $r0[268] = 321;
+
+        $r0[269] = 321;
+
+        $r0[270] = 322;
+
+        $r0[271] = 322;
+
+        $r0[272] = 322;
+
+        $r0[273] = 323;
+
+        $r0[274] = 323;
+
+        $r0[275] = 323;
+
+        $r0[276] = 323;
+
+        $r0[277] = 324;
+
+        $r0[278] = 324;
+
+        $r0[279] = 324;
+
+        $r0[280] = 325;
+
+        $r0[281] = 325;
+
+        $r0[282] = 325;
+
+        $r0[283] = 325;
+
+        $r0[284] = 326;
+
+        $r0[285] = 326;
+
+        $r0[286] = 326;
+
+        $r0[287] = 327;
+
+        $r0[288] = 327;
+
+        $r0[289] = 327;
+
+        $r0[290] = 327;
+
+        $r0[291] = 328;
+
+        $r0[292] = 328;
+
+        $r0[293] = 328;
+
+        $r0[294] = 329;
+
+        $r0[295] = 329;
+
+        $r0[296] = 329;
+
+        $r0[297] = 329;
+
+        $r0[298] = 329;
+
+        $r0[299] = 330;
+
+        $r0[300] = 330;
+
+        $r0[301] = 330;
+
+        $r0[302] = 330;
+
+        $r0[303] = 331;
+
+        $r0[304] = 331;
+
+        $r0[305] = 332;
+
+        $r0[306] = 332;
+
+        $r0[307] = 332;
+
+        $r0[308] = 333;
+
+        $r0[309] = 333;
+
+        $r0[310] = 333;
+
+        $r0[311] = 333;
+
+        $r0[312] = 334;
+
+        $r0[313] = 334;
+
+        $r0[314] = 334;
+
+        $r0[315] = 334;
+
+        $r0[316] = 335;
+
+        $r0[317] = 335;
+
+        $r0[318] = 335;
+
+        $r0[319] = 336;
+
+        $r0[320] = 336;
+
+        $r0[321] = 336;
+
+        $r0[322] = 336;
+
+        $r0[323] = 337;
+
+        $r0[324] = 337;
+
+        $r0[325] = 337;
+
+        $r0[326] = 337;
+
+        $r0[327] = 338;
+
+        $r0[328] = 338;
+
+        $r0[329] = 338;
+
+        $r0[330] = 339;
+
+        $r0[331] = 339;
+
+        $r0[332] = 339;
+
+        $r0[333] = 339;
+
+        $r0[334] = 339;
+
+        $r0[335] = 339;
+
+        $r0[336] = 340;
+
+        $r0[337] = 340;
+
+        $r0[338] = 340;
+
+        $r0[339] = 340;
+
+        $r0[340] = 341;
+
+        $r0[341] = 341;
+
+        $r0[342] = 342;
+
+        $r0[343] = 342;
+
+        $r0[344] = 342;
+
+        $r0[345] = 342;
+
+        $r0[346] = 343;
+
+        $r0[347] = 343;
+
+        $r0[348] = 343;
+
+        $r0[349] = 344;
+
+        $r0[350] = 344;
+
+        $r0[351] = 344;
+
+        $r0[352] = 344;
+
+        $r0[353] = 345;
+
+        $r0[354] = 345;
+
+        $r0[355] = 345;
+
+        $r0[356] = 345;
+
+        $r0[357] = 346;
+
+        $r0[358] = 346;
+
+        $r0[359] = 346;
+
+        $r0[360] = 346;
+
+        $r0[361] = 347;
+
+        $r0[362] = 347;
+
+        $r0[363] = 347;
+
+        $r0[364] = 347;
+
+        $r0[365] = 348;
+
+        $r0[366] = 348;
+
+        $r0[367] = 348;
+
+        $r0[368] = 348;
+
+        $r0[369] = 349;
+
+        $r0[370] = 349;
+
+        $r0[371] = 349;
+
+        $r0[372] = 349;
+
+        $r0[373] = 349;
+
+        $r0[374] = 349;
+
+        $r0[375] = 350;
+
+        $r0[376] = 350;
+
+        $r0[377] = 350;
+
+        $r0[378] = 350;
+
+        $r0[379] = 351;
+
+        $r0[380] = 351;
+
+        $r0[381] = 352;
+
+        $r0[382] = 352;
+
+        $r0[383] = 352;
+
+        $r0[384] = 352;
+
+        $r0[385] = 353;
+
+        $r0[386] = 353;
+
+        $r0[387] = 353;
+
+        $r0[388] = 353;
+
+        $r0[389] = 354;
+
+        $r0[390] = 354;
+
+        $r0[391] = 354;
+
+        $r0[392] = 354;
+
+        $r0[393] = 355;
+
+        $r0[394] = 355;
+
+        $r0[395] = 355;
+
+        $r0[396] = 355;
+
+        $r0[397] = 356;
+
+        $r0[398] = 356;
+
+        $r0[399] = 356;
+
+        $r0[400] = 356;
+
+        $r0[401] = 357;
+
+        $r0[402] = 357;
+
+        $r0[403] = 357;
+
+        $r0[404] = 357;
+
+        $r0[405] = 358;
+
+        $r0[406] = 358;
+
+        $r0[407] = 358;
+
+        $r0[408] = 358;
+
+        $r0[409] = 359;
+
+        $r0[410] = 359;
+
+        $r0[411] = 359;
+
+        $r0[412] = 359;
+
+        $r0[413] = 359;
+
+        $r0[414] = 359;
+
+        $r0[415] = 359;
+
+        $r0[416] = 360;
+
+        $r0[417] = 360;
+
+        $r0[418] = 360;
+
+        $r0[419] = 360;
+
+        $r0[420] = 361;
+
+        $r0[421] = 361;
+
+        $r0[422] = 362;
+
+        $r0[423] = 362;
+
+        $r0[424] = 362;
+
+        $r0[425] = 362;
+
+        $r0[426] = 363;
+
+        $r0[427] = 363;
+
+        $r0[428] = 363;
+
+        $r0[429] = 363;
+
+        $r0[430] = 364;
+
+        $r0[431] = 364;
+
+        $r0[432] = 364;
+
+        $r0[433] = 364;
+
+        $r0[434] = 365;
+
+        $r0[435] = 365;
+
+        $r0[436] = 365;
+
+        $r0[437] = 365;
+
+        $r0[438] = 366;
+
+        $r0[439] = 366;
+
+        $r0[440] = 366;
+
+        $r0[441] = 366;
+
+        $r0[442] = 366;
+
+        $r0[443] = 367;
+
+        $r0[444] = 367;
+
+        $r0[445] = 367;
+
+        $r0[446] = 367;
+
+        $r0[447] = 368;
+
+        $r0[448] = 368;
+
+        $r0[449] = 368;
+
+        $r0[450] = 368;
+
+        $r0[451] = 369;
+
+        $r0[452] = 369;
+
+        $r0[453] = 369;
+
+        $r0[454] = 369;
+
+        $r0[455] = 369;
+
+        $r0[456] = 369;
+
+        $r0[457] = 370;
+
+        $r0[458] = 370;
+
+        $r0[459] = 370;
+
+        $r0[460] = 370;
+
+        $r0[461] = 370;
+
+        $r0[462] = 371;
+
+        $r0[463] = 371;
+
+        $r0[464] = 372;
+
+        $r0[465] = 372;
+
+        $r0[466] = 372;
+
+        $r0[467] = 372;
+
+        $r0[468] = 373;
+
+        $r0[469] = 373;
+
+        $r0[470] = 373;
+
+        $r0[471] = 373;
+
+        $r0[472] = 374;
+
+        $r0[473] = 374;
+
+        $r0[474] = 374;
+
+        $r0[475] = 374;
+
+        $r0[476] = 374;
+
+        $r0[477] = 375;
+
+        $r0[478] = 375;
+
+        $r0[479] = 375;
+
+        $r0[480] = 375;
+
+        $r0[481] = 376;
+
+        $r0[482] = 376;
+
+        $r0[483] = 376;
+
+        $r0[484] = 376;
+
+        $r0[485] = 377;
+
+        $r0[486] = 377;
+
+        $r0[487] = 377;
+
+        $r0[488] = 377;
+
+        $r0[489] = 378;
+
+        $r0[490] = 378;
+
+        $r0[491] = 378;
+
+        $r0[492] = 378;
+
+        $r0[493] = 378;
+
+        $r0[494] = 379;
+
+        $r0[495] = 379;
+
+        $r0[496] = 379;
+
+        $r0[497] = 379;
+
+        $r0[498] = 379;
+
+        $r0[499] = 379;
+
+        $r0[500] = 380;
+
+        $r0[501] = 380;
+
+        $r0[502] = 380;
+
+        $r0[503] = 380;
+
+        $r0[504] = 381;
+
+        $r0[505] = 381;
+
+        $r0[506] = 381;
+
+        $r0[507] = 382;
+
+        $r0[508] = 382;
+
+        $r0[509] = 382;
+
+        $r0[510] = 382;
+
+        $r0[511] = 383;
+
+        $r0[512] = 383;
+
+        $r0[513] = 383;
+
+        $r0[514] = 383;
+
+        $r0[515] = 384;
+
+        $r0[516] = 384;
+
+        $r0[517] = 384;
+
+        $r0[518] = 384;
+
+        $r0[519] = 385;
+
+        $r0[520] = 385;
+
+        $r0[521] = 385;
+
+        $r0[522] = 385;
+
+        $r0[523] = 385;
+
+        $r0[524] = 386;
+
+        $r0[525] = 386;
+
+        $r0[526] = 386;
+
+        $r0[527] = 386;
+
+        $r0[528] = 387;
+
+        $r0[529] = 387;
+
+        $r0[530] = 387;
+
+        $r0[531] = 387;
+
+        $r0[532] = 388;
+
+        $r0[533] = 388;
+
+        $r0[534] = 388;
+
+        $r0[535] = 388;
+
+        $r0[536] = 388;
+
+        $r0[537] = 389;
+
+        $r0[538] = 389;
+
+        $r0[539] = 389;
+
+        $r0[540] = 389;
+
+        $r0[541] = 389;
+
+        $r0[542] = 389;
+
+        $r0[543] = 390;
+
+        $r0[544] = 390;
+
+        $r0[545] = 390;
+
+        $r0[546] = 390;
+
+        $r0[547] = 391;
+
+        $r0[548] = 391;
+
+        $r0[549] = 392;
+
+        $r0[550] = 392;
+
+        $r0[551] = 392;
+
+        $r0[552] = 392;
+
+        $r0[553] = 392;
+
+        $r0[554] = 393;
+
+        $r0[555] = 393;
+
+        $r0[556] = 393;
+
+        $r0[557] = 393;
+
+        $r0[558] = 394;
+
+        $r0[559] = 394;
+
+        $r0[560] = 394;
+
+        $r0[561] = 394;
+
+        $r0[562] = 395;
+
+        $r0[563] = 395;
+
+        $r0[564] = 395;
+
+        $r0[565] = 395;
+
+        $r0[566] = 396;
+
+        $r0[567] = 396;
+
+        $r0[568] = 396;
+
+        $r0[569] = 396;
+
+        $r0[570] = 396;
+
+        $r0[571] = 397;
+
+        $r0[572] = 397;
+
+        $r0[573] = 397;
+
+        $r0[574] = 397;
+
+        $r0[575] = 398;
+
+        $r0[576] = 398;
+
+        $r0[577] = 398;
+
+        $r0[578] = 398;
+
+        $r0[579] = 399;
+
+        $r0[580] = 399;
+
+        $r0[581] = 399;
+
+        $r0[582] = 399;
+
+        $r0[583] = 399;
+
+        $r0[584] = 399;
+
+        $r0[585] = 400;
+
+        $r0[586] = 400;
+
+        $r0[587] = 400;
+
+        $r0[588] = 400;
+
+        $r0[589] = 400;
+
+        $r0[590] = 401;
+
+        $r0[591] = 401;
+
+        $r0[592] = 402;
+
+        $r0[593] = 402;
+
+        $r0[594] = 402;
+
+        $r0[595] = 402;
+
+        $r0[596] = 403;
+
+        $r0[597] = 403;
+
+        $r0[598] = 403;
+
+        $r0[599] = 403;
+
+        $r0[600] = 404;
+
+        $r0[601] = 404;
+
+        $r0[602] = 404;
+
+        $r0[603] = 404;
+
+        $r0[604] = 405;
+
+        $r0[605] = 405;
+
+        $r0[606] = 405;
+
+        $r0[607] = 405;
+
+        $r0[608] = 406;
+
+        $r0[609] = 406;
+
+        $r0[610] = 406;
+
+        $r0[611] = 406;
+
+        $r0[612] = 406;
+
+        $r0[613] = 407;
+
+        $r0[614] = 407;
+
+        $r0[615] = 407;
+
+        $r0[616] = 407;
+
+        $r0[617] = 408;
+
+        $r0[618] = 408;
+
+        $r0[619] = 408;
+
+        $r0[620] = 408;
+
+        $r0[621] = 409;
+
+        $r0[622] = 409;
+
+        $r0[623] = 409;
+
+        $r0[624] = 409;
+
+        $r0[625] = 409;
+
+        $r0[626] = 409;
+
+        $r0[627] = 410;
+
+        $r0[628] = 410;
+
+        $r0[629] = 410;
+
+        $r0[630] = 410;
+
+        $r0[631] = 411;
+
+        $r0[632] = 411;
+
+        $r0[633] = 412;
+
+        $r0[634] = 412;
+
+        $r0[635] = 412;
+
+        $r0[636] = 412;
+
+        $r0[637] = 413;
+
+        $r0[638] = 413;
+
+        $r0[639] = 413;
+
+        $r0[640] = 413;
+
+        $r0[641] = 414;
+
+        $r0[642] = 414;
+
+        $r0[643] = 414;
+
+        $r0[644] = 414;
+
+        $r0[645] = 415;
+
+        $r0[646] = 415;
+
+        $r0[647] = 415;
+
+        $r0[648] = 415;
+
+        $r0[649] = 416;
+
+        $r0[650] = 416;
+
+        $r0[651] = 416;
+
+        $r0[652] = 416;
+
+        $r0[653] = 417;
+
+        $r0[654] = 417;
+
+        $r0[655] = 417;
+
+        $r0[656] = 417;
+
+        $r0[657] = 418;
+
+        $r0[658] = 418;
+
+        $r0[659] = 418;
+
+        $r0[660] = 418;
+
+        $r0[661] = 419;
+
+        $r0[662] = 419;
+
+        $r0[663] = 419;
+
+        $r0[664] = 419;
+
+        $r0[665] = 419;
+
+        $r0[666] = 419;
+
+        $r0[667] = 420;
+
+        $r0[668] = 420;
+
+        $r0[669] = 420;
+
+        $r0[670] = 420;
+
+        $r0[671] = 421;
+
+        $r0[672] = 421;
+
+        $r0[673] = 422;
+
+        $r0[674] = 422;
+
+        $r0[675] = 422;
+
+        $r0[676] = 422;
+
+        $r0[677] = 423;
+
+        $r0[678] = 423;
+
+        $r0[679] = 423;
+
+        $r0[680] = 423;
+
+        $r0[681] = 424;
+
+        $r0[682] = 424;
+
+        $r0[683] = 424;
+
+        $r0[684] = 425;
+
+        $r0[685] = 425;
+
+        $r0[686] = 425;
+
+        $r0[687] = 425;
+
+        $r0[688] = 426;
+
+        $r0[689] = 426;
+
+        $r0[690] = 426;
+
+        $r0[691] = 426;
+
+        $r0[692] = 427;
+
+        $r0[693] = 427;
+
+        $r0[694] = 427;
+
+        $r0[695] = 427;
+
+        $r0[696] = 428;
+
+        $r0[697] = 428;
+
+        $r0[698] = 428;
+
+        $r0[699] = 429;
+
+        $r0[700] = 429;
+
+        $r0[701] = 429;
+
+        $r0[702] = 429;
+
+        $r0[703] = 429;
+
+        $r0[704] = 429;
+
+        $r0[705] = 430;
+
+        $r0[706] = 430;
+
+        $r0[707] = 430;
+
+        $r0[708] = 430;
+
+        $r0[709] = 431;
+
+        $r0[710] = 431;
+
+        $r0[711] = 432;
+
+        $r0[712] = 432;
+
+        $r0[713] = 432;
+
+        $r0[714] = 433;
+
+        $r0[715] = 433;
+
+        $r0[716] = 433;
+
+        $r0[717] = 433;
+
+        $r0[718] = 434;
+
+        $r0[719] = 434;
+
+        $r0[720] = 434;
+
+        $r0[721] = 435;
+
+        $r0[722] = 435;
+
+        $r0[723] = 435;
+
+        $r0[724] = 435;
+
+        $r0[725] = 436;
+
+        $r0[726] = 436;
+
+        $r0[727] = 436;
+
+        $r0[728] = 436;
+
+        $r0[729] = 437;
+
+        $r0[730] = 437;
+
+        $r0[731] = 437;
+
+        $r0[732] = 438;
+
+        $r0[733] = 438;
+
+        $r0[734] = 438;
+
+        $r0[735] = 438;
+
+        $r0[736] = 439;
+
+        $r0[737] = 439;
+
+        $r0[738] = 439;
+
+        $r0[739] = 439;
+
+        $r0[740] = 439;
+
+        $r0[741] = 440;
+
+        $r0[742] = 440;
+
+        $r0[743] = 440;
+
+        $r0[744] = 441;
+
+        $r0[745] = 441;
+
+        $r0[746] = 442;
+
+        $r0[747] = 442;
+
+        $r0[748] = 442;
+
+        $r0[749] = 443;
+
+        $r0[750] = 443;
+
+        $r0[751] = 443;
+
+        $r0[752] = 443;
+
+        $r0[753] = 444;
+
+        $r0[754] = 444;
+
+        $r0[755] = 444;
+
+        $r0[756] = 445;
+
+        $r0[757] = 445;
+
+        $r0[758] = 445;
+
+        $r0[759] = 446;
+
+        $r0[760] = 446;
+
+        $r0[761] = 446;
+
+        $r0[762] = 446;
+
+        $r0[763] = 447;
+
+        $r0[764] = 447;
+
+        $r0[765] = 447;
+
+        $r0[766] = 448;
+
+        $r0[767] = 448;
+
+        $r0[768] = 448;
+
+        $r0[769] = 449;
+
+        $r0[770] = 449;
+
+        $r0[771] = 449;
+
+        $r0[772] = 449;
+
+        $r0[773] = 449;
+
+        $r0[774] = 450;
+
+        $r0[775] = 450;
+
+        $r0[776] = 450;
+
+        $r0[777] = 451;
+
+        $r0[778] = 451;
+
+        $r0[779] = 452;
+
+        $r0[780] = 452;
+
+        $r0[781] = 452;
+
+        $r0[782] = 453;
+
+        $r0[783] = 453;
+
+        $r0[784] = 453;
+
+        $r0[785] = 454;
+
+        $r0[786] = 454;
+
+        $r0[787] = 454;
+
+        $r0[788] = 455;
+
+        $r0[789] = 455;
+
+        $r0[790] = 455;
+
+        $r0[791] = 456;
+
+        $r0[792] = 456;
+
+        $r0[793] = 456;
+
+        $r0[794] = 457;
+
+        $r0[795] = 457;
+
+        $r0[796] = 457;
+
+        $r0[797] = 458;
+
+        $r0[798] = 458;
+
+        $r0[799] = 458;
+
+        $r0[800] = 459;
+
+        $r0[801] = 459;
+
+        $r0[802] = 459;
+
+        $r0[803] = 459;
+
+        $r0[804] = 460;
+
+        $r0[805] = 460;
+
+        $r0[806] = 460;
+
+        $r0[807] = 461;
+
+        $r0[808] = 461;
+
+        $r0[809] = 462;
+
+        $r0[810] = 462;
+
+        $r0[811] = 462;
+
+        $r0[812] = 463;
+
+        $r0[813] = 463;
+
+        $r0[814] = 463;
+
+        $r0[815] = 464;
+
+        $r0[816] = 464;
+
+        $r0[817] = 465;
+
+        $r0[818] = 465;
+
+        $r0[819] = 465;
+
+        $r0[820] = 466;
+
+        $r0[821] = 466;
+
+        $r0[822] = 466;
+
+        $r0[823] = 467;
+
+        $r0[824] = 467;
+
+        $r0[825] = 467;
+
+        $r0[826] = 468;
+
+        $r0[827] = 468;
+
+        $r0[828] = 469;
+
+        $r0[829] = 469;
+
+        $r0[830] = 469;
+
+        $r0[831] = 469;
+
+        $r0[832] = 470;
+
+        $r0[833] = 470;
+
+        $r0[834] = 470;
+
+        $r0[835] = 471;
+
+        $r0[836] = 472;
+
+        $r0[837] = 472;
+
+        $r0[838] = 472;
+
+        $r0[839] = 473;
+
+        $r0[840] = 473;
+
+        $r0[841] = 474;
+
+        $r0[842] = 474;
+
+        $r0[843] = 474;
+
+        $r0[844] = 475;
+
+        $r0[845] = 475;
+
+        $r0[846] = 476;
+
+        $r0[847] = 476;
+
+        $r0[848] = 476;
+
+        $r0[849] = 477;
+
+        $r0[850] = 477;
+
+        $r0[851] = 478;
+
+        $r0[852] = 478;
+
+        $r0[853] = 478;
+
+        $r0[854] = 479;
+
+        $r0[855] = 479;
+
+        $r0[856] = 479;
+
+        $r0[857] = 480;
+
+        $r0[858] = 480;
+
+        $r0[859] = 480;
+
+        $r0[860] = 481;
+
+        $r0[861] = 482;
+
+        $r0[862] = 482;
+
+        $r0[863] = 483;
+
+        $r0[864] = 483;
+
+        $r0[865] = 484;
+
+        $r0[866] = 484;
+
+        $r0[867] = 484;
+
+        $r0[868] = 485;
+
+        $r0[869] = 485;
+
+        $r0[870] = 486;
+
+        $r0[871] = 486;
+
+        $r0[872] = 487;
+
+        $r0[873] = 487;
+
+        $r0[874] = 488;
+
+        $r0[875] = 488;
+
+        $r0[876] = 488;
+
+        $r0[877] = 489;
+
+        $r0[878] = 489;
+
+        $r0[879] = 489;
+
+        $r0[880] = 490;
+
+        $r0[881] = 490;
+
+        $r0[882] = 491;
+
+        $r0[883] = 492;
+
+        $r0[884] = 492;
+
+        $r0[885] = 493;
+
+        $r0[886] = 493;
+
+        $r0[887] = 494;
+
+        $r0[888] = 494;
+
+        $r0[889] = 495;
+
+        $r0[890] = 495;
+
+        $r0[891] = 496;
+
+        $r0[892] = 496;
+
+        $r0[893] = 497;
+
+        $r0[894] = 497;
+
+        $r0[895] = 498;
+
+        $r0[896] = 498;
+
+        $r0[897] = 499;
+
+        $r0[898] = 499;
+
+        $r0[899] = 499;
+
+        $r0[900] = 500;
+
+        $r0[901] = 501;
+
+        $r0[902] = 502;
+
+        $r0[903] = 502;
+
+        $r0[904] = 503;
+
+        $r0[905] = 503;
+
+        $r0[906] = 504;
+
+        $r0[907] = 504;
+
+        $r0[908] = 505;
+
+        $r0[909] = 505;
+
+        $r0[910] = 506;
+
+        $r0[911] = 507;
+
+        $r0[912] = 507;
+
+        $r0[913] = 508;
+
+        $r0[914] = 508;
+
+        $r0[915] = 509;
+
+        $r0[916] = 509;
+
+        $r0[917] = 510;
+
+        $r0[918] = 510;
+
+        $r0[919] = 511;
+
+        $r0[920] = 512;
+
+        $r0[921] = 513;
+
+        $r0[922] = 513;
+
+        $r0[923] = 514;
+
+        $r0[924] = 515;
+
+        $r0[925] = 515;
+
+        $r0[926] = 516;
+
+        $r0[927] = 517;
+
+        $r0[928] = 517;
+
+        $r0[929] = 518;
+
+        $r0[930] = 519;
+
+        $r0[931] = 519;
+
+        $r0[932] = 519;
+
+        $r0[933] = 520;
+
+        $r0[934] = 521;
+
+        $r0[935] = 522;
+
+        $r0[936] = 523;
+
+        $r0[937] = 524;
+
+        $r0[938] = 524;
+
+        $r0[939] = 525;
+
+        $r0[940] = 526;
+
+        $r0[941] = 526;
+
+        $r0[942] = 527;
+
+        $r0[943] = 528;
+
+        $r0[944] = 529;
+
+        $r0[945] = 529;
+
+        $r0[946] = 530;
+
+        $r0[947] = 531;
+
+        $r0[948] = 532;
+
+        $r0[949] = 533;
+
+        $r0[950] = 534;
+
+        $r0[951] = 535;
+
+        $r0[952] = 535;
+
+        $r0[953] = 536;
+
+        $r0[954] = 537;
+
+        $r0[955] = 538;
+
+        $r0[956] = 539;
+
+        $r0[957] = 539;
+
+        $r0[958] = 540;
+
+        $r0[959] = 542;
+
+        $r0[960] = 543;
+
+        $r0[961] = 544;
+
+        $r0[962] = 545;
+
+        $r0[963] = 546;
+
+        $r0[964] = 547;
+
+        $r0[965] = 548;
+
+        $r0[966] = 549;
+
+        $r0[967] = 549;
+
+        $r0[968] = 550;
+
+        $r0[969] = 552;
+
+        $r0[970] = 553;
+
+        $r0[971] = 554;
+
+        $r0[972] = 555;
+
+        $r0[973] = 556;
+
+        $r0[974] = 558;
+
+        $r0[975] = 559;
+
+        $r0[976] = 559;
+
+        $r0[977] = 561;
+
+        $r0[978] = 562;
+
+        $r0[979] = 564;
+
+        $r0[980] = 565;
+
+        $r0[981] = 566;
+
+        $r0[982] = 568;
+
+        $r0[983] = 569;
+
+        $r0[984] = 570;
+
+        $r0[985] = 572;
+
+        $r0[986] = 574;
+
+        $r0[987] = 575;
+
+        $r0[988] = 577;
+
+        $r0[989] = 578;
+
+        $r0[990] = 579;
+
+        $r0[991] = 582;
+
+        $r0[992] = 583;
+
+        $r0[993] = 585;
+
+        $r0[994] = 587;
+
+        $r0[995] = 589;
+
+        $r0[996] = 590;
+
+        $r0[997] = 593;
+
+        $r0[998] = 595;
+
+        $r0[999] = 597;
+
+        $r0[1000] = 599;
+
+        $r0[1001] = 602;
+
+        $r0[1002] = 604;
+
+        $r0[1003] = 607;
+
+        $r0[1004] = 609;
+
+        $r0[1005] = 612;
+
+        $r0[1006] = 615;
+
+        $r0[1007] = 618;
+
+        $r0[1008] = 620;
+
+        $r0[1009] = 624;
+
+        $r0[1010] = 628;
+
+        $r0[1011] = 631;
+
+        $r0[1012] = 635;
+
+        $r0[1013] = 639;
+
+        $r0[1014] = 644;
+
+        $r0[1015] = 649;
+
+        $r0[1016] = 654;
+
+        $r0[1017] = 659;
+
+        $r0[1018] = 666;
+
+        $r0[1019] = 673;
+
+        $r0[1020] = 680;
+
+        $r0[1021] = 690;
+
+        $r0[1022] = 700;
+
+        $r0[1023] = 714;
+
+        <android.filterpacks.imageproc.AutoFixFilter: int[] normal_cdf> = $r0;
+
+        return;
+    }
+}

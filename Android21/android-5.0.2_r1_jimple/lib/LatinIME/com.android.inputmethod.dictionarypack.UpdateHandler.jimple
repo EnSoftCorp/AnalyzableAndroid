@@ -1,0 +1,2722 @@
+public final class com.android.inputmethod.dictionarypack.UpdateHandler extends java.lang.Object
+{
+    static final java.lang.String TAG;
+    private static final boolean DEBUG;
+    static final java.lang.Object sSharedIdProtector;
+    public static final int NOT_AN_ID;
+    public static final int MAXIMUM_SUPPORTED_FORMAT_VERSION;
+    private static final int FILE_COPY_BUFFER_SIZE;
+    static final java.lang.String METADATA_NAME;
+    static final int METADATA_TYPE;
+    static final int WORDLIST_TYPE;
+    private static final java.lang.String DICT_FILE_SUFFIX;
+    public static final java.lang.String MAIN_DICTIONARY_CATEGORY;
+    static final int DICT_AVAILABLE_NOTIFICATION_ID;
+    private static java.util.List sUpdateEventListeners;
+    private static final java.lang.String DOWNLOAD_OVER_METERED_SETTING_PREFS_KEY;
+    public static final int DOWNLOAD_OVER_METERED_SETTING_UNKNOWN;
+    public static final int DOWNLOAD_OVER_METERED_ALLOWED;
+    public static final int DOWNLOAD_OVER_METERED_DISALLOWED;
+
+    public void <init>()
+    {
+        com.android.inputmethod.dictionarypack.UpdateHandler r0;
+
+        r0 := @this: com.android.inputmethod.dictionarypack.UpdateHandler;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        return;
+    }
+
+    public static void registerUpdateEventListener(com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener)
+    {
+        com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener r0;
+        java.util.List $r1;
+
+        r0 := @parameter0: com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener;
+
+        $r1 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.List sUpdateEventListeners>;
+
+        interfaceinvoke $r1.<java.util.List: boolean add(java.lang.Object)>(r0);
+
+        return;
+    }
+
+    public static void unregisterUpdateEventListener(com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener)
+    {
+        com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener r0;
+        java.util.List $r1;
+
+        r0 := @parameter0: com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener;
+
+        $r1 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.List sUpdateEventListeners>;
+
+        interfaceinvoke $r1.<java.util.List: boolean remove(java.lang.Object)>(r0);
+
+        return;
+    }
+
+    private static void writeMetadataDownloadId(android.content.Context, java.lang.String, long)
+    {
+        android.content.Context r0;
+        java.lang.String r1;
+        long l0;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        l0 := @parameter2: long;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: void registerMetadataDownloadId(android.content.Context,java.lang.String,long)>(r0, r1, l0);
+
+        return;
+    }
+
+    public static void setDownloadOverMeteredSetting(android.content.Context, boolean)
+    {
+        android.content.Context r0;
+        boolean z0;
+        android.content.SharedPreferences r1;
+        android.content.SharedPreferences$Editor r2;
+        byte $b0;
+
+        r0 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        r1 = staticinvoke <com.android.inputmethod.dictionarypack.CommonPreferences: android.content.SharedPreferences getCommonPreferences(android.content.Context)>(r0);
+
+        r2 = interfaceinvoke r1.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        if z0 == 0 goto label1;
+
+        $b0 = 1;
+
+        goto label2;
+
+     label1:
+        $b0 = 2;
+
+     label2:
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putInt(java.lang.String,int)>("downloadOverMetered", $b0);
+
+        interfaceinvoke r2.<android.content.SharedPreferences$Editor: void apply()>();
+
+        return;
+    }
+
+    public static int getDownloadOverMeteredSetting(android.content.Context)
+    {
+        android.content.Context r0;
+        android.content.SharedPreferences r1;
+        int i0;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 = staticinvoke <com.android.inputmethod.dictionarypack.CommonPreferences: android.content.SharedPreferences getCommonPreferences(android.content.Context)>(r0);
+
+        i0 = interfaceinvoke r1.<android.content.SharedPreferences: int getInt(java.lang.String,int)>("downloadOverMetered", 0);
+
+        return i0;
+    }
+
+    public static boolean tryUpdate(android.content.Context, boolean)
+    {
+        android.content.Context r0;
+        boolean z0, z1, $z2, $z3, $z5, $z6, z7;
+        java.util.TreeSet r1, $r5;
+        android.database.Cursor r2;
+        java.lang.String r3, $r8, $r11, r14, r16;
+        java.lang.Throwable r4, $r13;
+        java.lang.StringBuilder $r6, $r7, $r9;
+        java.lang.Object[] $r10;
+        java.lang.Object $r12;
+        java.util.Iterator r15;
+
+        r0 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        $r5 = new java.util.TreeSet;
+
+        specialinvoke $r5.<java.util.TreeSet: void <init>()>();
+
+        r1 = $r5;
+
+        r2 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: android.database.Cursor queryClientIds(android.content.Context)>(r0);
+
+        if null != r2 goto label01;
+
+        return 0;
+
+     label01:
+        $z2 = interfaceinvoke r2.<android.database.Cursor: boolean moveToFirst()>();
+
+        if $z2 != 0 goto label03;
+
+        z1 = 0;
+
+     label02:
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        return z1;
+
+     label03:
+        r14 = interfaceinvoke r2.<android.database.Cursor: java.lang.String getString(int)>(0);
+
+        r3 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: java.lang.String getMetadataUriAsString(android.content.Context,java.lang.String)>(r0, r14);
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Update for clientId ");
+
+        $r8 = staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: java.lang.String s(java.lang.Object)>(r14);
+
+        $r9 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.inputmethod.dictionarypack.PrivateLog: void log(java.lang.String)>($r11);
+
+        $r10 = newarray (java.lang.Object)[4];
+
+        $r10[0] = "Update for clientId";
+
+        $r10[1] = r14;
+
+        $r10[2] = " which uses URI ";
+
+        $r10[3] = r3;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r10);
+
+        virtualinvoke r1.<java.util.TreeSet: boolean add(java.lang.Object)>(r3);
+
+        $z3 = interfaceinvoke r2.<android.database.Cursor: boolean moveToNext()>();
+
+        if $z3 != 0 goto label03;
+
+     label04:
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        goto label07;
+
+     label05:
+        $r13 := @caughtexception;
+
+        r4 = $r13;
+
+     label06:
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        throw r4;
+
+     label07:
+        z7 = 0;
+
+        r15 = virtualinvoke r1.<java.util.TreeSet: java.util.Iterator iterator()>();
+
+     label08:
+        $z5 = interfaceinvoke r15.<java.util.Iterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label10;
+
+        $r12 = interfaceinvoke r15.<java.util.Iterator: java.lang.Object next()>();
+
+        r16 = (java.lang.String) $r12;
+
+        $z6 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r16);
+
+        if $z6 != 0 goto label09;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void updateClientsWithMetadataUri(android.content.Context,boolean,java.lang.String)>(r0, z0, r16);
+
+        z7 = 1;
+
+     label09:
+        goto label08;
+
+     label10:
+        return z7;
+
+        catch java.lang.Throwable from label01 to label02 with label05;
+        catch java.lang.Throwable from label03 to label04 with label05;
+        catch java.lang.Throwable from label05 to label06 with label05;
+    }
+
+    private static void updateClientsWithMetadataUri(android.content.Context, boolean, java.lang.String)
+    {
+        android.content.Context r0;
+        boolean z0, z1, $z2, $z3, $z4, $z5, z6;
+        java.lang.String r1, r2, $r10, $r13, $r15, $r22, $r26, $r36;
+        android.app.DownloadManager$Request r3, $r19;
+        android.content.res.Resources r4;
+        com.android.inputmethod.dictionarypack.DownloadManagerWrapper r5, $r29;
+        long l0, $l1;
+        java.lang.Object r6, $r32;
+        java.lang.Throwable r7, $r39;
+        java.lang.StringBuilder $r8, $r9, $r11, $r12, $r14, $r16, $r17, $r18, $r20, $r21, $r23, $r33, $r34, $r37;
+        java.lang.Object[] $r24, $r31;
+        android.net.Uri $r25;
+        java.lang.Long $r35;
+        byte $b2;
+
+        r0 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        r1 := @parameter2: java.lang.String;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Update for metadata URI ");
+
+        $r10 = staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: java.lang.String s(java.lang.Object)>(r1);
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.inputmethod.dictionarypack.PrivateLog: void log(java.lang.String)>($r13);
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("#");
+
+        $l1 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l1);
+
+        $r15 = staticinvoke <com.android.inputmethod.latin.utils.ApplicationUtils: java.lang.String getVersionName(android.content.Context)>(r0);
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r15);
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".json");
+
+        r2 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r19 = new android.app.DownloadManager$Request;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        $r20 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r23 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r22 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r25 = staticinvoke <android.net.Uri: android.net.Uri parse(java.lang.String)>($r22);
+
+        specialinvoke $r19.<android.app.DownloadManager$Request: void <init>(android.net.Uri)>($r25);
+
+        r3 = $r19;
+
+        $r24 = newarray (java.lang.Object)[2];
+
+        $r24[0] = "Request =";
+
+        $r24[1] = r3;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r24);
+
+        r4 = virtualinvoke r0.<android.content.Context: android.content.res.Resources getResources()>();
+
+        if z0 != 0 goto label03;
+
+        z1 = virtualinvoke r4.<android.content.res.Resources: boolean getBoolean(int)>(2131165189);
+
+        $z5 = staticinvoke <com.android.inputmethod.compat.DownloadManagerCompatUtils: boolean hasSetAllowedOverMetered()>();
+
+        if $z5 == 0 goto label01;
+
+        staticinvoke <com.android.inputmethod.compat.DownloadManagerCompatUtils: android.app.DownloadManager$Request setAllowedOverMetered(android.app.DownloadManager$Request,boolean)>(r3, z1);
+
+        goto label02;
+
+     label01:
+        if z1 != 0 goto label02;
+
+        virtualinvoke r3.<android.app.DownloadManager$Request: android.app.DownloadManager$Request setAllowedNetworkTypes(int)>(2);
+
+     label02:
+        $z4 = virtualinvoke r4.<android.content.res.Resources: boolean getBoolean(int)>(2131165190);
+
+        virtualinvoke r3.<android.app.DownloadManager$Request: android.app.DownloadManager$Request setAllowedOverRoaming(boolean)>($z4);
+
+     label03:
+        if z0 == 0 goto label04;
+
+        $z2 = virtualinvoke r4.<android.content.res.Resources: boolean getBoolean(int)>(2131165194);
+
+        goto label05;
+
+     label04:
+        $z2 = virtualinvoke r4.<android.content.res.Resources: boolean getBoolean(int)>(2131165193);
+
+     label05:
+        z6 = $z2;
+
+        $r26 = virtualinvoke r4.<android.content.res.Resources: java.lang.String getString(int)>(2131363038);
+
+        virtualinvoke r3.<android.app.DownloadManager$Request: android.app.DownloadManager$Request setTitle(java.lang.CharSequence)>($r26);
+
+        if z6 == 0 goto label06;
+
+        $b2 = 0;
+
+        goto label07;
+
+     label06:
+        $b2 = 2;
+
+     label07:
+        virtualinvoke r3.<android.app.DownloadManager$Request: android.app.DownloadManager$Request setNotificationVisibility(int)>($b2);
+
+        $z3 = virtualinvoke r4.<android.content.res.Resources: boolean getBoolean(int)>(2131165192);
+
+        virtualinvoke r3.<android.app.DownloadManager$Request: android.app.DownloadManager$Request setVisibleInDownloadsUi(boolean)>($z3);
+
+        $r29 = new com.android.inputmethod.dictionarypack.DownloadManagerWrapper;
+
+        specialinvoke $r29.<com.android.inputmethod.dictionarypack.DownloadManagerWrapper: void <init>(android.content.Context)>(r0);
+
+        r5 = $r29;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void cancelUpdateWithDownloadManager(android.content.Context,java.lang.String,com.android.inputmethod.dictionarypack.DownloadManagerWrapper)>(r0, r1, r5);
+
+        $r32 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.Object sSharedIdProtector>;
+
+        r6 = $r32;
+
+        entermonitor $r32;
+
+     label08:
+        l0 = virtualinvoke r5.<com.android.inputmethod.dictionarypack.DownloadManagerWrapper: long enqueue(android.app.DownloadManager$Request)>(r3);
+
+        $r31 = newarray (java.lang.Object)[2];
+
+        $r31[0] = "Metadata download requested with id";
+
+        $r35 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r31[1] = $r35;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r31);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void writeMetadataDownloadId(android.content.Context,java.lang.String,long)>(r0, r1, l0);
+
+        exitmonitor r6;
+
+     label09:
+        goto label12;
+
+     label10:
+        $r39 := @caughtexception;
+
+        r7 = $r39;
+
+        exitmonitor r6;
+
+     label11:
+        throw r7;
+
+     label12:
+        $r33 = new java.lang.StringBuilder;
+
+        specialinvoke $r33.<java.lang.StringBuilder: void <init>()>();
+
+        $r34 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Requested download with id ");
+
+        $r37 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r36 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.inputmethod.dictionarypack.PrivateLog: void log(java.lang.String)>($r36);
+
+        return;
+
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label10 to label11 with label10;
+    }
+
+    private static void cancelUpdateWithDownloadManager(android.content.Context, java.lang.String, com.android.inputmethod.dictionarypack.DownloadManagerWrapper)
+    {
+        android.content.Context r0;
+        java.lang.String r1;
+        com.android.inputmethod.dictionarypack.DownloadManagerWrapper r2;
+        java.lang.Object r3, $r5, $r9;
+        long l0;
+        java.lang.Throwable r4, $r10;
+        byte $b1;
+        long[] $r6;
+        java.util.List $r7, $r8;
+        boolean $z0;
+        java.util.Iterator r11;
+        com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener r12;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: com.android.inputmethod.dictionarypack.DownloadManagerWrapper;
+
+        $r5 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.Object sSharedIdProtector>;
+
+        r3 = $r5;
+
+        entermonitor $r5;
+
+     label1:
+        l0 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: long getMetadataDownloadIdForURI(android.content.Context,java.lang.String)>(r0, r1);
+
+        $b1 = -1L cmp l0;
+
+        if $b1 != 0 goto label3;
+
+        exitmonitor r3;
+
+     label2:
+        return;
+
+     label3:
+        $r6 = newarray (long)[1];
+
+        $r6[0] = l0;
+
+        virtualinvoke r2.<com.android.inputmethod.dictionarypack.DownloadManagerWrapper: void remove(long[])>($r6);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void writeMetadataDownloadId(android.content.Context,java.lang.String,long)>(r0, r1, -1L);
+
+        exitmonitor r3;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r10 := @caughtexception;
+
+        r4 = $r10;
+
+        exitmonitor r3;
+
+     label6:
+        throw r4;
+
+     label7:
+        $r7 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.List sUpdateEventListeners>;
+
+        $r8 = staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.List linkedCopyOfList(java.util.List)>($r7);
+
+        r11 = interfaceinvoke $r8.<java.util.List: java.util.Iterator iterator()>();
+
+     label8:
+        $z0 = interfaceinvoke r11.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label9;
+
+        $r9 = interfaceinvoke r11.<java.util.Iterator: java.lang.Object next()>();
+
+        r12 = (com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener) $r9;
+
+        interfaceinvoke r12.<com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener: void downloadedMetadata(boolean)>(0);
+
+        goto label8;
+
+     label9:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public static void cancelUpdate(android.content.Context, java.lang.String)
+    {
+        android.content.Context r0;
+        java.lang.String r1, r3;
+        com.android.inputmethod.dictionarypack.DownloadManagerWrapper r2, $r4;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r4 = new com.android.inputmethod.dictionarypack.DownloadManagerWrapper;
+
+        specialinvoke $r4.<com.android.inputmethod.dictionarypack.DownloadManagerWrapper: void <init>(android.content.Context)>(r0);
+
+        r2 = $r4;
+
+        r3 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: java.lang.String getMetadataUriAsString(android.content.Context,java.lang.String)>(r0, r1);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void cancelUpdateWithDownloadManager(android.content.Context,java.lang.String,com.android.inputmethod.dictionarypack.DownloadManagerWrapper)>(r0, r3, r2);
+
+        return;
+    }
+
+    public static long registerDownloadRequest(com.android.inputmethod.dictionarypack.DownloadManagerWrapper, android.app.DownloadManager$Request, android.database.sqlite.SQLiteDatabase, java.lang.String, int)
+    {
+        com.android.inputmethod.dictionarypack.DownloadManagerWrapper r0;
+        android.app.DownloadManager$Request r1;
+        android.database.sqlite.SQLiteDatabase r2;
+        java.lang.String r3;
+        int i0;
+        long l1;
+        java.lang.Object r4, $r8;
+        java.lang.Throwable r5, $r11;
+        java.lang.Object[] $r6, $r9;
+        java.lang.Integer $r7;
+        java.lang.Long $r10;
+
+        r0 := @parameter0: com.android.inputmethod.dictionarypack.DownloadManagerWrapper;
+
+        r1 := @parameter1: android.app.DownloadManager$Request;
+
+        r2 := @parameter2: android.database.sqlite.SQLiteDatabase;
+
+        r3 := @parameter3: java.lang.String;
+
+        i0 := @parameter4: int;
+
+        $r6 = newarray (java.lang.Object)[4];
+
+        $r6[0] = "RegisterDownloadRequest for word list id : ";
+
+        $r6[1] = r3;
+
+        $r6[2] = ", version ";
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r6[3] = $r7;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r6);
+
+        $r8 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.Object sSharedIdProtector>;
+
+        r4 = $r8;
+
+        entermonitor $r8;
+
+     label1:
+        l1 = virtualinvoke r0.<com.android.inputmethod.dictionarypack.DownloadManagerWrapper: long enqueue(android.app.DownloadManager$Request)>(r1);
+
+        $r9 = newarray (java.lang.Object)[2];
+
+        $r9[0] = "Download requested with id";
+
+        $r10 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l1);
+
+        $r9[1] = $r10;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r9);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: void markEntryAsDownloading(android.database.sqlite.SQLiteDatabase,java.lang.String,int,long)>(r2, r3, i0, l1);
+
+        exitmonitor r4;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r11 := @caughtexception;
+
+        r5 = $r11;
+
+        exitmonitor r4;
+
+     label4:
+        throw r5;
+
+     label5:
+        return l1;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private static com.android.inputmethod.dictionarypack.CompletedDownloadInfo getCompletedDownloadInfo(com.android.inputmethod.dictionarypack.DownloadManagerWrapper, long)
+    {
+        com.android.inputmethod.dictionarypack.DownloadManagerWrapper r0;
+        long l0;
+        android.app.DownloadManager$Query r1, $r6;
+        android.database.Cursor r2;
+        java.lang.String r3, r4, $r11, $r15;
+        int i1, i2, i3, i4, i5, i6;
+        java.lang.Throwable r5, $r17;
+        long[] $r7;
+        com.android.inputmethod.dictionarypack.CompletedDownloadInfo $r8, $r16, r18;
+        boolean $z0;
+        java.lang.StringBuilder $r9, $r10, $r12, $r13, $r14;
+
+        r0 := @parameter0: com.android.inputmethod.dictionarypack.DownloadManagerWrapper;
+
+        l0 := @parameter1: long;
+
+        $r6 = new android.app.DownloadManager$Query;
+
+        specialinvoke $r6.<android.app.DownloadManager$Query: void <init>()>();
+
+        $r7 = newarray (long)[1];
+
+        $r7[0] = l0;
+
+        r1 = virtualinvoke $r6.<android.app.DownloadManager$Query: android.app.DownloadManager$Query setFilterById(long[])>($r7);
+
+        r2 = virtualinvoke r0.<com.android.inputmethod.dictionarypack.DownloadManagerWrapper: android.database.Cursor query(android.app.DownloadManager$Query)>(r1);
+
+        if null != r2 goto label1;
+
+        $r16 = new com.android.inputmethod.dictionarypack.CompletedDownloadInfo;
+
+        specialinvoke $r16.<com.android.inputmethod.dictionarypack.CompletedDownloadInfo: void <init>(java.lang.String,long,int)>(null, l0, 16);
+
+        return $r16;
+
+     label1:
+        $z0 = interfaceinvoke r2.<android.database.Cursor: boolean moveToNext()>();
+
+        if $z0 == 0 goto label5;
+
+        i2 = interfaceinvoke r2.<android.database.Cursor: int getColumnIndex(java.lang.String)>("status");
+
+        i3 = interfaceinvoke r2.<android.database.Cursor: int getColumnIndex(java.lang.String)>("reason");
+
+        i4 = interfaceinvoke r2.<android.database.Cursor: int getColumnIndex(java.lang.String)>("uri");
+
+        i5 = interfaceinvoke r2.<android.database.Cursor: int getInt(int)>(i3);
+
+        i1 = interfaceinvoke r2.<android.database.Cursor: int getInt(int)>(i2);
+
+        r4 = interfaceinvoke r2.<android.database.Cursor: java.lang.String getString(int)>(i4);
+
+        i6 = virtualinvoke r4.<java.lang.String: int indexOf(int)>(35);
+
+        if i6 == -1 goto label2;
+
+        r3 = virtualinvoke r4.<java.lang.String: java.lang.String substring(int,int)>(0, i6);
+
+        goto label3;
+
+     label2:
+        r3 = r4;
+
+     label3:
+        if 8 == i1 goto label4;
+
+        $r11 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Permanent failure of download ");
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" with error code: ");
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i5);
+
+        $r15 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r11, $r15);
+
+     label4:
+        goto label6;
+
+     label5:
+        r3 = null;
+
+        i1 = 16;
+
+     label6:
+        $r8 = new com.android.inputmethod.dictionarypack.CompletedDownloadInfo;
+
+        specialinvoke $r8.<com.android.inputmethod.dictionarypack.CompletedDownloadInfo: void <init>(java.lang.String,long,int)>(r3, l0, i1);
+
+        r18 = $r8;
+
+     label7:
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        return r18;
+
+     label8:
+        $r17 := @caughtexception;
+
+        r5 = $r17;
+
+     label9:
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        throw r5;
+
+        catch java.lang.Throwable from label1 to label7 with label8;
+        catch java.lang.Throwable from label8 to label9 with label8;
+    }
+
+    private static java.util.ArrayList getDownloadRecordsForCompletedDownloadInfo(android.content.Context, com.android.inputmethod.dictionarypack.CompletedDownloadInfo)
+    {
+        android.content.Context r0;
+        com.android.inputmethod.dictionarypack.CompletedDownloadInfo r1;
+        java.lang.Object r2, $r7, $r11;
+        java.util.ArrayList r3;
+        boolean z0, $z1;
+        java.util.Iterator r4;
+        com.android.inputmethod.dictionarypack.DownloadRecord r5;
+        java.lang.Throwable r6, $r12;
+        long $l0;
+        java.lang.String $r8, $r9;
+        android.content.ContentValues $r10;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: com.android.inputmethod.dictionarypack.CompletedDownloadInfo;
+
+        $r7 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.Object sSharedIdProtector>;
+
+        r2 = $r7;
+
+        entermonitor $r7;
+
+     label1:
+        $l0 = r1.<com.android.inputmethod.dictionarypack.CompletedDownloadInfo: long mDownloadId>;
+
+        r3 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: java.util.ArrayList getDownloadRecordsForDownloadId(android.content.Context,long)>(r0, $l0);
+
+        z0 = 0;
+
+        r4 = virtualinvoke r3.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label2:
+        $z1 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label4;
+
+        $r11 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (com.android.inputmethod.dictionarypack.DownloadRecord) $r11;
+
+        $r10 = r5.<com.android.inputmethod.dictionarypack.DownloadRecord: android.content.ContentValues mAttributes>;
+
+        if null != $r10 goto label3;
+
+        z0 = 1;
+
+        goto label4;
+
+     label3:
+        goto label2;
+
+     label4:
+        if z0 == 0 goto label5;
+
+        $r8 = r1.<com.android.inputmethod.dictionarypack.CompletedDownloadInfo: java.lang.String mUri>;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void writeMetadataDownloadId(android.content.Context,java.lang.String,long)>(r0, $r8, -1L);
+
+        $r9 = r1.<com.android.inputmethod.dictionarypack.CompletedDownloadInfo: java.lang.String mUri>;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: void saveLastUpdateTimeOfUri(android.content.Context,java.lang.String)>(r0, $r9);
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        return r3;
+
+     label7:
+        $r12 := @caughtexception;
+
+        r6 = $r12;
+
+        exitmonitor r2;
+
+     label8:
+        throw r6;
+
+        catch java.lang.Throwable from label1 to label6 with label7;
+        catch java.lang.Throwable from label7 to label8 with label7;
+    }
+
+    static void downloadFinished(android.content.Context, android.content.Intent)
+    {
+        android.content.Context r0;
+        android.content.Intent r1;
+        long l0;
+        com.android.inputmethod.dictionarypack.DownloadManagerWrapper r2, $r16;
+        com.android.inputmethod.dictionarypack.CompletedDownloadInfo r3;
+        java.util.ArrayList r4;
+        java.util.Iterator r5;
+        com.android.inputmethod.dictionarypack.DownloadRecord r6;
+        boolean z0, $z1, $z2, $z3, $z4;
+        android.database.sqlite.SQLiteDatabase r7, r9;
+        java.lang.Throwable r8, $r22;
+        java.lang.StringBuilder $r10, $r11, $r13;
+        java.lang.String $r12, $r21, $r23, $r25, $r26;
+        java.lang.Object[] $r14, $r17;
+        byte $b1;
+        java.lang.Long $r15, $r18;
+        java.lang.Object $r19;
+        long[] $r20;
+        android.content.ContentValues $r24, $r27;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: android.content.Intent;
+
+        l0 = virtualinvoke r1.<android.content.Intent: long getLongExtra(java.lang.String,long)>("extra_download_id", -1L);
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Download finished with id ");
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.inputmethod.dictionarypack.PrivateLog: void log(java.lang.String)>($r12);
+
+        $r14 = newarray (java.lang.Object)[2];
+
+        $r14[0] = "DownloadFinished with id";
+
+        $r15 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r14[1] = $r15;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r14);
+
+        $b1 = -1L cmp l0;
+
+        if $b1 != 0 goto label01;
+
+        return;
+
+     label01:
+        $r16 = new com.android.inputmethod.dictionarypack.DownloadManagerWrapper;
+
+        specialinvoke $r16.<com.android.inputmethod.dictionarypack.DownloadManagerWrapper: void <init>(android.content.Context)>(r0);
+
+        r2 = $r16;
+
+        r3 = staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: com.android.inputmethod.dictionarypack.CompletedDownloadInfo getCompletedDownloadInfo(com.android.inputmethod.dictionarypack.DownloadManagerWrapper,long)>(r2, l0);
+
+        r4 = staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.ArrayList getDownloadRecordsForCompletedDownloadInfo(android.content.Context,com.android.inputmethod.dictionarypack.CompletedDownloadInfo)>(r0, r3);
+
+        if null != r4 goto label02;
+
+        return;
+
+     label02:
+        $r17 = newarray (java.lang.Object)[2];
+
+        $r17[0] = "Received result for download ";
+
+        $r18 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r17[1] = $r18;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r17);
+
+        r5 = virtualinvoke r4.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label03:
+        $z1 = interfaceinvoke r5.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label12;
+
+        $r19 = interfaceinvoke r5.<java.util.Iterator: java.lang.Object next()>();
+
+        r6 = (com.android.inputmethod.dictionarypack.DownloadRecord) $r19;
+
+        z0 = 0;
+
+     label04:
+        $z2 = virtualinvoke r3.<com.android.inputmethod.dictionarypack.CompletedDownloadInfo: boolean wasSuccessful()>();
+
+        if $z2 == 0 goto label05;
+
+        z0 = staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: boolean handleDownloadedFile(android.content.Context,com.android.inputmethod.dictionarypack.DownloadRecord,com.android.inputmethod.dictionarypack.DownloadManagerWrapper,long)>(r0, r6, r2, l0);
+
+     label05:
+        $z3 = virtualinvoke r6.<com.android.inputmethod.dictionarypack.DownloadRecord: boolean isMetadata()>();
+
+        if $z3 == 0 goto label06;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void publishUpdateMetadataCompleted(android.content.Context,boolean)>(r0, z0);
+
+        goto label11;
+
+     label06:
+        $r21 = r6.<com.android.inputmethod.dictionarypack.DownloadRecord: java.lang.String mClientId>;
+
+        r7 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: android.database.sqlite.SQLiteDatabase getDb(android.content.Context,java.lang.String)>(r0, $r21);
+
+        $r24 = r6.<com.android.inputmethod.dictionarypack.DownloadRecord: android.content.ContentValues mAttributes>;
+
+        $r23 = r6.<com.android.inputmethod.dictionarypack.DownloadRecord: java.lang.String mClientId>;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void publishUpdateWordListCompleted(android.content.Context,boolean,long,android.database.sqlite.SQLiteDatabase,android.content.ContentValues,java.lang.String)>(r0, z0, l0, r7, $r24, $r23);
+
+        goto label11;
+
+     label07:
+        $r22 := @caughtexception;
+
+        r8 = $r22;
+
+     label08:
+        $z4 = virtualinvoke r6.<com.android.inputmethod.dictionarypack.DownloadRecord: boolean isMetadata()>();
+
+        if $z4 == 0 goto label09;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void publishUpdateMetadataCompleted(android.content.Context,boolean)>(r0, z0);
+
+        goto label10;
+
+     label09:
+        $r26 = r6.<com.android.inputmethod.dictionarypack.DownloadRecord: java.lang.String mClientId>;
+
+        r9 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: android.database.sqlite.SQLiteDatabase getDb(android.content.Context,java.lang.String)>(r0, $r26);
+
+        $r27 = r6.<com.android.inputmethod.dictionarypack.DownloadRecord: android.content.ContentValues mAttributes>;
+
+        $r25 = r6.<com.android.inputmethod.dictionarypack.DownloadRecord: java.lang.String mClientId>;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void publishUpdateWordListCompleted(android.content.Context,boolean,long,android.database.sqlite.SQLiteDatabase,android.content.ContentValues,java.lang.String)>(r0, z0, l0, r9, $r27, $r25);
+
+     label10:
+        throw r8;
+
+     label11:
+        goto label03;
+
+     label12:
+        $r20 = newarray (long)[1];
+
+        $r20[0] = l0;
+
+        virtualinvoke r2.<com.android.inputmethod.dictionarypack.DownloadManagerWrapper: void remove(long[])>($r20);
+
+        return;
+
+        catch java.lang.Throwable from label04 to label05 with label07;
+        catch java.lang.Throwable from label07 to label08 with label07;
+    }
+
+    public static void publishUpdateMetadataCompleted(android.content.Context, boolean)
+    {
+        android.content.Context r0;
+        boolean z0, $z1;
+        java.util.Iterator r1;
+        com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener r2;
+        java.util.List $r3, $r4;
+        java.lang.Object $r5;
+
+        r0 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        $r3 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.List sUpdateEventListeners>;
+
+        $r4 = staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.List linkedCopyOfList(java.util.List)>($r3);
+
+        r1 = interfaceinvoke $r4.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z1 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label2;
+
+        $r5 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener) $r5;
+
+        interfaceinvoke r2.<com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener: void downloadedMetadata(boolean)>(z0);
+
+        goto label1;
+
+     label2:
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void publishUpdateCycleCompletedEvent(android.content.Context)>(r0);
+
+        return;
+    }
+
+    private static void publishUpdateWordListCompleted(android.content.Context, boolean, long, android.database.sqlite.SQLiteDatabase, android.content.ContentValues, java.lang.String)
+    {
+        android.content.Context r0;
+        boolean z0, $z1;
+        long l0;
+        android.database.sqlite.SQLiteDatabase r1;
+        android.content.ContentValues r2;
+        java.lang.String r3, $r10, $r14;
+        java.lang.Object r4, $r7, $r11;
+        com.android.inputmethod.dictionarypack.ActionBatch r5, $r13;
+        java.lang.Throwable r6, $r16;
+        java.util.List $r8, $r9;
+        com.android.inputmethod.dictionarypack.ActionBatch$InstallAfterDownloadAction $r12;
+        com.android.inputmethod.dictionarypack.LogProblemReporter $r15;
+        java.util.Iterator r17;
+        com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener r18;
+
+        r0 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        l0 := @parameter2: long;
+
+        r1 := @parameter3: android.database.sqlite.SQLiteDatabase;
+
+        r2 := @parameter4: android.content.ContentValues;
+
+        r3 := @parameter5: java.lang.String;
+
+        $r7 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.Object sSharedIdProtector>;
+
+        r4 = $r7;
+
+        entermonitor $r7;
+
+     label1:
+        if z0 == 0 goto label2;
+
+        $r13 = new com.android.inputmethod.dictionarypack.ActionBatch;
+
+        specialinvoke $r13.<com.android.inputmethod.dictionarypack.ActionBatch: void <init>()>();
+
+        r5 = $r13;
+
+        $r12 = new com.android.inputmethod.dictionarypack.ActionBatch$InstallAfterDownloadAction;
+
+        specialinvoke $r12.<com.android.inputmethod.dictionarypack.ActionBatch$InstallAfterDownloadAction: void <init>(java.lang.String,android.content.ContentValues)>(r3, r2);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r12);
+
+        $r15 = new com.android.inputmethod.dictionarypack.LogProblemReporter;
+
+        $r14 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        specialinvoke $r15.<com.android.inputmethod.dictionarypack.LogProblemReporter: void <init>(java.lang.String)>($r14);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void execute(android.content.Context,com.android.inputmethod.dictionarypack.ProblemReporter)>(r0, $r15);
+
+        goto label3;
+
+     label2:
+        staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: void deleteDownloadingEntry(android.database.sqlite.SQLiteDatabase,long)>(r1, l0);
+
+     label3:
+        exitmonitor r4;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r16 := @caughtexception;
+
+        r6 = $r16;
+
+        exitmonitor r4;
+
+     label6:
+        throw r6;
+
+     label7:
+        $r8 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.List sUpdateEventListeners>;
+
+        $r9 = staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.List linkedCopyOfList(java.util.List)>($r8);
+
+        r17 = interfaceinvoke $r9.<java.util.List: java.util.Iterator iterator()>();
+
+     label8:
+        $z1 = interfaceinvoke r17.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label9;
+
+        $r11 = interfaceinvoke r17.<java.util.Iterator: java.lang.Object next()>();
+
+        r18 = (com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener) $r11;
+
+        $r10 = virtualinvoke r2.<android.content.ContentValues: java.lang.String getAsString(java.lang.String)>("id");
+
+        interfaceinvoke r18.<com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener: void wordListDownloadFinished(java.lang.String,boolean)>($r10, z0);
+
+        goto label8;
+
+     label9:
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void publishUpdateCycleCompletedEvent(android.content.Context)>(r0);
+
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private static void publishUpdateCycleCompletedEvent(android.content.Context)
+    {
+        android.content.Context r0;
+        java.util.Iterator r1;
+        com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener r2;
+        java.lang.Object[] $r3;
+        java.util.List $r4, $r5;
+        boolean $z0;
+        java.lang.Object $r6;
+
+        r0 := @parameter0: android.content.Context;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.PrivateLog: void log(java.lang.String)>("Publishing update cycle completed event");
+
+        $r3 = newarray (java.lang.Object)[1];
+
+        $r3[0] = "Publishing update cycle completed event";
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r3);
+
+        $r4 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.List sUpdateEventListeners>;
+
+        $r5 = staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.List linkedCopyOfList(java.util.List)>($r4);
+
+        r1 = interfaceinvoke $r5.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r6 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener) $r6;
+
+        interfaceinvoke r2.<com.android.inputmethod.dictionarypack.UpdateHandler$UpdateEventListener: void updateCycleCompleted()>();
+
+        goto label1;
+
+     label2:
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void signalNewDictionaryState(android.content.Context)>(r0);
+
+        return;
+    }
+
+    private static boolean handleDownloadedFile(android.content.Context, com.android.inputmethod.dictionarypack.DownloadRecord, com.android.inputmethod.dictionarypack.DownloadManagerWrapper, long)
+    {
+        android.content.Context r0;
+        com.android.inputmethod.dictionarypack.DownloadRecord r1;
+        com.android.inputmethod.dictionarypack.DownloadManagerWrapper r2;
+        long l0;
+        int i1;
+        boolean $z0;
+        java.lang.Object[] $r3, $r9;
+        android.content.ContentValues $r4;
+        java.lang.Integer $r5;
+        java.lang.String $r6, $r11, $r12, $r14, $r17, $r18, $r21;
+        android.os.ParcelFileDescriptor$AutoCloseInputStream $r7, $r10;
+        android.os.ParcelFileDescriptor $r8, $r13;
+        com.android.inputmethod.dictionarypack.BadFormatException $r15, r25;
+        java.io.IOException $r16, r23;
+        java.io.FileNotFoundException $r19, r22;
+        java.lang.IllegalStateException $r20, r24;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: com.android.inputmethod.dictionarypack.DownloadRecord;
+
+        r2 := @parameter2: com.android.inputmethod.dictionarypack.DownloadManagerWrapper;
+
+        l0 := @parameter3: long;
+
+     label1:
+        $z0 = virtualinvoke r1.<com.android.inputmethod.dictionarypack.DownloadRecord: boolean isMetadata()>();
+
+        if $z0 == 0 goto label2;
+
+        $r9 = newarray (java.lang.Object)[2];
+
+        $r9[0] = "Data D/L\'d is metadata for";
+
+        $r11 = r1.<com.android.inputmethod.dictionarypack.DownloadRecord: java.lang.String mClientId>;
+
+        $r9[1] = $r11;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r9);
+
+        $r10 = new android.os.ParcelFileDescriptor$AutoCloseInputStream;
+
+        $r13 = virtualinvoke r2.<com.android.inputmethod.dictionarypack.DownloadManagerWrapper: android.os.ParcelFileDescriptor openDownloadedFile(long)>(l0);
+
+        specialinvoke $r10.<android.os.ParcelFileDescriptor$AutoCloseInputStream: void <init>(android.os.ParcelFileDescriptor)>($r13);
+
+        $r12 = r1.<com.android.inputmethod.dictionarypack.DownloadRecord: java.lang.String mClientId>;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void handleMetadata(android.content.Context,java.io.InputStream,java.lang.String)>(r0, $r10, $r12);
+
+        goto label4;
+
+     label2:
+        $r3 = newarray (java.lang.Object)[1];
+
+        $r3[0] = "Data D/L\'d is a word list";
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r3);
+
+        $r4 = r1.<com.android.inputmethod.dictionarypack.DownloadRecord: android.content.ContentValues mAttributes>;
+
+        $r5 = virtualinvoke $r4.<android.content.ContentValues: java.lang.Integer getAsInteger(java.lang.String)>("status");
+
+        i1 = virtualinvoke $r5.<java.lang.Integer: int intValue()>();
+
+        if 2 != i1 goto label3;
+
+        $r7 = new android.os.ParcelFileDescriptor$AutoCloseInputStream;
+
+        $r8 = virtualinvoke r2.<com.android.inputmethod.dictionarypack.DownloadManagerWrapper: android.os.ParcelFileDescriptor openDownloadedFile(long)>(l0);
+
+        specialinvoke $r7.<android.os.ParcelFileDescriptor$AutoCloseInputStream: void <init>(android.os.ParcelFileDescriptor)>($r8);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void handleWordList(android.content.Context,java.io.InputStream,com.android.inputmethod.dictionarypack.DownloadRecord)>(r0, $r7, r1);
+
+        goto label4;
+
+     label3:
+        $r6 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r6, "Spurious download ended. Maybe a cancelled download?");
+
+     label4:
+        return 1;
+
+     label5:
+        $r19 := @caughtexception;
+
+        r22 = $r19;
+
+        $r18 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r18, "A file was downloaded but it can\'t be opened", r22);
+
+        goto label9;
+
+     label6:
+        $r16 := @caughtexception;
+
+        r23 = $r16;
+
+        $r17 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r17, "Can\'t read a file", r23);
+
+        goto label9;
+
+     label7:
+        $r20 := @caughtexception;
+
+        r24 = $r20;
+
+        $r21 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r21, "Incorrect data received", r24);
+
+        goto label9;
+
+     label8:
+        $r15 := @caughtexception;
+
+        r25 = $r15;
+
+        $r14 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r14, "Incorrect data received", r25);
+
+     label9:
+        return 0;
+
+        catch java.io.FileNotFoundException from label1 to label4 with label5;
+        catch java.io.IOException from label1 to label4 with label6;
+        catch java.lang.IllegalStateException from label1 to label4 with label7;
+        catch com.android.inputmethod.dictionarypack.BadFormatException from label1 to label4 with label8;
+    }
+
+    private static java.util.List linkedCopyOfList(java.util.List)
+    {
+        java.util.List r0;
+        java.util.LinkedList $r1;
+
+        r0 := @parameter0: java.util.List;
+
+        $r1 = new java.util.LinkedList;
+
+        specialinvoke $r1.<java.util.LinkedList: void <init>(java.util.Collection)>(r0);
+
+        return $r1;
+    }
+
+    private static void signalNewDictionaryState(android.content.Context)
+    {
+        android.content.Context r0;
+        android.content.Intent r1, $r2;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("com.android.inputmethod.dictionarypack.aosp.newdict");
+
+        r1 = $r2;
+
+        virtualinvoke r0.<android.content.Context: void sendBroadcast(android.content.Intent)>(r1);
+
+        return;
+    }
+
+    private static void handleMetadata(android.content.Context, java.io.InputStream, java.lang.String) throws java.io.IOException, com.android.inputmethod.dictionarypack.BadFormatException
+    {
+        android.content.Context r0;
+        java.io.InputStream r1;
+        java.lang.String r2, $r12, $r15;
+        java.util.List r3;
+        java.io.InputStreamReader r4, $r7;
+        java.lang.Throwable r5, $r14;
+        java.lang.Object[] $r6, $r8;
+        java.lang.StringBuilder $r9, $r10, $r11;
+        com.android.inputmethod.dictionarypack.LogProblemReporter $r13;
+        com.android.inputmethod.dictionarypack.ActionBatch r16;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.io.InputStream;
+
+        r2 := @parameter2: java.lang.String;
+
+        $r6 = newarray (java.lang.Object)[1];
+
+        $r6[0] = "Entering handleMetadata";
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r6);
+
+        $r7 = new java.io.InputStreamReader;
+
+        specialinvoke $r7.<java.io.InputStreamReader: void <init>(java.io.InputStream)>(r1);
+
+        r4 = $r7;
+
+     label1:
+        r3 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: java.util.List readMetadata(java.io.InputStreamReader)>(r4);
+
+     label2:
+        virtualinvoke r4.<java.io.InputStreamReader: void close()>();
+
+        goto label5;
+
+     label3:
+        $r14 := @caughtexception;
+
+        r5 = $r14;
+
+     label4:
+        virtualinvoke r4.<java.io.InputStreamReader: void close()>();
+
+        throw r5;
+
+     label5:
+        $r8 = newarray (java.lang.Object)[2];
+
+        $r8[0] = "Downloaded metadata :";
+
+        $r8[1] = r3;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r8);
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Downloaded metadata\n");
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.inputmethod.dictionarypack.PrivateLog: void log(java.lang.String)>($r12);
+
+        r16 = staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: com.android.inputmethod.dictionarypack.ActionBatch computeUpgradeTo(android.content.Context,java.lang.String,java.util.List)>(r0, r2, r3);
+
+        $r13 = new com.android.inputmethod.dictionarypack.LogProblemReporter;
+
+        $r15 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        specialinvoke $r13.<com.android.inputmethod.dictionarypack.LogProblemReporter: void <init>(java.lang.String)>($r15);
+
+        virtualinvoke r16.<com.android.inputmethod.dictionarypack.ActionBatch: void execute(android.content.Context,com.android.inputmethod.dictionarypack.ProblemReporter)>(r0, $r13);
+
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private static void handleWordList(android.content.Context, java.io.InputStream, com.android.inputmethod.dictionarypack.DownloadRecord) throws java.io.IOException, com.android.inputmethod.dictionarypack.BadFormatException
+    {
+        android.content.Context r0;
+        java.io.InputStream r1;
+        com.android.inputmethod.dictionarypack.DownloadRecord r2;
+        java.lang.String r3, r4, r7, $r11, $r12, $r15, $r20, $r22, $r26, $r34, $r36;
+        java.io.FileOutputStream r5;
+        java.lang.Throwable r6, r8, $r35, $r37;
+        java.lang.Object[] $r9;
+        android.content.ContentValues $r10, $r16, $r21, $r23, $r24, $r33;
+        java.lang.StringBuilder $r13, $r14, $r17, $r18, $r19, $r27, $r28, $r29, $r30, $r31, $r32;
+        boolean $z0, $z2;
+        com.android.inputmethod.dictionarypack.BadFormatException $r25;
+        java.io.FileInputStream r38;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.io.InputStream;
+
+        r2 := @parameter2: com.android.inputmethod.dictionarypack.DownloadRecord;
+
+        $r9 = newarray (java.lang.Object)[4];
+
+        $r9[0] = "Downloaded a new word list :";
+
+        $r10 = r2.<com.android.inputmethod.dictionarypack.DownloadRecord: android.content.ContentValues mAttributes>;
+
+        $r11 = virtualinvoke $r10.<android.content.ContentValues: java.lang.String getAsString(java.lang.String)>("description");
+
+        $r9[1] = $r11;
+
+        $r9[2] = "for";
+
+        $r12 = r2.<com.android.inputmethod.dictionarypack.DownloadRecord: java.lang.String mClientId>;
+
+        $r9[3] = $r12;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r9);
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Downloaded a new word list with description : ");
+
+        $r16 = r2.<com.android.inputmethod.dictionarypack.DownloadRecord: android.content.ContentValues mAttributes>;
+
+        $r15 = virtualinvoke $r16.<android.content.ContentValues: java.lang.String getAsString(java.lang.String)>("description");
+
+        $r18 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r15);
+
+        $r17 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" for ");
+
+        $r20 = r2.<com.android.inputmethod.dictionarypack.DownloadRecord: java.lang.String mClientId>;
+
+        $r19 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r20);
+
+        $r22 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.inputmethod.dictionarypack.PrivateLog: void log(java.lang.String)>($r22);
+
+        $r21 = r2.<com.android.inputmethod.dictionarypack.DownloadRecord: android.content.ContentValues mAttributes>;
+
+        r3 = virtualinvoke $r21.<android.content.ContentValues: java.lang.String getAsString(java.lang.String)>("locale");
+
+        r4 = staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String getTempFileName(android.content.Context,java.lang.String)>(r0, r3);
+
+        $r23 = r2.<com.android.inputmethod.dictionarypack.DownloadRecord: android.content.ContentValues mAttributes>;
+
+        virtualinvoke $r23.<android.content.ContentValues: void put(java.lang.String,java.lang.String)>("filename", r4);
+
+        r5 = null;
+
+     label01:
+        r5 = virtualinvoke r0.<android.content.Context: java.io.FileOutputStream openFileOutput(java.lang.String,int)>(r4, 0);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void copyFile(java.io.InputStream,java.io.OutputStream)>(r1, r5);
+
+     label02:
+        virtualinvoke r1.<java.io.InputStream: void close()>();
+
+        if r5 == null goto label06;
+
+        virtualinvoke r5.<java.io.FileOutputStream: void close()>();
+
+        goto label06;
+
+     label03:
+        $r35 := @caughtexception;
+
+        r6 = $r35;
+
+     label04:
+        virtualinvoke r1.<java.io.InputStream: void close()>();
+
+        if r5 == null goto label05;
+
+        virtualinvoke r5.<java.io.FileOutputStream: void close()>();
+
+     label05:
+        throw r6;
+
+     label06:
+        r38 = null;
+
+     label07:
+        r38 = virtualinvoke r0.<android.content.Context: java.io.FileInputStream openFileInput(java.lang.String)>(r4);
+
+        r7 = staticinvoke <com.android.inputmethod.dictionarypack.MD5Calculator: java.lang.String checksum(java.io.InputStream)>(r38);
+
+     label08:
+        if r38 == null goto label12;
+
+        virtualinvoke r38.<java.io.FileInputStream: void close()>();
+
+        goto label12;
+
+     label09:
+        $r37 := @caughtexception;
+
+        r8 = $r37;
+
+     label10:
+        if r38 == null goto label11;
+
+        virtualinvoke r38.<java.io.FileInputStream: void close()>();
+
+     label11:
+        throw r8;
+
+     label12:
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r7);
+
+        if $z0 == 0 goto label13;
+
+        return;
+
+     label13:
+        $r24 = r2.<com.android.inputmethod.dictionarypack.DownloadRecord: android.content.ContentValues mAttributes>;
+
+        $r26 = virtualinvoke $r24.<android.content.ContentValues: java.lang.String getAsString(java.lang.String)>("checksum");
+
+        $z2 = virtualinvoke r7.<java.lang.String: boolean equals(java.lang.Object)>($r26);
+
+        if $z2 != 0 goto label14;
+
+        virtualinvoke r0.<android.content.Context: boolean deleteFile(java.lang.String)>(r4);
+
+        $r25 = new com.android.inputmethod.dictionarypack.BadFormatException;
+
+        $r29 = new java.lang.StringBuilder;
+
+        specialinvoke $r29.<java.lang.StringBuilder: void <init>()>();
+
+        $r30 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("MD5 checksum check failed : \"");
+
+        $r27 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r7);
+
+        $r28 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\" <> \"");
+
+        $r33 = r2.<com.android.inputmethod.dictionarypack.DownloadRecord: android.content.ContentValues mAttributes>;
+
+        $r34 = virtualinvoke $r33.<android.content.ContentValues: java.lang.String getAsString(java.lang.String)>("checksum");
+
+        $r31 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r34);
+
+        $r32 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\"");
+
+        $r36 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r25.<com.android.inputmethod.dictionarypack.BadFormatException: void <init>(java.lang.String)>($r36);
+
+        throw $r25;
+
+     label14:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label03;
+        catch java.lang.Throwable from label03 to label04 with label03;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    private static void copyFile(java.io.InputStream, java.io.OutputStream) throws java.io.IOException
+    {
+        java.io.InputStream r0;
+        java.io.OutputStream r1;
+        java.nio.channels.FileChannel r2, r3;
+        java.lang.Object[] $r4, $r5, $r9;
+        boolean $z0, $z1;
+        java.io.FileInputStream $r6;
+        java.io.FileOutputStream $r7;
+        java.io.IOException $r8;
+
+        r0 := @parameter0: java.io.InputStream;
+
+        r1 := @parameter1: java.io.OutputStream;
+
+        $r4 = newarray (java.lang.Object)[1];
+
+        $r4[0] = "Copying files";
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r4);
+
+        $z0 = r0 instanceof java.io.FileInputStream;
+
+        if $z0 == 0 goto label1;
+
+        $z1 = r1 instanceof java.io.FileOutputStream;
+
+        if $z1 != 0 goto label2;
+
+     label1:
+        $r5 = newarray (java.lang.Object)[1];
+
+        $r5[0] = "Not the right types";
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r5);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void copyFileFallback(java.io.InputStream,java.io.OutputStream)>(r0, r1);
+
+        goto label5;
+
+     label2:
+        $r6 = (java.io.FileInputStream) r0;
+
+        r2 = virtualinvoke $r6.<java.io.FileInputStream: java.nio.channels.FileChannel getChannel()>();
+
+        $r7 = (java.io.FileOutputStream) r1;
+
+        r3 = virtualinvoke $r7.<java.io.FileOutputStream: java.nio.channels.FileChannel getChannel()>();
+
+        virtualinvoke r2.<java.nio.channels.FileChannel: long transferTo(long,long,java.nio.channels.WritableByteChannel)>(0L, 2147483647L, r3);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r8 := @caughtexception;
+
+        $r9 = newarray (java.lang.Object)[1];
+
+        $r9[0] = "Won\'t work";
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r9);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void copyFileFallback(java.io.InputStream,java.io.OutputStream)>(r0, r1);
+
+     label5:
+        return;
+
+        catch java.io.IOException from label2 to label3 with label4;
+    }
+
+    private static void copyFileFallback(java.io.InputStream, java.io.OutputStream) throws java.io.IOException
+    {
+        java.io.InputStream r0;
+        java.io.OutputStream r1;
+        byte[] r2;
+        int i0;
+        java.lang.Object[] $r3;
+
+        r0 := @parameter0: java.io.InputStream;
+
+        r1 := @parameter1: java.io.OutputStream;
+
+        $r3 = newarray (java.lang.Object)[1];
+
+        $r3[0] = "Falling back to slow copy";
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r3);
+
+        r2 = newarray (byte)[8192];
+
+        i0 = virtualinvoke r0.<java.io.InputStream: int read(byte[])>(r2);
+
+     label1:
+        if i0 < 0 goto label2;
+
+        virtualinvoke r1.<java.io.OutputStream: void write(byte[],int,int)>(r2, 0, i0);
+
+        i0 = virtualinvoke r0.<java.io.InputStream: int read(byte[])>(r2);
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private static java.lang.String getTempFileName(android.content.Context, java.lang.String) throws java.io.IOException
+    {
+        android.content.Context r0;
+        java.lang.String r1, $r8, $r10, $r11;
+        java.io.File r2, r3;
+        java.lang.Object[] $r4, $r9;
+        java.lang.StringBuilder $r5, $r6, $r7;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r4 = newarray (java.lang.Object)[1];
+
+        $r4[0] = "Entering openTempFileOutput";
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r4);
+
+        r2 = virtualinvoke r0.<android.content.Context: java.io.File getFilesDir()>();
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("___");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r3 = staticinvoke <java.io.File: java.io.File createTempFile(java.lang.String,java.lang.String,java.io.File)>($r8, ".dict", r2);
+
+        $r9 = newarray (java.lang.Object)[2];
+
+        $r9[0] = "File name is";
+
+        $r10 = virtualinvoke r3.<java.io.File: java.lang.String getName()>();
+
+        $r9[1] = $r10;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r9);
+
+        $r11 = virtualinvoke r3.<java.io.File: java.lang.String getName()>();
+
+        return $r11;
+    }
+
+    private static com.android.inputmethod.dictionarypack.ActionBatch compareMetadataForUpgrade(android.content.Context, java.lang.String, java.util.List, java.util.List)
+    {
+        android.content.Context r0;
+        java.lang.String r1, $r19, $r29, $r34, $r38, $r40, $r42, r48;
+        java.util.List r2, r3;
+        com.android.inputmethod.dictionarypack.ActionBatch r4, $r13;
+        java.util.TreeSet r5, $r15;
+        java.util.Iterator r6, r45, r47;
+        com.android.inputmethod.dictionarypack.WordListMetadata r7, r8, r9, r10, $r37, r46;
+        android.database.sqlite.SQLiteDatabase r11;
+        android.content.ContentValues r12;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i8;
+        java.lang.Object[] $r14, $r17;
+        boolean $z0, $z1, $z2;
+        java.lang.Object $r16, $r39, $r41;
+        java.lang.Integer $r18;
+        com.android.inputmethod.dictionarypack.ActionBatch$StartDownloadAction $r20;
+        com.android.inputmethod.dictionarypack.ActionBatch$ForgetAction $r21, $r26;
+        com.android.inputmethod.dictionarypack.ActionBatch$MakeAvailableAction $r22, $r23;
+        java.lang.StringBuilder $r24, $r27, $r28, $r30, $r31, $r32, $r33, $r35, $r36;
+        com.android.inputmethod.dictionarypack.ActionBatch$UpdateDataAction $r25;
+        java.util.ArrayList $r43, $r44;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.util.List;
+
+        r3 := @parameter3: java.util.List;
+
+        $r13 = new com.android.inputmethod.dictionarypack.ActionBatch;
+
+        specialinvoke $r13.<com.android.inputmethod.dictionarypack.ActionBatch: void <init>()>();
+
+        r4 = $r13;
+
+        $r14 = newarray (java.lang.Object)[1];
+
+        $r14[0] = "Comparing dictionaries";
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r14);
+
+        $r15 = new java.util.TreeSet;
+
+        specialinvoke $r15.<java.util.TreeSet: void <init>()>();
+
+        r5 = $r15;
+
+        if null != r2 goto label01;
+
+        $r44 = new java.util.ArrayList;
+
+        specialinvoke $r44.<java.util.ArrayList: void <init>()>();
+
+        r2 = $r44;
+
+     label01:
+        if null != r3 goto label02;
+
+        $r43 = new java.util.ArrayList;
+
+        specialinvoke $r43.<java.util.ArrayList: void <init>()>();
+
+        r3 = $r43;
+
+     label02:
+        r6 = interfaceinvoke r2.<java.util.List: java.util.Iterator iterator()>();
+
+     label03:
+        $z0 = interfaceinvoke r6.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label04;
+
+        $r39 = interfaceinvoke r6.<java.util.Iterator: java.lang.Object next()>();
+
+        r7 = (com.android.inputmethod.dictionarypack.WordListMetadata) $r39;
+
+        $r42 = r7.<com.android.inputmethod.dictionarypack.WordListMetadata: java.lang.String mId>;
+
+        interfaceinvoke r5.<java.util.Set: boolean add(java.lang.Object)>($r42);
+
+        goto label03;
+
+     label04:
+        r45 = interfaceinvoke r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label05:
+        $z1 = interfaceinvoke r45.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label06;
+
+        $r41 = interfaceinvoke r45.<java.util.Iterator: java.lang.Object next()>();
+
+        r46 = (com.android.inputmethod.dictionarypack.WordListMetadata) $r41;
+
+        $r40 = r46.<com.android.inputmethod.dictionarypack.WordListMetadata: java.lang.String mId>;
+
+        interfaceinvoke r5.<java.util.Set: boolean add(java.lang.Object)>($r40);
+
+        goto label05;
+
+     label06:
+        r47 = interfaceinvoke r5.<java.util.Set: java.util.Iterator iterator()>();
+
+     label07:
+        $z2 = interfaceinvoke r47.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label19;
+
+        $r16 = interfaceinvoke r47.<java.util.Iterator: java.lang.Object next()>();
+
+        r48 = (java.lang.String) $r16;
+
+        r8 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: com.android.inputmethod.dictionarypack.WordListMetadata findWordListById(java.util.List,java.lang.String)>(r2, r48);
+
+        r9 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: com.android.inputmethod.dictionarypack.WordListMetadata findWordListById(java.util.List,java.lang.String)>(r3, r48);
+
+        if null == r9 goto label08;
+
+        $i8 = r9.<com.android.inputmethod.dictionarypack.WordListMetadata: int mFormatVersion>;
+
+        if $i8 <= 2 goto label09;
+
+     label08:
+        $r37 = null;
+
+        goto label10;
+
+     label09:
+        $r37 = r9;
+
+     label10:
+        r10 = $r37;
+
+        $r17 = newarray (java.lang.Object)[4];
+
+        $r17[0] = "Considering updating ";
+
+        $r17[1] = r48;
+
+        $r17[2] = "currentInfo =";
+
+        $r17[3] = r8;
+
+        staticinvoke <com.android.inputmethod.latin.utils.DebugLogUtils: void l(java.lang.Object[])>($r17);
+
+        if null != r8 goto label12;
+
+        if null != r10 goto label12;
+
+        if null != r9 goto label11;
+
+        $r38 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r38, "Got an id for a wordlist that is neither in from nor in to");
+
+        goto label07;
+
+     label11:
+        $r29 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        $r24 = new java.lang.StringBuilder;
+
+        specialinvoke $r24.<java.lang.StringBuilder: void <init>()>();
+
+        $r30 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t handle word list with id \'");
+
+        $r27 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r48);
+
+        $r28 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\' because it has format");
+
+        $r33 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" version ");
+
+        $i6 = r9.<com.android.inputmethod.dictionarypack.WordListMetadata: int mFormatVersion>;
+
+        $r32 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i6);
+
+        $r31 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" and the maximum version");
+
+        $r36 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" we can handle is ");
+
+        $r35 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(2);
+
+        $r34 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>($r29, $r34);
+
+        goto label07;
+
+     label12:
+        if null != r8 goto label13;
+
+        $r23 = new com.android.inputmethod.dictionarypack.ActionBatch$MakeAvailableAction;
+
+        specialinvoke $r23.<com.android.inputmethod.dictionarypack.ActionBatch$MakeAvailableAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata)>(r1, r10);
+
+        virtualinvoke r4.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r23);
+
+        goto label18;
+
+     label13:
+        if null != r10 goto label14;
+
+        $r26 = new com.android.inputmethod.dictionarypack.ActionBatch$ForgetAction;
+
+        specialinvoke $r26.<com.android.inputmethod.dictionarypack.ActionBatch$ForgetAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata,boolean)>(r1, r8, 0);
+
+        virtualinvoke r4.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r26);
+
+        goto label18;
+
+     label14:
+        r11 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: android.database.sqlite.SQLiteDatabase getDb(android.content.Context,java.lang.String)>(r0, r1);
+
+        $i1 = r10.<com.android.inputmethod.dictionarypack.WordListMetadata: int mVersion>;
+
+        $i2 = r8.<com.android.inputmethod.dictionarypack.WordListMetadata: int mVersion>;
+
+        if $i1 != $i2 goto label15;
+
+        $r25 = new com.android.inputmethod.dictionarypack.ActionBatch$UpdateDataAction;
+
+        specialinvoke $r25.<com.android.inputmethod.dictionarypack.ActionBatch$UpdateDataAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata)>(r1, r10);
+
+        virtualinvoke r4.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r25);
+
+        goto label18;
+
+     label15:
+        $i3 = r10.<com.android.inputmethod.dictionarypack.WordListMetadata: int mVersion>;
+
+        $i4 = r8.<com.android.inputmethod.dictionarypack.WordListMetadata: int mVersion>;
+
+        if $i3 <= $i4 goto label18;
+
+        $r19 = r8.<com.android.inputmethod.dictionarypack.WordListMetadata: java.lang.String mId>;
+
+        $i5 = r8.<com.android.inputmethod.dictionarypack.WordListMetadata: int mVersion>;
+
+        r12 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: android.content.ContentValues getContentValuesByWordListId(android.database.sqlite.SQLiteDatabase,java.lang.String,int)>(r11, $r19, $i5);
+
+        $r18 = virtualinvoke r12.<android.content.ContentValues: java.lang.Integer getAsInteger(java.lang.String)>("status");
+
+        i0 = virtualinvoke $r18.<java.lang.Integer: int intValue()>();
+
+        $r22 = new com.android.inputmethod.dictionarypack.ActionBatch$MakeAvailableAction;
+
+        specialinvoke $r22.<com.android.inputmethod.dictionarypack.ActionBatch$MakeAvailableAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata)>(r1, r10);
+
+        virtualinvoke r4.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r22);
+
+        if i0 == 3 goto label16;
+
+        if i0 != 4 goto label17;
+
+     label16:
+        $r20 = new com.android.inputmethod.dictionarypack.ActionBatch$StartDownloadAction;
+
+        specialinvoke $r20.<com.android.inputmethod.dictionarypack.ActionBatch$StartDownloadAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata,boolean)>(r1, r10, 0);
+
+        virtualinvoke r4.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r20);
+
+        goto label18;
+
+     label17:
+        $r21 = new com.android.inputmethod.dictionarypack.ActionBatch$ForgetAction;
+
+        specialinvoke $r21.<com.android.inputmethod.dictionarypack.ActionBatch$ForgetAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata,boolean)>(r1, r8, 1);
+
+        virtualinvoke r4.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r21);
+
+     label18:
+        goto label07;
+
+     label19:
+        return r4;
+    }
+
+    public static com.android.inputmethod.dictionarypack.ActionBatch computeUpgradeTo(android.content.Context, java.lang.String, java.util.List)
+    {
+        android.content.Context r0;
+        java.lang.String r1;
+        java.util.List r2, r3;
+        com.android.inputmethod.dictionarypack.ActionBatch $r4;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.util.List;
+
+        r3 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: java.util.List getCurrentMetadata(android.content.Context,java.lang.String)>(r0, r1);
+
+        $r4 = staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: com.android.inputmethod.dictionarypack.ActionBatch compareMetadataForUpgrade(android.content.Context,java.lang.String,java.util.List,java.util.List)>(r0, r1, r3, r2);
+
+        return $r4;
+    }
+
+    private static void showDictionaryAvailableNotification(android.content.Context, java.lang.String, android.content.ContentValues)
+    {
+        android.content.Context r0;
+        java.lang.String r1, r3, r8, r9, r10, $r17, $r23, $r31;
+        android.content.ContentValues r2;
+        android.content.Intent r4, $r13;
+        android.app.PendingIntent r5;
+        android.app.NotificationManager r6;
+        java.util.Locale r7;
+        android.app.Notification$Builder r11, $r25, $r26, $r27, $r28, $r29, $r30, $r32, $r34;
+        android.app.Notification r12;
+        java.lang.Integer $r18;
+        java.lang.Object $r22;
+        java.lang.Object[] $r24;
+        android.content.res.Resources $r33;
+        int $i0;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.content.ContentValues;
+
+        r3 = virtualinvoke r2.<android.content.ContentValues: java.lang.String getAsString(java.lang.String)>("locale");
+
+        $r13 = new android.content.Intent;
+
+        specialinvoke $r13.<android.content.Intent: void <init>()>();
+
+        r4 = $r13;
+
+        virtualinvoke r4.<android.content.Intent: android.content.Intent setClass(android.content.Context,java.lang.Class)>(r0, class "com/android/inputmethod/dictionarypack/DownloadOverMeteredDialog");
+
+        virtualinvoke r4.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("client_id", r1);
+
+        $r17 = virtualinvoke r2.<android.content.ContentValues: java.lang.String getAsString(java.lang.String)>("id");
+
+        virtualinvoke r4.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("wordlist_to_download", $r17);
+
+        $r18 = virtualinvoke r2.<android.content.ContentValues: java.lang.Integer getAsInteger(java.lang.String)>("filesize");
+
+        virtualinvoke r4.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.io.Serializable)>("size", $r18);
+
+        virtualinvoke r4.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("locale", r3);
+
+        virtualinvoke r4.<android.content.Intent: android.content.Intent addFlags(int)>(276824064);
+
+        r5 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getActivity(android.content.Context,int,android.content.Intent,int)>(r0, 0, r4, 1207959552);
+
+        $r22 = virtualinvoke r0.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("notification");
+
+        r6 = (android.app.NotificationManager) $r22;
+
+        if null == r5 goto label1;
+
+        if null != r6 goto label2;
+
+     label1:
+        return;
+
+     label2:
+        r7 = staticinvoke <com.android.inputmethod.dictionarypack.LocaleUtils: java.util.Locale constructLocaleFromString(java.lang.String)>(r3);
+
+        if null != r7 goto label3;
+
+        $r23 = "";
+
+        goto label4;
+
+     label3:
+        $r23 = virtualinvoke r7.<java.util.Locale: java.lang.String getDisplayLanguage()>();
+
+     label4:
+        r8 = $r23;
+
+        r9 = virtualinvoke r0.<android.content.Context: java.lang.String getString(int)>(2131363063);
+
+        $r24 = newarray (java.lang.Object)[1];
+
+        $r24[0] = r8;
+
+        r10 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>(r9, $r24);
+
+        $r27 = new android.app.Notification$Builder;
+
+        specialinvoke $r27.<android.app.Notification$Builder: void <init>(android.content.Context)>(r0);
+
+        $r28 = virtualinvoke $r27.<android.app.Notification$Builder: android.app.Notification$Builder setAutoCancel(boolean)>(1);
+
+        $r25 = virtualinvoke $r28.<android.app.Notification$Builder: android.app.Notification$Builder setContentIntent(android.app.PendingIntent)>(r5);
+
+        $r26 = virtualinvoke $r25.<android.app.Notification$Builder: android.app.Notification$Builder setContentTitle(java.lang.CharSequence)>(r10);
+
+        $r31 = virtualinvoke r0.<android.content.Context: java.lang.String getString(int)>(2131363064);
+
+        $r32 = virtualinvoke $r26.<android.app.Notification$Builder: android.app.Notification$Builder setContentText(java.lang.CharSequence)>($r31);
+
+        $r29 = virtualinvoke $r32.<android.app.Notification$Builder: android.app.Notification$Builder setTicker(java.lang.CharSequence)>(r10);
+
+        $r30 = virtualinvoke $r29.<android.app.Notification$Builder: android.app.Notification$Builder setOngoing(boolean)>(0);
+
+        $r34 = virtualinvoke $r30.<android.app.Notification$Builder: android.app.Notification$Builder setOnlyAlertOnce(boolean)>(1);
+
+        r11 = virtualinvoke $r34.<android.app.Notification$Builder: android.app.Notification$Builder setSmallIcon(int)>(2130837632);
+
+        $r33 = virtualinvoke r0.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i0 = virtualinvoke $r33.<android.content.res.Resources: int getColor(int)>(2131230775);
+
+        staticinvoke <com.android.inputmethod.compat.NotificationCompatUtils: void setColor(android.app.Notification$Builder,int)>(r11, $i0);
+
+        staticinvoke <com.android.inputmethod.compat.NotificationCompatUtils: void setPriorityToLow(android.app.Notification$Builder)>(r11);
+
+        staticinvoke <com.android.inputmethod.compat.NotificationCompatUtils: void setVisibilityToSecret(android.app.Notification$Builder)>(r11);
+
+        staticinvoke <com.android.inputmethod.compat.NotificationCompatUtils: void setCategoryToRecommendation(android.app.Notification$Builder)>(r11);
+
+        r12 = staticinvoke <com.android.inputmethod.compat.NotificationCompatUtils: android.app.Notification build(android.app.Notification$Builder)>(r11);
+
+        virtualinvoke r6.<android.app.NotificationManager: void notify(int,android.app.Notification)>(1, r12);
+
+        return;
+    }
+
+    public static void installIfNeverRequested(android.content.Context, java.lang.String, java.lang.String, boolean)
+    {
+        android.content.Context r0;
+        java.lang.String r1, r2, r4, r8, $r10, $r16, $r24;
+        boolean z0, $z1, $z2, $z3;
+        java.lang.String[] r3;
+        android.database.sqlite.SQLiteDatabase r5;
+        android.content.ContentValues r6;
+        android.net.ConnectivityManager r7;
+        android.content.Intent r9, $r19;
+        int $i0, $i1, $i2;
+        android.content.SharedPreferences $r11;
+        java.lang.Integer $r12;
+        com.android.inputmethod.dictionarypack.ActionBatch$StartDownloadAction $r13;
+        com.android.inputmethod.dictionarypack.ActionBatch $r14, r25;
+        com.android.inputmethod.dictionarypack.WordListMetadata $r15;
+        com.android.inputmethod.dictionarypack.LogProblemReporter $r17;
+        java.lang.Object $r22;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        z0 := @parameter3: boolean;
+
+        r3 = virtualinvoke r2.<java.lang.String: java.lang.String[] split(java.lang.String)>(":");
+
+        $i0 = lengthof r3;
+
+        if 2 != $i0 goto label1;
+
+        $r24 = r3[0];
+
+        goto label2;
+
+     label1:
+        $r24 = "main";
+
+     label2:
+        r4 = $r24;
+
+        $r10 = "main";
+
+        $z1 = virtualinvoke $r10.<java.lang.String: boolean equals(java.lang.Object)>(r4);
+
+        if $z1 != 0 goto label3;
+
+        return;
+
+     label3:
+        $r11 = staticinvoke <com.android.inputmethod.dictionarypack.CommonPreferences: android.content.SharedPreferences getCommonPreferences(android.content.Context)>(r0);
+
+        $z2 = interfaceinvoke $r11.<android.content.SharedPreferences: boolean contains(java.lang.String)>(r2);
+
+        if $z2 == 0 goto label4;
+
+        return;
+
+     label4:
+        r5 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: android.database.sqlite.SQLiteDatabase getDb(android.content.Context,java.lang.String)>(r0, r1);
+
+        r6 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: android.content.ContentValues getContentValuesOfLatestAvailableWordlistById(android.database.sqlite.SQLiteDatabase,java.lang.String)>(r5, r2);
+
+        $r12 = virtualinvoke r6.<android.content.ContentValues: java.lang.Integer getAsInteger(java.lang.String)>("status");
+
+        $i1 = virtualinvoke $r12.<java.lang.Integer: int intValue()>();
+
+        if 1 == $i1 goto label5;
+
+        return;
+
+     label5:
+        if z0 == 0 goto label6;
+
+        $i2 = staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: int getDownloadOverMeteredSetting(android.content.Context)>(r0);
+
+        if 0 != $i2 goto label6;
+
+        $r22 = virtualinvoke r0.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("connectivity");
+
+        r7 = (android.net.ConnectivityManager) $r22;
+
+        $z3 = staticinvoke <com.android.inputmethod.compat.ConnectivityManagerCompatUtils: boolean isActiveNetworkMetered(android.net.ConnectivityManager)>(r7);
+
+        if $z3 == 0 goto label6;
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void showDictionaryAvailableNotification(android.content.Context,java.lang.String,android.content.ContentValues)>(r0, r1, r6);
+
+        return;
+
+     label6:
+        $r14 = new com.android.inputmethod.dictionarypack.ActionBatch;
+
+        specialinvoke $r14.<com.android.inputmethod.dictionarypack.ActionBatch: void <init>()>();
+
+        r25 = $r14;
+
+        $r13 = new com.android.inputmethod.dictionarypack.ActionBatch$StartDownloadAction;
+
+        $r15 = staticinvoke <com.android.inputmethod.dictionarypack.WordListMetadata: com.android.inputmethod.dictionarypack.WordListMetadata createFromContentValues(android.content.ContentValues)>(r6);
+
+        specialinvoke $r13.<com.android.inputmethod.dictionarypack.ActionBatch$StartDownloadAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata,boolean)>(r1, $r15, 0);
+
+        virtualinvoke r25.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r13);
+
+        r8 = virtualinvoke r6.<android.content.ContentValues: java.lang.String getAsString(java.lang.String)>("locale");
+
+        if z0 == 0 goto label7;
+
+        $r19 = new android.content.Intent;
+
+        specialinvoke $r19.<android.content.Intent: void <init>()>();
+
+        r9 = $r19;
+
+        virtualinvoke r9.<android.content.Intent: android.content.Intent setClass(android.content.Context,java.lang.Class)>(r0, class "com/android/inputmethod/dictionarypack/DictionaryService");
+
+        virtualinvoke r9.<android.content.Intent: android.content.Intent setAction(java.lang.String)>("com.android.inputmethod.latin.SHOW_DOWNLOAD_TOAST_INTENT_ACTION");
+
+        virtualinvoke r9.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("locale", r8);
+
+        virtualinvoke r0.<android.content.Context: android.content.ComponentName startService(android.content.Intent)>(r9);
+
+     label7:
+        $r17 = new com.android.inputmethod.dictionarypack.LogProblemReporter;
+
+        $r16 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        specialinvoke $r17.<com.android.inputmethod.dictionarypack.LogProblemReporter: void <init>(java.lang.String)>($r16);
+
+        virtualinvoke r25.<com.android.inputmethod.dictionarypack.ActionBatch: void execute(android.content.Context,com.android.inputmethod.dictionarypack.ProblemReporter)>(r0, $r17);
+
+        return;
+    }
+
+    public static void markAsUsed(android.content.Context, java.lang.String, java.lang.String, int, int, boolean)
+    {
+        android.content.Context r0;
+        java.lang.String r1, r2, $r9, $r12, $r13;
+        int i0, i1;
+        boolean z0;
+        java.util.List r3;
+        com.android.inputmethod.dictionarypack.WordListMetadata r4;
+        com.android.inputmethod.dictionarypack.ActionBatch r5, $r6;
+        com.android.inputmethod.dictionarypack.ActionBatch$EnableAction $r7;
+        com.android.inputmethod.dictionarypack.LogProblemReporter $r8;
+        java.lang.StringBuilder $r10, $r11, $r14;
+        com.android.inputmethod.dictionarypack.ActionBatch$StartDownloadAction $r15;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 := @parameter3: int;
+
+        i1 := @parameter4: int;
+
+        z0 := @parameter5: boolean;
+
+        r3 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: java.util.List getCurrentMetadata(android.content.Context,java.lang.String)>(r0, r1);
+
+        r4 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: com.android.inputmethod.dictionarypack.WordListMetadata findWordListById(java.util.List,java.lang.String)>(r3, r2);
+
+        if null != r4 goto label1;
+
+        return;
+
+     label1:
+        $r6 = new com.android.inputmethod.dictionarypack.ActionBatch;
+
+        specialinvoke $r6.<com.android.inputmethod.dictionarypack.ActionBatch: void <init>()>();
+
+        r5 = $r6;
+
+        if 4 == i1 goto label2;
+
+        if 5 != i1 goto label3;
+
+     label2:
+        $r7 = new com.android.inputmethod.dictionarypack.ActionBatch$EnableAction;
+
+        specialinvoke $r7.<com.android.inputmethod.dictionarypack.ActionBatch$EnableAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata)>(r1, r4);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r7);
+
+        goto label5;
+
+     label3:
+        if 1 != i1 goto label4;
+
+        $r15 = new com.android.inputmethod.dictionarypack.ActionBatch$StartDownloadAction;
+
+        specialinvoke $r15.<com.android.inputmethod.dictionarypack.ActionBatch$StartDownloadAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata,boolean)>(r1, r4, z0);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r15);
+
+        goto label5;
+
+     label4:
+        $r12 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unexpected state of the word list for markAsUsed : ");
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r12, $r13);
+
+     label5:
+        $r8 = new com.android.inputmethod.dictionarypack.LogProblemReporter;
+
+        $r9 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        specialinvoke $r8.<com.android.inputmethod.dictionarypack.LogProblemReporter: void <init>(java.lang.String)>($r9);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void execute(android.content.Context,com.android.inputmethod.dictionarypack.ProblemReporter)>(r0, $r8);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void signalNewDictionaryState(android.content.Context)>(r0);
+
+        return;
+    }
+
+    public static void markAsUnused(android.content.Context, java.lang.String, java.lang.String, int, int)
+    {
+        android.content.Context r0;
+        java.lang.String r1, r2, $r9;
+        int i0, i1;
+        java.util.List r3;
+        com.android.inputmethod.dictionarypack.WordListMetadata r4;
+        com.android.inputmethod.dictionarypack.ActionBatch r5, $r6;
+        com.android.inputmethod.dictionarypack.ActionBatch$DisableAction $r7;
+        com.android.inputmethod.dictionarypack.LogProblemReporter $r8;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 := @parameter3: int;
+
+        i1 := @parameter4: int;
+
+        r3 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: java.util.List getCurrentMetadata(android.content.Context,java.lang.String)>(r0, r1);
+
+        r4 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: com.android.inputmethod.dictionarypack.WordListMetadata findWordListById(java.util.List,java.lang.String)>(r3, r2);
+
+        if null != r4 goto label1;
+
+        return;
+
+     label1:
+        $r6 = new com.android.inputmethod.dictionarypack.ActionBatch;
+
+        specialinvoke $r6.<com.android.inputmethod.dictionarypack.ActionBatch: void <init>()>();
+
+        r5 = $r6;
+
+        $r7 = new com.android.inputmethod.dictionarypack.ActionBatch$DisableAction;
+
+        specialinvoke $r7.<com.android.inputmethod.dictionarypack.ActionBatch$DisableAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata)>(r1, r4);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r7);
+
+        $r8 = new com.android.inputmethod.dictionarypack.LogProblemReporter;
+
+        $r9 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        specialinvoke $r8.<com.android.inputmethod.dictionarypack.LogProblemReporter: void <init>(java.lang.String)>($r9);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void execute(android.content.Context,com.android.inputmethod.dictionarypack.ProblemReporter)>(r0, $r8);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void signalNewDictionaryState(android.content.Context)>(r0);
+
+        return;
+    }
+
+    public static void markAsDeleting(android.content.Context, java.lang.String, java.lang.String, int, int)
+    {
+        android.content.Context r0;
+        java.lang.String r1, r2, $r10;
+        int i0, i1;
+        java.util.List r3;
+        com.android.inputmethod.dictionarypack.WordListMetadata r4;
+        com.android.inputmethod.dictionarypack.ActionBatch r5, $r6;
+        com.android.inputmethod.dictionarypack.ActionBatch$DisableAction $r7;
+        com.android.inputmethod.dictionarypack.ActionBatch$StartDeleteAction $r8;
+        com.android.inputmethod.dictionarypack.LogProblemReporter $r9;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 := @parameter3: int;
+
+        i1 := @parameter4: int;
+
+        r3 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: java.util.List getCurrentMetadata(android.content.Context,java.lang.String)>(r0, r1);
+
+        r4 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: com.android.inputmethod.dictionarypack.WordListMetadata findWordListById(java.util.List,java.lang.String)>(r3, r2);
+
+        if null != r4 goto label1;
+
+        return;
+
+     label1:
+        $r6 = new com.android.inputmethod.dictionarypack.ActionBatch;
+
+        specialinvoke $r6.<com.android.inputmethod.dictionarypack.ActionBatch: void <init>()>();
+
+        r5 = $r6;
+
+        $r7 = new com.android.inputmethod.dictionarypack.ActionBatch$DisableAction;
+
+        specialinvoke $r7.<com.android.inputmethod.dictionarypack.ActionBatch$DisableAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata)>(r1, r4);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r7);
+
+        $r8 = new com.android.inputmethod.dictionarypack.ActionBatch$StartDeleteAction;
+
+        specialinvoke $r8.<com.android.inputmethod.dictionarypack.ActionBatch$StartDeleteAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata)>(r1, r4);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r8);
+
+        $r9 = new com.android.inputmethod.dictionarypack.LogProblemReporter;
+
+        $r10 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        specialinvoke $r9.<com.android.inputmethod.dictionarypack.LogProblemReporter: void <init>(java.lang.String)>($r10);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void execute(android.content.Context,com.android.inputmethod.dictionarypack.ProblemReporter)>(r0, $r9);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void signalNewDictionaryState(android.content.Context)>(r0);
+
+        return;
+    }
+
+    public static void markAsDeleted(android.content.Context, java.lang.String, java.lang.String, int, int)
+    {
+        android.content.Context r0;
+        java.lang.String r1, r2, $r9;
+        int i0, i1;
+        java.util.List r3;
+        com.android.inputmethod.dictionarypack.WordListMetadata r4;
+        com.android.inputmethod.dictionarypack.ActionBatch r5, $r6;
+        com.android.inputmethod.dictionarypack.ActionBatch$FinishDeleteAction $r7;
+        com.android.inputmethod.dictionarypack.LogProblemReporter $r8;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 := @parameter3: int;
+
+        i1 := @parameter4: int;
+
+        r3 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: java.util.List getCurrentMetadata(android.content.Context,java.lang.String)>(r0, r1);
+
+        r4 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataHandler: com.android.inputmethod.dictionarypack.WordListMetadata findWordListById(java.util.List,java.lang.String)>(r3, r2);
+
+        if null != r4 goto label1;
+
+        return;
+
+     label1:
+        $r6 = new com.android.inputmethod.dictionarypack.ActionBatch;
+
+        specialinvoke $r6.<com.android.inputmethod.dictionarypack.ActionBatch: void <init>()>();
+
+        r5 = $r6;
+
+        $r7 = new com.android.inputmethod.dictionarypack.ActionBatch$FinishDeleteAction;
+
+        specialinvoke $r7.<com.android.inputmethod.dictionarypack.ActionBatch$FinishDeleteAction: void <init>(java.lang.String,com.android.inputmethod.dictionarypack.WordListMetadata)>(r1, r4);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void add(com.android.inputmethod.dictionarypack.ActionBatch$Action)>($r7);
+
+        $r8 = new com.android.inputmethod.dictionarypack.LogProblemReporter;
+
+        $r9 = <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG>;
+
+        specialinvoke $r8.<com.android.inputmethod.dictionarypack.LogProblemReporter: void <init>(java.lang.String)>($r9);
+
+        virtualinvoke r5.<com.android.inputmethod.dictionarypack.ActionBatch: void execute(android.content.Context,com.android.inputmethod.dictionarypack.ProblemReporter)>(r0, $r8);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.UpdateHandler: void signalNewDictionaryState(android.content.Context)>(r0);
+
+        return;
+    }
+
+    public static void markAsBroken(android.content.Context, java.lang.String, java.lang.String, int)
+    {
+        android.content.Context r0;
+        java.lang.String r1, r2;
+        int i0;
+        android.database.sqlite.SQLiteDatabase $r3;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 := @parameter3: int;
+
+        $r3 = staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: android.database.sqlite.SQLiteDatabase getDb(android.content.Context,java.lang.String)>(r0, r1);
+
+        staticinvoke <com.android.inputmethod.dictionarypack.MetadataDbHelper: void deleteEntry(android.database.sqlite.SQLiteDatabase,java.lang.String,int)>($r3, r2, i0);
+
+        return;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.StringBuilder $r0, $r1, $r4;
+        java.lang.Class $r2;
+        java.lang.String $r3, $r5;
+        java.lang.Object $r6;
+        java.util.LinkedList $r7;
+        java.util.List $r8;
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: int DOWNLOAD_OVER_METERED_DISALLOWED> = 2;
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: int DOWNLOAD_OVER_METERED_ALLOWED> = 1;
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: int DOWNLOAD_OVER_METERED_SETTING_UNKNOWN> = 0;
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String DOWNLOAD_OVER_METERED_SETTING_PREFS_KEY> = "downloadOverMetered";
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: int DICT_AVAILABLE_NOTIFICATION_ID> = 1;
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String MAIN_DICTIONARY_CATEGORY> = "main";
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String DICT_FILE_SUFFIX> = ".dict";
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: int WORDLIST_TYPE> = 1;
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: int METADATA_TYPE> = 0;
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String METADATA_NAME> = "metadata";
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: int FILE_COPY_BUFFER_SIZE> = 8192;
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: int MAXIMUM_SUPPORTED_FORMAT_VERSION> = 2;
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: int NOT_AN_ID> = -1;
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: boolean DEBUG> = 0;
+
+        $r0 = new java.lang.StringBuilder;
+
+        specialinvoke $r0.<java.lang.StringBuilder: void <init>()>();
+
+        $r1 = virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("DictionaryProvider:");
+
+        $r2 = class "com/android/inputmethod/dictionarypack/UpdateHandler";
+
+        $r3 = virtualinvoke $r2.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r3);
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.String TAG> = $r5;
+
+        $r6 = new java.lang.Object;
+
+        specialinvoke $r6.<java.lang.Object: void <init>()>();
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: java.lang.Object sSharedIdProtector> = $r6;
+
+        $r7 = new java.util.LinkedList;
+
+        specialinvoke $r7.<java.util.LinkedList: void <init>()>();
+
+        $r8 = staticinvoke <java.util.Collections: java.util.List synchronizedList(java.util.List)>($r7);
+
+        <com.android.inputmethod.dictionarypack.UpdateHandler: java.util.List sUpdateEventListeners> = $r8;
+
+        return;
+    }
+}

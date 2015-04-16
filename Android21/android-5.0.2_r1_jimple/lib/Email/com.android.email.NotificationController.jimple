@@ -1,0 +1,2011 @@
+public class com.android.email.NotificationController extends java.lang.Object
+{
+    private static final java.lang.String LOG_TAG;
+    private static final int NOTIFICATION_ID_ATTACHMENT_WARNING;
+    private static final int NOTIFICATION_ID_PASSWORD_EXPIRING;
+    private static final int NOTIFICATION_ID_PASSWORD_EXPIRED;
+    private static final int NOTIFICATION_ID_BASE_MASK;
+    private static final int NOTIFICATION_ID_BASE_LOGIN_WARNING;
+    private static final int NOTIFICATION_ID_BASE_SECURITY_NEEDED;
+    private static final int NOTIFICATION_ID_BASE_SECURITY_CHANGED;
+    private static com.android.email.NotificationController$NotificationThread sNotificationThread;
+    private static android.os.Handler sNotificationHandler;
+    private static com.android.email.NotificationController sInstance;
+    private final android.content.Context mContext;
+    private final android.app.NotificationManager mNotificationManager;
+    private final com.android.mail.utils.Clock mClock;
+    private final java.util.Map mNotificationMap;
+    private android.database.ContentObserver mAccountObserver;
+    private static final int NOTIFICATION_DELAYED_MESSAGE;
+    private static final long NOTIFICATION_DELAY;
+    private static boolean sNotificationDelayedMessagePending;
+    private static boolean sRefreshAllNeeded;
+    private static final java.util.HashSet sRefreshAccountSet;
+    private static final java.lang.Object sNotificationDelayedMessageLock;
+    public static final java.lang.String EXTRA_ACCOUNT;
+    public static final java.lang.String EXTRA_CONVERSATION;
+    public static final java.lang.String EXTRA_FOLDER;
+
+    protected void <init>(android.content.Context, com.android.mail.utils.Clock)
+    {
+        com.android.email.NotificationController r0;
+        android.content.Context r1, $r4;
+        com.android.mail.utils.Clock r2;
+        java.util.HashMap $r3;
+        java.lang.Object $r5;
+        android.app.NotificationManager $r6;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.mail.utils.Clock;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r3 = new java.util.HashMap;
+
+        specialinvoke $r3.<java.util.HashMap: void <init>()>();
+
+        r0.<com.android.email.NotificationController: java.util.Map mNotificationMap> = $r3;
+
+        $r4 = virtualinvoke r1.<android.content.Context: android.content.Context getApplicationContext()>();
+
+        r0.<com.android.email.NotificationController: android.content.Context mContext> = $r4;
+
+        staticinvoke <com.android.emailcommon.provider.EmailContent: void init(android.content.Context)>(r1);
+
+        $r5 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("notification");
+
+        $r6 = (android.app.NotificationManager) $r5;
+
+        r0.<com.android.email.NotificationController: android.app.NotificationManager mNotificationManager> = $r6;
+
+        r0.<com.android.email.NotificationController: com.android.mail.utils.Clock mClock> = r2;
+
+        return;
+    }
+
+    public static synchronized com.android.email.NotificationController getInstance(android.content.Context)
+    {
+        android.content.Context r0;
+        com.android.email.NotificationController $r1, $r2, $r3;
+        com.android.mail.utils.Clock $r4;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r1 = <com.android.email.NotificationController: com.android.email.NotificationController sInstance>;
+
+        if $r1 != null goto label1;
+
+        $r3 = new com.android.email.NotificationController;
+
+        $r4 = <com.android.mail.utils.Clock: com.android.mail.utils.Clock INSTANCE>;
+
+        specialinvoke $r3.<com.android.email.NotificationController: void <init>(android.content.Context,com.android.mail.utils.Clock)>(r0, $r4);
+
+        <com.android.email.NotificationController: com.android.email.NotificationController sInstance> = $r3;
+
+     label1:
+        $r2 = <com.android.email.NotificationController: com.android.email.NotificationController sInstance>;
+
+        return $r2;
+    }
+
+    private static boolean needsOngoingNotification(int)
+    {
+        int i0, $i1;
+        boolean $z0;
+
+        i0 := @parameter0: int;
+
+        $i1 = i0 & -268435456;
+
+        if $i1 != 805306368 goto label1;
+
+        $z0 = 1;
+
+        goto label2;
+
+     label1:
+        $z0 = 0;
+
+     label2:
+        return $z0;
+    }
+
+    private android.support.v4.app.NotificationCompat$Builder createBaseAccountNotificationBuilder(long, java.lang.String, java.lang.CharSequence, java.lang.String, android.content.Intent, android.graphics.Bitmap, java.lang.Integer, boolean, boolean)
+    {
+        com.android.email.NotificationController r0;
+        long l0, $l2;
+        java.lang.String r1, r3;
+        java.lang.CharSequence r2;
+        android.content.Intent r4;
+        android.graphics.Bitmap r5;
+        java.lang.Integer r6;
+        boolean z0, z1;
+        android.app.PendingIntent r7;
+        android.support.v4.app.NotificationCompat$Builder r8, $r10, $r12, $r13, $r14, $r15, $r16, $r18, $r19, $r20;
+        com.android.emailcommon.provider.Account r9;
+        android.content.Context $r11, $r21, $r22;
+        int $i1;
+        com.android.mail.utils.Clock $r17;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        l0 := @parameter0: long;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.CharSequence;
+
+        r3 := @parameter3: java.lang.String;
+
+        r4 := @parameter4: android.content.Intent;
+
+        r5 := @parameter5: android.graphics.Bitmap;
+
+        r6 := @parameter6: java.lang.Integer;
+
+        z0 := @parameter7: boolean;
+
+        z1 := @parameter8: boolean;
+
+        r7 = null;
+
+        if r4 == null goto label1;
+
+        $r22 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r7 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getActivity(android.content.Context,int,android.content.Intent,int)>($r22, 0, r4, 134217728);
+
+     label1:
+        $r10 = new android.support.v4.app.NotificationCompat$Builder;
+
+        $r11 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        specialinvoke $r10.<android.support.v4.app.NotificationCompat$Builder: void <init>(android.content.Context)>($r11);
+
+        $r13 = virtualinvoke $r10.<android.support.v4.app.NotificationCompat$Builder: android.support.v4.app.NotificationCompat$Builder setContentTitle(java.lang.CharSequence)>(r2);
+
+        $r12 = virtualinvoke $r13.<android.support.v4.app.NotificationCompat$Builder: android.support.v4.app.NotificationCompat$Builder setContentText(java.lang.CharSequence)>(r3);
+
+        $r15 = virtualinvoke $r12.<android.support.v4.app.NotificationCompat$Builder: android.support.v4.app.NotificationCompat$Builder setContentIntent(android.app.PendingIntent)>(r7);
+
+        $r14 = virtualinvoke $r15.<android.support.v4.app.NotificationCompat$Builder: android.support.v4.app.NotificationCompat$Builder setLargeIcon(android.graphics.Bitmap)>(r5);
+
+        if r6 != null goto label2;
+
+        $i1 = 0;
+
+        goto label3;
+
+     label2:
+        $i1 = virtualinvoke r6.<java.lang.Integer: int intValue()>();
+
+     label3:
+        $r16 = virtualinvoke $r14.<android.support.v4.app.NotificationCompat$Builder: android.support.v4.app.NotificationCompat$Builder setNumber(int)>($i1);
+
+        $r18 = virtualinvoke $r16.<android.support.v4.app.NotificationCompat$Builder: android.support.v4.app.NotificationCompat$Builder setSmallIcon(int)>(2130837663);
+
+        $r17 = r0.<com.android.email.NotificationController: com.android.mail.utils.Clock mClock>;
+
+        $l2 = virtualinvoke $r17.<com.android.mail.utils.Clock: long getTime()>();
+
+        $r19 = virtualinvoke $r18.<android.support.v4.app.NotificationCompat$Builder: android.support.v4.app.NotificationCompat$Builder setWhen(long)>($l2);
+
+        $r20 = virtualinvoke $r19.<android.support.v4.app.NotificationCompat$Builder: android.support.v4.app.NotificationCompat$Builder setTicker(java.lang.CharSequence)>(r1);
+
+        r8 = virtualinvoke $r20.<android.support.v4.app.NotificationCompat$Builder: android.support.v4.app.NotificationCompat$Builder setOngoing(boolean)>(z1);
+
+        if z0 == 0 goto label4;
+
+        $r21 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r9 = staticinvoke <com.android.emailcommon.provider.Account: com.android.emailcommon.provider.Account restoreAccountWithId(android.content.Context,long)>($r21, l0);
+
+        specialinvoke r0.<com.android.email.NotificationController: void setupSoundAndVibration(android.support.v4.app.NotificationCompat$Builder,com.android.emailcommon.provider.Account)>(r8, r9);
+
+     label4:
+        return r8;
+    }
+
+    private void showNotification(long, java.lang.String, java.lang.String, java.lang.String, android.content.Intent, int)
+    {
+        com.android.email.NotificationController r0;
+        long l0;
+        java.lang.String r1, r2, r3;
+        android.content.Intent r4;
+        int i1;
+        android.support.v4.app.NotificationCompat$Builder r5;
+        boolean $z0;
+        android.app.NotificationManager $r6;
+        android.app.Notification $r7;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        l0 := @parameter0: long;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        r3 := @parameter3: java.lang.String;
+
+        r4 := @parameter4: android.content.Intent;
+
+        i1 := @parameter5: int;
+
+        $z0 = staticinvoke <com.android.email.NotificationController: boolean needsOngoingNotification(int)>(i1);
+
+        r5 = specialinvoke r0.<com.android.email.NotificationController: android.support.v4.app.NotificationCompat$Builder createBaseAccountNotificationBuilder(long,java.lang.String,java.lang.CharSequence,java.lang.String,android.content.Intent,android.graphics.Bitmap,java.lang.Integer,boolean,boolean)>(l0, r1, r2, r3, r4, null, null, 1, $z0);
+
+        $r6 = r0.<com.android.email.NotificationController: android.app.NotificationManager mNotificationManager>;
+
+        $r7 = virtualinvoke r5.<android.support.v4.app.NotificationCompat$Builder: android.app.Notification build()>();
+
+        virtualinvoke $r6.<android.app.NotificationManager: void notify(int,android.app.Notification)>(i1, $r7);
+
+        return;
+    }
+
+    public void watchForMessages()
+    {
+        com.android.email.NotificationController r0;
+        com.android.email.NotificationController$1 $r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        staticinvoke <com.android.email.NotificationController: void ensureHandlerExists()>();
+
+        $r2 = <com.android.email.NotificationController: android.os.Handler sNotificationHandler>;
+
+        $r1 = new com.android.email.NotificationController$1;
+
+        specialinvoke $r1.<com.android.email.NotificationController$1: void <init>(com.android.email.NotificationController)>(r0);
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    private static synchronized void ensureHandlerExists()
+    {
+        com.android.email.NotificationController$NotificationThread $r0, $r1, $r3;
+        android.os.Handler $r2;
+        android.os.Looper $r4;
+        com.android.email.NotificationController$2 $r5;
+
+        $r0 = <com.android.email.NotificationController: com.android.email.NotificationController$NotificationThread sNotificationThread>;
+
+        if $r0 != null goto label1;
+
+        $r1 = new com.android.email.NotificationController$NotificationThread;
+
+        specialinvoke $r1.<com.android.email.NotificationController$NotificationThread: void <init>()>();
+
+        <com.android.email.NotificationController: com.android.email.NotificationController$NotificationThread sNotificationThread> = $r1;
+
+        $r2 = new android.os.Handler;
+
+        $r3 = <com.android.email.NotificationController: com.android.email.NotificationController$NotificationThread sNotificationThread>;
+
+        $r4 = virtualinvoke $r3.<com.android.email.NotificationController$NotificationThread: android.os.Looper getLooper()>();
+
+        $r5 = new com.android.email.NotificationController$2;
+
+        specialinvoke $r5.<com.android.email.NotificationController$2: void <init>()>();
+
+        specialinvoke $r2.<android.os.Handler: void <init>(android.os.Looper,android.os.Handler$Callback)>($r4, $r5);
+
+        <com.android.email.NotificationController: android.os.Handler sNotificationHandler> = $r2;
+
+     label1:
+        return;
+    }
+
+    private void registerMessageNotification(long)
+    {
+        com.android.email.NotificationController r0;
+        long l0, l1;
+        android.content.ContentResolver r1;
+        android.database.Cursor r2;
+        java.lang.Throwable r3, $r23;
+        android.content.Context $r4, $r16;
+        byte $b2;
+        java.util.Map $r5, $r17;
+        java.lang.Long $r6, $r20;
+        java.lang.Object $r7;
+        java.lang.StringBuilder $r8, $r10, $r11;
+        java.lang.String $r9, $r13;
+        java.lang.Object[] $r12;
+        com.android.email.NotificationController$MessageContentObserver $r14, r25;
+        android.os.Handler $r15;
+        android.net.Uri $r18, $r21;
+        java.lang.String[] $r22;
+        boolean $z0;
+        android.database.ContentObserver r24;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        l0 := @parameter0: long;
+
+        $r4 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r1 = virtualinvoke $r4.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $b2 = l0 cmp 1152921504606846976L;
+
+        if $b2 != 0 goto label6;
+
+        $r21 = <com.android.emailcommon.provider.Account: android.net.Uri CONTENT_URI>;
+
+        $r22 = <com.android.emailcommon.provider.EmailContent: java.lang.String[] ID_PROJECTION>;
+
+        r2 = virtualinvoke r1.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r21, $r22, null, null, null);
+
+     label1:
+        $z0 = interfaceinvoke r2.<android.database.Cursor: boolean moveToNext()>();
+
+        if $z0 == 0 goto label2;
+
+        l1 = interfaceinvoke r2.<android.database.Cursor: long getLong(int)>(0);
+
+        specialinvoke r0.<com.android.email.NotificationController: void registerMessageNotification(long)>(l1);
+
+        goto label1;
+
+     label2:
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        goto label5;
+
+     label3:
+        $r23 := @caughtexception;
+
+        r3 = $r23;
+
+     label4:
+        interfaceinvoke r2.<android.database.Cursor: void close()>();
+
+        throw r3;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r5 = r0.<com.android.email.NotificationController: java.util.Map mNotificationMap>;
+
+        $r6 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r7 = interfaceinvoke $r5.<java.util.Map: java.lang.Object get(java.lang.Object)>($r6);
+
+        r24 = (android.database.ContentObserver) $r7;
+
+        if r24 == null goto label7;
+
+        return;
+
+     label7:
+        $r9 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Registering for notifications for account ");
+
+        $r10 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r12 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int i(java.lang.String,java.lang.String,java.lang.Object[])>($r9, $r13, $r12);
+
+        $r14 = new com.android.email.NotificationController$MessageContentObserver;
+
+        $r15 = <com.android.email.NotificationController: android.os.Handler sNotificationHandler>;
+
+        $r16 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        specialinvoke $r14.<com.android.email.NotificationController$MessageContentObserver: void <init>(android.os.Handler,android.content.Context,long)>($r15, $r16, l0);
+
+        r25 = $r14;
+
+        $r18 = <com.android.emailcommon.provider.EmailContent$Message: android.net.Uri NOTIFIER_URI>;
+
+        virtualinvoke r1.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver)>($r18, 1, r25);
+
+        $r17 = r0.<com.android.email.NotificationController: java.util.Map mNotificationMap>;
+
+        $r20 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        interfaceinvoke $r17.<java.util.Map: java.lang.Object put(java.lang.Object,java.lang.Object)>($r20, r25);
+
+        virtualinvoke r25.<android.database.ContentObserver: void onChange(boolean)>(1);
+
+     label8:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label3 to label4 with label3;
+    }
+
+    private void unregisterMessageNotification(long)
+    {
+        com.android.email.NotificationController r0;
+        long l0;
+        android.content.ContentResolver r1;
+        java.util.Iterator r2;
+        android.database.ContentObserver r3, r20;
+        android.content.Context $r4;
+        byte $b1;
+        java.lang.StringBuilder $r5, $r7, $r8;
+        java.lang.String $r6, $r9, $r15;
+        java.lang.Object[] $r10, $r13;
+        java.lang.Long $r11;
+        java.util.Map $r12, $r17, $r19;
+        java.lang.Object $r14, $r18;
+        java.util.Collection $r16;
+        boolean $z0;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        l0 := @parameter0: long;
+
+        $r4 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r1 = virtualinvoke $r4.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $b1 = l0 cmp 1152921504606846976L;
+
+        if $b1 != 0 goto label3;
+
+        $r15 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r13 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int i(java.lang.String,java.lang.String,java.lang.Object[])>($r15, "Unregistering notifications for all accounts", $r13);
+
+        $r17 = r0.<com.android.email.NotificationController: java.util.Map mNotificationMap>;
+
+        $r16 = interfaceinvoke $r17.<java.util.Map: java.util.Collection values()>();
+
+        r2 = interfaceinvoke $r16.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r18 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (android.database.ContentObserver) $r18;
+
+        virtualinvoke r1.<android.content.ContentResolver: void unregisterContentObserver(android.database.ContentObserver)>(r3);
+
+        goto label1;
+
+     label2:
+        $r19 = r0.<com.android.email.NotificationController: java.util.Map mNotificationMap>;
+
+        interfaceinvoke $r19.<java.util.Map: void clear()>();
+
+        goto label4;
+
+     label3:
+        $r6 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unregistering notifications for account ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r10 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int i(java.lang.String,java.lang.String,java.lang.Object[])>($r6, $r9, $r10);
+
+        $r12 = r0.<com.android.email.NotificationController: java.util.Map mNotificationMap>;
+
+        $r11 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r14 = interfaceinvoke $r12.<java.util.Map: java.lang.Object remove(java.lang.Object)>($r11);
+
+        r20 = (android.database.ContentObserver) $r14;
+
+        if r20 == null goto label4;
+
+        virtualinvoke r1.<android.content.ContentResolver: void unregisterContentObserver(android.database.ContentObserver)>(r20);
+
+     label4:
+        return;
+    }
+
+    private void setupSoundAndVibration(android.support.v4.app.NotificationCompat$Builder, com.android.emailcommon.provider.Account)
+    {
+        com.android.email.NotificationController r0;
+        android.support.v4.app.NotificationCompat$Builder r1, $r19;
+        com.android.emailcommon.provider.Account r2;
+        java.lang.String r3, $r15, $r30, $r32, $r33;
+        boolean z0, $z1, $z2, $z3;
+        android.database.Cursor r4, r40;
+        com.android.mail.providers.Account r5;
+        java.lang.Throwable r6, r8, $r37, $r39;
+        com.android.mail.providers.Folder r7, $r31;
+        android.net.Uri $r9, $r12, $r17, $r22, $r26, $r34;
+        android.content.Context $r10, $r21, $r29;
+        android.content.ContentResolver $r11, $r20;
+        long $l0, $l1;
+        java.lang.String[] $r13, $r24;
+        java.lang.Object[] $r14, $r27, $r36;
+        java.lang.Long $r16;
+        com.android.mail.providers.Settings $r23, $r25, $r35;
+        com.android.mail.preferences.FolderPreferences $r28, r41;
+        com.android.mail.providers.Account$Builder $r38;
+        byte b5;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        r1 := @parameter0: android.support.v4.app.NotificationCompat$Builder;
+
+        r2 := @parameter1: com.android.emailcommon.provider.Account;
+
+        $r9 = <android.provider.Settings$System: android.net.Uri DEFAULT_NOTIFICATION_URI>;
+
+        r3 = virtualinvoke $r9.<android.net.Uri: java.lang.String toString()>();
+
+        z0 = 0;
+
+        $r10 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $r11 = virtualinvoke $r10.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $l0 = r2.<com.android.emailcommon.provider.Account: long mId>;
+
+        $r12 = staticinvoke <com.android.email.provider.EmailProvider: android.net.Uri uiUri(java.lang.String,long)>("uiaccount", $l0);
+
+        $r13 = <com.android.mail.providers.UIProvider: java.lang.String[] ACCOUNTS_PROJECTION>;
+
+        r4 = virtualinvoke $r11.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r12, $r13, null, null, null);
+
+        r5 = null;
+
+     label01:
+        $z1 = interfaceinvoke r4.<android.database.Cursor: boolean moveToFirst()>();
+
+        if $z1 == 0 goto label02;
+
+        $r38 = staticinvoke <com.android.mail.providers.Account: com.android.mail.providers.Account$Builder builder()>();
+
+        r5 = virtualinvoke $r38.<com.android.mail.providers.Account$Builder: com.android.mail.providers.Account buildFrom(android.database.Cursor)>(r4);
+
+     label02:
+        interfaceinvoke r4.<android.database.Cursor: void close()>();
+
+        goto label05;
+
+     label03:
+        $r39 := @caughtexception;
+
+        r6 = $r39;
+
+     label04:
+        interfaceinvoke r4.<android.database.Cursor: void close()>();
+
+        throw r6;
+
+     label05:
+        if r5 == null goto label14;
+
+        $r21 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $r20 = virtualinvoke $r21.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r23 = r5.<com.android.mail.providers.Account: com.android.mail.providers.Settings settings>;
+
+        $r22 = $r23.<com.android.mail.providers.Settings: android.net.Uri defaultInbox>;
+
+        $r24 = <com.android.mail.providers.UIProvider: java.lang.String[] FOLDERS_PROJECTION>;
+
+        r40 = virtualinvoke $r20.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r22, $r24, null, null, null);
+
+        if r40 != null goto label06;
+
+        $r33 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r36 = newarray (java.lang.Object)[1];
+
+        $r35 = r5.<com.android.mail.providers.Account: com.android.mail.providers.Settings settings>;
+
+        $r34 = $r35.<com.android.mail.providers.Settings: android.net.Uri defaultInbox>;
+
+        $r36[0] = $r34;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int w(java.lang.String,java.lang.String,java.lang.Object[])>($r33, "Null folder cursor for mailbox %s", $r36);
+
+        goto label13;
+
+     label06:
+        r7 = null;
+
+     label07:
+        $z3 = interfaceinvoke r40.<android.database.Cursor: boolean moveToFirst()>();
+
+        if $z3 == 0 goto label08;
+
+        $r31 = new com.android.mail.providers.Folder;
+
+        specialinvoke $r31.<com.android.mail.providers.Folder: void <init>(android.database.Cursor)>(r40);
+
+        r7 = $r31;
+
+     label08:
+        interfaceinvoke r40.<android.database.Cursor: void close()>();
+
+        goto label11;
+
+     label09:
+        $r37 := @caughtexception;
+
+        r8 = $r37;
+
+     label10:
+        interfaceinvoke r40.<android.database.Cursor: void close()>();
+
+        throw r8;
+
+     label11:
+        if r7 == null goto label12;
+
+        $r28 = new com.android.mail.preferences.FolderPreferences;
+
+        $r29 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $r32 = virtualinvoke r5.<com.android.mail.providers.Account: java.lang.String getEmailAddress()>();
+
+        specialinvoke $r28.<com.android.mail.preferences.FolderPreferences: void <init>(android.content.Context,java.lang.String,com.android.mail.providers.Folder,boolean)>($r29, $r32, r7, 1);
+
+        r41 = $r28;
+
+        r3 = virtualinvoke r41.<com.android.mail.preferences.FolderPreferences: java.lang.String getNotificationRingtoneUri()>();
+
+        z0 = virtualinvoke r41.<com.android.mail.preferences.FolderPreferences: boolean isNotificationVibrateEnabled()>();
+
+        goto label13;
+
+     label12:
+        $r30 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r27 = newarray (java.lang.Object)[1];
+
+        $r25 = r5.<com.android.mail.providers.Account: com.android.mail.providers.Settings settings>;
+
+        $r26 = $r25.<com.android.mail.providers.Settings: android.net.Uri defaultInbox>;
+
+        $r27[0] = $r26;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>($r30, "Null folder for mailbox %s", $r27);
+
+     label13:
+        goto label15;
+
+     label14:
+        $r15 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r14 = newarray (java.lang.Object)[1];
+
+        $l1 = r2.<com.android.emailcommon.provider.Account: long mId>;
+
+        $r16 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l1);
+
+        $r14[0] = $r16;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>($r15, "Null uiAccount for account id %d", $r14);
+
+     label15:
+        b5 = 4;
+
+        if z0 == 0 goto label16;
+
+        b5 = b5 | 2;
+
+     label16:
+        $z2 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r3);
+
+        if $z2 == 0 goto label17;
+
+        $r17 = null;
+
+        goto label18;
+
+     label17:
+        $r17 = staticinvoke <android.net.Uri: android.net.Uri parse(java.lang.String)>(r3);
+
+     label18:
+        $r19 = virtualinvoke r1.<android.support.v4.app.NotificationCompat$Builder: android.support.v4.app.NotificationCompat$Builder setSound(android.net.Uri)>($r17);
+
+        virtualinvoke $r19.<android.support.v4.app.NotificationCompat$Builder: android.support.v4.app.NotificationCompat$Builder setDefaults(int)>(b5);
+
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label03;
+        catch java.lang.Throwable from label03 to label04 with label03;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label09 to label10 with label09;
+    }
+
+    public void showDownloadForwardFailedNotificationSynchronous(com.android.emailcommon.provider.EmailContent$Attachment)
+    {
+        com.android.email.NotificationController r0;
+        com.android.emailcommon.provider.EmailContent$Attachment r1;
+        com.android.emailcommon.provider.EmailContent$Message r2;
+        com.android.emailcommon.provider.Mailbox r3;
+        long $l0, $l1, $l2;
+        android.content.Context $r4, $r5, $r6, $r8;
+        java.lang.String $r7, $r9, $r10;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        r1 := @parameter0: com.android.emailcommon.provider.EmailContent$Attachment;
+
+        $r4 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $l0 = r1.<com.android.emailcommon.provider.EmailContent$Attachment: long mMessageKey>;
+
+        r2 = staticinvoke <com.android.emailcommon.provider.EmailContent$Message: com.android.emailcommon.provider.EmailContent$Message restoreMessageWithId(android.content.Context,long)>($r4, $l0);
+
+        if r2 != null goto label1;
+
+        return;
+
+     label1:
+        $r5 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $l1 = r2.<com.android.emailcommon.provider.EmailContent$Message: long mMailboxKey>;
+
+        r3 = staticinvoke <com.android.emailcommon.provider.Mailbox: com.android.emailcommon.provider.Mailbox restoreMailboxWithId(android.content.Context,long)>($r5, $l1);
+
+        $l2 = r3.<com.android.emailcommon.provider.Mailbox: long mAccountKey>;
+
+        $r6 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $r7 = virtualinvoke $r6.<android.content.Context: java.lang.String getString(int)>(2131296733);
+
+        $r8 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $r9 = virtualinvoke $r8.<android.content.Context: java.lang.String getString(int)>(2131296734);
+
+        $r10 = r1.<com.android.emailcommon.provider.EmailContent$Attachment: java.lang.String mFileName>;
+
+        specialinvoke r0.<com.android.email.NotificationController: void showNotification(long,java.lang.String,java.lang.String,java.lang.String,android.content.Intent,int)>($l2, $r7, $r9, $r10, null, 3);
+
+        return;
+    }
+
+    private static int getLoginFailedNotificationId(long)
+    {
+        long l0;
+        int $i1, $i2;
+
+        l0 := @parameter0: long;
+
+        $i1 = (int) l0;
+
+        $i2 = 536870912 + $i1;
+
+        return $i2;
+    }
+
+    public void showLoginFailedNotificationSynchronous(long, boolean)
+    {
+        com.android.email.NotificationController r0;
+        long l0, $l1;
+        boolean z0;
+        com.android.emailcommon.provider.Account r1;
+        com.android.emailcommon.provider.Mailbox r2;
+        android.content.Intent r3, $r6, $r15;
+        android.content.Context $r4, $r5, $r10, $r11;
+        android.net.Uri $r7, $r16;
+        java.lang.Object[] $r8;
+        java.lang.String $r9, $r12, $r13, $r14;
+        int $i2;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        l0 := @parameter0: long;
+
+        z0 := @parameter1: boolean;
+
+        $r4 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r1 = staticinvoke <com.android.emailcommon.provider.Account: com.android.emailcommon.provider.Account restoreAccountWithId(android.content.Context,long)>($r4, l0);
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        $r5 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r2 = staticinvoke <com.android.emailcommon.provider.Mailbox: com.android.emailcommon.provider.Mailbox restoreMailboxOfType(android.content.Context,long,int)>($r5, l0, 0);
+
+        if r2 != null goto label2;
+
+        return;
+
+     label2:
+        if z0 == 0 goto label3;
+
+        $r15 = new android.content.Intent;
+
+        $r16 = staticinvoke <com.android.email.activity.setup.HeadlessAccountSettingsLoader: android.net.Uri getIncomingSettingsUri(long)>(l0);
+
+        specialinvoke $r15.<android.content.Intent: void <init>(java.lang.String,android.net.Uri)>("android.intent.action.VIEW", $r16);
+
+        r3 = $r15;
+
+        goto label4;
+
+     label3:
+        $r6 = new android.content.Intent;
+
+        $r7 = staticinvoke <com.android.email.activity.setup.HeadlessAccountSettingsLoader: android.net.Uri getOutgoingSettingsUri(long)>(l0);
+
+        specialinvoke $r6.<android.content.Intent: void <init>(java.lang.String,android.net.Uri)>("android.intent.action.VIEW", $r7);
+
+        r3 = $r6;
+
+     label4:
+        $l1 = r2.<com.android.emailcommon.provider.Mailbox: long mAccountKey>;
+
+        $r10 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $r8 = newarray (java.lang.Object)[1];
+
+        $r9 = r1.<com.android.emailcommon.provider.Account: java.lang.String mDisplayName>;
+
+        $r8[0] = $r9;
+
+        $r12 = virtualinvoke $r10.<android.content.Context: java.lang.String getString(int,java.lang.Object[])>(2131296735, $r8);
+
+        $r11 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $r14 = virtualinvoke $r11.<android.content.Context: java.lang.String getString(int)>(2131296736);
+
+        $r13 = virtualinvoke r1.<com.android.emailcommon.provider.Account: java.lang.String getDisplayName()>();
+
+        $i2 = staticinvoke <com.android.email.NotificationController: int getLoginFailedNotificationId(long)>(l0);
+
+        specialinvoke r0.<com.android.email.NotificationController: void showNotification(long,java.lang.String,java.lang.String,java.lang.String,android.content.Intent,int)>($l1, $r12, $r14, $r13, r3, $i2);
+
+        return;
+    }
+
+    public void cancelLoginFailedNotification(long)
+    {
+        com.android.email.NotificationController r0;
+        long l0;
+        android.app.NotificationManager $r1;
+        int $i1;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        l0 := @parameter0: long;
+
+        $r1 = r0.<com.android.email.NotificationController: android.app.NotificationManager mNotificationManager>;
+
+        $i1 = staticinvoke <com.android.email.NotificationController: int getLoginFailedNotificationId(long)>(l0);
+
+        virtualinvoke $r1.<android.app.NotificationManager: void cancel(int)>($i1);
+
+        return;
+    }
+
+    public void showPasswordExpiringNotificationSynchronous(long)
+    {
+        com.android.email.NotificationController r0;
+        long l0;
+        com.android.emailcommon.provider.Account r1;
+        android.content.Intent r2;
+        java.lang.String r3, r4, r5;
+        android.content.Context $r6, $r7, $r9, $r10;
+        java.lang.Object[] $r8;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        l0 := @parameter0: long;
+
+        $r6 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r1 = staticinvoke <com.android.emailcommon.provider.Account: com.android.emailcommon.provider.Account restoreAccountWithId(android.content.Context,long)>($r6, l0);
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        $r7 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r2 = staticinvoke <com.android.email.activity.setup.AccountSecurity: android.content.Intent actionDevicePasswordExpirationIntent(android.content.Context,long,boolean)>($r7, l0, 0);
+
+        r3 = virtualinvoke r1.<com.android.emailcommon.provider.Account: java.lang.String getDisplayName()>();
+
+        $r9 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $r8 = newarray (java.lang.Object)[1];
+
+        $r8[0] = r3;
+
+        r4 = virtualinvoke $r9.<android.content.Context: java.lang.String getString(int,java.lang.Object[])>(2131296864, $r8);
+
+        $r10 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r5 = virtualinvoke $r10.<android.content.Context: java.lang.String getString(int)>(2131296865);
+
+        specialinvoke r0.<com.android.email.NotificationController: void showNotification(long,java.lang.String,java.lang.String,java.lang.String,android.content.Intent,int)>(l0, r4, r5, r3, r2, 4);
+
+        return;
+    }
+
+    public void showPasswordExpiredNotificationSynchronous(long)
+    {
+        com.android.email.NotificationController r0;
+        long l0;
+        com.android.emailcommon.provider.Account r1;
+        android.content.Intent r2;
+        java.lang.String r3, r4, r5;
+        android.content.Context $r6, $r7, $r8, $r9;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        l0 := @parameter0: long;
+
+        $r6 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r1 = staticinvoke <com.android.emailcommon.provider.Account: com.android.emailcommon.provider.Account restoreAccountWithId(android.content.Context,long)>($r6, l0);
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        $r7 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r2 = staticinvoke <com.android.email.activity.setup.AccountSecurity: android.content.Intent actionDevicePasswordExpirationIntent(android.content.Context,long,boolean)>($r7, l0, 1);
+
+        r3 = virtualinvoke r1.<com.android.emailcommon.provider.Account: java.lang.String getDisplayName()>();
+
+        $r8 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r4 = virtualinvoke $r8.<android.content.Context: java.lang.String getString(int)>(2131296866);
+
+        $r9 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r5 = virtualinvoke $r9.<android.content.Context: java.lang.String getString(int)>(2131296867);
+
+        specialinvoke r0.<com.android.email.NotificationController: void showNotification(long,java.lang.String,java.lang.String,java.lang.String,android.content.Intent,int)>(l0, r4, r5, r3, r2, 5);
+
+        return;
+    }
+
+    public void cancelPasswordExpirationNotifications()
+    {
+        com.android.email.NotificationController r0;
+        android.app.NotificationManager $r1, $r2;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        $r1 = r0.<com.android.email.NotificationController: android.app.NotificationManager mNotificationManager>;
+
+        virtualinvoke $r1.<android.app.NotificationManager: void cancel(int)>(4);
+
+        $r2 = r0.<com.android.email.NotificationController: android.app.NotificationManager mNotificationManager>;
+
+        virtualinvoke $r2.<android.app.NotificationManager: void cancel(int)>(5);
+
+        return;
+    }
+
+    public void showSecurityNeededNotification(com.android.emailcommon.provider.Account)
+    {
+        com.android.email.NotificationController r0;
+        com.android.emailcommon.provider.Account r1;
+        android.content.Intent r2;
+        java.lang.String r3, r4, r5;
+        long $l0, $l1, $l3, $l4;
+        android.content.Context $r6, $r8, $r9;
+        java.lang.Object[] $r7;
+        int $i2;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        r1 := @parameter0: com.android.emailcommon.provider.Account;
+
+        $r6 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $l0 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        r2 = staticinvoke <com.android.email.activity.setup.AccountSecurity: android.content.Intent actionUpdateSecurityIntent(android.content.Context,long,boolean)>($r6, $l0, 1);
+
+        r3 = virtualinvoke r1.<com.android.emailcommon.provider.Account: java.lang.String getDisplayName()>();
+
+        $r8 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $r7 = newarray (java.lang.Object)[1];
+
+        $r7[0] = r3;
+
+        r4 = virtualinvoke $r8.<android.content.Context: java.lang.String getString(int,java.lang.Object[])>(2131296856, $r7);
+
+        $r9 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r5 = virtualinvoke $r9.<android.content.Context: java.lang.String getString(int)>(2131296858);
+
+        $l4 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $l1 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $l3 = 805306368L + $l1;
+
+        $i2 = (int) $l3;
+
+        specialinvoke r0.<com.android.email.NotificationController: void showNotification(long,java.lang.String,java.lang.String,java.lang.String,android.content.Intent,int)>($l4, r4, r5, r3, r2, $i2);
+
+        return;
+    }
+
+    public void showSecurityChangedNotification(com.android.emailcommon.provider.Account)
+    {
+        com.android.email.NotificationController r0;
+        com.android.emailcommon.provider.Account r1;
+        android.content.Intent r2, $r6;
+        java.lang.String r3, r4, r5;
+        long $l0, $l1, $l2, $l3;
+        android.net.Uri $r7;
+        java.lang.Object[] $r8;
+        android.content.Context $r9, $r10;
+        int $i4;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        r1 := @parameter0: com.android.emailcommon.provider.Account;
+
+        $r6 = new android.content.Intent;
+
+        $l0 = virtualinvoke r1.<com.android.emailcommon.provider.Account: long getId()>();
+
+        $r7 = staticinvoke <com.android.email.activity.setup.HeadlessAccountSettingsLoader: android.net.Uri getIncomingSettingsUri(long)>($l0);
+
+        specialinvoke $r6.<android.content.Intent: void <init>(java.lang.String,android.net.Uri)>("android.intent.action.VIEW", $r7);
+
+        r2 = $r6;
+
+        r3 = virtualinvoke r1.<com.android.emailcommon.provider.Account: java.lang.String getDisplayName()>();
+
+        $r9 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $r8 = newarray (java.lang.Object)[1];
+
+        $r8[0] = r3;
+
+        r4 = virtualinvoke $r9.<android.content.Context: java.lang.String getString(int,java.lang.Object[])>(2131296857, $r8);
+
+        $r10 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r5 = virtualinvoke $r10.<android.content.Context: java.lang.String getString(int)>(2131296859);
+
+        $l3 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $l2 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $l1 = 1073741824L + $l2;
+
+        $i4 = (int) $l1;
+
+        specialinvoke r0.<com.android.email.NotificationController: void showNotification(long,java.lang.String,java.lang.String,java.lang.String,android.content.Intent,int)>($l3, r4, r5, r3, r2, $i4);
+
+        return;
+    }
+
+    public void showSecurityUnsupportedNotification(com.android.emailcommon.provider.Account)
+    {
+        com.android.email.NotificationController r0;
+        com.android.emailcommon.provider.Account r1;
+        android.content.Intent r2, $r6;
+        java.lang.String r3, r4, r5;
+        long $l0, $l1, $l2, $l3;
+        android.net.Uri $r7;
+        java.lang.Object[] $r8;
+        android.content.Context $r9, $r10;
+        int $i4;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        r1 := @parameter0: com.android.emailcommon.provider.Account;
+
+        $r6 = new android.content.Intent;
+
+        $l0 = virtualinvoke r1.<com.android.emailcommon.provider.Account: long getId()>();
+
+        $r7 = staticinvoke <com.android.email.activity.setup.HeadlessAccountSettingsLoader: android.net.Uri getIncomingSettingsUri(long)>($l0);
+
+        specialinvoke $r6.<android.content.Intent: void <init>(java.lang.String,android.net.Uri)>("android.intent.action.VIEW", $r7);
+
+        r2 = $r6;
+
+        r3 = virtualinvoke r1.<com.android.emailcommon.provider.Account: java.lang.String getDisplayName()>();
+
+        $r9 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        $r8 = newarray (java.lang.Object)[1];
+
+        $r8[0] = r3;
+
+        r4 = virtualinvoke $r9.<android.content.Context: java.lang.String getString(int,java.lang.Object[])>(2131296855, $r8);
+
+        $r10 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        r5 = virtualinvoke $r10.<android.content.Context: java.lang.String getString(int)>(2131296860);
+
+        $l3 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $l2 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $l1 = 805306368L + $l2;
+
+        $i4 = (int) $l1;
+
+        specialinvoke r0.<com.android.email.NotificationController: void showNotification(long,java.lang.String,java.lang.String,java.lang.String,android.content.Intent,int)>($l3, r4, r5, r3, r2, $i4);
+
+        return;
+    }
+
+    public void cancelSecurityNeededNotification()
+    {
+        com.android.email.NotificationController r0;
+        com.android.email.NotificationController$3 $r1;
+
+        r0 := @this: com.android.email.NotificationController;
+
+        $r1 = new com.android.email.NotificationController$3;
+
+        specialinvoke $r1.<com.android.email.NotificationController$3: void <init>(com.android.email.NotificationController)>(r0);
+
+        staticinvoke <com.android.emailcommon.utility.EmailAsyncTask: com.android.emailcommon.utility.EmailAsyncTask runAsyncParallel(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    public static void cancelNotifications(android.content.Context, com.android.emailcommon.provider.Account)
+    {
+        android.content.Context r0;
+        com.android.emailcommon.provider.Account r1;
+        com.android.email.service.EmailServiceUtils$EmailServiceInfo r2;
+        android.accounts.Account r3;
+        android.app.NotificationManager r4;
+        long $l0, $l1, $l2, $l4, $l5, $l7, $l8, $l10;
+        java.lang.String $r5, $r8;
+        com.android.email.NotificationController $r6;
+        int $i3, $i6, $i9;
+        java.lang.Object[] $r7;
+        java.lang.Long $r9;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: com.android.emailcommon.provider.Account;
+
+        $l0 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        r2 = staticinvoke <com.android.email.service.EmailServiceUtils: com.android.email.service.EmailServiceUtils$EmailServiceInfo getServiceInfoForAccount(android.content.Context,long)>(r0, $l0);
+
+        if r2 != null goto label1;
+
+        $r8 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r7 = newarray (java.lang.Object)[1];
+
+        $l10 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $r9 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l10);
+
+        $r7[0] = $r9;
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>($r8, "Can\'t cancel notification for missing account %d", $r7);
+
+        return;
+
+     label1:
+        $r5 = r2.<com.android.email.service.EmailServiceUtils$EmailServiceInfo: java.lang.String accountType>;
+
+        r3 = virtualinvoke r1.<com.android.emailcommon.provider.Account: android.accounts.Account getAccountManagerAccount(java.lang.String)>($r5);
+
+        staticinvoke <com.android.mail.utils.NotificationUtils: void clearAccountNotifications(android.content.Context,android.accounts.Account)>(r0, r3);
+
+        $r6 = staticinvoke <com.android.email.NotificationController: com.android.email.NotificationController getInstance(android.content.Context)>(r0);
+
+        r4 = $r6.<com.android.email.NotificationController: android.app.NotificationManager mNotificationManager>;
+
+        $l1 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $l2 = 536870912L + $l1;
+
+        $i3 = (int) $l2;
+
+        virtualinvoke r4.<android.app.NotificationManager: void cancel(int)>($i3);
+
+        $l4 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $l5 = 805306368L + $l4;
+
+        $i6 = (int) $l5;
+
+        virtualinvoke r4.<android.app.NotificationManager: void cancel(int)>($i6);
+
+        $l8 = r1.<com.android.emailcommon.provider.Account: long mId>;
+
+        $l7 = 1073741824L + $l8;
+
+        $i9 = (int) $l7;
+
+        virtualinvoke r4.<android.app.NotificationManager: void cancel(int)>($i9);
+
+        return;
+    }
+
+    private static void refreshNotificationsForAccount(android.content.Context, long)
+    {
+        android.content.Context r0;
+        long l0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r9;
+        boolean $z0;
+        android.os.Handler $r4, $r5;
+        android.os.Message $r6;
+        java.util.HashSet $r7;
+        java.lang.Long $r8;
+
+        r0 := @parameter0: android.content.Context;
+
+        l0 := @parameter1: long;
+
+        $r3 = <com.android.email.NotificationController: java.lang.Object sNotificationDelayedMessageLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $z0 = <com.android.email.NotificationController: boolean sNotificationDelayedMessagePending>;
+
+        if $z0 == 0 goto label2;
+
+        $r7 = <com.android.email.NotificationController: java.util.HashSet sRefreshAccountSet>;
+
+        $r8 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        virtualinvoke $r7.<java.util.HashSet: boolean add(java.lang.Object)>($r8);
+
+        goto label3;
+
+     label2:
+        staticinvoke <com.android.email.NotificationController: void ensureHandlerExists()>();
+
+        $r5 = <com.android.email.NotificationController: android.os.Handler sNotificationHandler>;
+
+        $r4 = <com.android.email.NotificationController: android.os.Handler sNotificationHandler>;
+
+        $r6 = staticinvoke <android.os.Message: android.os.Message obtain(android.os.Handler,int,java.lang.Object)>($r4, 0, r0);
+
+        virtualinvoke $r5.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>($r6, 15000L);
+
+        <com.android.email.NotificationController: boolean sNotificationDelayedMessagePending> = 1;
+
+        staticinvoke <com.android.email.NotificationController: void refreshNotificationsForAccountInternal(android.content.Context,long)>(r0, l0);
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r9 := @caughtexception;
+
+        r2 = $r9;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private static void refreshNotificationsForAccountInternal(android.content.Context, long)
+    {
+        android.content.Context r0;
+        long l0, l1;
+        android.net.Uri r1, r4, $r7, $r8;
+        android.content.ContentResolver r2;
+        android.database.Cursor r3;
+        int i2, i3;
+        android.content.Intent r5, $r23;
+        java.lang.Throwable r6, $r28;
+        boolean $z0;
+        byte $b4;
+        java.lang.String $r9, $r17, $r21, $r26;
+        java.lang.StringBuilder $r10, $r11, $r12, $r13, $r14, $r15, $r16, $r19, $r20;
+        java.lang.Object[] $r18;
+
+        r0 := @parameter0: android.content.Context;
+
+        l0 := @parameter1: long;
+
+        r1 = staticinvoke <com.android.email.provider.EmailProvider: android.net.Uri uiUri(java.lang.String,long)>("uiaccount", l0);
+
+        r2 = virtualinvoke r0.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r7 = <com.android.emailcommon.provider.EmailContent: android.net.Uri MAILBOX_NOTIFICATION_URI>;
+
+        $r8 = staticinvoke <android.content.ContentUris: android.net.Uri withAppendedId(android.net.Uri,long)>($r7, l0);
+
+        r3 = virtualinvoke r2.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r8, null, null, null, null);
+
+     label1:
+        $z0 = interfaceinvoke r3.<android.database.Cursor: boolean moveToNext()>();
+
+        if $z0 == 0 goto label5;
+
+        l1 = interfaceinvoke r3.<android.database.Cursor: long getLong(int)>(0);
+
+        $b4 = l1 cmp 0L;
+
+        if $b4 != 0 goto label2;
+
+        goto label1;
+
+     label2:
+        i2 = interfaceinvoke r3.<android.database.Cursor: int getInt(int)>(2);
+
+        if i2 != 0 goto label3;
+
+        i3 = 0;
+
+        goto label4;
+
+     label3:
+        i3 = interfaceinvoke r3.<android.database.Cursor: int getInt(int)>(1);
+
+     label4:
+        r4 = staticinvoke <com.android.email.provider.EmailProvider: android.net.Uri uiUri(java.lang.String,long)>("uifolder", l1);
+
+        $r9 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Changes to account ");
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", folder: ");
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l1);
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", unreadCount: ");
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i3);
+
+        $r19 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", unseenCount: ");
+
+        $r20 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r17 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r18 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>($r9, $r17, $r18);
+
+        $r23 = new android.content.Intent;
+
+        specialinvoke $r23.<android.content.Intent: void <init>(java.lang.String)>("com.android.mail.action.update_notification");
+
+        r5 = $r23;
+
+        $r21 = virtualinvoke r0.<android.content.Context: java.lang.String getPackageName()>();
+
+        virtualinvoke r5.<android.content.Intent: android.content.Intent setPackage(java.lang.String)>($r21);
+
+        $r26 = <com.android.email.provider.EmailProvider: java.lang.String EMAIL_APP_MIME_TYPE>;
+
+        virtualinvoke r5.<android.content.Intent: android.content.Intent setType(java.lang.String)>($r26);
+
+        virtualinvoke r5.<android.content.Intent: android.content.Intent putExtra(java.lang.String,android.os.Parcelable)>("notification_extra_account", r1);
+
+        virtualinvoke r5.<android.content.Intent: android.content.Intent putExtra(java.lang.String,android.os.Parcelable)>("notification_extra_folder", r4);
+
+        virtualinvoke r5.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("notification_updated_unread_count", i3);
+
+        virtualinvoke r5.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("notification_updated_unseen_count", i2);
+
+        virtualinvoke r0.<android.content.Context: void sendOrderedBroadcast(android.content.Intent,java.lang.String)>(r5, null);
+
+        goto label1;
+
+     label5:
+        interfaceinvoke r3.<android.database.Cursor: void close()>();
+
+        goto label8;
+
+     label6:
+        $r28 := @caughtexception;
+
+        r6 = $r28;
+
+     label7:
+        interfaceinvoke r3.<android.database.Cursor: void close()>();
+
+        throw r6;
+
+     label8:
+        return;
+
+        catch java.lang.Throwable from label1 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    public static void handleUpdateNotificationIntent(android.content.Context, android.content.Intent)
+    {
+        android.content.Context r0;
+        android.content.Intent r1;
+        android.net.Uri r2, r3;
+        int i0, i1;
+        android.content.ContentResolver r4;
+        android.database.Cursor r5, r45;
+        com.android.mail.providers.Account r6;
+        java.lang.Throwable r7, r8, $r42, $r43;
+        android.os.Parcelable $r9, $r10;
+        java.lang.String[] $r11, $r12;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r13, $r14, $r16, $r17, $r19, $r22, $r24, $r25, $r27, $r28, $r29, $r34, $r35, $r36, $r39, $r40;
+        java.lang.String $r15, $r18, $r21, $r26, $r30, $r32, $r38, $r41;
+        java.lang.Object[] $r20, $r31, $r33, $r44;
+        com.android.mail.providers.Folder $r23, r46;
+        com.android.mail.providers.Account$Builder $r37;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: android.content.Intent;
+
+        $r9 = virtualinvoke r1.<android.content.Intent: android.os.Parcelable getParcelableExtra(java.lang.String)>("notification_extra_account");
+
+        r2 = (android.net.Uri) $r9;
+
+        $r10 = virtualinvoke r1.<android.content.Intent: android.os.Parcelable getParcelableExtra(java.lang.String)>("notification_extra_folder");
+
+        r3 = (android.net.Uri) $r10;
+
+        i0 = virtualinvoke r1.<android.content.Intent: int getIntExtra(java.lang.String,int)>("notification_updated_unread_count", 0);
+
+        i1 = virtualinvoke r1.<android.content.Intent: int getIntExtra(java.lang.String,int)>("notification_updated_unseen_count", 0);
+
+        r4 = virtualinvoke r0.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r11 = <com.android.mail.providers.UIProvider: java.lang.String[] ACCOUNTS_PROJECTION>;
+
+        r5 = virtualinvoke r4.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>(r2, $r11, null, null, null);
+
+        if r5 != null goto label01;
+
+        $r41 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r36 = new java.lang.StringBuilder;
+
+        specialinvoke $r36.<java.lang.StringBuilder: void <init>()>();
+
+        $r40 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Null account cursor for account ");
+
+        $r39 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r38 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r44 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>($r41, $r38, $r44);
+
+        return;
+
+     label01:
+        r6 = null;
+
+     label02:
+        $z0 = interfaceinvoke r5.<android.database.Cursor: boolean moveToFirst()>();
+
+        if $z0 == 0 goto label03;
+
+        $r37 = staticinvoke <com.android.mail.providers.Account: com.android.mail.providers.Account$Builder builder()>();
+
+        r6 = virtualinvoke $r37.<com.android.mail.providers.Account$Builder: com.android.mail.providers.Account buildFrom(android.database.Cursor)>(r5);
+
+     label03:
+        interfaceinvoke r5.<android.database.Cursor: void close()>();
+
+        goto label06;
+
+     label04:
+        $r42 := @caughtexception;
+
+        r7 = $r42;
+
+     label05:
+        interfaceinvoke r5.<android.database.Cursor: void close()>();
+
+        throw r7;
+
+     label06:
+        if r6 != null goto label07;
+
+        $r30 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r29 = new java.lang.StringBuilder;
+
+        specialinvoke $r29.<java.lang.StringBuilder: void <init>()>();
+
+        $r34 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Tried to create a notification for a missing account ");
+
+        $r35 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r32 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r33 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int d(java.lang.String,java.lang.String,java.lang.Object[])>($r30, $r32, $r33);
+
+        return;
+
+     label07:
+        $r12 = <com.android.mail.providers.UIProvider: java.lang.String[] FOLDERS_PROJECTION>;
+
+        r45 = virtualinvoke r4.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>(r3, $r12, null, null, null);
+
+        if r45 != null goto label08;
+
+        $r21 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r24 = new java.lang.StringBuilder;
+
+        specialinvoke $r24.<java.lang.StringBuilder: void <init>()>();
+
+        $r22 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Null folder cursor for account ");
+
+        $r27 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r28 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", mailbox ");
+
+        $r25 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r26 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r31 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>($r21, $r26, $r31);
+
+        return;
+
+     label08:
+        $z1 = interfaceinvoke r45.<android.database.Cursor: boolean moveToFirst()>();
+
+        if $z1 == 0 goto label09;
+
+        $r23 = new com.android.mail.providers.Folder;
+
+        specialinvoke $r23.<com.android.mail.providers.Folder: void <init>(android.database.Cursor)>(r45);
+
+        r46 = $r23;
+
+        goto label11;
+
+     label09:
+        $r15 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Empty folder cursor for account ");
+
+        $r17 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r16 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", mailbox ");
+
+        $r19 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r20 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.mail.utils.LogUtils: int e(java.lang.String,java.lang.String,java.lang.Object[])>($r15, $r18, $r20);
+
+     label10:
+        interfaceinvoke r45.<android.database.Cursor: void close()>();
+
+        return;
+
+     label11:
+        interfaceinvoke r45.<android.database.Cursor: void close()>();
+
+        goto label14;
+
+     label12:
+        $r43 := @caughtexception;
+
+        r8 = $r43;
+
+     label13:
+        interfaceinvoke r45.<android.database.Cursor: void close()>();
+
+        throw r8;
+
+     label14:
+        staticinvoke <com.android.mail.utils.NotificationUtils: void sendSetNewEmailIndicatorIntent(android.content.Context,int,int,com.android.mail.providers.Account,com.android.mail.providers.Folder,boolean)>(r0, i0, i1, r6, r46, 1);
+
+        return;
+
+        catch java.lang.Throwable from label02 to label03 with label04;
+        catch java.lang.Throwable from label04 to label05 with label04;
+        catch java.lang.Throwable from label08 to label10 with label12;
+        catch java.lang.Throwable from label12 to label13 with label12;
+    }
+
+    private static void refreshAllNotifications(android.content.Context)
+    {
+        android.content.Context r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable r2, $r7;
+        boolean $z0;
+        android.os.Handler $r4, $r5;
+        android.os.Message $r6;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r3 = <com.android.email.NotificationController: java.lang.Object sNotificationDelayedMessageLock>;
+
+        r1 = $r3;
+
+        entermonitor $r3;
+
+     label1:
+        $z0 = <com.android.email.NotificationController: boolean sNotificationDelayedMessagePending>;
+
+        if $z0 == 0 goto label2;
+
+        <com.android.email.NotificationController: boolean sRefreshAllNeeded> = 1;
+
+        goto label3;
+
+     label2:
+        staticinvoke <com.android.email.NotificationController: void ensureHandlerExists()>();
+
+        $r5 = <com.android.email.NotificationController: android.os.Handler sNotificationHandler>;
+
+        $r4 = <com.android.email.NotificationController: android.os.Handler sNotificationHandler>;
+
+        $r6 = staticinvoke <android.os.Message: android.os.Message obtain(android.os.Handler,int,java.lang.Object)>($r4, 0, r0);
+
+        virtualinvoke $r5.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>($r6, 15000L);
+
+        <com.android.email.NotificationController: boolean sNotificationDelayedMessagePending> = 1;
+
+        staticinvoke <com.android.email.NotificationController: void refreshAllNotificationsInternal(android.content.Context)>(r0);
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        goto label7;
+
+     label5:
+        $r7 := @caughtexception;
+
+        r2 = $r7;
+
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    private static void refreshAllNotificationsInternal(android.content.Context)
+    {
+        android.content.Context r0;
+
+        r0 := @parameter0: android.content.Context;
+
+        staticinvoke <com.android.mail.utils.NotificationUtils: void resendNotifications(android.content.Context,boolean,android.net.Uri,com.android.mail.utils.FolderUri,com.android.mail.photo.ContactPhotoFetcher)>(r0, 0, null, null, null);
+
+        return;
+    }
+
+    static android.content.Context access$000(com.android.email.NotificationController)
+    {
+        com.android.email.NotificationController r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.email.NotificationController;
+
+        $r1 = r0.<com.android.email.NotificationController: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static void access$100(com.android.email.NotificationController, long)
+    {
+        com.android.email.NotificationController r0;
+        long l0;
+
+        r0 := @parameter0: com.android.email.NotificationController;
+
+        l0 := @parameter1: long;
+
+        specialinvoke r0.<com.android.email.NotificationController: void registerMessageNotification(long)>(l0);
+
+        return;
+    }
+
+    static android.database.ContentObserver access$200(com.android.email.NotificationController)
+    {
+        com.android.email.NotificationController r0;
+        android.database.ContentObserver $r1;
+
+        r0 := @parameter0: com.android.email.NotificationController;
+
+        $r1 = r0.<com.android.email.NotificationController: android.database.ContentObserver mAccountObserver>;
+
+        return $r1;
+    }
+
+    static java.lang.String access$300()
+    {
+        java.lang.String $r0;
+
+        $r0 = <com.android.email.NotificationController: java.lang.String LOG_TAG>;
+
+        return $r0;
+    }
+
+    static android.database.ContentObserver access$202(com.android.email.NotificationController, android.database.ContentObserver)
+    {
+        com.android.email.NotificationController r0;
+        android.database.ContentObserver r1;
+
+        r0 := @parameter0: com.android.email.NotificationController;
+
+        r1 := @parameter1: android.database.ContentObserver;
+
+        r0.<com.android.email.NotificationController: android.database.ContentObserver mAccountObserver> = r1;
+
+        return r1;
+    }
+
+    static android.os.Handler access$400()
+    {
+        android.os.Handler $r0;
+
+        $r0 = <com.android.email.NotificationController: android.os.Handler sNotificationHandler>;
+
+        return $r0;
+    }
+
+    static java.lang.Object access$500()
+    {
+        java.lang.Object $r0;
+
+        $r0 = <com.android.email.NotificationController: java.lang.Object sNotificationDelayedMessageLock>;
+
+        return $r0;
+    }
+
+    static boolean access$602(boolean)
+    {
+        boolean z0;
+
+        z0 := @parameter0: boolean;
+
+        <com.android.email.NotificationController: boolean sNotificationDelayedMessagePending> = z0;
+
+        return z0;
+    }
+
+    static boolean access$700()
+    {
+        boolean $z0;
+
+        $z0 = <com.android.email.NotificationController: boolean sRefreshAllNeeded>;
+
+        return $z0;
+    }
+
+    static boolean access$702(boolean)
+    {
+        boolean z0;
+
+        z0 := @parameter0: boolean;
+
+        <com.android.email.NotificationController: boolean sRefreshAllNeeded> = z0;
+
+        return z0;
+    }
+
+    static void access$800(android.content.Context)
+    {
+        android.content.Context r0;
+
+        r0 := @parameter0: android.content.Context;
+
+        staticinvoke <com.android.email.NotificationController: void refreshAllNotificationsInternal(android.content.Context)>(r0);
+
+        return;
+    }
+
+    static java.util.HashSet access$900()
+    {
+        java.util.HashSet $r0;
+
+        $r0 = <com.android.email.NotificationController: java.util.HashSet sRefreshAccountSet>;
+
+        return $r0;
+    }
+
+    static void access$1000(android.content.Context, long)
+    {
+        android.content.Context r0;
+        long l0;
+
+        r0 := @parameter0: android.content.Context;
+
+        l0 := @parameter1: long;
+
+        staticinvoke <com.android.email.NotificationController: void refreshNotificationsForAccountInternal(android.content.Context,long)>(r0, l0);
+
+        return;
+    }
+
+    static android.app.NotificationManager access$1100(com.android.email.NotificationController)
+    {
+        com.android.email.NotificationController r0;
+        android.app.NotificationManager $r1;
+
+        r0 := @parameter0: com.android.email.NotificationController;
+
+        $r1 = r0.<com.android.email.NotificationController: android.app.NotificationManager mNotificationManager>;
+
+        return $r1;
+    }
+
+    static void access$1200(android.content.Context, long)
+    {
+        android.content.Context r0;
+        long l0;
+
+        r0 := @parameter0: android.content.Context;
+
+        l0 := @parameter1: long;
+
+        staticinvoke <com.android.email.NotificationController: void refreshNotificationsForAccount(android.content.Context,long)>(r0, l0);
+
+        return;
+    }
+
+    static com.android.email.NotificationController access$1300()
+    {
+        com.android.email.NotificationController $r0;
+
+        $r0 = <com.android.email.NotificationController: com.android.email.NotificationController sInstance>;
+
+        return $r0;
+    }
+
+    static java.util.Map access$1400(com.android.email.NotificationController)
+    {
+        com.android.email.NotificationController r0;
+        java.util.Map $r1;
+
+        r0 := @parameter0: com.android.email.NotificationController;
+
+        $r1 = r0.<com.android.email.NotificationController: java.util.Map mNotificationMap>;
+
+        return $r1;
+    }
+
+    static void access$1500(com.android.email.NotificationController, long)
+    {
+        com.android.email.NotificationController r0;
+        long l0;
+
+        r0 := @parameter0: com.android.email.NotificationController;
+
+        l0 := @parameter1: long;
+
+        specialinvoke r0.<com.android.email.NotificationController: void unregisterMessageNotification(long)>(l0);
+
+        return;
+    }
+
+    static void access$1600(android.content.Context)
+    {
+        android.content.Context r0;
+
+        r0 := @parameter0: android.content.Context;
+
+        staticinvoke <com.android.email.NotificationController: void refreshAllNotifications(android.content.Context)>(r0);
+
+        return;
+    }
+
+    static void <clinit>()
+    {
+        java.lang.String $r0;
+        java.util.HashSet $r1;
+        java.lang.Object $r2;
+
+        <com.android.email.NotificationController: java.lang.String EXTRA_FOLDER> = "folder";
+
+        <com.android.email.NotificationController: java.lang.String EXTRA_CONVERSATION> = "conversationUri";
+
+        <com.android.email.NotificationController: java.lang.String EXTRA_ACCOUNT> = "account";
+
+        <com.android.email.NotificationController: long NOTIFICATION_DELAY> = 15000L;
+
+        <com.android.email.NotificationController: int NOTIFICATION_DELAYED_MESSAGE> = 0;
+
+        <com.android.email.NotificationController: int NOTIFICATION_ID_BASE_SECURITY_CHANGED> = 1073741824;
+
+        <com.android.email.NotificationController: int NOTIFICATION_ID_BASE_SECURITY_NEEDED> = 805306368;
+
+        <com.android.email.NotificationController: int NOTIFICATION_ID_BASE_LOGIN_WARNING> = 536870912;
+
+        <com.android.email.NotificationController: int NOTIFICATION_ID_BASE_MASK> = -268435456;
+
+        <com.android.email.NotificationController: int NOTIFICATION_ID_PASSWORD_EXPIRED> = 5;
+
+        <com.android.email.NotificationController: int NOTIFICATION_ID_PASSWORD_EXPIRING> = 4;
+
+        <com.android.email.NotificationController: int NOTIFICATION_ID_ATTACHMENT_WARNING> = 3;
+
+        $r0 = staticinvoke <com.android.mail.utils.LogTag: java.lang.String getLogTag()>();
+
+        <com.android.email.NotificationController: java.lang.String LOG_TAG> = $r0;
+
+        $r1 = new java.util.HashSet;
+
+        specialinvoke $r1.<java.util.HashSet: void <init>()>();
+
+        <com.android.email.NotificationController: java.util.HashSet sRefreshAccountSet> = $r1;
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        <com.android.email.NotificationController: java.lang.Object sNotificationDelayedMessageLock> = $r2;
+
+        return;
+    }
+}

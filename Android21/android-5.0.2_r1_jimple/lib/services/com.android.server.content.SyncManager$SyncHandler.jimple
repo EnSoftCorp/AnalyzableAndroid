@@ -1,0 +1,4276 @@
+class com.android.server.content.SyncManager$SyncHandler extends android.os.Handler
+{
+    private static final int MESSAGE_SYNC_FINISHED;
+    private static final int MESSAGE_SYNC_ALARM;
+    private static final int MESSAGE_CHECK_ALARMS;
+    private static final int MESSAGE_SERVICE_CONNECTED;
+    private static final int MESSAGE_SERVICE_DISCONNECTED;
+    private static final int MESSAGE_CANCEL;
+    private static final int MESSAGE_SYNC_EXPIRED;
+    public final com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo;
+    private java.lang.Long mAlarmScheduleTime;
+    public final com.android.server.content.SyncManager$SyncTimeTracker mSyncTimeTracker;
+    private final java.util.HashMap mWakeLocks;
+    private java.util.List mBootQueue;
+    final com.android.server.content.SyncManager this$0;
+
+    public void onBootCompleted()
+    {
+        com.android.server.content.SyncManager$SyncHandler r0, r1;
+        java.util.Iterator r2;
+        android.os.Message r3;
+        java.lang.Throwable r4, $r10;
+        boolean $z0, $z1;
+        com.android.server.content.SyncManager $r5, $r8;
+        java.util.List $r7;
+        java.lang.Object $r9;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        $z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "Boot completed, clearing boot queue.");
+
+     label1:
+        $r5 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        staticinvoke <com.android.server.content.SyncManager: void access$2000(com.android.server.content.SyncManager)>($r5);
+
+        r1 = r0;
+
+        entermonitor r0;
+
+     label2:
+        $r7 = r0.<com.android.server.content.SyncManager$SyncHandler: java.util.List mBootQueue>;
+
+        r2 = interfaceinvoke $r7.<java.util.List: java.util.Iterator iterator()>();
+
+     label3:
+        $z1 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label4;
+
+        $r9 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (android.os.Message) $r9;
+
+        virtualinvoke r0.<com.android.server.content.SyncManager$SyncHandler: boolean sendMessage(android.os.Message)>(r3);
+
+        goto label3;
+
+     label4:
+        r0.<com.android.server.content.SyncManager$SyncHandler: java.util.List mBootQueue> = null;
+
+        $r8 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        staticinvoke <com.android.server.content.SyncManager: boolean access$2102(com.android.server.content.SyncManager,boolean)>($r8, 1);
+
+        exitmonitor r1;
+
+     label5:
+        goto label8;
+
+     label6:
+        $r10 := @caughtexception;
+
+        r4 = $r10;
+
+        exitmonitor r1;
+
+     label7:
+        throw r4;
+
+     label8:
+        return;
+
+        catch java.lang.Throwable from label2 to label5 with label6;
+        catch java.lang.Throwable from label6 to label7 with label6;
+    }
+
+    private android.os.PowerManager$WakeLock getSyncWakeLock(com.android.server.content.SyncOperation)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        com.android.server.content.SyncOperation r1;
+        java.lang.String r2, r4;
+        android.os.PowerManager$WakeLock r3;
+        java.util.HashMap $r5, $r12;
+        java.lang.Object $r6;
+        java.lang.StringBuilder $r7, $r8, $r9;
+        com.android.server.content.SyncManager $r10;
+        android.os.PowerManager $r11;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: com.android.server.content.SyncOperation;
+
+        r2 = virtualinvoke r1.<com.android.server.content.SyncOperation: java.lang.String wakeLockName()>();
+
+        $r5 = r0.<com.android.server.content.SyncManager$SyncHandler: java.util.HashMap mWakeLocks>;
+
+        $r6 = virtualinvoke $r5.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r2);
+
+        r3 = (android.os.PowerManager$WakeLock) $r6;
+
+        if r3 != null goto label1;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("*sync*/");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        r4 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r10 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r11 = staticinvoke <com.android.server.content.SyncManager: android.os.PowerManager access$2200(com.android.server.content.SyncManager)>($r10);
+
+        r3 = virtualinvoke $r11.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, r4);
+
+        virtualinvoke r3.<android.os.PowerManager$WakeLock: void setReferenceCounted(boolean)>(0);
+
+        $r12 = r0.<com.android.server.content.SyncManager$SyncHandler: java.util.HashMap mWakeLocks>;
+
+        virtualinvoke $r12.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r2, r3);
+
+     label1:
+        return r3;
+    }
+
+    private boolean tryEnqueueMessageUntilReadyToRun(android.os.Message)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0, r2;
+        android.os.Message r1, $r7;
+        java.lang.Throwable r3, $r8;
+        com.android.server.content.SyncManager $r5;
+        boolean $z0;
+        java.util.List $r6;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: android.os.Message;
+
+        r2 = r0;
+
+        entermonitor r0;
+
+     label1:
+        $r5 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $z0 = staticinvoke <com.android.server.content.SyncManager: boolean access$2100(com.android.server.content.SyncManager)>($r5);
+
+        if $z0 != 0 goto label3;
+
+        $r6 = r0.<com.android.server.content.SyncManager$SyncHandler: java.util.List mBootQueue>;
+
+        $r7 = staticinvoke <android.os.Message: android.os.Message obtain(android.os.Message)>(r1);
+
+        interfaceinvoke $r6.<java.util.List: boolean add(java.lang.Object)>($r7);
+
+        exitmonitor r2;
+
+     label2:
+        return 1;
+
+     label3:
+        exitmonitor r2;
+
+     label4:
+        return 0;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r3 = $r8;
+
+        exitmonitor r2;
+
+     label6:
+        throw r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label5 to label6 with label5;
+    }
+
+    public void <init>(com.android.server.content.SyncManager, android.os.Looper)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        com.android.server.content.SyncManager r1, $r5;
+        android.os.Looper r2;
+        com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo $r3;
+        com.android.server.content.SyncManager$SyncTimeTracker $r4;
+        java.util.HashMap $r6;
+        java.util.ArrayList $r7;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: com.android.server.content.SyncManager;
+
+        r2 := @parameter1: android.os.Looper;
+
+        r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0> = r1;
+
+        specialinvoke r0.<android.os.Handler: void <init>(android.os.Looper)>(r2);
+
+        $r3 = new com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo;
+
+        specialinvoke $r3.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: void <init>(com.android.server.content.SyncManager$SyncHandler)>(r0);
+
+        r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo> = $r3;
+
+        r0.<com.android.server.content.SyncManager$SyncHandler: java.lang.Long mAlarmScheduleTime> = null;
+
+        $r4 = new com.android.server.content.SyncManager$SyncTimeTracker;
+
+        $r5 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        specialinvoke $r4.<com.android.server.content.SyncManager$SyncTimeTracker: void <init>(com.android.server.content.SyncManager,com.android.server.content.SyncManager$1)>($r5, null);
+
+        r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncTimeTracker mSyncTimeTracker> = $r4;
+
+        $r6 = staticinvoke <com.google.android.collect.Maps: java.util.HashMap newHashMap()>();
+
+        r0.<com.android.server.content.SyncManager$SyncHandler: java.util.HashMap mWakeLocks> = $r6;
+
+        $r7 = new java.util.ArrayList;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.content.SyncManager$SyncHandler: java.util.List mBootQueue> = $r7;
+
+        return;
+    }
+
+    public void handleMessage(android.os.Message)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        android.os.Message r1;
+        long l0, l1, $l5, $l6;
+        com.android.server.content.SyncManager$ActiveSyncContext r2, $r46, $r49, $r53, $r57, $r61, $r64, r77;
+        com.android.server.content.SyncStorageEngine$EndPoint r3, $r17;
+        android.os.Bundle r4, $r14;
+        java.lang.Throwable r6, r7, $r67, $r74;
+        boolean $z0, $z1, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, z12;
+        com.android.server.content.SyncManager $r8, $r9, $r10, $r16, $r20, $r35, $r50, $r56, $r58, $r68, $r72;
+        android.os.PowerManager$WakeLock $r11, $r19, $r59, $r65, $r71;
+        java.lang.Object $r12, $r24, $r32, $r42, $r55;
+        int $i2;
+        com.android.server.content.SyncOperation $r13, $r15;
+        com.android.server.content.SyncManager$SyncTimeTracker $r18, $r73;
+        java.lang.StringBuilder $r21, $r22, $r23, $r26, $r27, $r28, $r29, $r30, $r43, $r44, $r45, $r47, $r48, $r52, $r60, $r62, $r69;
+        java.lang.String $r25, $r33, $r41, $r54, $r70;
+        com.android.server.content.SyncManager$ServiceConnectionData $r31, r76;
+        android.content.ISyncAdapter $r34, $r39;
+        android.content.SyncStats $r36;
+        android.content.SyncResult $r37, $r63, r78;
+        android.content.ISyncServiceAdapter $r38, $r40;
+        android.os.IBinder $r51;
+        android.os.RemoteException $r66;
+        com.android.server.content.SyncManager$SyncHandlerMessagePayload r75;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: android.os.Message;
+
+        $z0 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: boolean tryEnqueueMessageUntilReadyToRun(android.os.Message)>(r1);
+
+        if $z0 == 0 goto label01;
+
+        return;
+
+     label01:
+        l0 = 9223372036854775807L;
+
+        l1 = 9223372036854775807L;
+
+     label02:
+        $r9 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r8 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $z1 = staticinvoke <com.android.server.content.SyncManager: boolean access$400(com.android.server.content.SyncManager)>($r8);
+
+        staticinvoke <com.android.server.content.SyncManager: boolean access$302(com.android.server.content.SyncManager,boolean)>($r9, $z1);
+
+        $r10 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r11 = staticinvoke <com.android.server.content.SyncManager: android.os.PowerManager$WakeLock access$2300(com.android.server.content.SyncManager)>($r10);
+
+        virtualinvoke $r11.<android.os.PowerManager$WakeLock: void acquire()>();
+
+        l0 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: long scheduleReadyPeriodicSyncs()>();
+
+        $i2 = r1.<android.os.Message: int what>;
+
+        tableswitch($i2)
+        {
+            case 1: goto label07;
+            case 2: goto label19;
+            case 3: goto label26;
+            case 4: goto label10;
+            case 5: goto label12;
+            case 6: goto label05;
+            case 7: goto label03;
+            default: goto label28;
+        };
+
+     label03:
+        $r12 = r1.<android.os.Message: java.lang.Object obj>;
+
+        r2 = (com.android.server.content.SyncManager$ActiveSyncContext) $r12;
+
+        $z3 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 3);
+
+        if $z3 == 0 goto label04;
+
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleSyncHandlerMessage: MESSAGE_SYNC_EXPIRED: expiring ");
+
+        $r22 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("SyncManager", $r25);
+
+     label04:
+        $r16 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r13 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $r17 = $r13.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $r15 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $r14 = $r15.<com.android.server.content.SyncOperation: android.os.Bundle extras>;
+
+        virtualinvoke $r16.<com.android.server.content.SyncManager: void cancelActiveSync(com.android.server.content.SyncStorageEngine$EndPoint,android.os.Bundle)>($r17, $r14);
+
+        l1 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: long maybeStartNextSyncLocked()>();
+
+        goto label28;
+
+     label05:
+        $r24 = r1.<android.os.Message: java.lang.Object obj>;
+
+        r3 = (com.android.server.content.SyncStorageEngine$EndPoint) $r24;
+
+        r4 = virtualinvoke r1.<android.os.Message: android.os.Bundle peekData()>();
+
+        $z4 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 3);
+
+        if $z4 == 0 goto label06;
+
+        $r26 = new java.lang.StringBuilder;
+
+        specialinvoke $r26.<java.lang.StringBuilder: void <init>()>();
+
+        $r29 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleSyncHandlerMessage: MESSAGE_SERVICE_CANCEL: ");
+
+        $r30 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r27 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" bundle: ");
+
+        $r28 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r4);
+
+        $r33 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("SyncManager", $r33);
+
+     label06:
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void cancelActiveSyncLocked(com.android.server.content.SyncStorageEngine$EndPoint,android.os.Bundle)>(r3, r4);
+
+        l1 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: long maybeStartNextSyncLocked()>();
+
+        goto label28;
+
+     label07:
+        $z10 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z10 == 0 goto label08;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "handleSyncHandlerMessage: MESSAGE_SYNC_FINISHED");
+
+     label08:
+        $r55 = r1.<android.os.Message: java.lang.Object obj>;
+
+        r75 = (com.android.server.content.SyncManager$SyncHandlerMessagePayload) $r55;
+
+        $r56 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r57 = r75.<com.android.server.content.SyncManager$SyncHandlerMessagePayload: com.android.server.content.SyncManager$ActiveSyncContext activeSyncContext>;
+
+        $z11 = staticinvoke <com.android.server.content.SyncManager: boolean access$2400(com.android.server.content.SyncManager,com.android.server.content.SyncManager$ActiveSyncContext)>($r56, $r57);
+
+        if $z11 != 0 goto label09;
+
+        $r62 = new java.lang.StringBuilder;
+
+        specialinvoke $r62.<java.lang.StringBuilder: void <init>()>();
+
+        $r60 = virtualinvoke $r62.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleSyncHandlerMessage: dropping since the sync is no longer active: ");
+
+        $r61 = r75.<com.android.server.content.SyncManager$SyncHandlerMessagePayload: com.android.server.content.SyncManager$ActiveSyncContext activeSyncContext>;
+
+        $r69 = virtualinvoke $r60.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r61);
+
+        $r70 = virtualinvoke $r69.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("SyncManager", $r70);
+
+        goto label28;
+
+     label09:
+        $r63 = r75.<com.android.server.content.SyncManager$SyncHandlerMessagePayload: android.content.SyncResult syncResult>;
+
+        $r64 = r75.<com.android.server.content.SyncManager$SyncHandlerMessagePayload: com.android.server.content.SyncManager$ActiveSyncContext activeSyncContext>;
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void runSyncFinishedOrCanceledLocked(android.content.SyncResult,com.android.server.content.SyncManager$ActiveSyncContext)>($r63, $r64);
+
+        l1 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: long maybeStartNextSyncLocked()>();
+
+        goto label28;
+
+     label10:
+        $r42 = r1.<android.os.Message: java.lang.Object obj>;
+
+        r76 = (com.android.server.content.SyncManager$ServiceConnectionData) $r42;
+
+        $z7 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z7 == 0 goto label11;
+
+        $r47 = new java.lang.StringBuilder;
+
+        specialinvoke $r47.<java.lang.StringBuilder: void <init>()>();
+
+        $r48 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleSyncHandlerMessage: MESSAGE_SERVICE_CONNECTED: ");
+
+        $r53 = r76.<com.android.server.content.SyncManager$ServiceConnectionData: com.android.server.content.SyncManager$ActiveSyncContext activeSyncContext>;
+
+        $r52 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r53);
+
+        $r54 = virtualinvoke $r52.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("SyncManager", $r54);
+
+     label11:
+        $r50 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r49 = r76.<com.android.server.content.SyncManager$ServiceConnectionData: com.android.server.content.SyncManager$ActiveSyncContext activeSyncContext>;
+
+        $z8 = staticinvoke <com.android.server.content.SyncManager: boolean access$2400(com.android.server.content.SyncManager,com.android.server.content.SyncManager$ActiveSyncContext)>($r50, $r49);
+
+        if $z8 == 0 goto label28;
+
+        $r46 = r76.<com.android.server.content.SyncManager$ServiceConnectionData: com.android.server.content.SyncManager$ActiveSyncContext activeSyncContext>;
+
+        $r51 = r76.<com.android.server.content.SyncManager$ServiceConnectionData: android.os.IBinder adapter>;
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void runBoundToAdapter(com.android.server.content.SyncManager$ActiveSyncContext,android.os.IBinder)>($r46, $r51);
+
+        goto label28;
+
+     label12:
+        $r32 = r1.<android.os.Message: java.lang.Object obj>;
+
+        $r31 = (com.android.server.content.SyncManager$ServiceConnectionData) $r32;
+
+        r77 = $r31.<com.android.server.content.SyncManager$ServiceConnectionData: com.android.server.content.SyncManager$ActiveSyncContext activeSyncContext>;
+
+        $z6 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z6 == 0 goto label13;
+
+        $r43 = new java.lang.StringBuilder;
+
+        specialinvoke $r43.<java.lang.StringBuilder: void <init>()>();
+
+        $r44 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleSyncHandlerMessage: MESSAGE_SERVICE_DISCONNECTED: ");
+
+        $r45 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r77);
+
+        $r41 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("SyncManager", $r41);
+
+     label13:
+        $r35 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $z5 = staticinvoke <com.android.server.content.SyncManager: boolean access$2400(com.android.server.content.SyncManager,com.android.server.content.SyncManager$ActiveSyncContext)>($r35, r77);
+
+        if $z5 == 0 goto label28;
+
+     label14:
+        $r34 = r77.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncAdapter mSyncAdapter>;
+
+        if $r34 == null goto label15;
+
+        $r39 = r77.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncAdapter mSyncAdapter>;
+
+        interfaceinvoke $r39.<android.content.ISyncAdapter: void cancelSync(android.content.ISyncContext)>(r77);
+
+        goto label16;
+
+     label15:
+        $r38 = r77.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncServiceAdapter mSyncServiceAdapter>;
+
+        if $r38 == null goto label16;
+
+        $r40 = r77.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncServiceAdapter mSyncServiceAdapter>;
+
+        interfaceinvoke $r40.<android.content.ISyncServiceAdapter: void cancelSync(android.content.ISyncContext)>(r77);
+
+     label16:
+        goto label18;
+
+     label17:
+        $r66 := @caughtexception;
+
+     label18:
+        $r37 = new android.content.SyncResult;
+
+        specialinvoke $r37.<android.content.SyncResult: void <init>()>();
+
+        r78 = $r37;
+
+        $r36 = r78.<android.content.SyncResult: android.content.SyncStats stats>;
+
+        $l5 = $r36.<android.content.SyncStats: long numIoExceptions>;
+
+        $l6 = $l5 + 1L;
+
+        $r36.<android.content.SyncStats: long numIoExceptions> = $l6;
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void runSyncFinishedOrCanceledLocked(android.content.SyncResult,com.android.server.content.SyncManager$ActiveSyncContext)>(r78, r77);
+
+        l1 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: long maybeStartNextSyncLocked()>();
+
+        goto label28;
+
+     label19:
+        z12 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if z12 == 0 goto label20;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "handleSyncHandlerMessage: MESSAGE_SYNC_ALARM");
+
+     label20:
+        r0.<com.android.server.content.SyncManager$SyncHandler: java.lang.Long mAlarmScheduleTime> = null;
+
+     label21:
+        l1 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: long maybeStartNextSyncLocked()>();
+
+     label22:
+        $r58 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r59 = staticinvoke <com.android.server.content.SyncManager: android.os.PowerManager$WakeLock access$1000(com.android.server.content.SyncManager)>($r58);
+
+        virtualinvoke $r59.<android.os.PowerManager$WakeLock: void release()>();
+
+        goto label25;
+
+     label23:
+        $r67 := @caughtexception;
+
+        r6 = $r67;
+
+     label24:
+        $r68 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r65 = staticinvoke <com.android.server.content.SyncManager: android.os.PowerManager$WakeLock access$1000(com.android.server.content.SyncManager)>($r68);
+
+        virtualinvoke $r65.<android.os.PowerManager$WakeLock: void release()>();
+
+        throw r6;
+
+     label25:
+        goto label28;
+
+     label26:
+        $z9 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z9 == 0 goto label27;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "handleSyncHandlerMessage: MESSAGE_CHECK_ALARMS");
+
+     label27:
+        l1 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: long maybeStartNextSyncLocked()>();
+
+     label28:
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void manageSyncNotificationLocked()>();
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void manageSyncAlarmLocked(long,long)>(l0, l1);
+
+        $r18 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncTimeTracker mSyncTimeTracker>;
+
+        virtualinvoke $r18.<com.android.server.content.SyncManager$SyncTimeTracker: void update()>();
+
+        $r20 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r19 = staticinvoke <com.android.server.content.SyncManager: android.os.PowerManager$WakeLock access$2300(com.android.server.content.SyncManager)>($r20);
+
+        virtualinvoke $r19.<android.os.PowerManager$WakeLock: void release()>();
+
+        goto label31;
+
+     label29:
+        $r74 := @caughtexception;
+
+        r7 = $r74;
+
+     label30:
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void manageSyncNotificationLocked()>();
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void manageSyncAlarmLocked(long,long)>(l0, l1);
+
+        $r73 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncTimeTracker mSyncTimeTracker>;
+
+        virtualinvoke $r73.<com.android.server.content.SyncManager$SyncTimeTracker: void update()>();
+
+        $r72 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r71 = staticinvoke <com.android.server.content.SyncManager: android.os.PowerManager$WakeLock access$2300(com.android.server.content.SyncManager)>($r72);
+
+        virtualinvoke $r71.<android.os.PowerManager$WakeLock: void release()>();
+
+        throw r7;
+
+     label31:
+        return;
+
+        catch android.os.RemoteException from label14 to label16 with label17;
+        catch java.lang.Throwable from label21 to label22 with label23;
+        catch java.lang.Throwable from label23 to label24 with label23;
+        catch java.lang.Throwable from label02 to label28 with label29;
+        catch java.lang.Throwable from label29 to label30 with label29;
+    }
+
+    private boolean isDispatchable(com.android.server.content.SyncStorageEngine$EndPoint)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        com.android.server.content.SyncStorageEngine$EndPoint r1;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6;
+        android.accounts.AccountAndUser[] r2;
+        com.android.server.content.SyncManager $r3, $r6, $r7, $r9, $r12, $r17;
+        com.android.server.content.SyncStorageEngine $r4, $r10, $r11;
+        int $i0, $i2, $i3, $i5, $i6, $i7;
+        android.content.ComponentName $r5;
+        android.accounts.Account $r8, $r14, $r16;
+        java.lang.String $r13, $r15;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: com.android.server.content.SyncStorageEngine$EndPoint;
+
+        z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        $z1 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: boolean target_provider>;
+
+        if $z1 == 0 goto label7;
+
+        $r6 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        r2 = staticinvoke <com.android.server.content.SyncManager: android.accounts.AccountAndUser[] access$2500(com.android.server.content.SyncManager)>($r6);
+
+        $r7 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r8 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $i2 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $z4 = staticinvoke <com.android.server.content.SyncManager: boolean access$2600(com.android.server.content.SyncManager,android.accounts.AccountAndUser[],android.accounts.Account,int)>($r7, r2, $r8, $i2);
+
+        if $z4 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r9 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r10 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r9);
+
+        $i3 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $z5 = virtualinvoke $r10.<com.android.server.content.SyncStorageEngine: boolean getMasterSyncAutomatically(int)>($i3);
+
+        if $z5 == 0 goto label2;
+
+        $r12 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r11 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r12);
+
+        $r14 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $i5 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $r13 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $z6 = virtualinvoke $r11.<com.android.server.content.SyncStorageEngine: boolean getSyncAutomatically(android.accounts.Account,int,java.lang.String)>($r14, $i5, $r13);
+
+        if $z6 != 0 goto label4;
+
+     label2:
+        if z0 == 0 goto label3;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "    Not scheduling periodic operation: sync turned off.");
+
+     label3:
+        return 0;
+
+     label4:
+        $r17 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r16 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $i6 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $r15 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $i7 = virtualinvoke $r17.<com.android.server.content.SyncManager: int getIsSyncable(android.accounts.Account,int,java.lang.String)>($r16, $i6, $r15);
+
+        if $i7 != 0 goto label6;
+
+        if z0 == 0 goto label5;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "    Not scheduling periodic operation: isSyncable == 0.");
+
+     label5:
+        return 0;
+
+     label6:
+        goto label9;
+
+     label7:
+        $z2 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: boolean target_service>;
+
+        if $z2 == 0 goto label9;
+
+        $r3 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r4 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r3);
+
+        $r5 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: android.content.ComponentName service>;
+
+        $i0 = r1.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $z3 = virtualinvoke $r4.<com.android.server.content.SyncStorageEngine: boolean getIsTargetServiceActive(android.content.ComponentName,int)>($r5, $i0);
+
+        if $z3 == 0 goto label9;
+
+        if z0 == 0 goto label8;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "   Not scheduling periodic operation: isEnabled == 0.");
+
+     label8:
+        return 0;
+
+     label9:
+        return 1;
+    }
+
+    private long scheduleReadyPeriodicSyncs()
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8;
+        long l0, l1, l2, l5, l6, l7, l8, $l11, $l12, $l14, $l16, $l17, $l18, $l19, $l21, $l22, $l23, $l24, $l25, $l26, $l27, $l29, $l30, $l32, $l35, $l41, $l42, $l43, $l52, $l55, $l56, $l58, $l59, $l60, $l61, $l65, $l67, $l69, l70;
+        java.util.ArrayList r1, $r22, $r23, $r30;
+        java.util.Iterator r2;
+        android.util.Pair r3, r10;
+        com.android.server.content.SyncStorageEngine$AuthorityInfo r4;
+        android.content.SyncStatusInfo r5;
+        int i3, i4, $i9, $i28, $i37, $i40, $i46, $i49, $i62, $i64;
+        android.content.PeriodicSync r6, $r31;
+        java.lang.Long r7, r9, $r37, $r51;
+        android.os.Bundle r8;
+        com.android.server.content.SyncStorageEngine$EndPoint r11, $r19, $r21, $r68, $r86;
+        android.content.pm.RegisteredServicesCache$ServiceInfo r12;
+        com.android.server.content.SyncManager $r13, $r14, $r25, $r28, $r29, $r34, $r35, $r45, $r48, $r49, $r73, $r81;
+        byte $b10, $b13, $b15, $b20, $b31, $b33, $b34, $b36, $b50, $b51, $b57;
+        com.android.server.content.SyncStorageEngine $r15, $r26, $r27, $r39, $r54;
+        java.lang.Object $r16, $r17, $r18, $r24, $r32, $r38, $r52, $r55;
+        java.lang.String $r20, $r42, $r43, $r46, $r78, $r85, $r87;
+        android.content.ComponentName $r33;
+        com.android.server.content.SyncOperation $r36, $r50;
+        android.content.SyncAdapterType $r40, $r56;
+        android.content.SyncAdaptersCache $r41;
+        android.accounts.Account $r44, $r47;
+        java.lang.StringBuilder $r53, $r57, $r58, $r59, $r60, $r61, $r62, $r63, $r64, $r65, $r66, $r67, $r69, $r70, $r71, $r72, $r74, $r75, $r76, $r77, $r79, $r80, $r82, $r83, $r84;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if z0 == 0 goto label01;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "scheduleReadyPeriodicSyncs");
+
+     label01:
+        l0 = 9223372036854775807L;
+
+        l1 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r13 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $i9 = staticinvoke <com.android.server.content.SyncManager: int access$2700(com.android.server.content.SyncManager)>($r13);
+
+        $l11 = (long) $i9;
+
+        $l12 = l1 - $l11;
+
+        $b10 = 0L cmp $l12;
+
+        if $b10 >= 0 goto label02;
+
+        $r81 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $i64 = staticinvoke <com.android.server.content.SyncManager: int access$2700(com.android.server.content.SyncManager)>($r81);
+
+        $l65 = (long) $i64;
+
+        $l67 = l1 - $l65;
+
+        goto label03;
+
+     label02:
+        $l67 = 0L;
+
+     label03:
+        l2 = $l67;
+
+        $r14 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r15 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r14);
+
+        r1 = virtualinvoke $r15.<com.android.server.content.SyncStorageEngine: java.util.ArrayList getCopyOfAllAuthoritiesWithSyncStatus()>();
+
+        r2 = virtualinvoke r1.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label04:
+        $z2 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label26;
+
+        $r18 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (android.util.Pair) $r18;
+
+        $r17 = r3.<android.util.Pair: java.lang.Object first>;
+
+        r4 = (com.android.server.content.SyncStorageEngine$AuthorityInfo) $r17;
+
+        $r16 = r3.<android.util.Pair: java.lang.Object second>;
+
+        r5 = (android.content.SyncStatusInfo) $r16;
+
+        $r21 = r4.<com.android.server.content.SyncStorageEngine$AuthorityInfo: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $r20 = $r21.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $z3 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>($r20);
+
+        if $z3 == 0 goto label05;
+
+        $r83 = new java.lang.StringBuilder;
+
+        specialinvoke $r83.<java.lang.StringBuilder: void <init>()>();
+
+        $r82 = virtualinvoke $r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Got an empty provider string. Skipping: ");
+
+        $r86 = r4.<com.android.server.content.SyncStorageEngine$AuthorityInfo: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $r87 = $r86.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $r84 = virtualinvoke $r82.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r87);
+
+        $r85 = virtualinvoke $r84.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("SyncManager", $r85);
+
+        goto label04;
+
+     label05:
+        $r19 = r4.<com.android.server.content.SyncStorageEngine$AuthorityInfo: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $z4 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: boolean isDispatchable(com.android.server.content.SyncStorageEngine$EndPoint)>($r19);
+
+        if $z4 != 0 goto label06;
+
+        goto label04;
+
+     label06:
+        i3 = 0;
+
+        $r23 = r4.<com.android.server.content.SyncStorageEngine$AuthorityInfo: java.util.ArrayList periodicSyncs>;
+
+        i4 = virtualinvoke $r23.<java.util.ArrayList: int size()>();
+
+     label07:
+        if i3 >= i4 goto label25;
+
+        $r22 = r4.<com.android.server.content.SyncStorageEngine$AuthorityInfo: java.util.ArrayList periodicSyncs>;
+
+        $r24 = virtualinvoke $r22.<java.util.ArrayList: java.lang.Object get(int)>(i3);
+
+        r6 = (android.content.PeriodicSync) $r24;
+
+        r8 = r6.<android.content.PeriodicSync: android.os.Bundle extras>;
+
+        $l19 = r6.<android.content.PeriodicSync: long period>;
+
+        $l18 = $l19 * 1000L;
+
+        r7 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l18);
+
+        $l21 = r6.<android.content.PeriodicSync: long flexTime>;
+
+        $l22 = $l21 * 1000L;
+
+        r9 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l22);
+
+        $l23 = virtualinvoke r7.<java.lang.Long: long longValue()>();
+
+        $b20 = $l23 cmp 0L;
+
+        if $b20 > 0 goto label08;
+
+        goto label24;
+
+     label08:
+        l5 = virtualinvoke r5.<android.content.SyncStatusInfo: long getPeriodicSyncTime(int)>(i3);
+
+        $r25 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $i28 = staticinvoke <com.android.server.content.SyncManager: int access$2700(com.android.server.content.SyncManager)>($r25);
+
+        $l29 = (long) $i28;
+
+        $l30 = l5 - $l29;
+
+        $b31 = 0L cmp $l30;
+
+        if $b31 >= 0 goto label09;
+
+        $r73 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $i62 = staticinvoke <com.android.server.content.SyncManager: int access$2700(com.android.server.content.SyncManager)>($r73);
+
+        $l61 = (long) $i62;
+
+        $l69 = l5 - $l61;
+
+        goto label10;
+
+     label09:
+        $l69 = 0L;
+
+     label10:
+        l6 = $l69;
+
+        $l24 = virtualinvoke r7.<java.lang.Long: long longValue()>();
+
+        $l25 = virtualinvoke r7.<java.lang.Long: long longValue()>();
+
+        $l26 = l2 % $l25;
+
+        l7 = $l24 - $l26;
+
+        l8 = l1 - l5;
+
+        $l27 = virtualinvoke r9.<java.lang.Long: long longValue()>();
+
+        $b33 = l7 cmp $l27;
+
+        if $b33 > 0 goto label11;
+
+        $l60 = virtualinvoke r7.<java.lang.Long: long longValue()>();
+
+        $l59 = virtualinvoke r9.<java.lang.Long: long longValue()>();
+
+        $l58 = $l60 - $l59;
+
+        $b57 = l8 cmp $l58;
+
+        if $b57 <= 0 goto label11;
+
+        $z8 = 1;
+
+        goto label12;
+
+     label11:
+        $z8 = 0;
+
+     label12:
+        z1 = $z8;
+
+        if z0 == 0 goto label13;
+
+        $r53 = new java.lang.StringBuilder;
+
+        specialinvoke $r53.<java.lang.StringBuilder: void <init>()>();
+
+        $r65 = virtualinvoke $r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sync: ");
+
+        $r66 = virtualinvoke $r65.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i3);
+
+        $r67 = virtualinvoke $r66.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" for ");
+
+        $r68 = r4.<com.android.server.content.SyncStorageEngine$AuthorityInfo: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $r69 = virtualinvoke $r67.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r68);
+
+        $r70 = virtualinvoke $r69.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".");
+
+        $r71 = virtualinvoke $r70.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" period: ");
+
+        $r72 = virtualinvoke $r71.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r7);
+
+        $r57 = virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" flex: ");
+
+        $r58 = virtualinvoke $r57.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r9);
+
+        $r59 = virtualinvoke $r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" remaining: ");
+
+        $r60 = virtualinvoke $r59.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l7);
+
+        $r61 = virtualinvoke $r60.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" time_since_last: ");
+
+        $r62 = virtualinvoke $r61.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l8);
+
+        $r63 = virtualinvoke $r62.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" last poll absol: ");
+
+        $r64 = virtualinvoke $r63.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l5);
+
+        $r77 = virtualinvoke $r64.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" last poll shifed: ");
+
+        $r76 = virtualinvoke $r77.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l6);
+
+        $r75 = virtualinvoke $r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" shifted now: ");
+
+        $r74 = virtualinvoke $r75.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l2);
+
+        $r80 = virtualinvoke $r74.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" run_early: ");
+
+        $r79 = virtualinvoke $r80.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z1);
+
+        $r78 = virtualinvoke $r79.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r78);
+
+     label13:
+        $l32 = virtualinvoke r7.<java.lang.Long: long longValue()>();
+
+        $b34 = l7 cmp $l32;
+
+        if $b34 == 0 goto label14;
+
+        $b50 = l5 cmp l1;
+
+        if $b50 > 0 goto label14;
+
+        $l52 = virtualinvoke r7.<java.lang.Long: long longValue()>();
+
+        $b51 = l8 cmp $l52;
+
+        if $b51 >= 0 goto label14;
+
+        if z1 == 0 goto label21;
+
+     label14:
+        r11 = r4.<com.android.server.content.SyncStorageEngine$AuthorityInfo: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $r29 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r26 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r29);
+
+        r10 = virtualinvoke $r26.<com.android.server.content.SyncStorageEngine: android.util.Pair getBackoff(com.android.server.content.SyncStorageEngine$EndPoint)>(r11);
+
+        $r28 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r27 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r28);
+
+        $i37 = r4.<com.android.server.content.SyncStorageEngine$AuthorityInfo: int ident>;
+
+        $r30 = r4.<com.android.server.content.SyncStorageEngine$AuthorityInfo: java.util.ArrayList periodicSyncs>;
+
+        $r32 = virtualinvoke $r30.<java.util.ArrayList: java.lang.Object get(int)>(i3);
+
+        $r31 = (android.content.PeriodicSync) $r32;
+
+        virtualinvoke $r27.<com.android.server.content.SyncStorageEngine: void setPeriodicSyncTime(int,android.content.PeriodicSync,long)>($i37, $r31, l1);
+
+        $z6 = r11.<com.android.server.content.SyncStorageEngine$EndPoint: boolean target_provider>;
+
+        if $z6 == 0 goto label18;
+
+        $r45 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r41 = $r45.<com.android.server.content.SyncManager: android.content.SyncAdaptersCache mSyncAdapters>;
+
+        $r42 = r11.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $r44 = r11.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $r43 = $r44.<android.accounts.Account: java.lang.String type>;
+
+        $r40 = staticinvoke <android.content.SyncAdapterType: android.content.SyncAdapterType newKey(java.lang.String,java.lang.String)>($r42, $r43);
+
+        $i46 = r11.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        r12 = virtualinvoke $r41.<android.content.SyncAdaptersCache: android.content.pm.RegisteredServicesCache$ServiceInfo getServiceInfo(java.lang.Object,int)>($r40, $i46);
+
+        if r12 != null goto label15;
+
+        goto label24;
+
+     label15:
+        $r48 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r50 = new com.android.server.content.SyncOperation;
+
+        $r47 = r11.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $i49 = r11.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $r46 = r11.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        if r10 == null goto label16;
+
+        $r52 = r10.<android.util.Pair: java.lang.Object first>;
+
+        $r51 = (java.lang.Long) $r52;
+
+        $l55 = virtualinvoke $r51.<java.lang.Long: long longValue()>();
+
+        goto label17;
+
+     label16:
+        $l55 = 0L;
+
+     label17:
+        $r49 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r54 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r49);
+
+        $l56 = virtualinvoke $r54.<com.android.server.content.SyncStorageEngine: long getDelayUntilTime(com.android.server.content.SyncStorageEngine$EndPoint)>(r11);
+
+        $r55 = r12.<android.content.pm.RegisteredServicesCache$ServiceInfo: java.lang.Object type>;
+
+        $r56 = (android.content.SyncAdapterType) $r55;
+
+        $z7 = virtualinvoke $r56.<android.content.SyncAdapterType: boolean allowParallelSyncs()>();
+
+        specialinvoke $r50.<com.android.server.content.SyncOperation: void <init>(android.accounts.Account,int,int,int,java.lang.String,android.os.Bundle,long,long,long,long,boolean)>($r47, $i49, -4, 4, $r46, r8, 0L, 0L, $l55, $l56, $z7);
+
+        virtualinvoke $r48.<com.android.server.content.SyncManager: void scheduleSyncOperation(com.android.server.content.SyncOperation)>($r50);
+
+        goto label21;
+
+     label18:
+        $z5 = r11.<com.android.server.content.SyncStorageEngine$EndPoint: boolean target_service>;
+
+        if $z5 == 0 goto label21;
+
+        $r35 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r36 = new com.android.server.content.SyncOperation;
+
+        $r33 = r11.<com.android.server.content.SyncStorageEngine$EndPoint: android.content.ComponentName service>;
+
+        $i40 = r11.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        if r10 == null goto label19;
+
+        $r38 = r10.<android.util.Pair: java.lang.Object first>;
+
+        $r37 = (java.lang.Long) $r38;
+
+        $l43 = virtualinvoke $r37.<java.lang.Long: long longValue()>();
+
+        goto label20;
+
+     label19:
+        $l43 = 0L;
+
+     label20:
+        $r34 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r39 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r34);
+
+        $l42 = virtualinvoke $r39.<com.android.server.content.SyncStorageEngine: long getDelayUntilTime(com.android.server.content.SyncStorageEngine$EndPoint)>(r11);
+
+        specialinvoke $r36.<com.android.server.content.SyncOperation: void <init>(android.content.ComponentName,int,int,int,android.os.Bundle,long,long,long,long)>($r33, $i40, -4, 4, r8, 0L, 0L, $l43, $l42);
+
+        virtualinvoke $r35.<com.android.server.content.SyncManager: void scheduleSyncOperation(com.android.server.content.SyncOperation)>($r36);
+
+     label21:
+        if z1 == 0 goto label22;
+
+        $l35 = virtualinvoke r7.<java.lang.Long: long longValue()>();
+
+        $l41 = l1 + $l35;
+
+        l70 = $l41 + l7;
+
+        goto label23;
+
+     label22:
+        l70 = l1 + l7;
+
+     label23:
+        $b36 = l70 cmp l0;
+
+        if $b36 >= 0 goto label24;
+
+        l0 = l70;
+
+     label24:
+        i3 = i3 + 1;
+
+        goto label07;
+
+     label25:
+        goto label04;
+
+     label26:
+        $b15 = l0 cmp 9223372036854775807L;
+
+        if $b15 != 0 goto label27;
+
+        return 9223372036854775807L;
+
+     label27:
+        $l16 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $b13 = l0 cmp l1;
+
+        if $b13 >= 0 goto label28;
+
+        $l14 = 0L;
+
+        goto label29;
+
+     label28:
+        $l14 = l0 - l1;
+
+     label29:
+        $l17 = $l16 + $l14;
+
+        return $l17;
+    }
+
+    private long maybeStartNextSyncLocked()
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z10, $z11, $z12, $z13, $z14, $z15, $z16, $z17, $z18, $z19, $z20, $z21, $z22, $z23, z27, z28;
+        long l0, l1, $l17, $l18, $l19, $l21, $l22, $l25, $l28, $l29, $l32, $l34, $l36;
+        java.util.ArrayList r1, $r22, $r31;
+        com.android.server.content.SyncQueue r2, $r23, $r25, $r35, $r38, $r118, r132;
+        java.util.Iterator r3, r11, r128;
+        android.app.ActivityManager r4;
+        java.util.HashSet r5;
+        com.android.server.content.SyncOperation r6, r13, $r33, $r37, $r45, $r52, $r55, r130;
+        android.content.pm.UserInfo r7, $r91;
+        java.lang.Throwable r8, r15, $r126, $r127;
+        com.android.server.content.SyncManager$ActiveSyncContext r9, r10, r12, r14, r131;
+        com.android.server.content.SyncManager $r16, $r17, $r19, $r21, $r26, $r29, $r32, $r34, $r36, $r41, $r93, $r96, $r100, $r116, $r123;
+        android.accounts.AccountAndUser[] $r18, $r20;
+        java.util.Collection $r24, $r119;
+        android.content.Context $r27;
+        java.lang.Object $r28, $r30, $r80, $r90, $r95;
+        int $i2, $i5, $i7, $i9, $i15, $i26, $i30, $i31, $i38, $i39, $i43, $i44, i47, i48, i49, i50;
+        java.lang.StringBuilder $r39, $r42, $r43, $r46, $r47, $r48, $r49, $r50, $r51, $r53, $r56, $r58, $r59, $r60, $r62, $r63, $r64, $r65, $r66, $r68, $r69, $r70, $r71, $r72, $r73, $r75, $r76, $r77, $r79, $r81, $r83, $r84, $r85, $r86, $r87, $r88, $r97, $r98, $r99, $r103, $r104, $r105, $r106, $r107, $r108, $r110, $r113, $r120, $r121, $r122;
+        java.lang.String $r40, $r44, $r54, $r57, $r61, $r67, $r74, $r78, $r82, $r89, $r102, $r109, $r117;
+        byte $b20, $b23, $b27, $b35;
+        android.os.UserManager $r92, $r115;
+        com.android.server.content.SyncStorageEngine$EndPoint $r94, $r111, $r112, $r124;
+        com.android.server.content.SyncStorageEngine $r101;
+        com.android.server.content.SyncStorageEngine$PendingOperation $r114;
+        java.lang.Integer $r125, r129;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if z0 == 0 goto label01;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "maybeStartNextSync");
+
+     label01:
+        $r16 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $z1 = staticinvoke <com.android.server.content.SyncManager: boolean access$300(com.android.server.content.SyncManager)>($r16);
+
+        if $z1 != 0 goto label03;
+
+        if z0 == 0 goto label02;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "maybeStartNextSync: no data connection, skipping");
+
+     label02:
+        return 9223372036854775807L;
+
+     label03:
+        $r17 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $z2 = staticinvoke <com.android.server.content.SyncManager: boolean access$000(com.android.server.content.SyncManager)>($r17);
+
+        if $z2 == 0 goto label05;
+
+        if z0 == 0 goto label04;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "maybeStartNextSync: memory low, skipping");
+
+     label04:
+        return 9223372036854775807L;
+
+     label05:
+        $r19 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r18 = staticinvoke <com.android.server.content.SyncManager: android.accounts.AccountAndUser[] access$2500(com.android.server.content.SyncManager)>($r19);
+
+        $r20 = staticinvoke <com.android.server.content.SyncManager: android.accounts.AccountAndUser[] access$2800()>();
+
+        if $r18 != $r20 goto label07;
+
+        if z0 == 0 goto label06;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "maybeStartNextSync: accounts not known, skipping");
+
+     label06:
+        return 9223372036854775807L;
+
+     label07:
+        l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        l1 = 9223372036854775807L;
+
+        $r22 = new java.util.ArrayList;
+
+        specialinvoke $r22.<java.util.ArrayList: void <init>()>();
+
+        r1 = $r22;
+
+        $r21 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r25 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncQueue access$500(com.android.server.content.SyncManager)>($r21);
+
+        r2 = $r25;
+
+        entermonitor $r25;
+
+     label08:
+        if z0 == 0 goto label09;
+
+        $r121 = new java.lang.StringBuilder;
+
+        specialinvoke $r121.<java.lang.StringBuilder: void <init>()>();
+
+        $r122 = virtualinvoke $r121.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("build the operation array, syncQueue size is ");
+
+        $r123 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r118 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncQueue access$500(com.android.server.content.SyncManager)>($r123);
+
+        $r119 = virtualinvoke $r118.<com.android.server.content.SyncQueue: java.util.Collection getOperations()>();
+
+        $i43 = interfaceinvoke $r119.<java.util.Collection: int size()>();
+
+        $r120 = virtualinvoke $r122.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i43);
+
+        $r117 = virtualinvoke $r120.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r117);
+
+     label09:
+        $r26 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r23 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncQueue access$500(com.android.server.content.SyncManager)>($r26);
+
+        $r24 = virtualinvoke $r23.<com.android.server.content.SyncQueue: java.util.Collection getOperations()>();
+
+        r3 = interfaceinvoke $r24.<java.util.Collection: java.util.Iterator iterator()>();
+
+        $r29 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r27 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$1400(com.android.server.content.SyncManager)>($r29);
+
+        $r28 = virtualinvoke $r27.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("activity");
+
+        r4 = (android.app.ActivityManager) $r28;
+
+        r5 = staticinvoke <com.google.android.collect.Sets: java.util.HashSet newHashSet()>();
+
+     label10:
+        $z4 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label16;
+
+        $r95 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r6 = (com.android.server.content.SyncOperation) $r95;
+
+        $r94 = r6.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $i26 = $r94.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $z23 = virtualinvoke r4.<android.app.ActivityManager: boolean isUserRunning(int)>($i26);
+
+        if $z23 != 0 goto label12;
+
+        $r116 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r115 = staticinvoke <com.android.server.content.SyncManager: android.os.UserManager access$2900(com.android.server.content.SyncManager)>($r116);
+
+        $r112 = r6.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $i39 = $r112.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        r7 = virtualinvoke $r115.<android.os.UserManager: android.content.pm.UserInfo getUserInfo(int)>($i39);
+
+        if r7 != null goto label11;
+
+        $r124 = r6.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $i44 = $r124.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $r125 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i44);
+
+        interfaceinvoke r5.<java.util.Set: boolean add(java.lang.Object)>($r125);
+
+     label11:
+        if z0 == 0 goto label10;
+
+        $r113 = new java.lang.StringBuilder;
+
+        specialinvoke $r113.<java.lang.StringBuilder: void <init>()>();
+
+        $r110 = virtualinvoke $r113.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("    Dropping all sync operations for + ");
+
+        $r111 = r6.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $i38 = $r111.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $r108 = virtualinvoke $r110.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i38);
+
+        $r107 = virtualinvoke $r108.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": user not running.");
+
+        $r109 = virtualinvoke $r107.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r109);
+
+        goto label10;
+
+     label12:
+        $z22 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: boolean isOperationValidLocked(com.android.server.content.SyncOperation)>(r6);
+
+        if $z22 != 0 goto label13;
+
+        interfaceinvoke r3.<java.util.Iterator: void remove()>();
+
+        $r100 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r101 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r100);
+
+        $r114 = r6.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$PendingOperation pendingOperation>;
+
+        virtualinvoke $r101.<com.android.server.content.SyncStorageEngine: boolean deleteFromPending(com.android.server.content.SyncStorageEngine$PendingOperation)>($r114);
+
+        goto label10;
+
+     label13:
+        $l29 = r6.<com.android.server.content.SyncOperation: long effectiveRunTime>;
+
+        $l25 = r6.<com.android.server.content.SyncOperation: long flexTime>;
+
+        $l28 = $l29 - $l25;
+
+        $b27 = $l28 cmp l0;
+
+        if $b27 <= 0 goto label15;
+
+        $l34 = r6.<com.android.server.content.SyncOperation: long effectiveRunTime>;
+
+        $b35 = l1 cmp $l34;
+
+        if $b35 <= 0 goto label14;
+
+        l1 = r6.<com.android.server.content.SyncOperation: long effectiveRunTime>;
+
+     label14:
+        if z0 == 0 goto label10;
+
+        $r103 = new java.lang.StringBuilder;
+
+        specialinvoke $r103.<java.lang.StringBuilder: void <init>()>();
+
+        $r106 = virtualinvoke $r103.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("    Not running sync operation: Sync too far in future.effective: ");
+
+        $l36 = r6.<com.android.server.content.SyncOperation: long effectiveRunTime>;
+
+        $r104 = virtualinvoke $r106.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l36);
+
+        $r105 = virtualinvoke $r104.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" flex: ");
+
+        $l32 = r6.<com.android.server.content.SyncOperation: long flexTime>;
+
+        $r99 = virtualinvoke $r105.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l32);
+
+        $r97 = virtualinvoke $r99.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" now: ");
+
+        $r98 = virtualinvoke $r97.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r102 = virtualinvoke $r98.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r102);
+
+        goto label10;
+
+     label15:
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>(r6);
+
+        goto label10;
+
+     label16:
+        r128 = interfaceinvoke r5.<java.util.Set: java.util.Iterator iterator()>();
+
+     label17:
+        $z3 = interfaceinvoke r128.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label19;
+
+        $r90 = interfaceinvoke r128.<java.util.Iterator: java.lang.Object next()>();
+
+        r129 = (java.lang.Integer) $r90;
+
+        $r93 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r92 = staticinvoke <com.android.server.content.SyncManager: android.os.UserManager access$2900(com.android.server.content.SyncManager)>($r93);
+
+        $i30 = virtualinvoke r129.<java.lang.Integer: int intValue()>();
+
+        $r91 = virtualinvoke $r92.<android.os.UserManager: android.content.pm.UserInfo getUserInfo(int)>($i30);
+
+        if $r91 != null goto label18;
+
+        $r96 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $i31 = virtualinvoke r129.<java.lang.Integer: int intValue()>();
+
+        staticinvoke <com.android.server.content.SyncManager: void access$700(com.android.server.content.SyncManager,int)>($r96, $i31);
+
+     label18:
+        goto label17;
+
+     label19:
+        exitmonitor r2;
+
+     label20:
+        goto label23;
+
+     label21:
+        $r126 := @caughtexception;
+
+        r8 = $r126;
+
+        exitmonitor r2;
+
+     label22:
+        throw r8;
+
+     label23:
+        if z0 == 0 goto label24;
+
+        $r86 = new java.lang.StringBuilder;
+
+        specialinvoke $r86.<java.lang.StringBuilder: void <init>()>();
+
+        $r87 = virtualinvoke $r86.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sort the candidate operations, size ");
+
+        $i15 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        $r88 = virtualinvoke $r87.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i15);
+
+        $r89 = virtualinvoke $r88.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r89);
+
+     label24:
+        staticinvoke <java.util.Collections: void sort(java.util.List)>(r1);
+
+        if z0 == 0 goto label25;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "dispatch all ready sync operations");
+
+     label25:
+        i47 = 0;
+
+        i48 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+     label26:
+        if i47 >= i48 goto label51;
+
+        $r30 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(i47);
+
+        r130 = (com.android.server.content.SyncOperation) $r30;
+
+        z27 = virtualinvoke r130.<com.android.server.content.SyncOperation: boolean isInitialization()>();
+
+        i49 = 0;
+
+        i50 = 0;
+
+        r131 = null;
+
+        r9 = null;
+
+        r10 = null;
+
+        r12 = null;
+
+        $r32 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r31 = $r32.<com.android.server.content.SyncManager: java.util.ArrayList mActiveSyncContexts>;
+
+        r11 = virtualinvoke $r31.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label27:
+        $z5 = interfaceinvoke r11.<java.util.Iterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label33;
+
+        $r80 = interfaceinvoke r11.<java.util.Iterator: java.lang.Object next()>();
+
+        r14 = (com.android.server.content.SyncManager$ActiveSyncContext) $r80;
+
+        r13 = r14.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $z19 = virtualinvoke r13.<com.android.server.content.SyncOperation: boolean isInitialization()>();
+
+        if $z19 == 0 goto label28;
+
+        i49 = i49 + 1;
+
+        goto label30;
+
+     label28:
+        i50 = i50 + 1;
+
+        $z18 = virtualinvoke r13.<com.android.server.content.SyncOperation: boolean isExpedited()>();
+
+        if $z18 != 0 goto label30;
+
+        if r12 == null goto label29;
+
+        $l22 = r12.<com.android.server.content.SyncManager$ActiveSyncContext: long mStartTime>;
+
+        $l21 = r14.<com.android.server.content.SyncManager$ActiveSyncContext: long mStartTime>;
+
+        $b23 = $l22 cmp $l21;
+
+        if $b23 <= 0 goto label30;
+
+     label29:
+        r12 = r14;
+
+     label30:
+        $z21 = virtualinvoke r13.<com.android.server.content.SyncOperation: boolean isConflict(com.android.server.content.SyncOperation)>(r130);
+
+        if $z21 == 0 goto label31;
+
+        r131 = r14;
+
+        goto label32;
+
+     label31:
+        $z20 = virtualinvoke r13.<com.android.server.content.SyncOperation: boolean isInitialization()>();
+
+        if z27 != $z20 goto label32;
+
+        $l17 = r14.<com.android.server.content.SyncManager$ActiveSyncContext: long mStartTime>;
+
+        $l18 = staticinvoke <com.android.server.content.SyncManager: long access$3000()>();
+
+        $l19 = $l17 + $l18;
+
+        $b20 = $l19 cmp l0;
+
+        if $b20 >= 0 goto label32;
+
+        r9 = r14;
+
+     label32:
+        goto label27;
+
+     label33:
+        if z0 == 0 goto label34;
+
+        $r56 = new java.lang.StringBuilder;
+
+        specialinvoke $r56.<java.lang.StringBuilder: void <init>()>();
+
+        $r66 = virtualinvoke $r56.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("candidate ");
+
+        $i9 = i47 + 1;
+
+        $r64 = virtualinvoke $r66.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i9);
+
+        $r65 = virtualinvoke $r64.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" of ");
+
+        $r62 = virtualinvoke $r65.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i48);
+
+        $r63 = virtualinvoke $r62.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        $r60 = virtualinvoke $r63.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r130);
+
+        $r61 = virtualinvoke $r60.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r61);
+
+        $r72 = new java.lang.StringBuilder;
+
+        specialinvoke $r72.<java.lang.StringBuilder: void <init>()>();
+
+        $r71 = virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  numActiveInit=");
+
+        $r70 = virtualinvoke $r71.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i49);
+
+        $r69 = virtualinvoke $r70.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", numActiveRegular=");
+
+        $r68 = virtualinvoke $r69.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i50);
+
+        $r67 = virtualinvoke $r68.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r67);
+
+        $r77 = new java.lang.StringBuilder;
+
+        specialinvoke $r77.<java.lang.StringBuilder: void <init>()>();
+
+        $r76 = virtualinvoke $r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  longRunning: ");
+
+        $r75 = virtualinvoke $r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r9);
+
+        $r74 = virtualinvoke $r75.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r74);
+
+        $r73 = new java.lang.StringBuilder;
+
+        specialinvoke $r73.<java.lang.StringBuilder: void <init>()>();
+
+        $r81 = virtualinvoke $r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  conflict: ");
+
+        $r83 = virtualinvoke $r81.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r131);
+
+        $r82 = virtualinvoke $r83.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r82);
+
+        $r84 = new java.lang.StringBuilder;
+
+        specialinvoke $r84.<java.lang.StringBuilder: void <init>()>();
+
+        $r85 = virtualinvoke $r84.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  oldestNonExpeditedRegular: ");
+
+        $r79 = virtualinvoke $r85.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r12);
+
+        $r78 = virtualinvoke $r79.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r78);
+
+     label34:
+        if z27 == 0 goto label36;
+
+        $i7 = staticinvoke <com.android.server.content.SyncManager: int access$3100()>();
+
+        if i49 >= $i7 goto label35;
+
+        $z17 = 1;
+
+        goto label38;
+
+     label35:
+        $z17 = 0;
+
+        goto label38;
+
+     label36:
+        $i2 = staticinvoke <com.android.server.content.SyncManager: int access$3200()>();
+
+        if i50 >= $i2 goto label37;
+
+        $z17 = 1;
+
+        goto label38;
+
+     label37:
+        $z17 = 0;
+
+     label38:
+        z28 = $z17;
+
+        if r131 == null goto label40;
+
+        if z27 == 0 goto label39;
+
+        $r55 = r131.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $z16 = virtualinvoke $r55.<com.android.server.content.SyncOperation: boolean isInitialization()>();
+
+        if $z16 != 0 goto label39;
+
+        $i5 = staticinvoke <com.android.server.content.SyncManager: int access$3100()>();
+
+        if i49 >= $i5 goto label39;
+
+        r10 = r131;
+
+        $z15 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z15 == 0 goto label43;
+
+        $r53 = new java.lang.StringBuilder;
+
+        specialinvoke $r53.<java.lang.StringBuilder: void <init>()>();
+
+        $r58 = virtualinvoke $r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("canceling and rescheduling sync since an initialization takes higher priority, ");
+
+        $r59 = virtualinvoke $r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r131);
+
+        $r57 = virtualinvoke $r59.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r57);
+
+        goto label43;
+
+     label39:
+        $z11 = virtualinvoke r130.<com.android.server.content.SyncOperation: boolean isExpedited()>();
+
+        if $z11 == 0 goto label50;
+
+        $r45 = r131.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $z12 = virtualinvoke $r45.<com.android.server.content.SyncOperation: boolean isExpedited()>();
+
+        if $z12 != 0 goto label50;
+
+        $r52 = r131.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $z14 = virtualinvoke $r52.<com.android.server.content.SyncOperation: boolean isInitialization()>();
+
+        if z27 != $z14 goto label50;
+
+        r10 = r131;
+
+        $z13 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z13 == 0 goto label43;
+
+        $r49 = new java.lang.StringBuilder;
+
+        specialinvoke $r49.<java.lang.StringBuilder: void <init>()>();
+
+        $r51 = virtualinvoke $r49.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("canceling and rescheduling sync since an expedited takes higher priority, ");
+
+        $r50 = virtualinvoke $r51.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r131);
+
+        $r54 = virtualinvoke $r50.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r54);
+
+        goto label43;
+
+     label40:
+        if z28 == 0 goto label41;
+
+        goto label43;
+
+     label41:
+        $z7 = virtualinvoke r130.<com.android.server.content.SyncOperation: boolean isExpedited()>();
+
+        if $z7 == 0 goto label42;
+
+        if r12 == null goto label42;
+
+        if z27 != 0 goto label42;
+
+        r10 = r12;
+
+        $z10 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z10 == 0 goto label43;
+
+        $r46 = new java.lang.StringBuilder;
+
+        specialinvoke $r46.<java.lang.StringBuilder: void <init>()>();
+
+        $r47 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("canceling and rescheduling sync since an expedited is ready to run, ");
+
+        $r48 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r12);
+
+        $r44 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r44);
+
+        goto label43;
+
+     label42:
+        if r9 == null goto label50;
+
+        $r33 = r9.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $z6 = virtualinvoke $r33.<com.android.server.content.SyncOperation: boolean isInitialization()>();
+
+        if z27 != $z6 goto label50;
+
+        r10 = r9;
+
+        $z8 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z8 == 0 goto label43;
+
+        $r42 = new java.lang.StringBuilder;
+
+        specialinvoke $r42.<java.lang.StringBuilder: void <init>()>();
+
+        $r43 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("canceling and rescheduling sync since it ran roo long, ");
+
+        $r39 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r9);
+
+        $r40 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r40);
+
+     label43:
+        if r10 == null goto label44;
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void runSyncFinishedOrCanceledLocked(android.content.SyncResult,com.android.server.content.SyncManager$ActiveSyncContext)>(null, r10);
+
+        $r41 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r37 = r10.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        virtualinvoke $r41.<com.android.server.content.SyncManager: void scheduleSyncOperation(com.android.server.content.SyncOperation)>($r37);
+
+     label44:
+        $r36 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r35 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncQueue access$500(com.android.server.content.SyncManager)>($r36);
+
+        r132 = $r35;
+
+        entermonitor $r35;
+
+     label45:
+        $r34 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r38 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncQueue access$500(com.android.server.content.SyncManager)>($r34);
+
+        virtualinvoke $r38.<com.android.server.content.SyncQueue: void remove(com.android.server.content.SyncOperation)>(r130);
+
+        exitmonitor r132;
+
+     label46:
+        goto label49;
+
+     label47:
+        $r127 := @caughtexception;
+
+        r15 = $r127;
+
+        exitmonitor r132;
+
+     label48:
+        throw r15;
+
+     label49:
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: boolean dispatchSyncOperation(com.android.server.content.SyncOperation)>(r130);
+
+     label50:
+        i47 = i47 + 1;
+
+        goto label26;
+
+     label51:
+        return l1;
+
+        catch java.lang.Throwable from label08 to label20 with label21;
+        catch java.lang.Throwable from label21 to label22 with label21;
+        catch java.lang.Throwable from label45 to label46 with label47;
+        catch java.lang.Throwable from label47 to label48 with label47;
+    }
+
+    private boolean isOperationValidLocked(com.android.server.content.SyncOperation)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        com.android.server.content.SyncOperation r1;
+        boolean z0, z1, z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z13, $z14, z15;
+        int i0, i1, $i2, $i4, $i10, $i11, $i12, $i13;
+        com.android.server.content.SyncStorageEngine$EndPoint r2;
+        android.accounts.AccountAndUser[] r3;
+        android.content.pm.RegisteredServicesCache$ServiceInfo r4;
+        com.android.server.content.SyncManager $r5, $r11, $r15, $r21, $r23, $r25, $r26, $r31, $r32, $r38;
+        com.android.server.content.SyncStorageEngine $r6, $r12, $r39;
+        java.lang.StringBuilder $r7, $r8, $r10, $r33, $r41, $r42, $r45, $r48, $r50;
+        java.lang.String $r9, $r29, $r34, $r35, $r40, $r43, $r49;
+        android.content.ComponentName $r13, $r16, $r47;
+        android.content.Context $r14;
+        android.content.pm.PackageManager $r17;
+        android.os.Bundle $r18;
+        android.content.pm.ServiceInfo $r19;
+        android.content.pm.ApplicationInfo $r20;
+        android.net.ConnectivityManager $r22, $r24;
+        byte $b8;
+        android.accounts.Account $r27, $r28, $r30, $r46;
+        android.content.SyncAdaptersCache $r36;
+        android.content.SyncAdapterType $r37;
+        android.content.pm.PackageManager$NameNotFoundException $r44;
+        android.net.NetworkInfo r52;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: com.android.server.content.SyncOperation;
+
+        z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        r2 = r1.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $r5 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r6 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r5);
+
+        $i2 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        z1 = virtualinvoke $r6.<com.android.server.content.SyncStorageEngine: boolean getMasterSyncAutomatically(int)>($i2);
+
+        $z3 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: boolean target_provider>;
+
+        if $z3 == 0 goto label10;
+
+        $r25 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        r3 = staticinvoke <com.android.server.content.SyncManager: android.accounts.AccountAndUser[] access$2500(com.android.server.content.SyncManager)>($r25);
+
+        $r26 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r27 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $i10 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $z12 = staticinvoke <com.android.server.content.SyncManager: boolean access$2600(com.android.server.content.SyncManager,android.accounts.AccountAndUser[],android.accounts.Account,int)>($r26, r3, $r27, $i10);
+
+        if $z12 != 0 goto label02;
+
+        if z0 == 0 goto label01;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "    Dropping sync operation: account doesn\'t exist.");
+
+     label01:
+        return 0;
+
+     label02:
+        $r32 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r28 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $i11 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $r29 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        i1 = virtualinvoke $r32.<com.android.server.content.SyncManager: int getIsSyncable(android.accounts.Account,int,java.lang.String)>($r28, $i11, $r29);
+
+        if i1 != 0 goto label04;
+
+        if z0 == 0 goto label03;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "    Dropping sync operation: isSyncable == 0.");
+
+     label03:
+        return 0;
+
+     label04:
+        if z1 == 0 goto label05;
+
+        $r38 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r39 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r38);
+
+        $r46 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $i13 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $r40 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $z13 = virtualinvoke $r39.<com.android.server.content.SyncStorageEngine: boolean getSyncAutomatically(android.accounts.Account,int,java.lang.String)>($r46, $i13, $r40);
+
+        if $z13 == 0 goto label05;
+
+        $z14 = 1;
+
+        goto label06;
+
+     label05:
+        $z14 = 0;
+
+     label06:
+        z1 = $z14;
+
+        $r31 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r36 = $r31.<com.android.server.content.SyncManager: android.content.SyncAdaptersCache mSyncAdapters>;
+
+        $r35 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $r30 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $r34 = $r30.<android.accounts.Account: java.lang.String type>;
+
+        $r37 = staticinvoke <android.content.SyncAdapterType: android.content.SyncAdapterType newKey(java.lang.String,java.lang.String)>($r35, $r34);
+
+        $i12 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        r4 = virtualinvoke $r36.<android.content.SyncAdaptersCache: android.content.pm.RegisteredServicesCache$ServiceInfo getServiceInfo(java.lang.Object,int)>($r37, $i12);
+
+        if r4 == null goto label07;
+
+        i0 = r4.<android.content.pm.RegisteredServicesCache$ServiceInfo: int uid>;
+
+        goto label09;
+
+     label07:
+        if z0 == 0 goto label08;
+
+        $r33 = new java.lang.StringBuilder;
+
+        specialinvoke $r33.<java.lang.StringBuilder: void <init>()>();
+
+        $r41 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("    Dropping sync operation: No sync adapter registeredfor: ");
+
+        $r42 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r43 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r43);
+
+     label08:
+        return 0;
+
+     label09:
+        goto label19;
+
+     label10:
+        $z4 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: boolean target_service>;
+
+        if $z4 == 0 goto label18;
+
+        $r11 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r12 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r11);
+
+        $r13 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: android.content.ComponentName service>;
+
+        $i4 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $z5 = virtualinvoke $r12.<com.android.server.content.SyncStorageEngine: boolean getIsTargetServiceActive(android.content.ComponentName,int)>($r13, $i4);
+
+        if $z5 == 0 goto label11;
+
+        $b8 = 1;
+
+        goto label12;
+
+     label11:
+        $b8 = 0;
+
+     label12:
+        i1 = $b8;
+
+        if i1 != 0 goto label14;
+
+        if z0 == 0 goto label13;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "    Dropping sync operation: isActive == 0.");
+
+     label13:
+        return 0;
+
+     label14:
+        $r15 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r14 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$1400(com.android.server.content.SyncManager)>($r15);
+
+        $r17 = virtualinvoke $r14.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        $r16 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: android.content.ComponentName service>;
+
+        $r19 = virtualinvoke $r17.<android.content.pm.PackageManager: android.content.pm.ServiceInfo getServiceInfo(android.content.ComponentName,int)>($r16, 0);
+
+        $r20 = $r19.<android.content.pm.ServiceInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        i0 = $r20.<android.content.pm.ApplicationInfo: int uid>;
+
+     label15:
+        goto label19;
+
+     label16:
+        $r44 := @caughtexception;
+
+        if z0 == 0 goto label17;
+
+        $r45 = new java.lang.StringBuilder;
+
+        specialinvoke $r45.<java.lang.StringBuilder: void <init>()>();
+
+        $r48 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("    Dropping sync operation: No service registered for: ");
+
+        $r47 = r2.<com.android.server.content.SyncStorageEngine$EndPoint: android.content.ComponentName service>;
+
+        $r50 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r47);
+
+        $r49 = virtualinvoke $r50.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r49);
+
+     label17:
+        return 0;
+
+     label18:
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown target for Sync Op: ");
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("SyncManager", $r9);
+
+        return 0;
+
+     label19:
+        $r18 = r1.<com.android.server.content.SyncOperation: android.os.Bundle extras>;
+
+        $z6 = virtualinvoke $r18.<android.os.Bundle: boolean getBoolean(java.lang.String,boolean)>("ignore_settings", 0);
+
+        if $z6 != 0 goto label20;
+
+        if i1 >= 0 goto label21;
+
+     label20:
+        $z11 = 1;
+
+        goto label22;
+
+     label21:
+        $z11 = 0;
+
+     label22:
+        z15 = $z11;
+
+        if z1 != 0 goto label24;
+
+        if z15 != 0 goto label24;
+
+        if z0 == 0 goto label23;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "    Dropping sync operation: disallowed by settings/network.");
+
+     label23:
+        return 0;
+
+     label24:
+        $r21 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r22 = staticinvoke <com.android.server.content.SyncManager: android.net.ConnectivityManager access$3300(com.android.server.content.SyncManager)>($r21);
+
+        r52 = virtualinvoke $r22.<android.net.ConnectivityManager: android.net.NetworkInfo getActiveNetworkInfoForUid(int)>(i0);
+
+        if r52 == null goto label25;
+
+        $z10 = virtualinvoke r52.<android.net.NetworkInfo: boolean isConnected()>();
+
+        if $z10 == 0 goto label25;
+
+        $z9 = 1;
+
+        goto label26;
+
+     label25:
+        $z9 = 0;
+
+     label26:
+        z2 = $z9;
+
+        if z2 != 0 goto label28;
+
+        if z15 != 0 goto label28;
+
+        if z0 == 0 goto label27;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "    Dropping sync operation: disallowed by settings/network.");
+
+     label27:
+        return 0;
+
+     label28:
+        $z7 = virtualinvoke r1.<com.android.server.content.SyncOperation: boolean isNotAllowedOnMetered()>();
+
+        if $z7 == 0 goto label30;
+
+        $r23 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r24 = staticinvoke <com.android.server.content.SyncManager: android.net.ConnectivityManager access$3300(com.android.server.content.SyncManager)>($r23);
+
+        $z8 = virtualinvoke $r24.<android.net.ConnectivityManager: boolean isActiveNetworkMetered()>();
+
+        if $z8 == 0 goto label30;
+
+        if z15 != 0 goto label30;
+
+        if z0 == 0 goto label29;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", "    Dropping sync operation: not allowed on metered network.");
+
+     label29:
+        return 0;
+
+     label30:
+        return 1;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label14 to label15 with label16;
+    }
+
+    private boolean dispatchSyncOperation(com.android.server.content.SyncOperation)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        com.android.server.content.SyncOperation r1, $r20, $r29, $r30, $r32;
+        java.util.Iterator r2;
+        com.android.server.content.SyncManager$ActiveSyncContext r3, $r13, r70;
+        com.android.server.content.SyncStorageEngine$EndPoint r4;
+        android.content.SyncAdapterType r5;
+        android.content.pm.RegisteredServicesCache$ServiceInfo r6;
+        boolean $z0, $z1, $z3, $z4, $z5, $z6, $z7, $z8, $z9;
+        com.android.server.content.SyncManager $r7, $r14, $r16, $r17, $r31, $r37, $r41, $r53, $r58, $r67;
+        android.content.Context $r8;
+        android.content.pm.PackageManager $r9;
+        android.content.ComponentName $r10, $r60, r68;
+        android.content.pm.ServiceInfo $r11;
+        android.content.pm.ApplicationInfo $r12;
+        long $l0;
+        com.android.server.content.SyncStorageEngine $r15, $r47, $r66;
+        android.content.SyncInfo $r18;
+        java.util.ArrayList $r19, $r54, $r57;
+        int $i1, $i4, $i7, i11;
+        java.lang.StringBuilder $r21, $r22, $r23, $r24, $r26, $r28, $r38, $r39, $r40, $r43, $r44, $r46, $r48, $r49, $r50, $r52, $r59, $r62, $r63, $r65;
+        java.lang.String $r25, $r27, $r33, $r34, $r42, $r45, $r51, $r56, $r61;
+        android.accounts.Account $r35;
+        android.content.SyncAdaptersCache $r36;
+        java.lang.Object $r55;
+        android.content.pm.PackageManager$NameNotFoundException $r64;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: com.android.server.content.SyncOperation;
+
+        $z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z0 == 0 goto label02;
+
+        $r48 = new java.lang.StringBuilder;
+
+        specialinvoke $r48.<java.lang.StringBuilder: void <init>()>();
+
+        $r49 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("dispatchSyncOperation: we are going to sync ");
+
+        $r44 = virtualinvoke $r49.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r45 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r45);
+
+        $r46 = new java.lang.StringBuilder;
+
+        specialinvoke $r46.<java.lang.StringBuilder: void <init>()>();
+
+        $r52 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("num active syncs: ");
+
+        $r53 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r54 = $r53.<com.android.server.content.SyncManager: java.util.ArrayList mActiveSyncContexts>;
+
+        $i7 = virtualinvoke $r54.<java.util.ArrayList: int size()>();
+
+        $r50 = virtualinvoke $r52.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        $r51 = virtualinvoke $r50.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r51);
+
+        $r58 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r57 = $r58.<com.android.server.content.SyncManager: java.util.ArrayList mActiveSyncContexts>;
+
+        r2 = virtualinvoke $r57.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label01:
+        $z9 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z9 == 0 goto label02;
+
+        $r55 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.server.content.SyncManager$ActiveSyncContext) $r55;
+
+        $r56 = virtualinvoke r3.<com.android.server.content.SyncManager$ActiveSyncContext: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r56);
+
+        goto label01;
+
+     label02:
+        r4 = r1.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $z1 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: boolean target_provider>;
+
+        if $z1 == 0 goto label04;
+
+        $r33 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $r35 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $r34 = $r35.<android.accounts.Account: java.lang.String type>;
+
+        r5 = staticinvoke <android.content.SyncAdapterType: android.content.SyncAdapterType newKey(java.lang.String,java.lang.String)>($r33, $r34);
+
+        $r37 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r36 = $r37.<com.android.server.content.SyncManager: android.content.SyncAdaptersCache mSyncAdapters>;
+
+        $i4 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        r6 = virtualinvoke $r36.<android.content.SyncAdaptersCache: android.content.pm.RegisteredServicesCache$ServiceInfo getServiceInfo(java.lang.Object,int)>(r5, $i4);
+
+        if r6 != null goto label03;
+
+        $r40 = new java.lang.StringBuilder;
+
+        specialinvoke $r40.<java.lang.StringBuilder: void <init>()>();
+
+        $r39 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("can\'t find a sync adapter for ");
+
+        $r38 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r5);
+
+        $r43 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", removing settings for it");
+
+        $r42 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("SyncManager", $r42);
+
+        $r41 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r47 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r41);
+
+        virtualinvoke $r47.<com.android.server.content.SyncStorageEngine: void removeAuthority(com.android.server.content.SyncStorageEngine$EndPoint)>(r4);
+
+        return 0;
+
+     label03:
+        i11 = r6.<android.content.pm.RegisteredServicesCache$ServiceInfo: int uid>;
+
+        r68 = r6.<android.content.pm.RegisteredServicesCache$ServiceInfo: android.content.ComponentName componentName>;
+
+        goto label07;
+
+     label04:
+        $r7 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r8 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$1400(com.android.server.content.SyncManager)>($r7);
+
+        $r9 = virtualinvoke $r8.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        $r10 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: android.content.ComponentName service>;
+
+        $r11 = virtualinvoke $r9.<android.content.pm.PackageManager: android.content.pm.ServiceInfo getServiceInfo(android.content.ComponentName,int)>($r10, 0);
+
+        $r12 = $r11.<android.content.pm.ServiceInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        i11 = $r12.<android.content.pm.ApplicationInfo: int uid>;
+
+        r68 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: android.content.ComponentName service>;
+
+     label05:
+        goto label07;
+
+     label06:
+        $r64 := @caughtexception;
+
+        $r63 = new java.lang.StringBuilder;
+
+        specialinvoke $r63.<java.lang.StringBuilder: void <init>()>();
+
+        $r65 = virtualinvoke $r63.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t find a service for ");
+
+        $r60 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: android.content.ComponentName service>;
+
+        $r59 = virtualinvoke $r65.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r60);
+
+        $r62 = virtualinvoke $r59.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", removing settings for it");
+
+        $r61 = virtualinvoke $r62.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("SyncManager", $r61);
+
+        $r67 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r66 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r67);
+
+        virtualinvoke $r66.<com.android.server.content.SyncStorageEngine: void removeAuthority(com.android.server.content.SyncStorageEngine$EndPoint)>(r4);
+
+        return 0;
+
+     label07:
+        $r13 = new com.android.server.content.SyncManager$ActiveSyncContext;
+
+        $r14 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $l0 = virtualinvoke r0.<com.android.server.content.SyncManager$SyncHandler: long insertStartSyncEvent(com.android.server.content.SyncOperation)>(r1);
+
+        specialinvoke $r13.<com.android.server.content.SyncManager$ActiveSyncContext: void <init>(com.android.server.content.SyncManager,com.android.server.content.SyncOperation,long,int)>($r14, r1, $l0, i11);
+
+        r70 = $r13;
+
+        $r16 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r15 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r16);
+
+        $r18 = virtualinvoke $r15.<com.android.server.content.SyncStorageEngine: android.content.SyncInfo addActiveSync(com.android.server.content.SyncManager$ActiveSyncContext)>(r70);
+
+        r70.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.SyncInfo mSyncInfo> = $r18;
+
+        $r17 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r19 = $r17.<com.android.server.content.SyncManager: java.util.ArrayList mActiveSyncContexts>;
+
+        virtualinvoke $r19.<java.util.ArrayList: boolean add(java.lang.Object)>(r70);
+
+        $r20 = r70.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $z3 = virtualinvoke $r20.<com.android.server.content.SyncOperation: boolean isInitialization()>();
+
+        if $z3 != 0 goto label08;
+
+        $r30 = r70.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $z6 = virtualinvoke $r30.<com.android.server.content.SyncOperation: boolean isExpedited()>();
+
+        if $z6 != 0 goto label08;
+
+        $r29 = r70.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $z8 = virtualinvoke $r29.<com.android.server.content.SyncOperation: boolean isManual()>();
+
+        if $z8 != 0 goto label08;
+
+        $r32 = r70.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $z7 = virtualinvoke $r32.<com.android.server.content.SyncOperation: boolean isIgnoreSettings()>();
+
+        if $z7 != 0 goto label08;
+
+        $r31 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        staticinvoke <com.android.server.content.SyncManager: void access$3400(com.android.server.content.SyncManager,com.android.server.content.SyncManager$ActiveSyncContext)>($r31, r70);
+
+     label08:
+        $z4 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z4 == 0 goto label09;
+
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        $r28 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("dispatchSyncOperation: starting ");
+
+        $r26 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r70);
+
+        $r27 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r27);
+
+     label09:
+        $i1 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $z5 = virtualinvoke r70.<com.android.server.content.SyncManager$ActiveSyncContext: boolean bindToSyncAdapter(android.content.ComponentName,int)>(r68, $i1);
+
+        if $z5 != 0 goto label10;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        $r22 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Bind attempt failed - target: ");
+
+        $r24 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r68);
+
+        $r25 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("SyncManager", $r25);
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void closeActiveSyncContext(com.android.server.content.SyncManager$ActiveSyncContext)>(r70);
+
+        return 0;
+
+     label10:
+        return 1;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label04 to label05 with label06;
+    }
+
+    private void runBoundToAdapter(com.android.server.content.SyncManager$ActiveSyncContext, android.os.IBinder)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        com.android.server.content.SyncManager$ActiveSyncContext r1;
+        android.os.IBinder r2;
+        com.android.server.content.SyncOperation r3, $r20;
+        android.os.RemoteException r4, $r16;
+        com.android.server.content.SyncStorageEngine$EndPoint $r5, $r6, $r11, $r12;
+        boolean $z0, $z1;
+        android.content.ISyncServiceAdapter $r7, $r9;
+        android.os.Bundle $r8, $r13;
+        android.content.ISyncAdapter $r10, $r17;
+        java.lang.String $r14, $r24;
+        android.accounts.Account $r15;
+        com.android.server.content.SyncManager $r18, $r19;
+        java.lang.StringBuilder $r21, $r23, $r25;
+        java.lang.RuntimeException $r22, r26;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: com.android.server.content.SyncManager$ActiveSyncContext;
+
+        r2 := @parameter1: android.os.IBinder;
+
+        r3 = r1.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+     label1:
+        r1.<com.android.server.content.SyncManager$ActiveSyncContext: boolean mIsLinkedToDeath> = 1;
+
+        interfaceinvoke r2.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>(r1, 0);
+
+        $r5 = r3.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $z0 = $r5.<com.android.server.content.SyncStorageEngine$EndPoint: boolean target_provider>;
+
+        if $z0 == 0 goto label2;
+
+        $r10 = staticinvoke <android.content.ISyncAdapter$Stub: android.content.ISyncAdapter asInterface(android.os.IBinder)>(r2);
+
+        r1.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncAdapter mSyncAdapter> = $r10;
+
+        $r17 = r1.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncAdapter mSyncAdapter>;
+
+        $r11 = r3.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $r14 = $r11.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $r12 = r3.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $r15 = $r12.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $r13 = r3.<com.android.server.content.SyncOperation: android.os.Bundle extras>;
+
+        interfaceinvoke $r17.<android.content.ISyncAdapter: void startSync(android.content.ISyncContext,java.lang.String,android.accounts.Account,android.os.Bundle)>(r1, $r14, $r15, $r13);
+
+        goto label3;
+
+     label2:
+        $r6 = r3.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $z1 = $r6.<com.android.server.content.SyncStorageEngine$EndPoint: boolean target_service>;
+
+        if $z1 == 0 goto label3;
+
+        $r7 = staticinvoke <android.content.ISyncServiceAdapter$Stub: android.content.ISyncServiceAdapter asInterface(android.os.IBinder)>(r2);
+
+        r1.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncServiceAdapter mSyncServiceAdapter> = $r7;
+
+        $r9 = r1.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncServiceAdapter mSyncServiceAdapter>;
+
+        $r8 = r3.<com.android.server.content.SyncOperation: android.os.Bundle extras>;
+
+        interfaceinvoke $r9.<android.content.ISyncServiceAdapter: void startSync(android.content.ISyncContext,android.os.Bundle)>(r1, $r8);
+
+     label3:
+        goto label6;
+
+     label4:
+        $r16 := @caughtexception;
+
+        r4 = $r16;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String,java.lang.Throwable)>("SyncManager", "maybeStartNextSync: caught a RemoteException, rescheduling", r4);
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void closeActiveSyncContext(com.android.server.content.SyncManager$ActiveSyncContext)>(r1);
+
+        $r18 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        staticinvoke <com.android.server.content.SyncManager: void access$3500(com.android.server.content.SyncManager,com.android.server.content.SyncOperation)>($r18, r3);
+
+        $r19 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r20 = new com.android.server.content.SyncOperation;
+
+        specialinvoke $r20.<com.android.server.content.SyncOperation: void <init>(com.android.server.content.SyncOperation,long)>(r3, 0L);
+
+        virtualinvoke $r19.<com.android.server.content.SyncManager: void scheduleSyncOperation(com.android.server.content.SyncOperation)>($r20);
+
+        goto label6;
+
+     label5:
+        $r22 := @caughtexception;
+
+        r26 = $r22;
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void closeActiveSyncContext(com.android.server.content.SyncManager$ActiveSyncContext)>(r1);
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        $r23 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Caught RuntimeException while starting the sync ");
+
+        $r25 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r24 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("SyncManager", $r24, r26);
+
+     label6:
+        return;
+
+        catch android.os.RemoteException from label1 to label3 with label4;
+        catch java.lang.RuntimeException from label1 to label3 with label5;
+    }
+
+    private void cancelActiveSyncLocked(com.android.server.content.SyncStorageEngine$EndPoint, android.os.Bundle)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        com.android.server.content.SyncStorageEngine$EndPoint r1, r6;
+        android.os.Bundle r2, $r13;
+        java.util.ArrayList r3, $r7, $r9;
+        java.util.Iterator r4;
+        com.android.server.content.SyncManager$ActiveSyncContext r5;
+        com.android.server.content.SyncManager $r8;
+        boolean $z0, $z1, $z2;
+        java.lang.Object $r10;
+        com.android.server.content.SyncOperation $r11, $r12;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: com.android.server.content.SyncStorageEngine$EndPoint;
+
+        r2 := @parameter1: android.os.Bundle;
+
+        $r7 = new java.util.ArrayList;
+
+        $r8 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r9 = $r8.<com.android.server.content.SyncManager: java.util.ArrayList mActiveSyncContexts>;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>(java.util.Collection)>($r9);
+
+        r3 = $r7;
+
+        r4 = virtualinvoke r3.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r4.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label5;
+
+        $r10 = interfaceinvoke r4.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (com.android.server.content.SyncManager$ActiveSyncContext) $r10;
+
+        if r5 == null goto label4;
+
+        $r11 = r5.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        r6 = $r11.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $z1 = virtualinvoke r6.<com.android.server.content.SyncStorageEngine$EndPoint: boolean matchesSpec(com.android.server.content.SyncStorageEngine$EndPoint)>(r1);
+
+        if $z1 != 0 goto label2;
+
+        goto label1;
+
+     label2:
+        if r2 == null goto label3;
+
+        $r12 = r5.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $r13 = $r12.<com.android.server.content.SyncOperation: android.os.Bundle extras>;
+
+        $z2 = staticinvoke <com.android.server.content.SyncManager: boolean syncExtrasEquals(android.os.Bundle,android.os.Bundle,boolean)>($r13, r2, 0);
+
+        if $z2 != 0 goto label3;
+
+        goto label1;
+
+     label3:
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void runSyncFinishedOrCanceledLocked(android.content.SyncResult,com.android.server.content.SyncManager$ActiveSyncContext)>(null, r5);
+
+     label4:
+        goto label1;
+
+     label5:
+        return;
+    }
+
+    private void runSyncFinishedOrCanceledLocked(android.content.SyncResult, com.android.server.content.SyncManager$ActiveSyncContext)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        android.content.SyncResult r1;
+        com.android.server.content.SyncManager$ActiveSyncContext r2;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z9;
+        com.android.server.content.SyncOperation r3, $r9, $r20;
+        com.android.server.content.SyncStorageEngine$EndPoint r4;
+        long l0, $l3, $l4, $l5, $l9, $l10, $l18, $l19, $l20, $l24;
+        java.lang.String r5, $r15, $r22, $r27, $r34, $r38, $r50;
+        byte b1, b2;
+        android.content.ISyncServiceAdapter $r7, $r25, $r51;
+        android.content.ISyncAdapter $r8, $r24, $r49;
+        com.android.server.content.SyncManager $r10, $r14, $r19, $r36, $r39, $r44, $r45;
+        android.os.Bundle $r11, $r18;
+        int $i6, $i7, $i8, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i21, $i23;
+        android.content.ComponentName $r12;
+        android.app.NotificationManager $r13;
+        android.accounts.Account $r16, $r21, $r26;
+        android.os.UserHandle $r17;
+        android.content.SyncStats $r23;
+        java.lang.StringBuilder $r28, $r29, $r30, $r31, $r32, $r33, $r35, $r37, $r40, $r41, $r42, $r43, $r46;
+        android.os.IBinder $r47, $r48;
+        android.os.RemoteException $r52, $r53;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: android.content.SyncResult;
+
+        r2 := @parameter1: com.android.server.content.SyncManager$ActiveSyncContext;
+
+        z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        r3 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        r4 = r3.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $z1 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: boolean mIsLinkedToDeath>;
+
+        if $z1 == 0 goto label03;
+
+        $z9 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: boolean target_provider>;
+
+        if $z9 == 0 goto label01;
+
+        $r49 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncAdapter mSyncAdapter>;
+
+        $r48 = interfaceinvoke $r49.<android.content.ISyncAdapter: android.os.IBinder asBinder()>();
+
+        interfaceinvoke $r48.<android.os.IBinder: boolean unlinkToDeath(android.os.IBinder$DeathRecipient,int)>(r2, 0);
+
+        goto label02;
+
+     label01:
+        $r51 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncServiceAdapter mSyncServiceAdapter>;
+
+        $r47 = interfaceinvoke $r51.<android.content.ISyncServiceAdapter: android.os.IBinder asBinder()>();
+
+        interfaceinvoke $r47.<android.os.IBinder: boolean unlinkToDeath(android.os.IBinder$DeathRecipient,int)>(r2, 0);
+
+     label02:
+        r2.<com.android.server.content.SyncManager$ActiveSyncContext: boolean mIsLinkedToDeath> = 0;
+
+     label03:
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void closeActiveSyncContext(com.android.server.content.SyncManager$ActiveSyncContext)>(r2);
+
+        $l3 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l4 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: long mStartTime>;
+
+        l0 = $l3 - $l4;
+
+        if r1 == null goto label07;
+
+        if z0 == 0 goto label04;
+
+        $r46 = new java.lang.StringBuilder;
+
+        specialinvoke $r46.<java.lang.StringBuilder: void <init>()>();
+
+        $r41 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("runSyncFinishedOrCanceled [finished]: ");
+
+        $r40 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r43 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", result ");
+
+        $r42 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r50 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r50);
+
+     label04:
+        $z7 = virtualinvoke r1.<android.content.SyncResult: boolean hasError()>();
+
+        if $z7 != 0 goto label05;
+
+        r5 = "success";
+
+        b1 = 0;
+
+        b2 = 0;
+
+        $r44 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        staticinvoke <com.android.server.content.SyncManager: void access$3600(com.android.server.content.SyncManager,com.android.server.content.SyncOperation)>($r44, r3);
+
+        goto label06;
+
+     label05:
+        $r35 = new java.lang.StringBuilder;
+
+        specialinvoke $r35.<java.lang.StringBuilder: void <init>()>();
+
+        $r31 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("failed sync operation ");
+
+        $r32 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r33 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        $r37 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r38 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("SyncManager", $r38);
+
+        $r39 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        staticinvoke <com.android.server.content.SyncManager: void access$3500(com.android.server.content.SyncManager,com.android.server.content.SyncOperation)>($r39, r3);
+
+        $r36 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        virtualinvoke $r36.<com.android.server.content.SyncManager: void maybeRescheduleSync(android.content.SyncResult,com.android.server.content.SyncOperation)>(r1, r3);
+
+        $i23 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: int syncResultToErrorNumber(android.content.SyncResult)>(r1);
+
+        r5 = staticinvoke <android.content.ContentResolver: java.lang.String syncErrorToString(int)>($i23);
+
+        b1 = 0;
+
+        b2 = 0;
+
+     label06:
+        $r45 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $l24 = r1.<android.content.SyncResult: long delayUntil>;
+
+        staticinvoke <com.android.server.content.SyncManager: void access$3700(com.android.server.content.SyncManager,com.android.server.content.SyncOperation,long)>($r45, r3, $l24);
+
+        goto label17;
+
+     label07:
+        if z0 == 0 goto label08;
+
+        $r30 = new java.lang.StringBuilder;
+
+        specialinvoke $r30.<java.lang.StringBuilder: void <init>()>();
+
+        $r29 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("runSyncFinishedOrCanceled [canceled]: ");
+
+        $r28 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r34 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r34);
+
+     label08:
+        $r8 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncAdapter mSyncAdapter>;
+
+        if $r8 == null goto label12;
+
+     label09:
+        $r24 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncAdapter mSyncAdapter>;
+
+        interfaceinvoke $r24.<android.content.ISyncAdapter: void cancelSync(android.content.ISyncContext)>(r2);
+
+     label10:
+        goto label16;
+
+     label11:
+        $r53 := @caughtexception;
+
+        goto label16;
+
+     label12:
+        $r7 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncServiceAdapter mSyncServiceAdapter>;
+
+        if $r7 == null goto label16;
+
+     label13:
+        $r25 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.ISyncServiceAdapter mSyncServiceAdapter>;
+
+        interfaceinvoke $r25.<android.content.ISyncServiceAdapter: void cancelSync(android.content.ISyncContext)>(r2);
+
+     label14:
+        goto label16;
+
+     label15:
+        $r52 := @caughtexception;
+
+     label16:
+        r5 = "canceled";
+
+        b1 = 0;
+
+        b2 = 0;
+
+     label17:
+        $l5 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: long mHistoryRowId>;
+
+        virtualinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void stopSyncEvent(long,com.android.server.content.SyncOperation,java.lang.String,int,int,long)>($l5, r3, r5, b2, b1, l0);
+
+        $z2 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: boolean target_provider>;
+
+        if $z2 == 0 goto label20;
+
+        if r1 == null goto label18;
+
+        $z6 = r1.<android.content.SyncResult: boolean tooManyDeletions>;
+
+        if $z6 == 0 goto label18;
+
+        $r26 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $r27 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $r23 = r1.<android.content.SyncResult: android.content.SyncStats stats>;
+
+        $l20 = $r23.<android.content.SyncStats: long numDeletes>;
+
+        $i21 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void installHandleTooManyDeletesNotification(android.accounts.Account,java.lang.String,long,int)>($r26, $r27, $l20, $i21);
+
+        goto label19;
+
+     label18:
+        $r14 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r13 = staticinvoke <com.android.server.content.SyncManager: android.app.NotificationManager access$3800(com.android.server.content.SyncManager)>($r14);
+
+        $r16 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $i11 = virtualinvoke $r16.<android.accounts.Account: int hashCode()>();
+
+        $r15 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $i14 = virtualinvoke $r15.<java.lang.String: int hashCode()>();
+
+        $i13 = $i11 ^ $i14;
+
+        $r17 = new android.os.UserHandle;
+
+        $i12 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        specialinvoke $r17.<android.os.UserHandle: void <init>(int)>($i12);
+
+        virtualinvoke $r13.<android.app.NotificationManager: void cancelAsUser(java.lang.String,int,android.os.UserHandle)>(null, $i13, $r17);
+
+     label19:
+        if r1 == null goto label21;
+
+        $z4 = r1.<android.content.SyncResult: boolean fullSyncRequested>;
+
+        if $z4 == 0 goto label21;
+
+        $r19 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r20 = new com.android.server.content.SyncOperation;
+
+        $r21 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: android.accounts.Account account>;
+
+        $i17 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $i15 = r3.<com.android.server.content.SyncOperation: int reason>;
+
+        $i16 = r3.<com.android.server.content.SyncOperation: int syncSource>;
+
+        $r22 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: java.lang.String provider>;
+
+        $r18 = new android.os.Bundle;
+
+        specialinvoke $r18.<android.os.Bundle: void <init>()>();
+
+        $l18 = r3.<com.android.server.content.SyncOperation: long backoff>;
+
+        $l19 = r3.<com.android.server.content.SyncOperation: long delayUntil>;
+
+        $z5 = r3.<com.android.server.content.SyncOperation: boolean allowParallelSyncs>;
+
+        specialinvoke $r20.<com.android.server.content.SyncOperation: void <init>(android.accounts.Account,int,int,int,java.lang.String,android.os.Bundle,long,long,long,long,boolean)>($r21, $i17, $i15, $i16, $r22, $r18, 0L, 0L, $l18, $l19, $z5);
+
+        virtualinvoke $r19.<com.android.server.content.SyncManager: void scheduleSyncOperation(com.android.server.content.SyncOperation)>($r20);
+
+        goto label21;
+
+     label20:
+        if r1 == null goto label21;
+
+        $z3 = r1.<android.content.SyncResult: boolean fullSyncRequested>;
+
+        if $z3 == 0 goto label21;
+
+        $r10 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r9 = new com.android.server.content.SyncOperation;
+
+        $r12 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: android.content.ComponentName service>;
+
+        $i6 = r4.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        $i8 = r3.<com.android.server.content.SyncOperation: int reason>;
+
+        $i7 = r3.<com.android.server.content.SyncOperation: int syncSource>;
+
+        $r11 = new android.os.Bundle;
+
+        specialinvoke $r11.<android.os.Bundle: void <init>()>();
+
+        $l9 = r3.<com.android.server.content.SyncOperation: long backoff>;
+
+        $l10 = r3.<com.android.server.content.SyncOperation: long delayUntil>;
+
+        specialinvoke $r9.<com.android.server.content.SyncOperation: void <init>(android.content.ComponentName,int,int,int,android.os.Bundle,long,long,long,long)>($r12, $i6, $i8, $i7, $r11, 0L, 0L, $l9, $l10);
+
+        virtualinvoke $r10.<com.android.server.content.SyncManager: void scheduleSyncOperation(com.android.server.content.SyncOperation)>($r9);
+
+     label21:
+        return;
+
+        catch android.os.RemoteException from label09 to label10 with label11;
+        catch android.os.RemoteException from label13 to label14 with label15;
+    }
+
+    private void closeActiveSyncContext(com.android.server.content.SyncManager$ActiveSyncContext)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        com.android.server.content.SyncManager$ActiveSyncContext r1;
+        com.android.server.content.SyncManager $r2, $r4, $r9;
+        java.util.ArrayList $r3;
+        com.android.server.content.SyncStorageEngine $r5;
+        com.android.server.content.SyncOperation $r6;
+        com.android.server.content.SyncStorageEngine$EndPoint $r7;
+        int $i0;
+        android.content.SyncInfo $r8;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: com.android.server.content.SyncManager$ActiveSyncContext;
+
+        virtualinvoke r1.<com.android.server.content.SyncManager$ActiveSyncContext: void close()>();
+
+        $r2 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r3 = $r2.<com.android.server.content.SyncManager: java.util.ArrayList mActiveSyncContexts>;
+
+        virtualinvoke $r3.<java.util.ArrayList: boolean remove(java.lang.Object)>(r1);
+
+        $r4 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r5 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r4);
+
+        $r8 = r1.<com.android.server.content.SyncManager$ActiveSyncContext: android.content.SyncInfo mSyncInfo>;
+
+        $r6 = r1.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $r7 = $r6.<com.android.server.content.SyncOperation: com.android.server.content.SyncStorageEngine$EndPoint target>;
+
+        $i0 = $r7.<com.android.server.content.SyncStorageEngine$EndPoint: int userId>;
+
+        virtualinvoke $r5.<com.android.server.content.SyncStorageEngine: void removeActiveSync(android.content.SyncInfo,int)>($r8, $i0);
+
+        $r9 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        staticinvoke <com.android.server.content.SyncManager: void access$3900(com.android.server.content.SyncManager,com.android.server.content.SyncManager$ActiveSyncContext)>($r9, r1);
+
+        return;
+    }
+
+    private int syncResultToErrorNumber(android.content.SyncResult)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        android.content.SyncResult r1;
+        boolean $z0, $z1, $z2, $z3;
+        android.content.SyncStats $r2, $r3, $r4, $r5;
+        long $l0, $l2, $l4, $l6;
+        byte $b1, $b3, $b5, $b7;
+        java.lang.StringBuilder $r6, $r8, $r9;
+        java.lang.IllegalStateException $r7;
+        java.lang.String $r10;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: android.content.SyncResult;
+
+        $z0 = r1.<android.content.SyncResult: boolean syncAlreadyInProgress>;
+
+        if $z0 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        $r2 = r1.<android.content.SyncResult: android.content.SyncStats stats>;
+
+        $l0 = $r2.<android.content.SyncStats: long numAuthExceptions>;
+
+        $b1 = $l0 cmp 0L;
+
+        if $b1 <= 0 goto label2;
+
+        return 2;
+
+     label2:
+        $r3 = r1.<android.content.SyncResult: android.content.SyncStats stats>;
+
+        $l2 = $r3.<android.content.SyncStats: long numIoExceptions>;
+
+        $b3 = $l2 cmp 0L;
+
+        if $b3 <= 0 goto label3;
+
+        return 3;
+
+     label3:
+        $r4 = r1.<android.content.SyncResult: android.content.SyncStats stats>;
+
+        $l4 = $r4.<android.content.SyncStats: long numParseExceptions>;
+
+        $b5 = $l4 cmp 0L;
+
+        if $b5 <= 0 goto label4;
+
+        return 4;
+
+     label4:
+        $r5 = r1.<android.content.SyncResult: android.content.SyncStats stats>;
+
+        $l6 = $r5.<android.content.SyncStats: long numConflictDetectedExceptions>;
+
+        $b7 = $l6 cmp 0L;
+
+        if $b7 <= 0 goto label5;
+
+        return 5;
+
+     label5:
+        $z1 = r1.<android.content.SyncResult: boolean tooManyDeletions>;
+
+        if $z1 == 0 goto label6;
+
+        return 6;
+
+     label6:
+        $z3 = r1.<android.content.SyncResult: boolean tooManyRetries>;
+
+        if $z3 == 0 goto label7;
+
+        return 7;
+
+     label7:
+        $z2 = r1.<android.content.SyncResult: boolean databaseError>;
+
+        if $z2 == 0 goto label8;
+
+        return 8;
+
+     label8:
+        $r7 = new java.lang.IllegalStateException;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("we are not in an error state, ");
+
+        $r8 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r7.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r10);
+
+        throw $r7;
+    }
+
+    private void manageSyncNotificationLocked()
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        boolean z0, z1, z2, z3, $z4, $z5, $z6, $z9;
+        long l0, $l1, $l2, $l3;
+        java.util.Iterator r1;
+        com.android.server.content.SyncManager$ActiveSyncContext r2;
+        com.android.server.content.SyncManager $r3, $r10, $r12, $r14;
+        java.util.ArrayList $r4, $r11;
+        com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo $r5, $r7, $r8, $r13, $r17, $r19, $r21, $r22;
+        java.lang.Long $r6, $r9, $r20;
+        byte $b4;
+        com.android.server.content.SyncOperation $r15;
+        android.os.Bundle $r16;
+        java.lang.Object $r18;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        $r3 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r4 = $r3.<com.android.server.content.SyncManager: java.util.ArrayList mActiveSyncContexts>;
+
+        $z4 = virtualinvoke $r4.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z4 == 0 goto label01;
+
+        $r21 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo>;
+
+        $r21.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: java.lang.Long startTime> = null;
+
+        $r22 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo>;
+
+        z0 = $r22.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: boolean isActive>;
+
+        z1 = 0;
+
+        goto label09;
+
+     label01:
+        l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $r5 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo>;
+
+        $r6 = $r5.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: java.lang.Long startTime>;
+
+        if $r6 != null goto label02;
+
+        $r19 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo>;
+
+        $r20 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l0);
+
+        $r19.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: java.lang.Long startTime> = $r20;
+
+     label02:
+        $r7 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo>;
+
+        $z5 = $r7.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: boolean isActive>;
+
+        if $z5 == 0 goto label03;
+
+        z0 = 0;
+
+        z1 = 0;
+
+        goto label09;
+
+     label03:
+        z0 = 0;
+
+        $r8 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo>;
+
+        $r9 = $r8.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: java.lang.Long startTime>;
+
+        $l1 = virtualinvoke $r9.<java.lang.Long: long longValue()>();
+
+        $l3 = staticinvoke <com.android.server.content.SyncManager: long access$4000()>();
+
+        $l2 = $l1 + $l3;
+
+        $b4 = l0 cmp $l2;
+
+        if $b4 <= 0 goto label04;
+
+        $z9 = 1;
+
+        goto label05;
+
+     label04:
+        $z9 = 0;
+
+     label05:
+        z2 = $z9;
+
+        if z2 == 0 goto label06;
+
+        z1 = 1;
+
+        goto label09;
+
+     label06:
+        z1 = 0;
+
+        $r10 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r11 = $r10.<com.android.server.content.SyncManager: java.util.ArrayList mActiveSyncContexts>;
+
+        r1 = virtualinvoke $r11.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label07:
+        $z6 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z6 == 0 goto label09;
+
+        $r18 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.server.content.SyncManager$ActiveSyncContext) $r18;
+
+        $r15 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: com.android.server.content.SyncOperation mSyncOperation>;
+
+        $r16 = $r15.<com.android.server.content.SyncOperation: android.os.Bundle extras>;
+
+        z3 = virtualinvoke $r16.<android.os.Bundle: boolean getBoolean(java.lang.String,boolean)>("force", 0);
+
+        if z3 == 0 goto label08;
+
+        z1 = 1;
+
+        goto label09;
+
+     label08:
+        goto label07;
+
+     label09:
+        if z0 == 0 goto label10;
+
+        if z1 != 0 goto label10;
+
+        $r14 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        staticinvoke <com.android.server.content.SyncManager: boolean access$4102(com.android.server.content.SyncManager,boolean)>($r14, 0);
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void sendSyncStateIntent()>();
+
+        $r17 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo>;
+
+        $r17.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: boolean isActive> = 0;
+
+     label10:
+        if z1 == 0 goto label11;
+
+        $r12 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        staticinvoke <com.android.server.content.SyncManager: boolean access$4102(com.android.server.content.SyncManager,boolean)>($r12, 1);
+
+        specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: void sendSyncStateIntent()>();
+
+        $r13 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo>;
+
+        $r13.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: boolean isActive> = 1;
+
+     label11:
+        return;
+    }
+
+    private void manageSyncAlarmLocked(long, long)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0, $r7, $r64, $r70;
+        long l0, l1, l2, l3, l4, $l6, $l7, $l10, $l11, $l12, $l15, $l18, $l19, $l26, $l27, $l28, $l29, $l30, l32, l33, l34, l35;
+        java.util.Iterator r1;
+        com.android.server.content.SyncManager$ActiveSyncContext r2;
+        boolean z0, z1, z2, z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z13, $z14, $z15, $z16, $z17;
+        com.android.server.content.SyncManager $r3, $r4, $r5, $r8, $r10, $r12, $r14, $r17, $r21, $r68, $r71;
+        com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo $r6, $r63, $r69;
+        java.util.ArrayList $r9;
+        byte $b5, $b8, $b9, $b13, $b16, $b25;
+        java.lang.Long $r11, $r18, $r27, $r33, $r65, $r72;
+        android.app.PendingIntent $r13, $r20;
+        android.app.AlarmManager $r15, $r16;
+        java.lang.StringBuilder $r19, $r22, $r23, $r24, $r25, $r26, $r28, $r29, $r31, $r32, $r35, $r36, $r37, $r38, $r39, $r41, $r42, $r43, $r44, $r46, $r47, $r48, $r49, $r50, $r51, $r53, $r54, $r56, $r57, $r58, $r60, $r61, $r67;
+        java.lang.String $r30, $r34, $r40, $r45, $r52, $r55, $r59, $r66;
+        java.lang.Object $r62;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        l0 := @parameter0: long;
+
+        l1 := @parameter1: long;
+
+        $r3 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $z4 = staticinvoke <com.android.server.content.SyncManager: boolean access$300(com.android.server.content.SyncManager)>($r3);
+
+        if $z4 != 0 goto label01;
+
+        return;
+
+     label01:
+        $r4 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $z5 = staticinvoke <com.android.server.content.SyncManager: boolean access$000(com.android.server.content.SyncManager)>($r4);
+
+        if $z5 == 0 goto label02;
+
+        return;
+
+     label02:
+        $r5 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r7 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncManager$SyncHandler access$200(com.android.server.content.SyncManager)>($r5);
+
+        $r6 = $r7.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo>;
+
+        $z6 = $r6.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: boolean isActive>;
+
+        if $z6 != 0 goto label03;
+
+        $r68 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r70 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncManager$SyncHandler access$200(com.android.server.content.SyncManager)>($r68);
+
+        $r69 = $r70.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo>;
+
+        $r72 = $r69.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: java.lang.Long startTime>;
+
+        if $r72 == null goto label03;
+
+        $r71 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r64 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncManager$SyncHandler access$200(com.android.server.content.SyncManager)>($r71);
+
+        $r63 = $r64.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo mSyncNotificationInfo>;
+
+        $r65 = $r63.<com.android.server.content.SyncManager$SyncHandler$SyncNotificationInfo: java.lang.Long startTime>;
+
+        $l28 = virtualinvoke $r65.<java.lang.Long: long longValue()>();
+
+        $l30 = staticinvoke <com.android.server.content.SyncManager: long access$4000()>();
+
+        $l29 = $l28 + $l30;
+
+        goto label04;
+
+     label03:
+        $l29 = 9223372036854775807L;
+
+     label04:
+        l2 = $l29;
+
+        l3 = 9223372036854775807L;
+
+        $r8 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r9 = $r8.<com.android.server.content.SyncManager: java.util.ArrayList mActiveSyncContexts>;
+
+        r1 = virtualinvoke $r9.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label05:
+        $z8 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z8 == 0 goto label08;
+
+        $r62 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.server.content.SyncManager$ActiveSyncContext) $r62;
+
+        $l27 = r2.<com.android.server.content.SyncManager$ActiveSyncContext: long mTimeoutStartTime>;
+
+        $l26 = staticinvoke <com.android.server.content.SyncManager: long access$3000()>();
+
+        l4 = $l27 + $l26;
+
+        $z17 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z17 == 0 goto label06;
+
+        $r61 = new java.lang.StringBuilder;
+
+        specialinvoke $r61.<java.lang.StringBuilder: void <init>()>();
+
+        $r60 = virtualinvoke $r61.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("manageSyncAlarm: active sync, mTimeoutStartTime + MAX is ");
+
+        $r67 = virtualinvoke $r60.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l4);
+
+        $r66 = virtualinvoke $r67.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r66);
+
+     label06:
+        $b25 = l3 cmp l4;
+
+        if $b25 <= 0 goto label07;
+
+        l3 = l4;
+
+     label07:
+        goto label05;
+
+     label08:
+        $z7 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z7 == 0 goto label09;
+
+        $r58 = new java.lang.StringBuilder;
+
+        specialinvoke $r58.<java.lang.StringBuilder: void <init>()>();
+
+        $r57 = virtualinvoke $r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("manageSyncAlarm: notificationTime is ");
+
+        $r56 = virtualinvoke $r57.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l2);
+
+        $r55 = virtualinvoke $r56.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r55);
+
+     label09:
+        $z10 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z10 == 0 goto label10;
+
+        $r51 = new java.lang.StringBuilder;
+
+        specialinvoke $r51.<java.lang.StringBuilder: void <init>()>();
+
+        $r49 = virtualinvoke $r51.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("manageSyncAlarm: earliestTimeoutTime is ");
+
+        $r50 = virtualinvoke $r49.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l3);
+
+        $r59 = virtualinvoke $r50.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r59);
+
+     label10:
+        $z9 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z9 == 0 goto label11;
+
+        $r44 = new java.lang.StringBuilder;
+
+        specialinvoke $r44.<java.lang.StringBuilder: void <init>()>();
+
+        $r53 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("manageSyncAlarm: nextPeriodicEventElapsedTime is ");
+
+        $r54 = virtualinvoke $r53.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r52 = virtualinvoke $r54.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r52);
+
+     label11:
+        $z11 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z11 == 0 goto label12;
+
+        $r48 = new java.lang.StringBuilder;
+
+        specialinvoke $r48.<java.lang.StringBuilder: void <init>()>();
+
+        $r46 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("manageSyncAlarm: nextPendingEventElapsedTime is ");
+
+        $r47 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l1);
+
+        $r45 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r45);
+
+     label12:
+        l32 = staticinvoke <java.lang.Math: long min(long,long)>(l2, l3);
+
+        l33 = staticinvoke <java.lang.Math: long min(long,long)>(l32, l0);
+
+        l34 = staticinvoke <java.lang.Math: long min(long,long)>(l33, l1);
+
+        l35 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l7 = l35 + 30000L;
+
+        $b5 = l34 cmp $l7;
+
+        if $b5 >= 0 goto label14;
+
+        $z16 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z16 == 0 goto label13;
+
+        $r35 = new java.lang.StringBuilder;
+
+        specialinvoke $r35.<java.lang.StringBuilder: void <init>()>();
+
+        $r41 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("manageSyncAlarm: the alarmTime is too small, ");
+
+        $r43 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l34);
+
+        $r42 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", setting to ");
+
+        $l19 = l35 + 30000L;
+
+        $r39 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l19);
+
+        $r40 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r40);
+
+     label13:
+        l34 = l35 + 30000L;
+
+        goto label16;
+
+     label14:
+        $l6 = l35 + 7200000L;
+
+        $b9 = l34 cmp $l6;
+
+        if $b9 <= 0 goto label16;
+
+        $z14 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z14 == 0 goto label15;
+
+        $r31 = new java.lang.StringBuilder;
+
+        specialinvoke $r31.<java.lang.StringBuilder: void <init>()>();
+
+        $r32 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("manageSyncAlarm: the alarmTime is too large, ");
+
+        $r37 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l34);
+
+        $r36 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", setting to ");
+
+        $l18 = l35 + 30000L;
+
+        $r38 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l18);
+
+        $r34 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r34);
+
+     label15:
+        l34 = l35 + 7200000L;
+
+     label16:
+        z0 = 0;
+
+        z1 = 0;
+
+        $r11 = r0.<com.android.server.content.SyncManager$SyncHandler: java.lang.Long mAlarmScheduleTime>;
+
+        if $r11 == null goto label17;
+
+        $r33 = r0.<com.android.server.content.SyncManager$SyncHandler: java.lang.Long mAlarmScheduleTime>;
+
+        $l15 = virtualinvoke $r33.<java.lang.Long: long longValue()>();
+
+        $b16 = l35 cmp $l15;
+
+        if $b16 >= 0 goto label17;
+
+        $z15 = 1;
+
+        goto label18;
+
+     label17:
+        $z15 = 0;
+
+     label18:
+        z2 = $z15;
+
+        $b8 = l34 cmp 9223372036854775807L;
+
+        if $b8 == 0 goto label19;
+
+        $z13 = 1;
+
+        goto label20;
+
+     label19:
+        $z13 = 0;
+
+     label20:
+        z3 = $z13;
+
+        if z3 == 0 goto label22;
+
+        if z2 == 0 goto label21;
+
+        $r27 = r0.<com.android.server.content.SyncManager$SyncHandler: java.lang.Long mAlarmScheduleTime>;
+
+        $l12 = virtualinvoke $r27.<java.lang.Long: long longValue()>();
+
+        $b13 = l34 cmp $l12;
+
+        if $b13 >= 0 goto label23;
+
+     label21:
+        z0 = 1;
+
+        goto label23;
+
+     label22:
+        z1 = z2;
+
+     label23:
+        $r10 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        staticinvoke <com.android.server.content.SyncManager: void access$4200(com.android.server.content.SyncManager)>($r10);
+
+        if z0 == 0 goto label25;
+
+        $z12 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncManager", 2);
+
+        if $z12 == 0 goto label24;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r24 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("requesting that the alarm manager wake us up at elapsed time ");
+
+        $r23 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l34);
+
+        $r22 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", now is ");
+
+        $r26 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l35);
+
+        $r25 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        $l11 = l34 - l35;
+
+        $l10 = $l11 / 1000L;
+
+        $r28 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l10);
+
+        $r29 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" secs from now");
+
+        $r30 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SyncManager", $r30);
+
+     label24:
+        $r18 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l34);
+
+        r0.<com.android.server.content.SyncManager$SyncHandler: java.lang.Long mAlarmScheduleTime> = $r18;
+
+        $r17 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r16 = staticinvoke <com.android.server.content.SyncManager: android.app.AlarmManager access$4400(com.android.server.content.SyncManager)>($r17);
+
+        $r21 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r20 = staticinvoke <com.android.server.content.SyncManager: android.app.PendingIntent access$4300(com.android.server.content.SyncManager)>($r21);
+
+        virtualinvoke $r16.<android.app.AlarmManager: void setExact(int,long,android.app.PendingIntent)>(2, l34, $r20);
+
+        goto label26;
+
+     label25:
+        if z1 == 0 goto label26;
+
+        r0.<com.android.server.content.SyncManager$SyncHandler: java.lang.Long mAlarmScheduleTime> = null;
+
+        $r14 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r15 = staticinvoke <com.android.server.content.SyncManager: android.app.AlarmManager access$4400(com.android.server.content.SyncManager)>($r14);
+
+        $r12 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r13 = staticinvoke <com.android.server.content.SyncManager: android.app.PendingIntent access$4300(com.android.server.content.SyncManager)>($r12);
+
+        virtualinvoke $r15.<android.app.AlarmManager: void cancel(android.app.PendingIntent)>($r13);
+
+     label26:
+        return;
+    }
+
+    private void sendSyncStateIntent()
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        android.content.Intent r1, $r2;
+        com.android.server.content.SyncManager $r4, $r7;
+        boolean $z0;
+        android.content.Context $r8;
+        android.os.UserHandle $r9;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.SYNC_STATE_CHANGED");
+
+        r1 = $r2;
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent addFlags(int)>(67108864);
+
+        $r4 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $z0 = staticinvoke <com.android.server.content.SyncManager: boolean access$4100(com.android.server.content.SyncManager)>($r4);
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,boolean)>("active", $z0);
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,boolean)>("failing", 0);
+
+        $r7 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r8 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$1400(com.android.server.content.SyncManager)>($r7);
+
+        $r9 = <android.os.UserHandle: android.os.UserHandle OWNER>;
+
+        virtualinvoke $r8.<android.content.Context: void sendBroadcastAsUser(android.content.Intent,android.os.UserHandle)>(r1, $r9);
+
+        return;
+    }
+
+    private void installHandleTooManyDeletesNotification(android.accounts.Account, java.lang.String, long, int)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        android.accounts.Account r1;
+        java.lang.String r2, $r25, $r38, $r39, $r41, $r42;
+        long l0, $l4;
+        int i2, $i3, $i5, $i6, $i7, $i8, $i9;
+        android.content.pm.ProviderInfo r3;
+        java.lang.CharSequence r4, r8;
+        android.content.Intent r5, $r20;
+        android.os.UserHandle r6, $r26;
+        android.app.PendingIntent r7;
+        android.content.Context r9, $r13, $r16, $r22, $r30, $r31, $r34;
+        android.app.Notification r10, $r35;
+        com.android.server.content.SyncManager $r11, $r14, $r17, $r19, $r27, $r29, $r32, $r36, $r44;
+        android.app.NotificationManager $r12, $r43;
+        android.content.pm.PackageManager $r15, $r18;
+        boolean $z0;
+        android.content.res.Resources $r33, $r37;
+        java.lang.Object[] $r40;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: android.accounts.Account;
+
+        r2 := @parameter1: java.lang.String;
+
+        l0 := @parameter2: long;
+
+        i2 := @parameter3: int;
+
+        $r11 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r12 = staticinvoke <com.android.server.content.SyncManager: android.app.NotificationManager access$3800(com.android.server.content.SyncManager)>($r11);
+
+        if $r12 != null goto label1;
+
+        return;
+
+     label1:
+        $r14 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r13 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$1400(com.android.server.content.SyncManager)>($r14);
+
+        $r15 = virtualinvoke $r13.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r3 = virtualinvoke $r15.<android.content.pm.PackageManager: android.content.pm.ProviderInfo resolveContentProvider(java.lang.String,int)>(r2, 0);
+
+        if r3 != null goto label2;
+
+        return;
+
+     label2:
+        $r17 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r16 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$1400(com.android.server.content.SyncManager)>($r17);
+
+        $r18 = virtualinvoke $r16.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r4 = virtualinvoke r3.<android.content.pm.ProviderInfo: java.lang.CharSequence loadLabel(android.content.pm.PackageManager)>($r18);
+
+        $r20 = new android.content.Intent;
+
+        $r19 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r22 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$1400(com.android.server.content.SyncManager)>($r19);
+
+        specialinvoke $r20.<android.content.Intent: void <init>(android.content.Context,java.lang.Class)>($r22, class "android/content/SyncActivityTooManyDeletes");
+
+        r5 = $r20;
+
+        virtualinvoke r5.<android.content.Intent: android.content.Intent putExtra(java.lang.String,android.os.Parcelable)>("account", r1);
+
+        virtualinvoke r5.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("authority", r2);
+
+        $r25 = interfaceinvoke r4.<java.lang.CharSequence: java.lang.String toString()>();
+
+        virtualinvoke r5.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("provider", $r25);
+
+        virtualinvoke r5.<android.content.Intent: android.content.Intent putExtra(java.lang.String,long)>("numDeletes", l0);
+
+        $z0 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: boolean isActivityAvailable(android.content.Intent)>(r5);
+
+        if $z0 != 0 goto label3;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("SyncManager", "No activity found to handle too many deletes.");
+
+        return;
+
+     label3:
+        $r26 = new android.os.UserHandle;
+
+        specialinvoke $r26.<android.os.UserHandle: void <init>(int)>(i2);
+
+        r6 = $r26;
+
+        $r27 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r31 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$1400(com.android.server.content.SyncManager)>($r27);
+
+        r7 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getActivityAsUser(android.content.Context,int,android.content.Intent,int,android.os.Bundle,android.os.UserHandle)>($r31, 0, r5, 268435456, null, r6);
+
+        $r29 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r30 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$1400(com.android.server.content.SyncManager)>($r29);
+
+        $r33 = virtualinvoke $r30.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r8 = virtualinvoke $r33.<android.content.res.Resources: java.lang.CharSequence getText(int)>(17039582);
+
+        $r32 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        r9 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$4500(com.android.server.content.SyncManager,android.os.UserHandle)>($r32, r6);
+
+        $r35 = new android.app.Notification;
+
+        $r36 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r34 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$1400(com.android.server.content.SyncManager)>($r36);
+
+        $r38 = virtualinvoke $r34.<android.content.Context: java.lang.String getString(int)>(17039580);
+
+        $l4 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        specialinvoke $r35.<android.app.Notification: void <init>(int,java.lang.CharSequence,long)>(17303125, $r38, $l4);
+
+        r10 = $r35;
+
+        $r37 = virtualinvoke r9.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i3 = virtualinvoke $r37.<android.content.res.Resources: int getColor(int)>(17170520);
+
+        r10.<android.app.Notification: int color> = $i3;
+
+        $r42 = virtualinvoke r9.<android.content.Context: java.lang.String getString(int)>(17039581);
+
+        $r41 = interfaceinvoke r8.<java.lang.CharSequence: java.lang.String toString()>();
+
+        $r40 = newarray (java.lang.Object)[1];
+
+        $r40[0] = r4;
+
+        $r39 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>($r41, $r40);
+
+        virtualinvoke r10.<android.app.Notification: void setLatestEventInfo(android.content.Context,java.lang.CharSequence,java.lang.CharSequence,android.app.PendingIntent)>(r9, $r42, $r39, r7);
+
+        $i6 = r10.<android.app.Notification: int flags>;
+
+        $i5 = $i6 | 2;
+
+        r10.<android.app.Notification: int flags> = $i5;
+
+        $r44 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r43 = staticinvoke <com.android.server.content.SyncManager: android.app.NotificationManager access$3800(com.android.server.content.SyncManager)>($r44);
+
+        $i9 = virtualinvoke r1.<android.accounts.Account: int hashCode()>();
+
+        $i8 = virtualinvoke r2.<java.lang.String: int hashCode()>();
+
+        $i7 = $i9 ^ $i8;
+
+        virtualinvoke $r43.<android.app.NotificationManager: void notifyAsUser(java.lang.String,int,android.app.Notification,android.os.UserHandle)>(null, $i7, r10, r6);
+
+        return;
+    }
+
+    private boolean isActivityAvailable(android.content.Intent)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        android.content.Intent r1;
+        android.content.pm.PackageManager r2;
+        java.util.List r3;
+        int i0, i1, $i2, $i3;
+        android.content.pm.ResolveInfo r4;
+        com.android.server.content.SyncManager $r5;
+        android.content.Context $r6;
+        java.lang.Object $r7;
+        android.content.pm.ActivityInfo $r8;
+        android.content.pm.ApplicationInfo $r9;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: android.content.Intent;
+
+        $r5 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r6 = staticinvoke <com.android.server.content.SyncManager: android.content.Context access$1400(com.android.server.content.SyncManager)>($r5);
+
+        r2 = virtualinvoke $r6.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r3 = virtualinvoke r2.<android.content.pm.PackageManager: java.util.List queryIntentActivities(android.content.Intent,int)>(r1, 0);
+
+        i0 = interfaceinvoke r3.<java.util.List: int size()>();
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label3;
+
+        $r7 = interfaceinvoke r3.<java.util.List: java.lang.Object get(int)>(i1);
+
+        r4 = (android.content.pm.ResolveInfo) $r7;
+
+        $r8 = r4.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r9 = $r8.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i2 = $r9.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i3 = $i2 & 1;
+
+        if $i3 == 0 goto label2;
+
+        return 1;
+
+     label2:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    public long insertStartSyncEvent(com.android.server.content.SyncOperation)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        com.android.server.content.SyncOperation r1;
+        long l0, $l2;
+        java.lang.Object[] $r2;
+        com.android.server.content.SyncManager $r3;
+        com.android.server.content.SyncStorageEngine $r4;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter0: com.android.server.content.SyncOperation;
+
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r2 = virtualinvoke r1.<com.android.server.content.SyncOperation: java.lang.Object[] toEventLog(int)>(0);
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2720, $r2);
+
+        $r3 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r4 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r3);
+
+        $l2 = virtualinvoke $r4.<com.android.server.content.SyncStorageEngine: long insertStartSyncEvent(com.android.server.content.SyncOperation,long)>(r1, l0);
+
+        return $l2;
+    }
+
+    public void stopSyncEvent(long, com.android.server.content.SyncOperation, java.lang.String, int, int, long)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        long l0, l3, $l5, $l6;
+        com.android.server.content.SyncOperation r1;
+        java.lang.String r2;
+        int i1, i2;
+        java.lang.Object[] $r3;
+        com.android.server.content.SyncManager $r4;
+        com.android.server.content.SyncStorageEngine $r5;
+
+        r0 := @this: com.android.server.content.SyncManager$SyncHandler;
+
+        l0 := @parameter0: long;
+
+        r1 := @parameter1: com.android.server.content.SyncOperation;
+
+        r2 := @parameter2: java.lang.String;
+
+        i1 := @parameter3: int;
+
+        i2 := @parameter4: int;
+
+        l3 := @parameter5: long;
+
+        $r3 = virtualinvoke r1.<com.android.server.content.SyncOperation: java.lang.Object[] toEventLog(int)>(1);
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2720, $r3);
+
+        $r4 = r0.<com.android.server.content.SyncManager$SyncHandler: com.android.server.content.SyncManager this$0>;
+
+        $r5 = staticinvoke <com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine access$600(com.android.server.content.SyncManager)>($r4);
+
+        $l6 = (long) i2;
+
+        $l5 = (long) i1;
+
+        virtualinvoke $r5.<com.android.server.content.SyncStorageEngine: void stopSyncEvent(long,long,java.lang.String,long,long)>(l0, l3, r2, $l6, $l5);
+
+        return;
+    }
+
+    static android.os.PowerManager$WakeLock access$1200(com.android.server.content.SyncManager$SyncHandler, com.android.server.content.SyncOperation)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        com.android.server.content.SyncOperation r1;
+        android.os.PowerManager$WakeLock $r2;
+
+        r0 := @parameter0: com.android.server.content.SyncManager$SyncHandler;
+
+        r1 := @parameter1: com.android.server.content.SyncOperation;
+
+        $r2 = specialinvoke r0.<com.android.server.content.SyncManager$SyncHandler: android.os.PowerManager$WakeLock getSyncWakeLock(com.android.server.content.SyncOperation)>(r1);
+
+        return $r2;
+    }
+
+    static java.lang.Long access$1600(com.android.server.content.SyncManager$SyncHandler)
+    {
+        com.android.server.content.SyncManager$SyncHandler r0;
+        java.lang.Long $r1;
+
+        r0 := @parameter0: com.android.server.content.SyncManager$SyncHandler;
+
+        $r1 = r0.<com.android.server.content.SyncManager$SyncHandler: java.lang.Long mAlarmScheduleTime>;
+
+        return $r1;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.content.SyncManager$SyncHandler: int MESSAGE_SYNC_EXPIRED> = 7;
+
+        <com.android.server.content.SyncManager$SyncHandler: int MESSAGE_CANCEL> = 6;
+
+        <com.android.server.content.SyncManager$SyncHandler: int MESSAGE_SERVICE_DISCONNECTED> = 5;
+
+        <com.android.server.content.SyncManager$SyncHandler: int MESSAGE_SERVICE_CONNECTED> = 4;
+
+        <com.android.server.content.SyncManager$SyncHandler: int MESSAGE_CHECK_ALARMS> = 3;
+
+        <com.android.server.content.SyncManager$SyncHandler: int MESSAGE_SYNC_ALARM> = 2;
+
+        <com.android.server.content.SyncManager$SyncHandler: int MESSAGE_SYNC_FINISHED> = 1;
+
+        return;
+    }
+}
