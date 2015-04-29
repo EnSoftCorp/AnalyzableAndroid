@@ -1,0 +1,2985 @@
+public class com.android.server.net.NetworkStatsService extends android.net.INetworkStatsService$Stub
+{
+    public static final java.lang.String ACTION_NETWORK_STATS_POLL;
+    public static final java.lang.String ACTION_NETWORK_STATS_UPDATED;
+    private static final int FLAG_PERSIST_ALL;
+    private static final int FLAG_PERSIST_FORCE;
+    private static final int FLAG_PERSIST_NETWORK;
+    private static final int FLAG_PERSIST_UID;
+    private static final boolean LOGV;
+    private static final int MSG_PERFORM_POLL;
+    private static final int MSG_REGISTER_GLOBAL_ALERT;
+    private static final int MSG_UPDATE_IFACES;
+    private static final java.lang.String PREFIX_DEV;
+    private static final java.lang.String PREFIX_UID;
+    private static final java.lang.String PREFIX_UID_TAG;
+    private static final java.lang.String PREFIX_XT;
+    private static final java.lang.String TAG;
+    private static final java.lang.String TAG_NETSTATS_ERROR;
+    private java.lang.String mActiveIface;
+    private java.util.HashMap mActiveIfaces;
+    private android.util.SparseIntArray mActiveUidCounterSet;
+    private final android.app.AlarmManager mAlarmManager;
+    private android.net.INetworkManagementEventObserver mAlertObserver;
+    private final java.io.File mBaseDir;
+    private android.net.IConnectivityManager mConnManager;
+    private android.content.BroadcastReceiver mConnReceiver;
+    private final android.content.Context mContext;
+    private com.android.server.net.NetworkStatsRecorder mDevRecorder;
+    private com.android.server.net.NetworkStatsCollection mDevStatsCached;
+    private long mGlobalAlertBytes;
+    private final android.os.Handler mHandler;
+    private android.os.Handler$Callback mHandlerCallback;
+    private int mLastPhoneNetworkType;
+    private int mLastPhoneState;
+    private java.lang.String[] mMobileIfaces;
+    private final android.os.INetworkManagementService mNetworkManager;
+    private final com.android.server.net.NetworkStatsService$DropBoxNonMonotonicObserver mNonMonotonicObserver;
+    private long mPersistThreshold;
+    private android.telephony.PhoneStateListener mPhoneListener;
+    private android.app.PendingIntent mPollIntent;
+    private android.content.BroadcastReceiver mPollReceiver;
+    private android.content.BroadcastReceiver mRemovedReceiver;
+    private final com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings;
+    private android.content.BroadcastReceiver mShutdownReceiver;
+    private final java.lang.Object mStatsLock;
+    private final java.io.File mSystemDir;
+    private boolean mSystemReady;
+    private final android.telephony.TelephonyManager mTeleManager;
+    private android.content.BroadcastReceiver mTetherReceiver;
+    private final android.util.TrustedTime mTime;
+    private android.net.NetworkStats mUidOperations;
+    private com.android.server.net.NetworkStatsRecorder mUidRecorder;
+    private com.android.server.net.NetworkStatsRecorder mUidTagRecorder;
+    private android.content.BroadcastReceiver mUserReceiver;
+    private final android.os.PowerManager$WakeLock mWakeLock;
+    private com.android.server.net.NetworkStatsRecorder mXtRecorder;
+    private com.android.server.net.NetworkStatsCollection mXtStatsCached;
+
+    public void <init>(android.content.Context, android.os.INetworkManagementService, android.app.IAlarmManager)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.content.Context r1;
+        android.os.INetworkManagementService r2;
+        android.app.IAlarmManager r3;
+        android.util.NtpTrustedTime $r4;
+        java.io.File $r5;
+        com.android.server.net.NetworkStatsService$DefaultNetworkStatsSettings $r6;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.os.INetworkManagementService;
+
+        r3 := @parameter2: android.app.IAlarmManager;
+
+        $r4 = staticinvoke <android.util.NtpTrustedTime: android.util.NtpTrustedTime getInstance(android.content.Context)>(r1);
+
+        $r5 = staticinvoke <com.android.server.net.NetworkStatsService: java.io.File getDefaultSystemDir()>();
+
+        $r6 = new com.android.server.net.NetworkStatsService$DefaultNetworkStatsSettings;
+
+        specialinvoke $r6.<com.android.server.net.NetworkStatsService$DefaultNetworkStatsSettings: void <init>(android.content.Context)>(r1);
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void <init>(android.content.Context,android.os.INetworkManagementService,android.app.IAlarmManager,android.util.TrustedTime,java.io.File,com.android.server.net.NetworkStatsService$NetworkStatsSettings)>(r1, r2, r3, $r4, $r5, $r6);
+
+        return;
+    }
+
+    public void <init>(android.content.Context, android.os.INetworkManagementService, android.app.IAlarmManager, android.util.TrustedTime, java.io.File, com.android.server.net.NetworkStatsService$NetworkStatsSettings)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.content.Context r1, $r25;
+        android.os.INetworkManagementService r2, $r27;
+        android.app.IAlarmManager r3;
+        android.util.TrustedTime r4, $r29;
+        java.io.File r5, $r44, $r45, $r46;
+        com.android.server.net.NetworkStatsService$NetworkStatsSettings r6, $r35;
+        android.os.HandlerThread r7, $r37;
+        java.lang.Object $r8, $r22, $r24, $r26, $r31, $r32, $r34, $r38, $r41;
+        java.util.HashMap $r9;
+        java.lang.String[] $r10;
+        com.android.server.net.NetworkStatsService$DropBoxNonMonotonicObserver $r11;
+        android.util.SparseIntArray $r12;
+        android.net.NetworkStats $r13;
+        com.android.server.net.NetworkStatsService$2 $r14;
+        com.android.server.net.NetworkStatsService$3 $r15;
+        com.android.server.net.NetworkStatsService$5 $r16;
+        com.android.server.net.NetworkStatsService$4 $r17;
+        com.android.server.net.NetworkStatsService$7 $r18;
+        com.android.server.net.NetworkStatsService$6 $r19;
+        com.android.server.net.NetworkStatsService$9 $r20;
+        com.android.server.net.NetworkStatsService$8 $r21;
+        com.android.server.net.NetworkStatsService$10 $r23;
+        android.telephony.TelephonyManager $r28, $r30;
+        android.app.AlarmManager $r33;
+        android.os.PowerManager$WakeLock $r36;
+        android.os.PowerManager $r39;
+        android.os.Handler$Callback $r40;
+        android.os.Handler $r42;
+        android.os.Looper $r43;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.os.INetworkManagementService;
+
+        r3 := @parameter2: android.app.IAlarmManager;
+
+        r4 := @parameter3: android.util.TrustedTime;
+
+        r5 := @parameter4: java.io.File;
+
+        r6 := @parameter5: com.android.server.net.NetworkStatsService$NetworkStatsSettings;
+
+        specialinvoke r0.<android.net.INetworkStatsService$Stub: void <init>()>();
+
+        $r8 = new java.lang.Object;
+
+        specialinvoke $r8.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.net.NetworkStatsService: java.lang.Object mStatsLock> = $r8;
+
+        $r9 = staticinvoke <com.google.android.collect.Maps: java.util.HashMap newHashMap()>();
+
+        r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces> = $r9;
+
+        $r10 = newarray (java.lang.String)[0];
+
+        r0.<com.android.server.net.NetworkStatsService: java.lang.String[] mMobileIfaces> = $r10;
+
+        $r11 = new com.android.server.net.NetworkStatsService$DropBoxNonMonotonicObserver;
+
+        specialinvoke $r11.<com.android.server.net.NetworkStatsService$DropBoxNonMonotonicObserver: void <init>(com.android.server.net.NetworkStatsService,com.android.server.net.NetworkStatsService$1)>(r0, null);
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$DropBoxNonMonotonicObserver mNonMonotonicObserver> = $r11;
+
+        $r12 = new android.util.SparseIntArray;
+
+        specialinvoke $r12.<android.util.SparseIntArray: void <init>()>();
+
+        r0.<com.android.server.net.NetworkStatsService: android.util.SparseIntArray mActiveUidCounterSet> = $r12;
+
+        $r13 = new android.net.NetworkStats;
+
+        specialinvoke $r13.<android.net.NetworkStats: void <init>(long,int)>(0L, 10);
+
+        r0.<com.android.server.net.NetworkStatsService: android.net.NetworkStats mUidOperations> = $r13;
+
+        r0.<com.android.server.net.NetworkStatsService: long mPersistThreshold> = 2097152L;
+
+        $r14 = new com.android.server.net.NetworkStatsService$2;
+
+        specialinvoke $r14.<com.android.server.net.NetworkStatsService$2: void <init>(com.android.server.net.NetworkStatsService)>(r0);
+
+        r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mConnReceiver> = $r14;
+
+        $r15 = new com.android.server.net.NetworkStatsService$3;
+
+        specialinvoke $r15.<com.android.server.net.NetworkStatsService$3: void <init>(com.android.server.net.NetworkStatsService)>(r0);
+
+        r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mTetherReceiver> = $r15;
+
+        $r17 = new com.android.server.net.NetworkStatsService$4;
+
+        specialinvoke $r17.<com.android.server.net.NetworkStatsService$4: void <init>(com.android.server.net.NetworkStatsService)>(r0);
+
+        r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mPollReceiver> = $r17;
+
+        $r16 = new com.android.server.net.NetworkStatsService$5;
+
+        specialinvoke $r16.<com.android.server.net.NetworkStatsService$5: void <init>(com.android.server.net.NetworkStatsService)>(r0);
+
+        r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mRemovedReceiver> = $r16;
+
+        $r19 = new com.android.server.net.NetworkStatsService$6;
+
+        specialinvoke $r19.<com.android.server.net.NetworkStatsService$6: void <init>(com.android.server.net.NetworkStatsService)>(r0);
+
+        r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mUserReceiver> = $r19;
+
+        $r18 = new com.android.server.net.NetworkStatsService$7;
+
+        specialinvoke $r18.<com.android.server.net.NetworkStatsService$7: void <init>(com.android.server.net.NetworkStatsService)>(r0);
+
+        r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mShutdownReceiver> = $r18;
+
+        $r21 = new com.android.server.net.NetworkStatsService$8;
+
+        specialinvoke $r21.<com.android.server.net.NetworkStatsService$8: void <init>(com.android.server.net.NetworkStatsService)>(r0);
+
+        r0.<com.android.server.net.NetworkStatsService: android.net.INetworkManagementEventObserver mAlertObserver> = $r21;
+
+        r0.<com.android.server.net.NetworkStatsService: int mLastPhoneState> = -1;
+
+        r0.<com.android.server.net.NetworkStatsService: int mLastPhoneNetworkType> = 0;
+
+        $r20 = new com.android.server.net.NetworkStatsService$9;
+
+        specialinvoke $r20.<com.android.server.net.NetworkStatsService$9: void <init>(com.android.server.net.NetworkStatsService)>(r0);
+
+        r0.<com.android.server.net.NetworkStatsService: android.telephony.PhoneStateListener mPhoneListener> = $r20;
+
+        $r23 = new com.android.server.net.NetworkStatsService$10;
+
+        specialinvoke $r23.<com.android.server.net.NetworkStatsService$10: void <init>(com.android.server.net.NetworkStatsService)>(r0);
+
+        r0.<com.android.server.net.NetworkStatsService: android.os.Handler$Callback mHandlerCallback> = $r23;
+
+        $r22 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object,java.lang.Object)>(r1, "missing Context");
+
+        $r25 = (android.content.Context) $r22;
+
+        r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext> = $r25;
+
+        $r24 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object,java.lang.Object)>(r2, "missing INetworkManagementService");
+
+        $r27 = (android.os.INetworkManagementService) $r24;
+
+        r0.<com.android.server.net.NetworkStatsService: android.os.INetworkManagementService mNetworkManager> = $r27;
+
+        $r26 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object,java.lang.Object)>(r4, "missing TrustedTime");
+
+        $r29 = (android.util.TrustedTime) $r26;
+
+        r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime> = $r29;
+
+        $r28 = staticinvoke <android.telephony.TelephonyManager: android.telephony.TelephonyManager getDefault()>();
+
+        $r31 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object,java.lang.Object)>($r28, "missing TelephonyManager");
+
+        $r30 = (android.telephony.TelephonyManager) $r31;
+
+        r0.<com.android.server.net.NetworkStatsService: android.telephony.TelephonyManager mTeleManager> = $r30;
+
+        $r34 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object,java.lang.Object)>(r6, "missing NetworkStatsSettings");
+
+        $r35 = (com.android.server.net.NetworkStatsService$NetworkStatsSettings) $r34;
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings> = $r35;
+
+        $r32 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("alarm");
+
+        $r33 = (android.app.AlarmManager) $r32;
+
+        r0.<com.android.server.net.NetworkStatsService: android.app.AlarmManager mAlarmManager> = $r33;
+
+        $r38 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r39 = (android.os.PowerManager) $r38;
+
+        $r36 = virtualinvoke $r39.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, "NetworkStats");
+
+        r0.<com.android.server.net.NetworkStatsService: android.os.PowerManager$WakeLock mWakeLock> = $r36;
+
+        $r37 = new android.os.HandlerThread;
+
+        specialinvoke $r37.<android.os.HandlerThread: void <init>(java.lang.String)>("NetworkStats");
+
+        r7 = $r37;
+
+        virtualinvoke r7.<android.os.HandlerThread: void start()>();
+
+        $r42 = new android.os.Handler;
+
+        $r43 = virtualinvoke r7.<android.os.HandlerThread: android.os.Looper getLooper()>();
+
+        $r40 = r0.<com.android.server.net.NetworkStatsService: android.os.Handler$Callback mHandlerCallback>;
+
+        specialinvoke $r42.<android.os.Handler: void <init>(android.os.Looper,android.os.Handler$Callback)>($r43, $r40);
+
+        r0.<com.android.server.net.NetworkStatsService: android.os.Handler mHandler> = $r42;
+
+        $r41 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object)>(r5);
+
+        $r45 = (java.io.File) $r41;
+
+        r0.<com.android.server.net.NetworkStatsService: java.io.File mSystemDir> = $r45;
+
+        $r46 = new java.io.File;
+
+        specialinvoke $r46.<java.io.File: void <init>(java.io.File,java.lang.String)>(r5, "netstats");
+
+        r0.<com.android.server.net.NetworkStatsService: java.io.File mBaseDir> = $r46;
+
+        $r44 = r0.<com.android.server.net.NetworkStatsService: java.io.File mBaseDir>;
+
+        virtualinvoke $r44.<java.io.File: boolean mkdirs()>();
+
+        return;
+    }
+
+    static java.lang.Object access$100(com.android.server.net.NetworkStatsService)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsService: java.lang.Object mStatsLock>;
+
+        return $r1;
+    }
+
+    static void access$1000(com.android.server.net.NetworkStatsService, int[])
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int[] r1;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter1: int[];
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void removeUidsLocked(int[])>(r1);
+
+        return;
+    }
+
+    static void access$1100(com.android.server.net.NetworkStatsService, int)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void removeUserLocked(int)>(i0);
+
+        return;
+    }
+
+    static void access$1200(com.android.server.net.NetworkStatsService)
+    {
+        com.android.server.net.NetworkStatsService r0;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void shutdownLocked()>();
+
+        return;
+    }
+
+    static android.content.Context access$1300(com.android.server.net.NetworkStatsService)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static android.os.Handler access$1400(com.android.server.net.NetworkStatsService)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.os.Handler $r1;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsService: android.os.Handler mHandler>;
+
+        return $r1;
+    }
+
+    static int access$1500(com.android.server.net.NetworkStatsService)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        $i0 = r0.<com.android.server.net.NetworkStatsService: int mLastPhoneState>;
+
+        return $i0;
+    }
+
+    static int access$1502(com.android.server.net.NetworkStatsService, int)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.net.NetworkStatsService: int mLastPhoneState> = i0;
+
+        return i0;
+    }
+
+    static int access$1600(com.android.server.net.NetworkStatsService)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        $i0 = r0.<com.android.server.net.NetworkStatsService: int mLastPhoneNetworkType>;
+
+        return $i0;
+    }
+
+    static int access$1602(com.android.server.net.NetworkStatsService, int)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.net.NetworkStatsService: int mLastPhoneNetworkType> = i0;
+
+        return i0;
+    }
+
+    static com.android.server.net.NetworkStatsRecorder access$200(com.android.server.net.NetworkStatsService)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        com.android.server.net.NetworkStatsRecorder $r1;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        return $r1;
+    }
+
+    static com.android.server.net.NetworkStatsRecorder access$300(com.android.server.net.NetworkStatsService)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        com.android.server.net.NetworkStatsRecorder $r1;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder>;
+
+        return $r1;
+    }
+
+    static android.net.NetworkStats access$400(com.android.server.net.NetworkStatsService, android.net.NetworkTemplate, long, long)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.net.NetworkTemplate r1;
+        long l0, l1;
+        android.net.NetworkStats $r2;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter1: android.net.NetworkTemplate;
+
+        l0 := @parameter2: long;
+
+        l1 := @parameter3: long;
+
+        $r2 = specialinvoke r0.<com.android.server.net.NetworkStatsService: android.net.NetworkStats internalGetSummaryForNetwork(android.net.NetworkTemplate,long,long)>(r1, l0, l1);
+
+        return $r2;
+    }
+
+    static android.net.NetworkStatsHistory access$500(com.android.server.net.NetworkStatsService, android.net.NetworkTemplate, int)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.net.NetworkTemplate r1;
+        int i0;
+        android.net.NetworkStatsHistory $r2;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter1: android.net.NetworkTemplate;
+
+        i0 := @parameter2: int;
+
+        $r2 = specialinvoke r0.<com.android.server.net.NetworkStatsService: android.net.NetworkStatsHistory internalGetHistoryForNetwork(android.net.NetworkTemplate,int)>(r1, i0);
+
+        return $r2;
+    }
+
+    static void access$600(com.android.server.net.NetworkStatsService)
+    {
+        com.android.server.net.NetworkStatsService r0;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void updateIfaces()>();
+
+        return;
+    }
+
+    static void access$700(com.android.server.net.NetworkStatsService, int)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void performPoll(int)>(i0);
+
+        return;
+    }
+
+    static void access$800(com.android.server.net.NetworkStatsService)
+    {
+        com.android.server.net.NetworkStatsService r0;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void registerGlobalAlert()>();
+
+        return;
+    }
+
+    static android.os.PowerManager$WakeLock access$900(com.android.server.net.NetworkStatsService)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.os.PowerManager$WakeLock $r1;
+
+        r0 := @parameter0: com.android.server.net.NetworkStatsService;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        return $r1;
+    }
+
+    private void assertBandwidthControlEnabled()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        boolean $z0;
+        java.lang.IllegalStateException $r1;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        $z0 = specialinvoke r0.<com.android.server.net.NetworkStatsService: boolean isBandwidthControlEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        $r1 = new java.lang.IllegalStateException;
+
+        specialinvoke $r1.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Bandwidth module disabled");
+
+        throw $r1;
+
+     label1:
+        return;
+    }
+
+    private void bootstrapStatsLocked()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        long l0;
+        java.lang.IllegalStateException r2, $r20;
+        android.net.NetworkStats r3, r4, r5;
+        android.util.TrustedTime $r6, $r16;
+        boolean $z0;
+        android.os.INetworkManagementService $r7, $r8;
+        java.util.HashMap $r9, $r10, $r12, $r14;
+        com.android.server.net.NetworkStatsRecorder $r11, $r13, $r15, $r17;
+        android.os.RemoteException $r18;
+        java.lang.StringBuilder $r19, $r21, $r22;
+        java.lang.String $r23;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        $r6 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        $z0 = interfaceinvoke $r6.<android.util.TrustedTime: boolean hasCache()>();
+
+        if $z0 == 0 goto label3;
+
+        $r16 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        l0 = interfaceinvoke $r16.<android.util.TrustedTime: long currentTimeMillis()>();
+
+     label1:
+        r3 = specialinvoke r0.<com.android.server.net.NetworkStatsService: android.net.NetworkStats getNetworkStatsUidDetail()>();
+
+        $r7 = r0.<com.android.server.net.NetworkStatsService: android.os.INetworkManagementService mNetworkManager>;
+
+        r4 = interfaceinvoke $r7.<android.os.INetworkManagementService: android.net.NetworkStats getNetworkStatsSummaryXt()>();
+
+        $r8 = r0.<com.android.server.net.NetworkStatsService: android.os.INetworkManagementService mNetworkManager>;
+
+        r5 = interfaceinvoke $r8.<android.os.INetworkManagementService: android.net.NetworkStats getNetworkStatsSummaryDev()>();
+
+        $r11 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        virtualinvoke $r11.<com.android.server.net.NetworkStatsRecorder: void recordSnapshotLocked(android.net.NetworkStats,java.util.Map,long)>(r5, $r9, l0);
+
+        $r13 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder>;
+
+        $r10 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        virtualinvoke $r13.<com.android.server.net.NetworkStatsRecorder: void recordSnapshotLocked(android.net.NetworkStats,java.util.Map,long)>(r4, $r10, l0);
+
+        $r15 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        $r12 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        virtualinvoke $r15.<com.android.server.net.NetworkStatsRecorder: void recordSnapshotLocked(android.net.NetworkStats,java.util.Map,long)>(r3, $r12, l0);
+
+        $r17 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder>;
+
+        $r14 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        virtualinvoke $r17.<com.android.server.net.NetworkStatsRecorder: void recordSnapshotLocked(android.net.NetworkStats,java.util.Map,long)>(r3, $r14, l0);
+
+     label2:
+        return;
+
+     label3:
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        goto label1;
+
+     label4:
+        $r20 := @caughtexception;
+
+        r2 = $r20;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("problem reading network stats: ");
+
+        $r22 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r23 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("NetworkStats", $r23);
+
+        return;
+
+     label5:
+        $r18 := @caughtexception;
+
+        return;
+
+        catch java.lang.IllegalStateException from label1 to label2 with label4;
+        catch android.os.RemoteException from label1 to label2 with label5;
+    }
+
+    private com.android.server.net.NetworkStatsRecorder buildRecorder(java.lang.String, com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config, boolean)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        java.lang.String r1;
+        com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config r2;
+        boolean z0;
+        android.os.DropBoxManager r3;
+        com.android.server.net.NetworkStatsRecorder r4, $r7;
+        android.content.Context $r5;
+        java.lang.Object $r6;
+        com.android.internal.util.FileRotator $r8;
+        long $l0, $l1, $l2;
+        java.io.File $r9;
+        com.android.server.net.NetworkStatsService$DropBoxNonMonotonicObserver $r10;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config;
+
+        z0 := @parameter2: boolean;
+
+        $r5 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r6 = virtualinvoke $r5.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("dropbox");
+
+        r3 = (android.os.DropBoxManager) $r6;
+
+        $r7 = new com.android.server.net.NetworkStatsRecorder;
+
+        $r8 = new com.android.internal.util.FileRotator;
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: java.io.File mBaseDir>;
+
+        $l1 = r2.<com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config: long rotateAgeMillis>;
+
+        $l0 = r2.<com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config: long deleteAgeMillis>;
+
+        specialinvoke $r8.<com.android.internal.util.FileRotator: void <init>(java.io.File,java.lang.String,long,long)>($r9, r1, $l1, $l0);
+
+        $r10 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$DropBoxNonMonotonicObserver mNonMonotonicObserver>;
+
+        $l2 = r2.<com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config: long bucketDuration>;
+
+        specialinvoke $r7.<com.android.server.net.NetworkStatsRecorder: void <init>(com.android.internal.util.FileRotator,android.net.NetworkStats$NonMonotonicObserver,android.os.DropBoxManager,java.lang.String,long,boolean)>($r8, $r10, r3, r1, $l2, z0);
+
+        r4 = $r7;
+
+        return r4;
+    }
+
+    private static java.io.File getDefaultSystemDir()
+    {
+        java.io.File $r0, $r1;
+
+        $r0 = new java.io.File;
+
+        $r1 = staticinvoke <android.os.Environment: java.io.File getDataDirectory()>();
+
+        specialinvoke $r0.<java.io.File: void <init>(java.io.File,java.lang.String)>($r1, "system");
+
+        return $r0;
+    }
+
+    private android.net.NetworkStats getNetworkStatsTethering() throws android.os.RemoteException
+    {
+        com.android.server.net.NetworkStatsService r0;
+        java.lang.IllegalStateException r1, $r4;
+        android.net.NetworkStats r2, $r5;
+        android.os.INetworkManagementService $r3;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+     label1:
+        $r3 = r0.<com.android.server.net.NetworkStatsService: android.os.INetworkManagementService mNetworkManager>;
+
+        r2 = interfaceinvoke $r3.<android.os.INetworkManagementService: android.net.NetworkStats getNetworkStatsTethering()>();
+
+     label2:
+        return r2;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+        staticinvoke <android.util.Log: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("NetworkStats", "problem reading network stats", r1);
+
+        $r5 = new android.net.NetworkStats;
+
+        specialinvoke $r5.<android.net.NetworkStats: void <init>(long,int)>(0L, 10);
+
+        return $r5;
+
+        catch java.lang.IllegalStateException from label1 to label2 with label3;
+    }
+
+    private android.net.NetworkStats getNetworkStatsUidDetail() throws android.os.RemoteException
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.net.NetworkStats r1, $r3, $r4;
+        android.os.INetworkManagementService $r2;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        $r2 = r0.<com.android.server.net.NetworkStatsService: android.os.INetworkManagementService mNetworkManager>;
+
+        r1 = interfaceinvoke $r2.<android.os.INetworkManagementService: android.net.NetworkStats getNetworkStatsUidDetail(int)>(-1);
+
+        $r3 = specialinvoke r0.<com.android.server.net.NetworkStatsService: android.net.NetworkStats getNetworkStatsTethering()>();
+
+        virtualinvoke r1.<android.net.NetworkStats: void combineAllValues(android.net.NetworkStats)>($r3);
+
+        $r4 = r0.<com.android.server.net.NetworkStatsService: android.net.NetworkStats mUidOperations>;
+
+        virtualinvoke r1.<android.net.NetworkStats: void combineAllValues(android.net.NetworkStats)>($r4);
+
+        return r1;
+    }
+
+    private android.net.NetworkStatsHistory internalGetHistoryForNetwork(android.net.NetworkTemplate, int)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.net.NetworkTemplate r1;
+        int i0;
+        long l1;
+        android.net.NetworkStatsHistory r2, r3, $r9;
+        com.android.server.net.NetworkStatsService$NetworkStatsSettings $r4;
+        boolean $z0;
+        com.android.server.net.NetworkStatsCollection $r5, $r6, $r7, $r8;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter0: android.net.NetworkTemplate;
+
+        i0 := @parameter1: int;
+
+        $r4 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $z0 = interfaceinvoke $r4.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: boolean getReportXtOverDev()>();
+
+        if $z0 != 0 goto label1;
+
+        $r8 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mDevStatsCached>;
+
+        $r9 = virtualinvoke $r8.<com.android.server.net.NetworkStatsCollection: android.net.NetworkStatsHistory getHistory(android.net.NetworkTemplate,int,int,int,int)>(r1, -1, -1, 0, i0);
+
+        return $r9;
+
+     label1:
+        $r5 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mXtStatsCached>;
+
+        l1 = virtualinvoke $r5.<com.android.server.net.NetworkStatsCollection: long getFirstAtomicBucketMillis()>();
+
+        $r6 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mDevStatsCached>;
+
+        r2 = virtualinvoke $r6.<com.android.server.net.NetworkStatsCollection: android.net.NetworkStatsHistory getHistory(android.net.NetworkTemplate,int,int,int,int,long,long)>(r1, -1, -1, 0, i0, -9223372036854775808L, l1);
+
+        $r7 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mXtStatsCached>;
+
+        r3 = virtualinvoke $r7.<com.android.server.net.NetworkStatsCollection: android.net.NetworkStatsHistory getHistory(android.net.NetworkTemplate,int,int,int,int,long,long)>(r1, -1, -1, 0, i0, l1, 9223372036854775807L);
+
+        virtualinvoke r3.<android.net.NetworkStatsHistory: void recordEntireHistory(android.net.NetworkStatsHistory)>(r2);
+
+        return r3;
+    }
+
+    private android.net.NetworkStats internalGetSummaryForNetwork(android.net.NetworkTemplate, long, long)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.net.NetworkTemplate r1;
+        long l0, l1, l2, $l3, $l4, $l5, $l6;
+        android.net.NetworkStats r2, r3, $r8;
+        com.android.server.net.NetworkStatsService$NetworkStatsSettings $r4;
+        boolean $z0;
+        com.android.server.net.NetworkStatsCollection $r5, $r6, $r7, $r9;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter0: android.net.NetworkTemplate;
+
+        l0 := @parameter1: long;
+
+        l1 := @parameter2: long;
+
+        $r4 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $z0 = interfaceinvoke $r4.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: boolean getReportXtOverDev()>();
+
+        if $z0 != 0 goto label1;
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mDevStatsCached>;
+
+        $r8 = virtualinvoke $r9.<com.android.server.net.NetworkStatsCollection: android.net.NetworkStats getSummary(android.net.NetworkTemplate,long,long)>(r1, l0, l1);
+
+        return $r8;
+
+     label1:
+        $r5 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mXtStatsCached>;
+
+        l2 = virtualinvoke $r5.<com.android.server.net.NetworkStatsCollection: long getFirstAtomicBucketMillis()>();
+
+        $r6 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mDevStatsCached>;
+
+        $l3 = staticinvoke <java.lang.Math: long min(long,long)>(l0, l2);
+
+        $l4 = staticinvoke <java.lang.Math: long min(long,long)>(l1, l2);
+
+        r2 = virtualinvoke $r6.<com.android.server.net.NetworkStatsCollection: android.net.NetworkStats getSummary(android.net.NetworkTemplate,long,long)>(r1, $l3, $l4);
+
+        $r7 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mXtStatsCached>;
+
+        $l5 = staticinvoke <java.lang.Math: long max(long,long)>(l0, l2);
+
+        $l6 = staticinvoke <java.lang.Math: long max(long,long)>(l1, l2);
+
+        r3 = virtualinvoke $r7.<com.android.server.net.NetworkStatsCollection: android.net.NetworkStats getSummary(android.net.NetworkTemplate,long,long)>(r1, $l5, $l6);
+
+        virtualinvoke r3.<android.net.NetworkStats: void combineAllValues(android.net.NetworkStats)>(r2);
+
+        return r3;
+    }
+
+    private boolean isBandwidthControlEnabled()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        long l0;
+        java.lang.Throwable r1, $r4;
+        boolean z0, z1;
+        android.os.INetworkManagementService $r3;
+        android.os.RemoteException $r5;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        $r3 = r0.<com.android.server.net.NetworkStatsService: android.os.INetworkManagementService mNetworkManager>;
+
+        z1 = interfaceinvoke $r3.<android.os.INetworkManagementService: boolean isBandwidthControlEnabled()>();
+
+     label2:
+        z0 = z1;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return z0;
+
+     label4:
+        $r5 := @caughtexception;
+
+        z0 = 0;
+
+        goto label3;
+
+     label5:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw r1;
+
+        catch android.os.RemoteException from label1 to label2 with label4;
+        catch java.lang.Throwable from label1 to label2 with label5;
+    }
+
+    private void maybeUpgradeLegacyStatsLocked()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        java.io.File r1, r4, r5, $r6, $r7, $r8, $r9, $r10, $r11;
+        java.lang.OutOfMemoryError r2, $r16;
+        java.io.IOException r3, $r15;
+        boolean $z0, $z1, $z2;
+        com.android.server.net.NetworkStatsRecorder $r12, $r13, $r14;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+     label1:
+        $r6 = new java.io.File;
+
+        $r7 = r0.<com.android.server.net.NetworkStatsService: java.io.File mSystemDir>;
+
+        specialinvoke $r6.<java.io.File: void <init>(java.io.File,java.lang.String)>($r7, "netstats.bin");
+
+        r1 = $r6;
+
+        $z0 = virtualinvoke r1.<java.io.File: boolean exists()>();
+
+        if $z0 == 0 goto label2;
+
+        $r14 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        virtualinvoke $r14.<com.android.server.net.NetworkStatsRecorder: void importLegacyNetworkLocked(java.io.File)>(r1);
+
+        virtualinvoke r1.<java.io.File: boolean delete()>();
+
+     label2:
+        $r8 = new java.io.File;
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: java.io.File mSystemDir>;
+
+        specialinvoke $r8.<java.io.File: void <init>(java.io.File,java.lang.String)>($r9, "netstats_xt.bin");
+
+        r4 = $r8;
+
+        $z1 = virtualinvoke r4.<java.io.File: boolean exists()>();
+
+        if $z1 == 0 goto label3;
+
+        virtualinvoke r4.<java.io.File: boolean delete()>();
+
+     label3:
+        $r10 = new java.io.File;
+
+        $r11 = r0.<com.android.server.net.NetworkStatsService: java.io.File mSystemDir>;
+
+        specialinvoke $r10.<java.io.File: void <init>(java.io.File,java.lang.String)>($r11, "netstats_uid.bin");
+
+        r5 = $r10;
+
+        $z2 = virtualinvoke r5.<java.io.File: boolean exists()>();
+
+        if $z2 == 0 goto label4;
+
+        $r12 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        virtualinvoke $r12.<com.android.server.net.NetworkStatsRecorder: void importLegacyUidLocked(java.io.File)>(r5);
+
+        $r13 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder>;
+
+        virtualinvoke $r13.<com.android.server.net.NetworkStatsRecorder: void importLegacyUidLocked(java.io.File)>(r5);
+
+        virtualinvoke r5.<java.io.File: boolean delete()>();
+
+     label4:
+        return;
+
+     label5:
+        $r15 := @caughtexception;
+
+        r3 = $r15;
+
+        staticinvoke <android.util.Log: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("NetworkStats", "problem during legacy upgrade", r3);
+
+        return;
+
+     label6:
+        $r16 := @caughtexception;
+
+        r2 = $r16;
+
+        staticinvoke <android.util.Log: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("NetworkStats", "problem during legacy upgrade", r2);
+
+        return;
+
+        catch java.io.IOException from label1 to label2 with label5;
+        catch java.lang.OutOfMemoryError from label1 to label2 with label6;
+        catch java.io.IOException from label2 to label3 with label5;
+        catch java.lang.OutOfMemoryError from label2 to label3 with label6;
+        catch java.io.IOException from label3 to label4 with label5;
+        catch java.lang.OutOfMemoryError from label3 to label4 with label6;
+    }
+
+    private void performPoll(int)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int i0;
+        java.lang.Object r1;
+        java.lang.Throwable r2, r3, $r10, $r11;
+        android.util.TrustedTime $r4, $r8;
+        long $l1, $l2;
+        com.android.server.net.NetworkStatsService$NetworkStatsSettings $r5;
+        byte $b3;
+        android.os.PowerManager$WakeLock $r6, $r7, $r9;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        i0 := @parameter0: int;
+
+        $r4 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        $l1 = interfaceinvoke $r4.<android.util.TrustedTime: long getCacheAge()>();
+
+        $r5 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $l2 = interfaceinvoke $r5.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: long getTimeCacheMaxAge()>();
+
+        $b3 = $l1 cmp $l2;
+
+        if $b3 <= 0 goto label01;
+
+        $r8 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        interfaceinvoke $r8.<android.util.TrustedTime: boolean forceRefresh()>();
+
+     label01:
+        r1 = r0.<com.android.server.net.NetworkStatsService: java.lang.Object mStatsLock>;
+
+        entermonitor r1;
+
+     label02:
+        $r6 = r0.<com.android.server.net.NetworkStatsService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r6.<android.os.PowerManager$WakeLock: void acquire()>();
+
+     label03:
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void performPollLocked(int)>(i0);
+
+     label04:
+        $r7 = r0.<com.android.server.net.NetworkStatsService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r7.<android.os.PowerManager$WakeLock: void release()>();
+
+        exitmonitor r1;
+
+     label05:
+        return;
+
+     label06:
+        $r10 := @caughtexception;
+
+        r3 = $r10;
+
+     label07:
+        $r9 = r0.<com.android.server.net.NetworkStatsService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r9.<android.os.PowerManager$WakeLock: void release()>();
+
+        throw r3;
+
+     label08:
+        $r11 := @caughtexception;
+
+        r2 = $r11;
+
+     label09:
+        exitmonitor r1;
+
+     label10:
+        throw r2;
+
+        catch java.lang.Throwable from label02 to label03 with label08;
+        catch java.lang.Throwable from label03 to label04 with label06;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label07 to label08 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    private void performPollLocked(int)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int i0, $i3, $i4, $i5;
+        boolean z0, z1, z2, $z3, $z4, $z5;
+        long l1;
+        java.lang.IllegalStateException r2, $r33;
+        android.net.NetworkStats r3, r4, r5;
+        android.content.Intent r6, $r17;
+        android.util.TrustedTime $r7, $r28;
+        android.os.INetworkManagementService $r8, $r9;
+        java.util.HashMap $r10, $r11, $r14, $r16;
+        com.android.server.net.NetworkStatsRecorder $r12, $r13, $r15, $r18, $r21, $r24, $r25, $r26, $r27, $r29, $r30, $r31;
+        com.android.server.net.NetworkStatsService$NetworkStatsSettings $r19;
+        android.content.Context $r20;
+        android.os.UserHandle $r23;
+        android.os.RemoteException $r32;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        i0 := @parameter0: int;
+
+        $z3 = r0.<com.android.server.net.NetworkStatsService: boolean mSystemReady>;
+
+        if $z3 != 0 goto label01;
+
+        return;
+
+     label01:
+        staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $i4 = i0 & 1;
+
+        if $i4 == 0 goto label09;
+
+        z0 = 1;
+
+     label02:
+        $i3 = i0 & 2;
+
+        if $i3 == 0 goto label10;
+
+        z1 = 1;
+
+     label03:
+        $i5 = i0 & 256;
+
+        if $i5 == 0 goto label11;
+
+        z2 = 1;
+
+     label04:
+        $r7 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        $z4 = interfaceinvoke $r7.<android.util.TrustedTime: boolean hasCache()>();
+
+        if $z4 == 0 goto label12;
+
+        $r28 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        l1 = interfaceinvoke $r28.<android.util.TrustedTime: long currentTimeMillis()>();
+
+     label05:
+        r3 = specialinvoke r0.<com.android.server.net.NetworkStatsService: android.net.NetworkStats getNetworkStatsUidDetail()>();
+
+        $r8 = r0.<com.android.server.net.NetworkStatsService: android.os.INetworkManagementService mNetworkManager>;
+
+        r4 = interfaceinvoke $r8.<android.os.INetworkManagementService: android.net.NetworkStats getNetworkStatsSummaryXt()>();
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: android.os.INetworkManagementService mNetworkManager>;
+
+        r5 = interfaceinvoke $r9.<android.os.INetworkManagementService: android.net.NetworkStats getNetworkStatsSummaryDev()>();
+
+        $r12 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        $r10 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        virtualinvoke $r12.<com.android.server.net.NetworkStatsRecorder: void recordSnapshotLocked(android.net.NetworkStats,java.util.Map,long)>(r5, $r10, l1);
+
+        $r15 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder>;
+
+        $r11 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        virtualinvoke $r15.<com.android.server.net.NetworkStatsRecorder: void recordSnapshotLocked(android.net.NetworkStats,java.util.Map,long)>(r4, $r11, l1);
+
+        $r13 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        $r16 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        virtualinvoke $r13.<com.android.server.net.NetworkStatsRecorder: void recordSnapshotLocked(android.net.NetworkStats,java.util.Map,long)>(r3, $r16, l1);
+
+        $r18 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder>;
+
+        $r14 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        virtualinvoke $r18.<com.android.server.net.NetworkStatsRecorder: void recordSnapshotLocked(android.net.NetworkStats,java.util.Map,long)>(r3, $r14, l1);
+
+     label06:
+        if z2 == 0 goto label15;
+
+        $r25 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        virtualinvoke $r25.<com.android.server.net.NetworkStatsRecorder: void forcePersistLocked(long)>(l1);
+
+        $r31 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder>;
+
+        virtualinvoke $r31.<com.android.server.net.NetworkStatsRecorder: void forcePersistLocked(long)>(l1);
+
+        $r30 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        virtualinvoke $r30.<com.android.server.net.NetworkStatsRecorder: void forcePersistLocked(long)>(l1);
+
+        $r29 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder>;
+
+        virtualinvoke $r29.<com.android.server.net.NetworkStatsRecorder: void forcePersistLocked(long)>(l1);
+
+     label07:
+        $r19 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $z5 = interfaceinvoke $r19.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: boolean getSampleEnabled()>();
+
+        if $z5 == 0 goto label08;
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void performSampleLocked()>();
+
+     label08:
+        $r17 = new android.content.Intent;
+
+        specialinvoke $r17.<android.content.Intent: void <init>(java.lang.String)>("com.android.server.action.NETWORK_STATS_UPDATED");
+
+        r6 = $r17;
+
+        virtualinvoke r6.<android.content.Intent: android.content.Intent setFlags(int)>(1073741824);
+
+        $r20 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r23 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r20.<android.content.Context: void sendBroadcastAsUser(android.content.Intent,android.os.UserHandle,java.lang.String)>(r6, $r23, "android.permission.READ_NETWORK_USAGE_HISTORY");
+
+        return;
+
+     label09:
+        z0 = 0;
+
+        goto label02;
+
+     label10:
+        z1 = 0;
+
+        goto label03;
+
+     label11:
+        z2 = 0;
+
+        goto label04;
+
+     label12:
+        l1 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        goto label05;
+
+     label13:
+        $r33 := @caughtexception;
+
+        r2 = $r33;
+
+        staticinvoke <android.util.Log: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("NetworkStats", "problem reading network stats", r2);
+
+        return;
+
+     label14:
+        $r32 := @caughtexception;
+
+        return;
+
+     label15:
+        if z0 == 0 goto label16;
+
+        $r27 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        virtualinvoke $r27.<com.android.server.net.NetworkStatsRecorder: void maybePersistLocked(long)>(l1);
+
+        $r24 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder>;
+
+        virtualinvoke $r24.<com.android.server.net.NetworkStatsRecorder: void maybePersistLocked(long)>(l1);
+
+     label16:
+        if z1 == 0 goto label07;
+
+        $r21 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        virtualinvoke $r21.<com.android.server.net.NetworkStatsRecorder: void maybePersistLocked(long)>(l1);
+
+        $r26 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder>;
+
+        virtualinvoke $r26.<com.android.server.net.NetworkStatsRecorder: void maybePersistLocked(long)>(l1);
+
+        goto label07;
+
+        catch java.lang.IllegalStateException from label05 to label06 with label13;
+        catch android.os.RemoteException from label05 to label06 with label14;
+    }
+
+    private void performSampleLocked()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        long l0, $l1, $l2, $l3, $l4, $l5, $l6, $l7, $l8, $l9, $l10, $l11, $l12, $l13, $l14, $l15, $l16, $l17, $l18, $l19, $l20, $l21, $l22, $l23, $l24;
+        android.net.NetworkTemplate r1, r5;
+        android.net.NetworkStats$Entry r2, r3, r4, r6, r7, r8;
+        android.util.TrustedTime $r9, $r16;
+        boolean $z0;
+        com.android.server.net.NetworkStatsRecorder $r10, $r11, $r12, $r13, $r14, $r15;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        $z0 = interfaceinvoke $r9.<android.util.TrustedTime: boolean hasCache()>();
+
+        if $z0 == 0 goto label2;
+
+        $r16 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        l0 = interfaceinvoke $r16.<android.util.TrustedTime: long currentTimeMillis()>();
+
+     label1:
+        r1 = staticinvoke <android.net.NetworkTemplate: android.net.NetworkTemplate buildTemplateMobileWildcard()>();
+
+        $r10 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        r2 = virtualinvoke $r10.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats$Entry getTotalSinceBootLocked(android.net.NetworkTemplate)>(r1);
+
+        $r11 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder>;
+
+        r3 = virtualinvoke $r11.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats$Entry getTotalSinceBootLocked(android.net.NetworkTemplate)>(r1);
+
+        $r12 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        r4 = virtualinvoke $r12.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats$Entry getTotalSinceBootLocked(android.net.NetworkTemplate)>(r1);
+
+        $l11 = r2.<android.net.NetworkStats$Entry: long rxBytes>;
+
+        $l12 = r2.<android.net.NetworkStats$Entry: long rxPackets>;
+
+        $l9 = r2.<android.net.NetworkStats$Entry: long txBytes>;
+
+        $l10 = r2.<android.net.NetworkStats$Entry: long txPackets>;
+
+        $l7 = r3.<android.net.NetworkStats$Entry: long rxBytes>;
+
+        $l8 = r3.<android.net.NetworkStats$Entry: long rxPackets>;
+
+        $l5 = r3.<android.net.NetworkStats$Entry: long txBytes>;
+
+        $l6 = r3.<android.net.NetworkStats$Entry: long txPackets>;
+
+        $l3 = r4.<android.net.NetworkStats$Entry: long rxBytes>;
+
+        $l4 = r4.<android.net.NetworkStats$Entry: long rxPackets>;
+
+        $l1 = r4.<android.net.NetworkStats$Entry: long txBytes>;
+
+        $l2 = r4.<android.net.NetworkStats$Entry: long txPackets>;
+
+        staticinvoke <com.android.server.EventLogTags: void writeNetstatsMobileSample(long,long,long,long,long,long,long,long,long,long,long,long,long)>($l11, $l12, $l9, $l10, $l7, $l8, $l5, $l6, $l3, $l4, $l1, $l2, l0);
+
+        r5 = staticinvoke <android.net.NetworkTemplate: android.net.NetworkTemplate buildTemplateWifiWildcard()>();
+
+        $r14 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        r6 = virtualinvoke $r14.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats$Entry getTotalSinceBootLocked(android.net.NetworkTemplate)>(r5);
+
+        $r13 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder>;
+
+        r7 = virtualinvoke $r13.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats$Entry getTotalSinceBootLocked(android.net.NetworkTemplate)>(r5);
+
+        $r15 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        r8 = virtualinvoke $r15.<com.android.server.net.NetworkStatsRecorder: android.net.NetworkStats$Entry getTotalSinceBootLocked(android.net.NetworkTemplate)>(r5);
+
+        $l22 = r6.<android.net.NetworkStats$Entry: long rxBytes>;
+
+        $l23 = r6.<android.net.NetworkStats$Entry: long rxPackets>;
+
+        $l24 = r6.<android.net.NetworkStats$Entry: long txBytes>;
+
+        $l19 = r6.<android.net.NetworkStats$Entry: long txPackets>;
+
+        $l18 = r7.<android.net.NetworkStats$Entry: long rxBytes>;
+
+        $l21 = r7.<android.net.NetworkStats$Entry: long rxPackets>;
+
+        $l20 = r7.<android.net.NetworkStats$Entry: long txBytes>;
+
+        $l15 = r7.<android.net.NetworkStats$Entry: long txPackets>;
+
+        $l14 = r8.<android.net.NetworkStats$Entry: long rxBytes>;
+
+        $l17 = r8.<android.net.NetworkStats$Entry: long rxPackets>;
+
+        $l16 = r8.<android.net.NetworkStats$Entry: long txBytes>;
+
+        $l13 = r8.<android.net.NetworkStats$Entry: long txPackets>;
+
+        staticinvoke <com.android.server.EventLogTags: void writeNetstatsWifiSample(long,long,long,long,long,long,long,long,long,long,long,long,long)>($l22, $l23, $l24, $l19, $l18, $l21, $l20, $l15, $l14, $l17, $l16, $l13, l0);
+
+        return;
+
+     label2:
+        l0 = -1L;
+
+        goto label1;
+    }
+
+    private void registerGlobalAlert()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        java.lang.IllegalStateException r2, $r5;
+        long $l0;
+        android.os.INetworkManagementService $r3;
+        android.os.RemoteException $r4;
+        java.lang.StringBuilder $r6, $r7, $r8;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+     label1:
+        $r3 = r0.<com.android.server.net.NetworkStatsService: android.os.INetworkManagementService mNetworkManager>;
+
+        $l0 = r0.<com.android.server.net.NetworkStatsService: long mGlobalAlertBytes>;
+
+        interfaceinvoke $r3.<android.os.INetworkManagementService: void setGlobalAlert(long)>($l0);
+
+     label2:
+        return;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = $r5;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("problem registering for global alert: ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("NetworkStats", $r9);
+
+        return;
+
+     label4:
+        $r4 := @caughtexception;
+
+        return;
+
+        catch java.lang.IllegalStateException from label1 to label2 with label3;
+        catch android.os.RemoteException from label1 to label2 with label4;
+    }
+
+    private void registerPollAlarmLocked()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        long l0, $l1;
+        android.app.PendingIntent $r1, $r4, $r7, $r8;
+        android.content.Intent $r2;
+        android.content.Context $r3;
+        com.android.server.net.NetworkStatsService$NetworkStatsSettings $r5;
+        android.app.AlarmManager $r6, $r9;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsService: android.app.PendingIntent mPollIntent>;
+
+        if $r1 == null goto label1;
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: android.app.AlarmManager mAlarmManager>;
+
+        $r8 = r0.<com.android.server.net.NetworkStatsService: android.app.PendingIntent mPollIntent>;
+
+        virtualinvoke $r9.<android.app.AlarmManager: void cancel(android.app.PendingIntent)>($r8);
+
+     label1:
+        $r3 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("com.android.server.action.NETWORK_STATS_POLL");
+
+        $r4 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getBroadcast(android.content.Context,int,android.content.Intent,int)>($r3, 0, $r2, 0);
+
+        r0.<com.android.server.net.NetworkStatsService: android.app.PendingIntent mPollIntent> = $r4;
+
+        l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $r6 = r0.<com.android.server.net.NetworkStatsService: android.app.AlarmManager mAlarmManager>;
+
+        $r5 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $l1 = interfaceinvoke $r5.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: long getPollInterval()>();
+
+        $r7 = r0.<com.android.server.net.NetworkStatsService: android.app.PendingIntent mPollIntent>;
+
+        virtualinvoke $r6.<android.app.AlarmManager: void setInexactRepeating(int,long,long,android.app.PendingIntent)>(3, l0, $l1, $r7);
+
+        return;
+    }
+
+    private transient void removeUidsLocked(int[])
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int[] r1;
+        int i0, i1, $i2;
+        com.android.server.net.NetworkStatsRecorder $r2, $r3;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter0: int[];
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void performPollLocked(int)>(3);
+
+        $r2 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        virtualinvoke $r2.<com.android.server.net.NetworkStatsRecorder: void removeUidsLocked(int[])>(r1);
+
+        $r3 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder>;
+
+        virtualinvoke $r3.<com.android.server.net.NetworkStatsRecorder: void removeUidsLocked(int[])>(r1);
+
+        i0 = lengthof r1;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $i2 = r1[i1];
+
+        staticinvoke <com.android.server.NetworkManagementSocketTagger: void resetKernelUidStats(int)>($i2);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void removeUserLocked(int)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int i0, $i1, $i2;
+        int[] r1;
+        java.util.Iterator r2;
+        android.content.Context $r3;
+        android.content.pm.PackageManager $r4;
+        java.util.List $r5;
+        boolean $z0;
+        java.lang.Object $r6;
+        android.content.pm.ApplicationInfo $r7;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        i0 := @parameter0: int;
+
+        r1 = newarray (int)[0];
+
+        $r3 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        $r5 = virtualinvoke $r4.<android.content.pm.PackageManager: java.util.List getInstalledApplications(int)>(8704);
+
+        r2 = interfaceinvoke $r5.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r6 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        $r7 = (android.content.pm.ApplicationInfo) $r6;
+
+        $i1 = $r7.<android.content.pm.ApplicationInfo: int uid>;
+
+        $i2 = staticinvoke <android.os.UserHandle: int getUid(int,int)>(i0, $i1);
+
+        r1 = staticinvoke <com.android.internal.util.ArrayUtils: int[] appendInt(int[],int)>(r1, $i2);
+
+        goto label1;
+
+     label2:
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void removeUidsLocked(int[])>(r1);
+
+        return;
+    }
+
+    private void shutdownLocked()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        long l0;
+        android.content.BroadcastReceiver $r1, $r3, $r5, $r7, $r9;
+        android.content.Context $r2, $r4, $r6, $r8, $r10;
+        android.util.TrustedTime $r11, $r16;
+        boolean $z0;
+        com.android.server.net.NetworkStatsRecorder $r12, $r13, $r14, $r15;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        $r2 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mConnReceiver>;
+
+        virtualinvoke $r2.<android.content.Context: void unregisterReceiver(android.content.BroadcastReceiver)>($r1);
+
+        $r4 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r3 = r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mTetherReceiver>;
+
+        virtualinvoke $r4.<android.content.Context: void unregisterReceiver(android.content.BroadcastReceiver)>($r3);
+
+        $r6 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r5 = r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mPollReceiver>;
+
+        virtualinvoke $r6.<android.content.Context: void unregisterReceiver(android.content.BroadcastReceiver)>($r5);
+
+        $r8 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r7 = r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mRemovedReceiver>;
+
+        virtualinvoke $r8.<android.content.Context: void unregisterReceiver(android.content.BroadcastReceiver)>($r7);
+
+        $r10 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mShutdownReceiver>;
+
+        virtualinvoke $r10.<android.content.Context: void unregisterReceiver(android.content.BroadcastReceiver)>($r9);
+
+        $r11 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        $z0 = interfaceinvoke $r11.<android.util.TrustedTime: boolean hasCache()>();
+
+        if $z0 == 0 goto label2;
+
+        $r16 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        l0 = interfaceinvoke $r16.<android.util.TrustedTime: long currentTimeMillis()>();
+
+     label1:
+        $r13 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        virtualinvoke $r13.<com.android.server.net.NetworkStatsRecorder: void forcePersistLocked(long)>(l0);
+
+        $r12 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder>;
+
+        virtualinvoke $r12.<com.android.server.net.NetworkStatsRecorder: void forcePersistLocked(long)>(l0);
+
+        $r15 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        virtualinvoke $r15.<com.android.server.net.NetworkStatsRecorder: void forcePersistLocked(long)>(l0);
+
+        $r14 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder>;
+
+        virtualinvoke $r14.<com.android.server.net.NetworkStatsRecorder: void forcePersistLocked(long)>(l0);
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder> = null;
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder> = null;
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder> = null;
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder> = null;
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mDevStatsCached> = null;
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mXtStatsCached> = null;
+
+        r0.<com.android.server.net.NetworkStatsService: boolean mSystemReady> = 0;
+
+        return;
+
+     label2:
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        goto label1;
+    }
+
+    private void updateIfaces()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        java.lang.Object r1;
+        java.lang.Throwable r2, r3, $r6, $r7;
+        android.os.PowerManager$WakeLock $r4, $r5, $r8;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        r1 = r0.<com.android.server.net.NetworkStatsService: java.lang.Object mStatsLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r4 = r0.<com.android.server.net.NetworkStatsService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r4.<android.os.PowerManager$WakeLock: void acquire()>();
+
+     label2:
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void updateIfacesLocked()>();
+
+     label3:
+        $r5 = r0.<com.android.server.net.NetworkStatsService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r5.<android.os.PowerManager$WakeLock: void release()>();
+
+        exitmonitor r1;
+
+     label4:
+        return;
+
+     label5:
+        $r7 := @caughtexception;
+
+        r3 = $r7;
+
+     label6:
+        $r8 = r0.<com.android.server.net.NetworkStatsService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r8.<android.os.PowerManager$WakeLock: void release()>();
+
+        throw r3;
+
+     label7:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label5;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label6 to label7 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    private void updateIfacesLocked()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.net.NetworkState[] r2;
+        android.net.LinkProperties r3, $r12;
+        java.lang.String r4, r6;
+        int i0, i1, $i2;
+        android.net.NetworkState r5;
+        com.android.server.net.NetworkIdentitySet r7, $r24;
+        boolean $z0, $z1, $z3, $z4;
+        android.net.IConnectivityManager $r8, $r9;
+        java.util.HashMap $r10, $r14, $r21;
+        android.net.NetworkInfo $r11, $r17;
+        java.lang.Object $r13;
+        android.net.NetworkIdentity $r15;
+        android.content.Context $r16;
+        java.lang.String[] $r18, $r20, $r23;
+        java.lang.Object[] $r19;
+        android.os.RemoteException $r25;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        $z0 = r0.<com.android.server.net.NetworkStatsService: boolean mSystemReady>;
+
+        if $z0 != 0 goto label02;
+
+     label01:
+        return;
+
+     label02:
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void performPollLocked(int)>(1);
+
+     label03:
+        $r8 = r0.<com.android.server.net.NetworkStatsService: android.net.IConnectivityManager mConnManager>;
+
+        r2 = interfaceinvoke $r8.<android.net.IConnectivityManager: android.net.NetworkState[] getAllNetworkState()>();
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: android.net.IConnectivityManager mConnManager>;
+
+        r3 = interfaceinvoke $r9.<android.net.IConnectivityManager: android.net.LinkProperties getActiveLinkProperties()>();
+
+     label04:
+        if r3 == null goto label10;
+
+        r4 = virtualinvoke r3.<android.net.LinkProperties: java.lang.String getInterfaceName()>();
+
+     label05:
+        r0.<com.android.server.net.NetworkStatsService: java.lang.String mActiveIface> = r4;
+
+        $r10 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        virtualinvoke $r10.<java.util.HashMap: void clear()>();
+
+        i0 = lengthof r2;
+
+        i1 = 0;
+
+     label06:
+        if i1 >= i0 goto label01;
+
+        r5 = r2[i1];
+
+        $r11 = r5.<android.net.NetworkState: android.net.NetworkInfo networkInfo>;
+
+        $z1 = virtualinvoke $r11.<android.net.NetworkInfo: boolean isConnected()>();
+
+        if $z1 == 0 goto label08;
+
+        $r12 = r5.<android.net.NetworkState: android.net.LinkProperties linkProperties>;
+
+        r6 = virtualinvoke $r12.<android.net.LinkProperties: java.lang.String getInterfaceName()>();
+
+        $r14 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        $r13 = virtualinvoke $r14.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r6);
+
+        r7 = (com.android.server.net.NetworkIdentitySet) $r13;
+
+        if r7 != null goto label07;
+
+        $r24 = new com.android.server.net.NetworkIdentitySet;
+
+        specialinvoke $r24.<com.android.server.net.NetworkIdentitySet: void <init>()>();
+
+        r7 = $r24;
+
+        $r21 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        virtualinvoke $r21.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r6, r7);
+
+     label07:
+        $r16 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r15 = staticinvoke <android.net.NetworkIdentity: android.net.NetworkIdentity buildNetworkIdentity(android.content.Context,android.net.NetworkState)>($r16, r5);
+
+        virtualinvoke r7.<com.android.server.net.NetworkIdentitySet: boolean add(java.lang.Object)>($r15);
+
+        $r17 = r5.<android.net.NetworkState: android.net.NetworkInfo networkInfo>;
+
+        $i2 = virtualinvoke $r17.<android.net.NetworkInfo: int getType()>();
+
+        $z3 = staticinvoke <android.net.ConnectivityManager: boolean isNetworkTypeMobile(int)>($i2);
+
+        if $z3 == 0 goto label08;
+
+        if r6 == null goto label08;
+
+        $r18 = r0.<com.android.server.net.NetworkStatsService: java.lang.String[] mMobileIfaces>;
+
+        $z4 = staticinvoke <com.android.internal.util.ArrayUtils: boolean contains(java.lang.Object[],java.lang.Object)>($r18, r6);
+
+        if $z4 != 0 goto label08;
+
+        $r20 = r0.<com.android.server.net.NetworkStatsService: java.lang.String[] mMobileIfaces>;
+
+        $r19 = staticinvoke <com.android.internal.util.ArrayUtils: java.lang.Object[] appendElement(java.lang.Class,java.lang.Object[],java.lang.Object)>(class "java/lang/String", $r20, r6);
+
+        $r23 = (java.lang.String[]) $r19;
+
+        r0.<com.android.server.net.NetworkStatsService: java.lang.String[] mMobileIfaces> = $r23;
+
+     label08:
+        i1 = i1 + 1;
+
+        goto label06;
+
+     label09:
+        $r25 := @caughtexception;
+
+        return;
+
+     label10:
+        r4 = null;
+
+        goto label05;
+
+        catch android.os.RemoteException from label03 to label04 with label09;
+    }
+
+    private void updatePersistThresholds()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        long $l0, $l1, $l2, $l3, $l4, $l5, $l6, $l7, $l8, $l9;
+        com.android.server.net.NetworkStatsService$NetworkStatsSettings $r1, $r3, $r5, $r7, $r9;
+        com.android.server.net.NetworkStatsRecorder $r2, $r4, $r6, $r8;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        $r2 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $l0 = r0.<com.android.server.net.NetworkStatsService: long mPersistThreshold>;
+
+        $l1 = interfaceinvoke $r1.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: long getDevPersistBytes(long)>($l0);
+
+        virtualinvoke $r2.<com.android.server.net.NetworkStatsRecorder: void setPersistThreshold(long)>($l1);
+
+        $r4 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder>;
+
+        $r3 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $l2 = r0.<com.android.server.net.NetworkStatsService: long mPersistThreshold>;
+
+        $l3 = interfaceinvoke $r3.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: long getXtPersistBytes(long)>($l2);
+
+        virtualinvoke $r4.<com.android.server.net.NetworkStatsRecorder: void setPersistThreshold(long)>($l3);
+
+        $r6 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        $r5 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $l4 = r0.<com.android.server.net.NetworkStatsService: long mPersistThreshold>;
+
+        $l5 = interfaceinvoke $r5.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: long getUidPersistBytes(long)>($l4);
+
+        virtualinvoke $r6.<com.android.server.net.NetworkStatsRecorder: void setPersistThreshold(long)>($l5);
+
+        $r8 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder>;
+
+        $r7 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $l6 = r0.<com.android.server.net.NetworkStatsService: long mPersistThreshold>;
+
+        $l8 = interfaceinvoke $r7.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: long getUidTagPersistBytes(long)>($l6);
+
+        virtualinvoke $r8.<com.android.server.net.NetworkStatsRecorder: void setPersistThreshold(long)>($l8);
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $l7 = r0.<com.android.server.net.NetworkStatsService: long mPersistThreshold>;
+
+        $l9 = interfaceinvoke $r9.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: long getGlobalAlertBytes(long)>($l7);
+
+        r0.<com.android.server.net.NetworkStatsService: long mGlobalAlertBytes> = $l9;
+
+        return;
+    }
+
+    public void advisePersistThreshold(long)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        long l0, l1, $l2;
+        java.lang.Object r1;
+        java.lang.Throwable r2, $r10;
+        android.content.Context $r3;
+        android.util.TrustedTime $r4, $r9;
+        boolean $z0, $z1;
+        com.android.server.net.NetworkStatsRecorder $r5, $r6, $r7, $r8;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        l0 := @parameter0: long;
+
+        $r3 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.MODIFY_NETWORK_ACCOUNTING", "NetworkStats");
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void assertBandwidthControlEnabled()>();
+
+        $l2 = staticinvoke <android.util.MathUtils: long constrain(long,long,long)>(l0, 131072L, 2097152L);
+
+        r0.<com.android.server.net.NetworkStatsService: long mPersistThreshold> = $l2;
+
+        $r4 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        $z0 = interfaceinvoke $r4.<android.util.TrustedTime: boolean hasCache()>();
+
+        if $z0 == 0 goto label4;
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: android.util.TrustedTime mTime>;
+
+        l1 = interfaceinvoke $r9.<android.util.TrustedTime: long currentTimeMillis()>();
+
+     label1:
+        r1 = r0.<com.android.server.net.NetworkStatsService: java.lang.Object mStatsLock>;
+
+        entermonitor r1;
+
+     label2:
+        $z1 = r0.<com.android.server.net.NetworkStatsService: boolean mSystemReady>;
+
+        if $z1 != 0 goto label5;
+
+        exitmonitor r1;
+
+     label3:
+        return;
+
+     label4:
+        l1 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        goto label1;
+
+     label5:
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void updatePersistThresholds()>();
+
+        $r5 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        virtualinvoke $r5.<com.android.server.net.NetworkStatsRecorder: void maybePersistLocked(long)>(l1);
+
+        $r6 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder>;
+
+        virtualinvoke $r6.<com.android.server.net.NetworkStatsRecorder: void maybePersistLocked(long)>(l1);
+
+        $r8 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        virtualinvoke $r8.<com.android.server.net.NetworkStatsRecorder: void maybePersistLocked(long)>(l1);
+
+        $r7 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder>;
+
+        virtualinvoke $r7.<com.android.server.net.NetworkStatsRecorder: void maybePersistLocked(long)>(l1);
+
+        exitmonitor r1;
+
+     label6:
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void registerGlobalAlert()>();
+
+        return;
+
+     label7:
+        $r10 := @caughtexception;
+
+        r2 = $r10;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw r2;
+
+        catch java.lang.Throwable from label2 to label3 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public void bindConnectivityManager(android.net.IConnectivityManager)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.net.IConnectivityManager r1, $r3;
+        java.lang.Object $r2;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter0: android.net.IConnectivityManager;
+
+        $r2 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object,java.lang.Object)>(r1, "missing IConnectivityManager");
+
+        $r3 = (android.net.IConnectivityManager) $r2;
+
+        r0.<com.android.server.net.NetworkStatsService: android.net.IConnectivityManager mConnManager> = $r3;
+
+        return;
+    }
+
+    protected void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.server.net.NetworkStatsService r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3, r8;
+        java.util.HashSet r4, $r13;
+        int i0, i1, i2, i3;
+        boolean z0, z1, z2, z3, z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z13;
+        com.android.internal.util.IndentingPrintWriter r5, $r14;
+        java.lang.Object r6, $r20, $r25;
+        java.lang.Throwable r7, $r27;
+        java.lang.String r9, $r22, $r26, $r28;
+        java.util.Iterator r10;
+        android.content.Context $r11;
+        com.android.server.net.NetworkIdentitySet r12;
+        java.util.Set $r15;
+        java.util.HashMap $r16, $r24;
+        com.android.server.net.NetworkStatsRecorder $r17, $r18, $r19, $r21;
+        java.io.File $r23;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        $r11 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r11.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.DUMP", "NetworkStats");
+
+        $r13 = new java.util.HashSet;
+
+        specialinvoke $r13.<java.util.HashSet: void <init>()>();
+
+        r4 = $r13;
+
+        i0 = lengthof r3;
+
+        i1 = 0;
+
+     label01:
+        if i1 >= i0 goto label02;
+
+        $r28 = r3[i1];
+
+        virtualinvoke r4.<java.util.HashSet: boolean add(java.lang.Object)>($r28);
+
+        i1 = i1 + 1;
+
+        goto label01;
+
+     label02:
+        $z5 = virtualinvoke r4.<java.util.HashSet: boolean contains(java.lang.Object)>("--poll");
+
+        if $z5 != 0 goto label03;
+
+        $z10 = virtualinvoke r4.<java.util.HashSet: boolean contains(java.lang.Object)>("poll");
+
+        if $z10 == 0 goto label34;
+
+     label03:
+        z0 = 1;
+
+     label04:
+        z1 = virtualinvoke r4.<java.util.HashSet: boolean contains(java.lang.Object)>("--checkin");
+
+        $z6 = virtualinvoke r4.<java.util.HashSet: boolean contains(java.lang.Object)>("--full");
+
+        if $z6 != 0 goto label05;
+
+        $z11 = virtualinvoke r4.<java.util.HashSet: boolean contains(java.lang.Object)>("full");
+
+        if $z11 == 0 goto label35;
+
+     label05:
+        z2 = 1;
+
+     label06:
+        $z8 = virtualinvoke r4.<java.util.HashSet: boolean contains(java.lang.Object)>("--uid");
+
+        if $z8 != 0 goto label07;
+
+        $z12 = virtualinvoke r4.<java.util.HashSet: boolean contains(java.lang.Object)>("detail");
+
+        if $z12 == 0 goto label36;
+
+     label07:
+        z3 = 1;
+
+     label08:
+        $z7 = virtualinvoke r4.<java.util.HashSet: boolean contains(java.lang.Object)>("--tag");
+
+        if $z7 != 0 goto label09;
+
+        $z13 = virtualinvoke r4.<java.util.HashSet: boolean contains(java.lang.Object)>("detail");
+
+        if $z13 == 0 goto label37;
+
+     label09:
+        z4 = 1;
+
+     label10:
+        $r14 = new com.android.internal.util.IndentingPrintWriter;
+
+        specialinvoke $r14.<com.android.internal.util.IndentingPrintWriter: void <init>(java.io.Writer,java.lang.String)>(r2, "  ");
+
+        r5 = $r14;
+
+        r6 = r0.<com.android.server.net.NetworkStatsService: java.lang.Object mStatsLock>;
+
+        entermonitor r6;
+
+        if z0 == 0 goto label13;
+
+     label11:
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void performPollLocked(int)>(259);
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Forced poll");
+
+        exitmonitor r6;
+
+     label12:
+        return;
+
+     label13:
+        if z1 == 0 goto label24;
+
+     label14:
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Current files:");
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void increaseIndent()>();
+
+        $r23 = r0.<com.android.server.net.NetworkStatsService: java.io.File mBaseDir>;
+
+        r8 = virtualinvoke $r23.<java.io.File: java.lang.String[] list()>();
+
+        i3 = lengthof r8;
+
+     label15:
+        i2 = 0;
+
+     label16:
+        if i2 >= i3 goto label19;
+
+     label17:
+        $r26 = r8[i2];
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r26);
+
+     label18:
+        i2 = i2 + 1;
+
+        goto label16;
+
+     label19:
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void decreaseIndent()>();
+
+        exitmonitor r6;
+
+     label20:
+        return;
+
+     label21:
+        $r27 := @caughtexception;
+
+        r7 = $r27;
+
+     label22:
+        exitmonitor r6;
+
+     label23:
+        throw r7;
+
+     label24:
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Active interfaces:");
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void increaseIndent()>();
+
+        $r16 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        $r15 = virtualinvoke $r16.<java.util.HashMap: java.util.Set keySet()>();
+
+        r10 = interfaceinvoke $r15.<java.util.Set: java.util.Iterator iterator()>();
+
+     label25:
+        $z9 = interfaceinvoke r10.<java.util.Iterator: boolean hasNext()>();
+
+        if $z9 == 0 goto label27;
+
+        $r20 = interfaceinvoke r10.<java.util.Iterator: java.lang.Object next()>();
+
+        r9 = (java.lang.String) $r20;
+
+        $r24 = r0.<com.android.server.net.NetworkStatsService: java.util.HashMap mActiveIfaces>;
+
+        $r25 = virtualinvoke $r24.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r9);
+
+        r12 = (com.android.server.net.NetworkIdentitySet) $r25;
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("iface=");
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>(r9);
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>(" ident=");
+
+        $r22 = virtualinvoke r12.<com.android.server.net.NetworkIdentitySet: java.lang.String toString()>();
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r22);
+
+     label26:
+        goto label25;
+
+     label27:
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void decreaseIndent()>();
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Dev stats:");
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void increaseIndent()>();
+
+        $r17 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        virtualinvoke $r17.<com.android.server.net.NetworkStatsRecorder: void dumpLocked(com.android.internal.util.IndentingPrintWriter,boolean)>(r5, z2);
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void decreaseIndent()>();
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Xt stats:");
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void increaseIndent()>();
+
+        $r18 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder>;
+
+        virtualinvoke $r18.<com.android.server.net.NetworkStatsRecorder: void dumpLocked(com.android.internal.util.IndentingPrintWriter,boolean)>(r5, z2);
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void decreaseIndent()>();
+
+     label28:
+        if z3 == 0 goto label30;
+
+     label29:
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("UID stats:");
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void increaseIndent()>();
+
+        $r19 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder>;
+
+        virtualinvoke $r19.<com.android.server.net.NetworkStatsRecorder: void dumpLocked(com.android.internal.util.IndentingPrintWriter,boolean)>(r5, z2);
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void decreaseIndent()>();
+
+     label30:
+        if z4 == 0 goto label32;
+
+     label31:
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("UID tag stats:");
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void increaseIndent()>();
+
+        $r21 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder>;
+
+        virtualinvoke $r21.<com.android.server.net.NetworkStatsRecorder: void dumpLocked(com.android.internal.util.IndentingPrintWriter,boolean)>(r5, z2);
+
+        virtualinvoke r5.<com.android.internal.util.IndentingPrintWriter: void decreaseIndent()>();
+
+     label32:
+        exitmonitor r6;
+
+     label33:
+        return;
+
+     label34:
+        z0 = 0;
+
+        goto label04;
+
+     label35:
+        z2 = 0;
+
+        goto label06;
+
+     label36:
+        z3 = 0;
+
+        goto label08;
+
+     label37:
+        z4 = 0;
+
+        goto label10;
+
+        catch java.lang.Throwable from label11 to label12 with label21;
+        catch java.lang.Throwable from label14 to label15 with label21;
+        catch java.lang.Throwable from label17 to label18 with label21;
+        catch java.lang.Throwable from label19 to label20 with label21;
+        catch java.lang.Throwable from label22 to label23 with label21;
+        catch java.lang.Throwable from label24 to label25 with label21;
+        catch java.lang.Throwable from label25 to label26 with label21;
+        catch java.lang.Throwable from label27 to label28 with label21;
+        catch java.lang.Throwable from label29 to label30 with label21;
+        catch java.lang.Throwable from label31 to label32 with label21;
+        catch java.lang.Throwable from label32 to label33 with label21;
+    }
+
+    public void forceUpdate()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        long l0;
+        java.lang.Throwable r1, $r3;
+        android.content.Context $r2;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        $r2 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r2.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.READ_NETWORK_USAGE_HISTORY", "NetworkStats");
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void assertBandwidthControlEnabled()>();
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void performPoll(int)>(3);
+
+     label2:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        r1 = $r3;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw r1;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public android.net.NetworkStats getDataLayerSnapshotForUid(int) throws android.os.RemoteException
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int i0, i2, $i3, $i5, $i6;
+        long l1, $l4;
+        java.lang.Throwable r1, $r11;
+        android.net.NetworkStats r2, r3, $r6, $r7;
+        android.net.NetworkStats$Entry r4;
+        android.os.INetworkManagementService $r5;
+        java.lang.String $r8;
+        android.content.Context $r9;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        i0 := @parameter0: int;
+
+        $i3 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        if $i3 == i0 goto label1;
+
+        $r9 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r9.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.ACCESS_NETWORK_STATE", "NetworkStats");
+
+     label1:
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void assertBandwidthControlEnabled()>();
+
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label2:
+        $r5 = r0.<com.android.server.net.NetworkStatsService: android.os.INetworkManagementService mNetworkManager>;
+
+        r2 = interfaceinvoke $r5.<android.os.INetworkManagementService: android.net.NetworkStats getNetworkStatsUidDetail(int)>(i0);
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        $r6 = r0.<com.android.server.net.NetworkStatsService: android.net.NetworkStats mUidOperations>;
+
+        virtualinvoke r2.<android.net.NetworkStats: void spliceOperationsFrom(android.net.NetworkStats)>($r6);
+
+        $r7 = new android.net.NetworkStats;
+
+        $l4 = virtualinvoke r2.<android.net.NetworkStats: long getElapsedRealtime()>();
+
+        $i6 = virtualinvoke r2.<android.net.NetworkStats: int size()>();
+
+        specialinvoke $r7.<android.net.NetworkStats: void <init>(long,int)>($l4, $i6);
+
+        r3 = $r7;
+
+        r4 = null;
+
+        i2 = 0;
+
+     label4:
+        $i5 = virtualinvoke r2.<android.net.NetworkStats: int size()>();
+
+        if i2 >= $i5 goto label6;
+
+        r4 = virtualinvoke r2.<android.net.NetworkStats: android.net.NetworkStats$Entry getValues(int,android.net.NetworkStats$Entry)>(i2, r4);
+
+        $r8 = <android.net.NetworkStats: java.lang.String IFACE_ALL>;
+
+        r4.<android.net.NetworkStats$Entry: java.lang.String iface> = $r8;
+
+        virtualinvoke r3.<android.net.NetworkStats: android.net.NetworkStats combineValues(android.net.NetworkStats$Entry)>(r4);
+
+        i2 = i2 + 1;
+
+        goto label4;
+
+     label5:
+        $r11 := @caughtexception;
+
+        r1 = $r11;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw r1;
+
+     label6:
+        return r3;
+
+        catch java.lang.Throwable from label2 to label3 with label5;
+    }
+
+    public java.lang.String[] getMobileIfaces()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        java.lang.String[] $r1;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsService: java.lang.String[] mMobileIfaces>;
+
+        return $r1;
+    }
+
+    public long getNetworkTotalBytes(android.net.NetworkTemplate, long, long)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.net.NetworkTemplate r1;
+        long l0, l1, $l2;
+        android.content.Context $r2;
+        android.net.NetworkStats $r3;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        r1 := @parameter0: android.net.NetworkTemplate;
+
+        l0 := @parameter1: long;
+
+        l1 := @parameter2: long;
+
+        $r2 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r2.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.READ_NETWORK_USAGE_HISTORY", "NetworkStats");
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void assertBandwidthControlEnabled()>();
+
+        $r3 = specialinvoke r0.<com.android.server.net.NetworkStatsService: android.net.NetworkStats internalGetSummaryForNetwork(android.net.NetworkTemplate,long,long)>(r1, l0, l1);
+
+        $l2 = virtualinvoke $r3.<android.net.NetworkStats: long getTotalBytes()>();
+
+        return $l2;
+    }
+
+    public void incrementOperationCount(int, int, int)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int i0, i1, i2, i3, $i4;
+        java.lang.Object r1;
+        java.lang.Throwable r2, $r12;
+        android.util.SparseIntArray $r3;
+        long $l5, $l6;
+        java.lang.String $r4, $r8;
+        android.net.NetworkStats $r5, $r7;
+        java.lang.IllegalArgumentException $r10, $r11;
+        android.content.Context $r13;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        $i4 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        if $i4 == i0 goto label1;
+
+        $r13 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r13.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.MODIFY_NETWORK_ACCOUNTING", "NetworkStats");
+
+     label1:
+        if i2 >= 0 goto label2;
+
+        $r10 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r10.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("operation count can only be incremented");
+
+        throw $r10;
+
+     label2:
+        if i1 != 0 goto label3;
+
+        $r11 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r11.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("operation count must have specific tag");
+
+        throw $r11;
+
+     label3:
+        r1 = r0.<com.android.server.net.NetworkStatsService: java.lang.Object mStatsLock>;
+
+        entermonitor r1;
+
+     label4:
+        $r3 = r0.<com.android.server.net.NetworkStatsService: android.util.SparseIntArray mActiveUidCounterSet>;
+
+        i3 = virtualinvoke $r3.<android.util.SparseIntArray: int get(int,int)>(i0, 0);
+
+        $r5 = r0.<com.android.server.net.NetworkStatsService: android.net.NetworkStats mUidOperations>;
+
+        $r4 = r0.<com.android.server.net.NetworkStatsService: java.lang.String mActiveIface>;
+
+        $l5 = (long) i2;
+
+        virtualinvoke $r5.<android.net.NetworkStats: android.net.NetworkStats combineValues(java.lang.String,int,int,int,long,long,long,long,long)>($r4, i0, i3, i1, 0L, 0L, 0L, 0L, $l5);
+
+        $r7 = r0.<com.android.server.net.NetworkStatsService: android.net.NetworkStats mUidOperations>;
+
+        $r8 = r0.<com.android.server.net.NetworkStatsService: java.lang.String mActiveIface>;
+
+        $l6 = (long) i2;
+
+        virtualinvoke $r7.<android.net.NetworkStats: android.net.NetworkStats combineValues(java.lang.String,int,int,int,long,long,long,long,long)>($r8, i0, i3, 0, 0L, 0L, 0L, 0L, $l6);
+
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r12 := @caughtexception;
+
+        r2 = $r12;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw r2;
+
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public android.net.INetworkStatsSession openSession()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        android.content.Context $r1;
+        com.android.server.net.NetworkStatsService$1 $r2;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r1.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.READ_NETWORK_USAGE_HISTORY", "NetworkStats");
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void assertBandwidthControlEnabled()>();
+
+        $r2 = new com.android.server.net.NetworkStatsService$1;
+
+        specialinvoke $r2.<com.android.server.net.NetworkStatsService$1: void <init>(com.android.server.net.NetworkStatsService)>(r0);
+
+        return $r2;
+    }
+
+    public void setUidForeground(int, boolean)
+    {
+        com.android.server.net.NetworkStatsService r0;
+        int i0, $i2;
+        boolean z0;
+        java.lang.Object r1;
+        byte b1;
+        java.lang.Throwable r2, $r6;
+        android.content.Context $r3;
+        android.util.SparseIntArray $r4, $r5;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        $r3 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.MODIFY_NETWORK_ACCOUNTING", "NetworkStats");
+
+        r1 = r0.<com.android.server.net.NetworkStatsService: java.lang.Object mStatsLock>;
+
+        entermonitor r1;
+
+        b1 = 0;
+
+        if z0 == 0 goto label1;
+
+        b1 = 1;
+
+     label1:
+        $r4 = r0.<com.android.server.net.NetworkStatsService: android.util.SparseIntArray mActiveUidCounterSet>;
+
+        $i2 = virtualinvoke $r4.<android.util.SparseIntArray: int get(int,int)>(i0, 0);
+
+        if $i2 == b1 goto label2;
+
+        $r5 = r0.<com.android.server.net.NetworkStatsService: android.util.SparseIntArray mActiveUidCounterSet>;
+
+        virtualinvoke $r5.<android.util.SparseIntArray: void put(int,int)>(i0, b1);
+
+        staticinvoke <com.android.server.NetworkManagementSocketTagger: void setKernelCounterSet(int,int)>(i0, b1);
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+        r2 = $r6;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw r2;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    public void systemReady()
+    {
+        com.android.server.net.NetworkStatsService r0;
+        java.lang.Object r1;
+        java.lang.Throwable r2, $r53;
+        android.content.IntentFilter r3, r4, r5, r6, r7, r8, $r24, $r33, $r37, $r40, $r43, $r54;
+        com.android.server.net.NetworkStatsService$NetworkStatsSettings $r10, $r12, $r15, $r18;
+        boolean $z0;
+        com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config $r11, $r14, $r17, $r20;
+        com.android.server.net.NetworkStatsRecorder $r13, $r16, $r19, $r21, $r23, $r25;
+        com.android.server.net.NetworkStatsCollection $r22, $r26;
+        android.content.Context $r27, $r32, $r42, $r45, $r48, $r56;
+        android.os.Handler $r29, $r34, $r36, $r39, $r50;
+        android.content.BroadcastReceiver $r30, $r31, $r35, $r46, $r49, $r55;
+        android.net.INetworkManagementEventObserver $r51;
+        android.os.INetworkManagementService $r52;
+        android.os.RemoteException $r58;
+
+        r0 := @this: com.android.server.net.NetworkStatsService;
+
+        r0.<com.android.server.net.NetworkStatsService: boolean mSystemReady> = 1;
+
+        $z0 = specialinvoke r0.<com.android.server.net.NetworkStatsService: boolean isBandwidthControlEnabled()>();
+
+        if $z0 != 0 goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("NetworkStats", "bandwidth controls disabled, unable to track stats");
+
+        return;
+
+     label1:
+        $r10 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $r11 = interfaceinvoke $r10.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config getDevConfig()>();
+
+        $r13 = specialinvoke r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder buildRecorder(java.lang.String,com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config,boolean)>("dev", $r11, 0);
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder> = $r13;
+
+        $r12 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $r14 = interfaceinvoke $r12.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config getXtConfig()>();
+
+        $r16 = specialinvoke r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder buildRecorder(java.lang.String,com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config,boolean)>("xt", $r14, 0);
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder> = $r16;
+
+        $r15 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $r17 = interfaceinvoke $r15.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config getUidConfig()>();
+
+        $r19 = specialinvoke r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder buildRecorder(java.lang.String,com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config,boolean)>("uid", $r17, 0);
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidRecorder> = $r19;
+
+        $r18 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsService$NetworkStatsSettings mSettings>;
+
+        $r20 = interfaceinvoke $r18.<com.android.server.net.NetworkStatsService$NetworkStatsSettings: com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config getUidTagConfig()>();
+
+        $r23 = specialinvoke r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder buildRecorder(java.lang.String,com.android.server.net.NetworkStatsService$NetworkStatsSettings$Config,boolean)>("uid_tag", $r20, 1);
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mUidTagRecorder> = $r23;
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void updatePersistThresholds()>();
+
+        r1 = r0.<com.android.server.net.NetworkStatsService: java.lang.Object mStatsLock>;
+
+        entermonitor r1;
+
+     label2:
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void maybeUpgradeLegacyStatsLocked()>();
+
+        $r21 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mDevRecorder>;
+
+        $r22 = virtualinvoke $r21.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection getOrLoadCompleteLocked()>();
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mDevStatsCached> = $r22;
+
+        $r25 = r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsRecorder mXtRecorder>;
+
+        $r26 = virtualinvoke $r25.<com.android.server.net.NetworkStatsRecorder: com.android.server.net.NetworkStatsCollection getOrLoadCompleteLocked()>();
+
+        r0.<com.android.server.net.NetworkStatsService: com.android.server.net.NetworkStatsCollection mXtStatsCached> = $r26;
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void bootstrapStatsLocked()>();
+
+        exitmonitor r1;
+
+     label3:
+        $r24 = new android.content.IntentFilter;
+
+        specialinvoke $r24.<android.content.IntentFilter: void <init>(java.lang.String)>("android.net.conn.CONNECTIVITY_CHANGE_IMMEDIATE");
+
+        r3 = $r24;
+
+        $r27 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r30 = r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mConnReceiver>;
+
+        $r29 = r0.<com.android.server.net.NetworkStatsService: android.os.Handler mHandler>;
+
+        virtualinvoke $r27.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter,java.lang.String,android.os.Handler)>($r30, r3, "android.permission.CONNECTIVITY_INTERNAL", $r29);
+
+        $r33 = new android.content.IntentFilter;
+
+        specialinvoke $r33.<android.content.IntentFilter: void <init>(java.lang.String)>("android.net.conn.TETHER_STATE_CHANGED");
+
+        r4 = $r33;
+
+        $r32 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r31 = r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mTetherReceiver>;
+
+        $r34 = r0.<com.android.server.net.NetworkStatsService: android.os.Handler mHandler>;
+
+        virtualinvoke $r32.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter,java.lang.String,android.os.Handler)>($r31, r4, "android.permission.CONNECTIVITY_INTERNAL", $r34);
+
+        $r37 = new android.content.IntentFilter;
+
+        specialinvoke $r37.<android.content.IntentFilter: void <init>(java.lang.String)>("com.android.server.action.NETWORK_STATS_POLL");
+
+        r5 = $r37;
+
+        $r42 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r35 = r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mPollReceiver>;
+
+        $r36 = r0.<com.android.server.net.NetworkStatsService: android.os.Handler mHandler>;
+
+        virtualinvoke $r42.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter,java.lang.String,android.os.Handler)>($r35, r5, "android.permission.READ_NETWORK_USAGE_HISTORY", $r36);
+
+        $r40 = new android.content.IntentFilter;
+
+        specialinvoke $r40.<android.content.IntentFilter: void <init>(java.lang.String)>("android.intent.action.UID_REMOVED");
+
+        r6 = $r40;
+
+        $r45 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r46 = r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mRemovedReceiver>;
+
+        $r39 = r0.<com.android.server.net.NetworkStatsService: android.os.Handler mHandler>;
+
+        virtualinvoke $r45.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter,java.lang.String,android.os.Handler)>($r46, r6, null, $r39);
+
+        $r43 = new android.content.IntentFilter;
+
+        specialinvoke $r43.<android.content.IntentFilter: void <init>(java.lang.String)>("android.intent.action.USER_REMOVED");
+
+        r7 = $r43;
+
+        $r48 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r49 = r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mUserReceiver>;
+
+        $r50 = r0.<com.android.server.net.NetworkStatsService: android.os.Handler mHandler>;
+
+        virtualinvoke $r48.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter,java.lang.String,android.os.Handler)>($r49, r7, null, $r50);
+
+        $r54 = new android.content.IntentFilter;
+
+        specialinvoke $r54.<android.content.IntentFilter: void <init>(java.lang.String)>("android.intent.action.ACTION_SHUTDOWN");
+
+        r8 = $r54;
+
+        $r56 = r0.<com.android.server.net.NetworkStatsService: android.content.Context mContext>;
+
+        $r55 = r0.<com.android.server.net.NetworkStatsService: android.content.BroadcastReceiver mShutdownReceiver>;
+
+        virtualinvoke $r56.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r55, r8);
+
+     label4:
+        $r52 = r0.<com.android.server.net.NetworkStatsService: android.os.INetworkManagementService mNetworkManager>;
+
+        $r51 = r0.<com.android.server.net.NetworkStatsService: android.net.INetworkManagementEventObserver mAlertObserver>;
+
+        interfaceinvoke $r52.<android.os.INetworkManagementService: void registerObserver(android.net.INetworkManagementEventObserver)>($r51);
+
+     label5:
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void registerPollAlarmLocked()>();
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsService: void registerGlobalAlert()>();
+
+        return;
+
+     label6:
+        $r53 := @caughtexception;
+
+        r2 = $r53;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw r2;
+
+     label9:
+        $r58 := @caughtexception;
+
+        goto label5;
+
+        catch java.lang.Throwable from label2 to label3 with label6;
+        catch android.os.RemoteException from label4 to label5 with label9;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.net.NetworkStatsService: java.lang.String TAG_NETSTATS_ERROR> = "netstats_error";
+
+        <com.android.server.net.NetworkStatsService: java.lang.String TAG> = "NetworkStats";
+
+        <com.android.server.net.NetworkStatsService: java.lang.String PREFIX_XT> = "xt";
+
+        <com.android.server.net.NetworkStatsService: java.lang.String PREFIX_UID_TAG> = "uid_tag";
+
+        <com.android.server.net.NetworkStatsService: java.lang.String PREFIX_UID> = "uid";
+
+        <com.android.server.net.NetworkStatsService: java.lang.String PREFIX_DEV> = "dev";
+
+        <com.android.server.net.NetworkStatsService: int MSG_UPDATE_IFACES> = 2;
+
+        <com.android.server.net.NetworkStatsService: int MSG_REGISTER_GLOBAL_ALERT> = 3;
+
+        <com.android.server.net.NetworkStatsService: int MSG_PERFORM_POLL> = 1;
+
+        <com.android.server.net.NetworkStatsService: boolean LOGV> = 0;
+
+        <com.android.server.net.NetworkStatsService: int FLAG_PERSIST_UID> = 2;
+
+        <com.android.server.net.NetworkStatsService: int FLAG_PERSIST_NETWORK> = 1;
+
+        <com.android.server.net.NetworkStatsService: int FLAG_PERSIST_FORCE> = 256;
+
+        <com.android.server.net.NetworkStatsService: int FLAG_PERSIST_ALL> = 3;
+
+        <com.android.server.net.NetworkStatsService: java.lang.String ACTION_NETWORK_STATS_UPDATED> = "com.android.server.action.NETWORK_STATS_UPDATED";
+
+        <com.android.server.net.NetworkStatsService: java.lang.String ACTION_NETWORK_STATS_POLL> = "com.android.server.action.NETWORK_STATS_POLL";
+
+        return;
+    }
+}

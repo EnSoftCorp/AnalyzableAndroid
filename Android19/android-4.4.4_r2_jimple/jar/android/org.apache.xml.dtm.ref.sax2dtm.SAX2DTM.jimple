@@ -1,0 +1,3391 @@
+public class org.apache.xml.dtm.ref.sax2dtm.SAX2DTM extends org.apache.xml.dtm.ref.DTMDefaultBaseIterators implements org.xml.sax.EntityResolver, org.xml.sax.DTDHandler, org.xml.sax.ContentHandler, org.xml.sax.ErrorHandler, org.xml.sax.ext.DeclHandler, org.xml.sax.ext.LexicalHandler
+{
+    private static final boolean DEBUG;
+    private static final int ENTITY_FIELDS_PER;
+    private static final int ENTITY_FIELD_NAME;
+    private static final int ENTITY_FIELD_NOTATIONNAME;
+    private static final int ENTITY_FIELD_PUBLICID;
+    private static final int ENTITY_FIELD_SYSTEMID;
+    private static final java.lang.String[] m_fixednames;
+    protected org.apache.xml.utils.FastStringBuffer m_chars;
+    protected transient int m_coalescedTextType;
+    protected transient org.apache.xml.utils.IntStack m_contextIndexes;
+    protected org.apache.xml.utils.SuballocatedIntVector m_data;
+    protected org.apache.xml.utils.SuballocatedIntVector m_dataOrQName;
+    protected boolean m_endDocumentOccured;
+    private java.util.Vector m_entities;
+    protected java.util.Hashtable m_idAttributes;
+    private org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource;
+    protected transient boolean m_insideDTD;
+    protected transient org.xml.sax.Locator m_locator;
+    protected transient org.apache.xml.utils.IntStack m_parents;
+    boolean m_pastFirstElement;
+    protected transient java.util.Vector m_prefixMappings;
+    protected transient int m_previous;
+    protected org.apache.xml.utils.IntVector m_sourceColumn;
+    protected org.apache.xml.utils.IntVector m_sourceLine;
+    protected org.apache.xml.utils.StringVector m_sourceSystemId;
+    private transient java.lang.String m_systemId;
+    protected int m_textPendingStart;
+    protected transient int m_textType;
+    protected boolean m_useSourceLocationProperty;
+    protected org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes;
+    protected org.apache.xml.dtm.ref.DTMTreeWalker m_walker;
+
+    static void <clinit>()
+    {
+        java.lang.String[] $r0;
+
+        <org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int ENTITY_FIELD_SYSTEMID> = 1;
+
+        <org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int ENTITY_FIELD_PUBLICID> = 0;
+
+        <org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int ENTITY_FIELD_NOTATIONNAME> = 2;
+
+        <org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int ENTITY_FIELD_NAME> = 3;
+
+        <org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int ENTITY_FIELDS_PER> = 4;
+
+        <org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean DEBUG> = 0;
+
+        $r0 = newarray (java.lang.String)[13];
+
+        $r0[0] = null;
+
+        $r0[1] = null;
+
+        $r0[2] = null;
+
+        $r0[3] = "#text";
+
+        $r0[4] = "#cdata_section";
+
+        $r0[5] = null;
+
+        $r0[6] = null;
+
+        $r0[7] = null;
+
+        $r0[8] = "#comment";
+
+        $r0[9] = "#document";
+
+        $r0[10] = null;
+
+        $r0[11] = "#document-fragment";
+
+        $r0[12] = null;
+
+        <org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String[] m_fixednames> = $r0;
+
+        return;
+    }
+
+    public void <init>(org.apache.xml.dtm.DTMManager, javax.xml.transform.Source, int, org.apache.xml.dtm.DTMWSFilter, org.apache.xml.utils.XMLStringFactory, boolean)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.apache.xml.dtm.DTMManager r1;
+        javax.xml.transform.Source r2;
+        int i0;
+        org.apache.xml.dtm.DTMWSFilter r3;
+        org.apache.xml.utils.XMLStringFactory r4;
+        boolean z0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: org.apache.xml.dtm.DTMManager;
+
+        r2 := @parameter1: javax.xml.transform.Source;
+
+        i0 := @parameter2: int;
+
+        r3 := @parameter3: org.apache.xml.dtm.DTMWSFilter;
+
+        r4 := @parameter4: org.apache.xml.utils.XMLStringFactory;
+
+        z0 := @parameter5: boolean;
+
+        specialinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void <init>(org.apache.xml.dtm.DTMManager,javax.xml.transform.Source,int,org.apache.xml.dtm.DTMWSFilter,org.apache.xml.utils.XMLStringFactory,boolean,int,boolean,boolean)>(r1, r2, i0, r3, r4, z0, 512, 1, 0);
+
+        return;
+    }
+
+    public void <init>(org.apache.xml.dtm.DTMManager, javax.xml.transform.Source, int, org.apache.xml.dtm.DTMWSFilter, org.apache.xml.utils.XMLStringFactory, boolean, int, boolean, boolean)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.apache.xml.dtm.DTMManager r1;
+        javax.xml.transform.Source r2;
+        int i0, i1;
+        org.apache.xml.dtm.DTMWSFilter r3;
+        org.apache.xml.utils.XMLStringFactory r4;
+        boolean z0, z1, z2, z3, $z4, $z5, $z6;
+        org.apache.xml.utils.StringVector r5, $r19;
+        org.apache.xml.utils.IntVector r6, r7, $r18, $r20;
+        java.util.Vector $r8;
+        org.apache.xml.dtm.ref.DTMTreeWalker $r9;
+        org.apache.xml.utils.SuballocatedIntVector $r10, $r13, $r16, $r21, $r22;
+        java.util.Hashtable $r11;
+        org.apache.xml.dtm.ref.DTMStringPool $r12, $r25;
+        org.apache.xml.utils.IntStack $r14, $r17, $r23, $r24;
+        org.apache.xml.utils.FastStringBuffer $r15, $r26;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: org.apache.xml.dtm.DTMManager;
+
+        r2 := @parameter1: javax.xml.transform.Source;
+
+        i0 := @parameter2: int;
+
+        r3 := @parameter3: org.apache.xml.dtm.DTMWSFilter;
+
+        r4 := @parameter4: org.apache.xml.utils.XMLStringFactory;
+
+        z0 := @parameter5: boolean;
+
+        i1 := @parameter6: int;
+
+        z1 := @parameter7: boolean;
+
+        z2 := @parameter8: boolean;
+
+        specialinvoke r0.<org.apache.xml.dtm.ref.DTMDefaultBaseIterators: void <init>(org.apache.xml.dtm.DTMManager,javax.xml.transform.Source,int,org.apache.xml.dtm.DTMWSFilter,org.apache.xml.utils.XMLStringFactory,boolean,int,boolean,boolean)>(r1, r2, i0, r3, r4, z0, i1, z1, z2);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource> = null;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous> = 0;
+
+        $r8 = new java.util.Vector;
+
+        specialinvoke $r8.<java.util.Vector: void <init>()>();
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings> = $r8;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textType> = 3;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_coalescedTextType> = 3;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.xml.sax.Locator m_locator> = null;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String m_systemId> = null;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_insideDTD> = 0;
+
+        $r9 = new org.apache.xml.dtm.ref.DTMTreeWalker;
+
+        specialinvoke $r9.<org.apache.xml.dtm.ref.DTMTreeWalker: void <init>()>();
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMTreeWalker m_walker> = $r9;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_endDocumentOccured> = 0;
+
+        $r11 = new java.util.Hashtable;
+
+        specialinvoke $r11.<java.util.Hashtable: void <init>()>();
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Hashtable m_idAttributes> = $r11;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities> = null;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textPendingStart> = -1;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_useSourceLocationProperty> = 0;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_pastFirstElement> = 0;
+
+        if i1 > 64 goto label5;
+
+        $r22 = new org.apache.xml.utils.SuballocatedIntVector;
+
+        specialinvoke $r22.<org.apache.xml.utils.SuballocatedIntVector: void <init>(int,int)>(i1, 4);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data> = $r22;
+
+        $r21 = new org.apache.xml.utils.SuballocatedIntVector;
+
+        specialinvoke $r21.<org.apache.xml.utils.SuballocatedIntVector: void <init>(int,int)>(i1, 4);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dataOrQName> = $r21;
+
+        $r25 = new org.apache.xml.dtm.ref.DTMStringPool;
+
+        specialinvoke $r25.<org.apache.xml.dtm.ref.DTMStringPool: void <init>(int)>(16);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes> = $r25;
+
+        $r26 = new org.apache.xml.utils.FastStringBuffer;
+
+        specialinvoke $r26.<org.apache.xml.utils.FastStringBuffer: void <init>(int,int)>(7, 10);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars> = $r26;
+
+        $r23 = new org.apache.xml.utils.IntStack;
+
+        specialinvoke $r23.<org.apache.xml.utils.IntStack: void <init>(int)>(4);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_contextIndexes> = $r23;
+
+        $r24 = new org.apache.xml.utils.IntStack;
+
+        specialinvoke $r24.<org.apache.xml.utils.IntStack: void <init>(int)>(4);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_parents> = $r24;
+
+     label1:
+        $r16 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        virtualinvoke $r16.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>(0);
+
+        $z5 = virtualinvoke r1.<org.apache.xml.dtm.DTMManager: boolean getSource_location()>();
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_useSourceLocationProperty> = $z5;
+
+        $z4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_useSourceLocationProperty>;
+
+        if $z4 == 0 goto label6;
+
+        $r19 = new org.apache.xml.utils.StringVector;
+
+        specialinvoke $r19.<org.apache.xml.utils.StringVector: void <init>()>();
+
+        r5 = $r19;
+
+     label2:
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.StringVector m_sourceSystemId> = r5;
+
+        $z6 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_useSourceLocationProperty>;
+
+        if $z6 == 0 goto label7;
+
+        $r20 = new org.apache.xml.utils.IntVector;
+
+        specialinvoke $r20.<org.apache.xml.utils.IntVector: void <init>()>();
+
+        r6 = $r20;
+
+     label3:
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntVector m_sourceLine> = r6;
+
+        z3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_useSourceLocationProperty>;
+
+        r7 = null;
+
+        if z3 == 0 goto label4;
+
+        $r18 = new org.apache.xml.utils.IntVector;
+
+        specialinvoke $r18.<org.apache.xml.utils.IntVector: void <init>()>();
+
+        r7 = $r18;
+
+     label4:
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntVector m_sourceColumn> = r7;
+
+        return;
+
+     label5:
+        $r10 = new org.apache.xml.utils.SuballocatedIntVector;
+
+        specialinvoke $r10.<org.apache.xml.utils.SuballocatedIntVector: void <init>(int,int)>(i1, 32);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data> = $r10;
+
+        $r13 = new org.apache.xml.utils.SuballocatedIntVector;
+
+        specialinvoke $r13.<org.apache.xml.utils.SuballocatedIntVector: void <init>(int,int)>(i1, 32);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dataOrQName> = $r13;
+
+        $r12 = new org.apache.xml.dtm.ref.DTMStringPool;
+
+        specialinvoke $r12.<org.apache.xml.dtm.ref.DTMStringPool: void <init>()>();
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes> = $r12;
+
+        $r15 = new org.apache.xml.utils.FastStringBuffer;
+
+        specialinvoke $r15.<org.apache.xml.utils.FastStringBuffer: void <init>(int,int)>(10, 13);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars> = $r15;
+
+        $r14 = new org.apache.xml.utils.IntStack;
+
+        specialinvoke $r14.<org.apache.xml.utils.IntStack: void <init>()>();
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_contextIndexes> = $r14;
+
+        $r17 = new org.apache.xml.utils.IntStack;
+
+        specialinvoke $r17.<org.apache.xml.utils.IntStack: void <init>()>();
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_parents> = $r17;
+
+        goto label1;
+
+     label6:
+        r5 = null;
+
+        goto label2;
+
+     label7:
+        r6 = null;
+
+        goto label3;
+    }
+
+    private final boolean isTextType(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        if 3 == i0 goto label1;
+
+        if 4 != i0 goto label2;
+
+     label1:
+        return 1;
+
+     label2:
+        return 0;
+    }
+
+    protected int _dataOrQName(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, $i1, $i2, $i3, $i4;
+        boolean $z0;
+        org.apache.xml.utils.SuballocatedIntVector $r1, $r2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        $i1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_size>;
+
+        if i0 >= $i1 goto label1;
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dataOrQName>;
+
+        $i4 = virtualinvoke $r2.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(i0);
+
+        return $i4;
+
+     label1:
+        $z0 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean nextNode()>();
+
+        if $z0 != 0 goto label2;
+
+        return -1;
+
+     label2:
+        $i2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_size>;
+
+        if i0 >= $i2 goto label1;
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dataOrQName>;
+
+        $i3 = virtualinvoke $r1.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(i0);
+
+        return $i3;
+    }
+
+    protected void addNewDTMID(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, $i2;
+        org.apache.xml.dtm.ref.DTMManagerDefault r2;
+        org.apache.xml.dtm.DTMManager $r3, $r4;
+        org.apache.xml.utils.SuballocatedIntVector $r5;
+        java.lang.ClassCastException $r6, $r7;
+        java.lang.String $r8;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+     label1:
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.DTMManager m_mgr>;
+
+        if $r3 != null goto label3;
+
+        $r6 = new java.lang.ClassCastException;
+
+        specialinvoke $r6.<java.lang.ClassCastException: void <init>()>();
+
+        throw $r6;
+
+     label2:
+        $r7 := @caughtexception;
+
+        $r8 = staticinvoke <org.apache.xml.res.XMLMessages: java.lang.String createXMLMessage(java.lang.String,java.lang.Object[])>("ER_NO_DTMIDS_AVAIL", null);
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void error(java.lang.String)>($r8);
+
+        return;
+
+     label3:
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.DTMManager m_mgr>;
+
+        r2 = (org.apache.xml.dtm.ref.DTMManagerDefault) $r4;
+
+        i1 = virtualinvoke r2.<org.apache.xml.dtm.ref.DTMManagerDefault: int getFirstFreeDTMID()>();
+
+        virtualinvoke r2.<org.apache.xml.dtm.ref.DTMManagerDefault: void addDTM(org.apache.xml.dtm.DTM,int,int)>(r0, i1, i0);
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dtmIdent>;
+
+        $i2 = i1 << 16;
+
+        virtualinvoke $r5.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>($i2);
+
+     label4:
+        return;
+
+        catch java.lang.ClassCastException from label1 to label2 with label2;
+        catch java.lang.ClassCastException from label3 to label4 with label2;
+    }
+
+    protected int addNode(int, int, int, int, int, boolean)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, i2, i3, i4, i5, $i7, $i8, $i9;
+        boolean z0, $z1;
+        org.apache.xml.utils.SuballocatedIntVector r1, $r2, $r3, $r4, $r5, $r6, $r8, $r9, $r10, $r11;
+        byte b6;
+        org.xml.sax.Locator $r7;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        i3 := @parameter3: int;
+
+        i4 := @parameter4: int;
+
+        z0 := @parameter5: boolean;
+
+        i5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_size>;
+
+        $i7 = i5 + 1;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_size> = $i7;
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dtmIdent>;
+
+        $i8 = virtualinvoke $r2.<org.apache.xml.utils.SuballocatedIntVector: int size()>();
+
+        $i9 = i5 >>> 16;
+
+        if $i8 != $i9 goto label1;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void addNewDTMID(int)>(i5);
+
+     label1:
+        r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_firstch>;
+
+        if z0 == 0 goto label8;
+
+        b6 = -2;
+
+     label2:
+        virtualinvoke r1.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>(b6);
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_nextsib>;
+
+        virtualinvoke $r3.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>(-2);
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_parent>;
+
+        virtualinvoke $r4.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>(i2);
+
+        $r6 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_exptype>;
+
+        virtualinvoke $r6.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>(i1);
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dataOrQName>;
+
+        virtualinvoke $r5.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>(i4);
+
+        $r8 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_prevsib>;
+
+        if $r8 == null goto label3;
+
+        $r10 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_prevsib>;
+
+        virtualinvoke $r10.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>(i3);
+
+     label3:
+        if -1 == i3 goto label4;
+
+        $r11 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_nextsib>;
+
+        virtualinvoke $r11.<org.apache.xml.utils.SuballocatedIntVector: void setElementAt(int,int)>(i5, i3);
+
+     label4:
+        $r7 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.xml.sax.Locator m_locator>;
+
+        if $r7 == null goto label5;
+
+        $z1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_useSourceLocationProperty>;
+
+        if $z1 == 0 goto label5;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void setSourceLocation()>();
+
+     label5:
+        lookupswitch(i0)
+        {
+            case 2: goto label7;
+            case 13: goto label9;
+            default: goto label6;
+        };
+
+     label6:
+        if -1 != i3 goto label7;
+
+        if -1 == i2 goto label7;
+
+        $r9 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_firstch>;
+
+        virtualinvoke $r9.<org.apache.xml.utils.SuballocatedIntVector: void setElementAt(int,int)>(i5, i2);
+
+     label7:
+        return i5;
+
+     label8:
+        b6 = -1;
+
+        goto label2;
+
+     label9:
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void declareNamespaceInContext(int,int)>(i2, i5);
+
+        return i5;
+    }
+
+    public void attributeDecl(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2, r3, r4, r5;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: java.lang.String;
+
+        r4 := @parameter3: java.lang.String;
+
+        r5 := @parameter4: java.lang.String;
+
+        return;
+    }
+
+    public void characters(char[], int, int) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        char[] r1;
+        int i0, i1, $i2, $i3, $i4, $i5;
+        org.apache.xml.utils.FastStringBuffer $r2, $r3;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: char[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $i2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textPendingStart>;
+
+        if $i2 != -1 goto label2;
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        $i4 = virtualinvoke $r3.<org.apache.xml.utils.FastStringBuffer: int size()>();
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textPendingStart> = $i4;
+
+        $i5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textType>;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_coalescedTextType> = $i5;
+
+     label1:
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        virtualinvoke $r2.<org.apache.xml.utils.FastStringBuffer: void append(char[],int,int)>(r1, i0, i1);
+
+        return;
+
+     label2:
+        $i3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textType>;
+
+        if $i3 != 3 goto label1;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_coalescedTextType> = 3;
+
+        goto label1;
+    }
+
+    protected void charactersFlush()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12;
+        boolean z0, z1;
+        org.apache.xml.utils.FastStringBuffer $r1, $r7, $r8;
+        org.apache.xml.dtm.ref.ExpandedNameTable $r2;
+        org.apache.xml.utils.SuballocatedIntVector $r3, $r5, $r6;
+        org.apache.xml.utils.IntStack $r4;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        $i3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textPendingStart>;
+
+        if $i3 < 0 goto label3;
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        $i4 = virtualinvoke $r1.<org.apache.xml.utils.FastStringBuffer: int size()>();
+
+        $i5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textPendingStart>;
+
+        i0 = $i4 - $i5;
+
+        z0 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean getShouldStripWhitespace()>();
+
+        z1 = 0;
+
+        if z0 == 0 goto label1;
+
+        $r8 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        $i12 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textPendingStart>;
+
+        z1 = virtualinvoke $r8.<org.apache.xml.utils.FastStringBuffer: boolean isWhitespace(int,int)>($i12, i0);
+
+     label1:
+        if z1 == 0 goto label4;
+
+        $r7 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        $i11 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textPendingStart>;
+
+        virtualinvoke $r7.<org.apache.xml.utils.FastStringBuffer: void setLength(int)>($i11);
+
+     label2:
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textPendingStart> = -1;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_coalescedTextType> = 3;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textType> = 3;
+
+     label3:
+        return;
+
+     label4:
+        if i0 <= 0 goto label2;
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        i1 = virtualinvoke $r2.<org.apache.xml.dtm.ref.ExpandedNameTable: int getExpandedTypeID(int)>(3);
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        i2 = virtualinvoke $r3.<org.apache.xml.utils.SuballocatedIntVector: int size()>();
+
+        $i7 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_coalescedTextType>;
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_parents>;
+
+        $i6 = virtualinvoke $r4.<org.apache.xml.utils.IntStack: int peek()>();
+
+        $i9 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous>;
+
+        $i8 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int addNode(int,int,int,int,int,boolean)>($i7, i1, $i6, $i9, i2, 0);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous> = $i8;
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        $i10 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textPendingStart>;
+
+        virtualinvoke $r5.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>($i10);
+
+        $r6 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        virtualinvoke $r6.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>(i0);
+
+        goto label2;
+    }
+
+    public void clearCoRoutine()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void clearCoRoutine(boolean)>(1);
+
+        return;
+    }
+
+    public void clearCoRoutine(boolean)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        boolean z0;
+        org.apache.xml.dtm.ref.IncrementalSAXSource $r1, $r2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource>;
+
+        if $r1 == null goto label2;
+
+        if z0 == 0 goto label1;
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource>;
+
+        interfaceinvoke $r2.<org.apache.xml.dtm.ref.IncrementalSAXSource: java.lang.Object deliverMoreNodes(boolean)>(0);
+
+     label1:
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource> = null;
+
+     label2:
+        return;
+    }
+
+    public void comment(char[], int, int) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        char[] r1;
+        int i0, i1, i2, i3, $i4, $i5, $i6;
+        boolean $z0;
+        org.apache.xml.dtm.ref.ExpandedNameTable $r2;
+        java.lang.String $r3;
+        org.apache.xml.dtm.ref.DTMStringPool $r4;
+        org.apache.xml.utils.IntStack $r5;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: char[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $z0 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_insideDTD>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void charactersFlush()>();
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        i2 = virtualinvoke $r2.<org.apache.xml.dtm.ref.ExpandedNameTable: int getExpandedTypeID(int)>(8);
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        $r3 = new java.lang.String;
+
+        specialinvoke $r3.<java.lang.String: void <init>(char[],int,int)>(r1, i0, i1);
+
+        i3 = virtualinvoke $r4.<org.apache.xml.dtm.ref.DTMStringPool: int stringToIndex(java.lang.String)>($r3);
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_parents>;
+
+        $i4 = virtualinvoke $r5.<org.apache.xml.utils.IntStack: int peek()>();
+
+        $i5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous>;
+
+        $i6 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int addNode(int,int,int,int,int,boolean)>(8, i2, $i4, $i5, i3, 0);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous> = $i6;
+
+        return;
+    }
+
+    protected boolean declAlreadyDeclared(java.lang.String)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r3;
+        int i0, i1, i2;
+        java.util.Vector r2;
+        org.apache.xml.utils.IntStack $r4;
+        java.lang.Object $r5;
+        boolean $z0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_contextIndexes>;
+
+        i0 = virtualinvoke $r4.<org.apache.xml.utils.IntStack: int peek()>();
+
+        r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        i1 = virtualinvoke r2.<java.util.Vector: int size()>();
+
+        i2 = i0;
+
+     label1:
+        if i2 >= i1 goto label4;
+
+        $r5 = virtualinvoke r2.<java.util.Vector: java.lang.Object elementAt(int)>(i2);
+
+        r3 = (java.lang.String) $r5;
+
+        if r3 != null goto label3;
+
+     label2:
+        i2 = i2 + 2;
+
+        goto label1;
+
+     label3:
+        $z0 = virtualinvoke r3.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z0 == 0 goto label2;
+
+        return 1;
+
+     label4:
+        return 0;
+    }
+
+    public void dispatchCharactersEvents(int, org.xml.sax.ContentHandler, boolean) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, $i13, $i14, $i15, $i18, $i19, $i20, $i21;
+        org.xml.sax.ContentHandler r1;
+        boolean z0, $z1, $z2;
+        short s2, $s16;
+        java.lang.String r2;
+        org.apache.xml.dtm.ref.DTMStringPool $r3;
+        char[] $r4, $r5;
+        org.apache.xml.utils.SuballocatedIntVector $r6, $r9, $r10, $r11, $r12, $r15;
+        org.apache.xml.utils.FastStringBuffer $r7, $r8, $r13, $r14;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: org.xml.sax.ContentHandler;
+
+        z0 := @parameter2: boolean;
+
+        i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeIdentity(int)>(i0);
+
+        if i1 != -1 goto label02;
+
+     label01:
+        return;
+
+     label02:
+        s2 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: short _type(int)>(i1);
+
+        $z1 = specialinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean isTextType(int)>(s2);
+
+        if $z1 == 0 goto label04;
+
+        $r10 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dataOrQName>;
+
+        i10 = virtualinvoke $r10.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(i1);
+
+        $r12 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        i12 = virtualinvoke $r12.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(i10);
+
+        $r15 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        $i21 = i10 + 1;
+
+        i11 = virtualinvoke $r15.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i21);
+
+        if z0 == 0 goto label03;
+
+        $r13 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        virtualinvoke $r13.<org.apache.xml.utils.FastStringBuffer: int sendNormalizedSAXcharacters(org.xml.sax.ContentHandler,int,int)>(r1, i12, i11);
+
+        return;
+
+     label03:
+        $r14 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        virtualinvoke $r14.<org.apache.xml.utils.FastStringBuffer: void sendSAXcharacters(org.xml.sax.ContentHandler,int,int)>(r1, i12, i11);
+
+        return;
+
+     label04:
+        i3 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _firstch(int)>(i1);
+
+        if -1 == i3 goto label10;
+
+        i6 = -1;
+
+        i7 = 0;
+
+        i8 = i3;
+
+     label05:
+        $s16 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: short _type(int)>(i8);
+
+        $z2 = specialinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean isTextType(int)>($s16);
+
+        if $z2 == 0 goto label07;
+
+        i9 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _dataOrQName(int)>(i8);
+
+        if -1 != i6 goto label06;
+
+        $r11 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        i6 = virtualinvoke $r11.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(i9);
+
+     label06:
+        $r9 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        $i18 = i9 + 1;
+
+        $i20 = virtualinvoke $r9.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i18);
+
+        i7 = i7 + $i20;
+
+     label07:
+        i8 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int getNextNodeIdentity(int)>(i8);
+
+        if -1 == i8 goto label08;
+
+        $i19 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _parent(int)>(i8);
+
+        if $i19 >= i1 goto label05;
+
+     label08:
+        if i7 <= 0 goto label01;
+
+        if z0 == 0 goto label09;
+
+        $r7 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        virtualinvoke $r7.<org.apache.xml.utils.FastStringBuffer: int sendNormalizedSAXcharacters(org.xml.sax.ContentHandler,int,int)>(r1, i6, i7);
+
+        return;
+
+     label09:
+        $r8 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        virtualinvoke $r8.<org.apache.xml.utils.FastStringBuffer: void sendSAXcharacters(org.xml.sax.ContentHandler,int,int)>(r1, i6, i7);
+
+        return;
+
+     label10:
+        if s2 == 1 goto label01;
+
+        i4 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _dataOrQName(int)>(i1);
+
+        if i4 >= 0 goto label11;
+
+        i5 = neg i4;
+
+        $r6 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        $i14 = i5 + 1;
+
+        i4 = virtualinvoke $r6.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i14);
+
+     label11:
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        r2 = virtualinvoke $r3.<org.apache.xml.dtm.ref.DTMStringPool: java.lang.String indexToString(int)>(i4);
+
+        if z0 == 0 goto label12;
+
+        $r5 = virtualinvoke r2.<java.lang.String: char[] toCharArray()>();
+
+        $i15 = virtualinvoke r2.<java.lang.String: int length()>();
+
+        staticinvoke <org.apache.xml.utils.FastStringBuffer: void sendNormalizedSAXcharacters(char[],int,int,org.xml.sax.ContentHandler)>($r5, 0, $i15, r1);
+
+        return;
+
+     label12:
+        $r4 = virtualinvoke r2.<java.lang.String: char[] toCharArray()>();
+
+        $i13 = virtualinvoke r2.<java.lang.String: int length()>();
+
+        interfaceinvoke r1.<org.xml.sax.ContentHandler: void characters(char[],int,int)>($r4, 0, $i13);
+
+        return;
+    }
+
+    public void dispatchToEvents(int, org.xml.sax.ContentHandler) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0;
+        org.xml.sax.ContentHandler r1, $r4;
+        org.apache.xml.dtm.ref.DTMTreeWalker r2, $r5;
+        java.lang.Throwable r3, $r6;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: org.xml.sax.ContentHandler;
+
+        r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMTreeWalker m_walker>;
+
+        $r4 = virtualinvoke r2.<org.apache.xml.dtm.ref.DTMTreeWalker: org.xml.sax.ContentHandler getcontentHandler()>();
+
+        if $r4 == null goto label1;
+
+        $r5 = new org.apache.xml.dtm.ref.DTMTreeWalker;
+
+        specialinvoke $r5.<org.apache.xml.dtm.ref.DTMTreeWalker: void <init>()>();
+
+        r2 = $r5;
+
+     label1:
+        virtualinvoke r2.<org.apache.xml.dtm.ref.DTMTreeWalker: void setcontentHandler(org.xml.sax.ContentHandler)>(r1);
+
+        virtualinvoke r2.<org.apache.xml.dtm.ref.DTMTreeWalker: void setDTM(org.apache.xml.dtm.DTM)>(r0);
+
+     label2:
+        virtualinvoke r2.<org.apache.xml.dtm.ref.DTMTreeWalker: void traverse(int)>(i0);
+
+     label3:
+        virtualinvoke r2.<org.apache.xml.dtm.ref.DTMTreeWalker: void setcontentHandler(org.xml.sax.ContentHandler)>(null);
+
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+        r3 = $r6;
+
+        virtualinvoke r2.<org.apache.xml.dtm.ref.DTMTreeWalker: void setcontentHandler(org.xml.sax.ContentHandler)>(null);
+
+        throw r3;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+    }
+
+    public void elementDecl(java.lang.String, java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        return;
+    }
+
+    public void endCDATA() throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textType> = 3;
+
+        return;
+    }
+
+    public void endDTD() throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_insideDTD> = 0;
+
+        return;
+    }
+
+    public void endDocument() throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.apache.xml.utils.SuballocatedIntVector $r1, $r2, $r3, $r4;
+        int $i0, $i1, $i2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void charactersFlush()>();
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_nextsib>;
+
+        virtualinvoke $r1.<org.apache.xml.utils.SuballocatedIntVector: void setElementAt(int,int)>(-1, 0);
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_firstch>;
+
+        $i0 = virtualinvoke $r2.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(0);
+
+        if $i0 != -2 goto label1;
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_firstch>;
+
+        virtualinvoke $r4.<org.apache.xml.utils.SuballocatedIntVector: void setElementAt(int,int)>(-1, 0);
+
+     label1:
+        $i1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous>;
+
+        if -1 == $i1 goto label2;
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_nextsib>;
+
+        $i2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous>;
+
+        virtualinvoke $r3.<org.apache.xml.utils.SuballocatedIntVector: void setElementAt(int,int)>(-1, $i2);
+
+     label2:
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_parents> = null;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings> = null;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_contextIndexes> = null;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_endDocumentOccured> = 1;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.xml.sax.Locator m_locator> = null;
+
+        return;
+    }
+
+    public void endElement(java.lang.String, java.lang.String, java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2, r3;
+        int i0, i1, $i2, $i3, $i4;
+        org.apache.xml.utils.IntStack $r4, $r5, $r7;
+        java.util.Vector $r6, $r10;
+        org.apache.xml.utils.SuballocatedIntVector $r8, $r9;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: java.lang.String;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void charactersFlush()>();
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_contextIndexes>;
+
+        virtualinvoke $r4.<org.apache.xml.utils.IntStack: void quickPop(int)>(1);
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_contextIndexes>;
+
+        i0 = virtualinvoke $r5.<org.apache.xml.utils.IntStack: int peek()>();
+
+        $r6 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        $i2 = virtualinvoke $r6.<java.util.Vector: int size()>();
+
+        if i0 == $i2 goto label1;
+
+        $r10 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        virtualinvoke $r10.<java.util.Vector: void setSize(int)>(i0);
+
+     label1:
+        i1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous>;
+
+        $r7 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_parents>;
+
+        $i3 = virtualinvoke $r7.<org.apache.xml.utils.IntStack: int pop()>();
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous> = $i3;
+
+        if -1 != i1 goto label3;
+
+        $r9 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_firstch>;
+
+        $i4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous>;
+
+        virtualinvoke $r9.<org.apache.xml.utils.SuballocatedIntVector: void setElementAt(int,int)>(-1, $i4);
+
+     label2:
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void popShouldStripWhitespace()>();
+
+        return;
+
+     label3:
+        $r8 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_nextsib>;
+
+        virtualinvoke $r8.<org.apache.xml.utils.SuballocatedIntVector: void setElementAt(int,int)>(-1, i1);
+
+        goto label2;
+    }
+
+    public void endEntity(java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        return;
+    }
+
+    public void endPrefixMapping(java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1;
+        int i0, $i1, $i2, $i3, $i4;
+        org.apache.xml.utils.IntStack $r2;
+        java.util.Vector $r3, $r4, $r5;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        if r1 != null goto label1;
+
+        r1 = "";
+
+     label1:
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_contextIndexes>;
+
+        $i1 = virtualinvoke $r2.<org.apache.xml.utils.IntStack: int peek()>();
+
+        i0 = -1 + $i1;
+
+     label2:
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        $i2 = i0 + 1;
+
+        i0 = virtualinvoke $r3.<java.util.Vector: int indexOf(java.lang.Object,int)>(r1, $i2);
+
+        if i0 < 0 goto label3;
+
+        $i4 = i0 & 1;
+
+        if $i4 == 1 goto label2;
+
+     label3:
+        if i0 <= -1 goto label4;
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        virtualinvoke $r4.<java.util.Vector: void setElementAt(java.lang.Object,int)>("%@$#^@#", i0);
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        $i3 = i0 + 1;
+
+        virtualinvoke $r5.<java.util.Vector: void setElementAt(java.lang.Object,int)>("%@$#^@#", $i3);
+
+     label4:
+        return;
+    }
+
+    public void error(org.xml.sax.SAXParseException) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.xml.sax.SAXParseException r1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: org.xml.sax.SAXParseException;
+
+        throw r1;
+    }
+
+    public void externalEntityDecl(java.lang.String, java.lang.String, java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2, r3;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: java.lang.String;
+
+        return;
+    }
+
+    public void fatalError(org.xml.sax.SAXParseException) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.xml.sax.SAXParseException r1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: org.xml.sax.SAXParseException;
+
+        throw r1;
+    }
+
+    public int getAttributeNode(int, java.lang.String, java.lang.String)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1;
+        java.lang.String r1, r2, r3, r4;
+        boolean z0, $z1, $z2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int getFirstAttribute(int)>(i0);
+
+     label1:
+        if -1 == i1 goto label6;
+
+        r3 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String getNamespaceURI(int)>(i1);
+
+        r4 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String getLocalName(int)>(i1);
+
+        if r1 == r3 goto label2;
+
+        if r1 == null goto label4;
+
+        $z2 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z2 == 0 goto label4;
+
+     label2:
+        z0 = 1;
+
+     label3:
+        if z0 == 0 goto label5;
+
+        $z1 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>(r4);
+
+        if $z1 == 0 goto label5;
+
+        return i1;
+
+     label4:
+        z0 = 0;
+
+        goto label3;
+
+     label5:
+        i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int getNextAttribute(int)>(i1);
+
+        goto label1;
+
+     label6:
+        return -1;
+    }
+
+    public org.xml.sax.ContentHandler getContentHandler()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.apache.xml.dtm.ref.IncrementalSAXSource $r1, $r2;
+        boolean $z0;
+        org.xml.sax.ContentHandler $r3;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource>;
+
+        $z0 = $r1 instanceof org.apache.xml.dtm.ref.IncrementalSAXSource_Filter;
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource>;
+
+        $r3 = (org.xml.sax.ContentHandler) $r2;
+
+        return $r3;
+
+     label1:
+        return r0;
+    }
+
+    public org.xml.sax.DTDHandler getDTDHandler()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        return r0;
+    }
+
+    public org.xml.sax.ext.DeclHandler getDeclHandler()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        return r0;
+    }
+
+    public java.lang.String getDocumentTypeDeclarationPublicIdentifier()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String $r1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        $r1 = staticinvoke <org.apache.xml.res.XMLMessages: java.lang.String createXMLMessage(java.lang.String,java.lang.Object[])>("ER_METHOD_NOT_SUPPORTED", null);
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void error(java.lang.String)>($r1);
+
+        return null;
+    }
+
+    public java.lang.String getDocumentTypeDeclarationSystemIdentifier()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String $r1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        $r1 = staticinvoke <org.apache.xml.res.XMLMessages: java.lang.String createXMLMessage(java.lang.String,java.lang.Object[])>("ER_METHOD_NOT_SUPPORTED", null);
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void error(java.lang.String)>($r1);
+
+        return null;
+    }
+
+    public int getElementById(java.lang.String)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1;
+        boolean z0, $z1;
+        java.lang.Integer r2;
+        java.util.Hashtable $r3;
+        java.lang.Object $r4;
+        int $i0, $i1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 = 1;
+
+     label1:
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Hashtable m_idAttributes>;
+
+        $r4 = virtualinvoke $r3.<java.util.Hashtable: java.lang.Object get(java.lang.Object)>(r1);
+
+        r2 = (java.lang.Integer) $r4;
+
+        if r2 == null goto label2;
+
+        $i0 = virtualinvoke r2.<java.lang.Integer: int intValue()>();
+
+        $i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeHandle(int)>($i0);
+
+        return $i1;
+
+     label2:
+        if z0 == 0 goto label3;
+
+        $z1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_endDocumentOccured>;
+
+        if $z1 == 0 goto label4;
+
+     label3:
+        return -1;
+
+     label4:
+        z0 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean nextNode()>();
+
+        if r2 == null goto label1;
+
+        goto label3;
+    }
+
+    public org.xml.sax.EntityResolver getEntityResolver()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        return r0;
+    }
+
+    public org.xml.sax.ErrorHandler getErrorHandler()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        return r0;
+    }
+
+    public java.lang.String getFixedNames(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0;
+        java.lang.String[] $r1;
+        java.lang.String $r2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        $r1 = <org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String[] m_fixednames>;
+
+        $r2 = $r1[i0];
+
+        return $r2;
+    }
+
+    public int getIdForNamespace(java.lang.String)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1;
+        org.apache.xml.dtm.ref.DTMStringPool $r2;
+        int $i0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        $i0 = virtualinvoke $r2.<org.apache.xml.dtm.ref.DTMStringPool: int stringToIndex(java.lang.String)>(r1);
+
+        return $i0;
+    }
+
+    public org.xml.sax.ext.LexicalHandler getLexicalHandler()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.apache.xml.dtm.ref.IncrementalSAXSource $r1, $r2;
+        boolean $z0;
+        org.xml.sax.ext.LexicalHandler $r3;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource>;
+
+        $z0 = $r1 instanceof org.apache.xml.dtm.ref.IncrementalSAXSource_Filter;
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource>;
+
+        $r3 = (org.xml.sax.ext.LexicalHandler) $r2;
+
+        return $r3;
+
+     label1:
+        return r0;
+    }
+
+    public java.lang.String getLocalName(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, $i1, $i2;
+        org.apache.xml.dtm.ref.ExpandedNameTable $r1;
+        java.lang.String $r2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeIdentity(int)>(i0);
+
+        $i2 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _exptype(int)>($i1);
+
+        $r2 = virtualinvoke $r1.<org.apache.xml.dtm.ref.ExpandedNameTable: java.lang.String getLocalName(int)>($i2);
+
+        return $r2;
+    }
+
+    public java.lang.String getNamespaceURI(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, $i1, $i2;
+        org.apache.xml.dtm.ref.ExpandedNameTable $r1;
+        java.lang.String $r2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeIdentity(int)>(i0);
+
+        $i2 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _exptype(int)>($i1);
+
+        $r2 = virtualinvoke $r1.<org.apache.xml.dtm.ref.ExpandedNameTable: java.lang.String getNamespace(int)>($i2);
+
+        return $r2;
+    }
+
+    public java.lang.String getNamespaceURI(java.lang.String)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2;
+        int i0, $i1, $i2, $i3, $i4;
+        org.apache.xml.utils.IntStack $r3;
+        java.util.Vector $r4, $r5;
+        java.lang.Object $r6;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = "";
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_contextIndexes>;
+
+        $i1 = virtualinvoke $r3.<org.apache.xml.utils.IntStack: int peek()>();
+
+        i0 = -1 + $i1;
+
+        if r1 != null goto label1;
+
+        r1 = "";
+
+     label1:
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        $i2 = i0 + 1;
+
+        i0 = virtualinvoke $r4.<java.util.Vector: int indexOf(java.lang.Object,int)>(r1, $i2);
+
+        if i0 < 0 goto label2;
+
+        $i4 = i0 & 1;
+
+        if $i4 == 1 goto label1;
+
+     label2:
+        if i0 <= -1 goto label3;
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        $i3 = i0 + 1;
+
+        $r6 = virtualinvoke $r5.<java.util.Vector: java.lang.Object elementAt(int)>($i3);
+
+        r2 = (java.lang.String) $r6;
+
+     label3:
+        return r2;
+    }
+
+    protected int getNextNodeIdentity(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, $i2;
+        org.apache.xml.dtm.ref.IncrementalSAXSource $r1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        i1 = i0 + 1;
+
+     label1:
+        $i2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_size>;
+
+        if i1 < $i2 goto label2;
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource>;
+
+        if $r1 != null goto label3;
+
+        i1 = -1;
+
+     label2:
+        return i1;
+
+     label3:
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean nextNode()>();
+
+        goto label1;
+    }
+
+    public java.lang.String getNodeName(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, i2, i3, $i5, $i6, $i7;
+        short s4;
+        org.apache.xml.dtm.ref.ExpandedNameTable $r1, $r6, $r7, $r10, $r14;
+        org.apache.xml.utils.SuballocatedIntVector $r2, $r5;
+        org.apache.xml.dtm.ref.DTMStringPool $r3;
+        java.lang.String $r4, $r9, $r11, $r13, $r17, $r18;
+        java.lang.String[] $r8;
+        java.lang.StringBuilder $r12, $r15, $r16;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int getExpandedTypeID(int)>(i0);
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $i5 = virtualinvoke $r1.<org.apache.xml.dtm.ref.ExpandedNameTable: int getNamespaceID(int)>(i1);
+
+        if $i5 != 0 goto label4;
+
+        s4 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: short getNodeType(int)>(i0);
+
+        if s4 != 13 goto label2;
+
+        $r10 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $r13 = virtualinvoke $r10.<org.apache.xml.dtm.ref.ExpandedNameTable: java.lang.String getLocalName(int)>(i1);
+
+        if $r13 != null goto label1;
+
+        return "xmlns";
+
+     label1:
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        $r15 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("xmlns:");
+
+        $r14 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $r17 = virtualinvoke $r14.<org.apache.xml.dtm.ref.ExpandedNameTable: java.lang.String getLocalName(int)>(i1);
+
+        $r16 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r17);
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r18;
+
+     label2:
+        $r6 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $i7 = virtualinvoke $r6.<org.apache.xml.dtm.ref.ExpandedNameTable: int getLocalNameID(int)>(i1);
+
+        if $i7 != 0 goto label3;
+
+        $r8 = <org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String[] m_fixednames>;
+
+        $r11 = $r8[s4];
+
+        return $r11;
+
+     label3:
+        $r7 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $r9 = virtualinvoke $r7.<org.apache.xml.dtm.ref.ExpandedNameTable: java.lang.String getLocalName(int)>(i1);
+
+        return $r9;
+
+     label4:
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dataOrQName>;
+
+        $i6 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeIdentity(int)>(i0);
+
+        i2 = virtualinvoke $r2.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i6);
+
+        if i2 >= 0 goto label5;
+
+        i3 = neg i2;
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        i2 = virtualinvoke $r5.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(i3);
+
+     label5:
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        $r4 = virtualinvoke $r3.<org.apache.xml.dtm.ref.DTMStringPool: java.lang.String indexToString(int)>(i2);
+
+        return $r4;
+    }
+
+    public java.lang.String getNodeNameX(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, i2, i3, $i4, $i5;
+        java.lang.String r1, $r5;
+        org.apache.xml.dtm.ref.ExpandedNameTable $r2, $r7;
+        org.apache.xml.utils.SuballocatedIntVector $r3, $r6;
+        org.apache.xml.dtm.ref.DTMStringPool $r4;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int getExpandedTypeID(int)>(i0);
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $i4 = virtualinvoke $r2.<org.apache.xml.dtm.ref.ExpandedNameTable: int getNamespaceID(int)>(i1);
+
+        if $i4 != 0 goto label2;
+
+        $r7 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        r1 = virtualinvoke $r7.<org.apache.xml.dtm.ref.ExpandedNameTable: java.lang.String getLocalName(int)>(i1);
+
+        if r1 != null goto label1;
+
+        r1 = "";
+
+     label1:
+        return r1;
+
+     label2:
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dataOrQName>;
+
+        $i5 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeIdentity(int)>(i0);
+
+        i2 = virtualinvoke $r3.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i5);
+
+        if i2 >= 0 goto label3;
+
+        i3 = neg i2;
+
+        $r6 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        i2 = virtualinvoke $r6.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(i3);
+
+     label3:
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        $r5 = virtualinvoke $r4.<org.apache.xml.dtm.ref.DTMStringPool: java.lang.String indexToString(int)>(i2);
+
+        return $r5;
+    }
+
+    public java.lang.String getNodeValue(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, i3, i4, i5, i6, i7, $i8, $i9;
+        short s2;
+        boolean $z0;
+        org.apache.xml.dtm.ref.DTMStringPool $r1;
+        java.lang.String $r2, $r6;
+        org.apache.xml.utils.SuballocatedIntVector $r3, $r4, $r5;
+        org.apache.xml.utils.FastStringBuffer $r7;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeIdentity(int)>(i0);
+
+        s2 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: short _type(int)>(i1);
+
+        $z0 = specialinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean isTextType(int)>(s2);
+
+        if $z0 == 0 goto label1;
+
+        i5 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _dataOrQName(int)>(i1);
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        i6 = virtualinvoke $r4.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(i5);
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        $i9 = i5 + 1;
+
+        i7 = virtualinvoke $r5.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i9);
+
+        $r7 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        $r6 = virtualinvoke $r7.<org.apache.xml.utils.FastStringBuffer: java.lang.String getString(int,int)>(i6, i7);
+
+        return $r6;
+
+     label1:
+        if 1 == s2 goto label2;
+
+        if 11 == s2 goto label2;
+
+        if 9 != s2 goto label3;
+
+     label2:
+        return null;
+
+     label3:
+        i3 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _dataOrQName(int)>(i1);
+
+        if i3 >= 0 goto label4;
+
+        i4 = neg i3;
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        $i8 = i4 + 1;
+
+        i3 = virtualinvoke $r3.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i8);
+
+     label4:
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        $r2 = virtualinvoke $r1.<org.apache.xml.dtm.ref.DTMStringPool: java.lang.String indexToString(int)>(i3);
+
+        return $r2;
+    }
+
+    public int getNumberOfNodes()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int $i0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        $i0 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_size>;
+
+        return $i0;
+    }
+
+    public java.lang.String getPrefix(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, i3, i4, i5, $i6;
+        short s2;
+        org.apache.xml.utils.SuballocatedIntVector $r1;
+        org.apache.xml.dtm.ref.DTMStringPool $r2, $r5;
+        java.lang.String $r3, $r4, $r6, $r7;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeIdentity(int)>(i0);
+
+        s2 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: short _type(int)>(i1);
+
+        if 1 != s2 goto label2;
+
+        i5 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _dataOrQName(int)>(i1);
+
+        if i5 != 0 goto label1;
+
+        return "";
+
+     label1:
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        $r7 = virtualinvoke $r5.<org.apache.xml.dtm.ref.DTMStringPool: java.lang.String indexToString(int)>(i5);
+
+        $r6 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String getPrefix(java.lang.String,java.lang.String)>($r7, null);
+
+        return $r6;
+
+     label2:
+        if 2 != s2 goto label3;
+
+        i3 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _dataOrQName(int)>(i1);
+
+        if i3 >= 0 goto label3;
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        $i6 = neg i3;
+
+        i4 = virtualinvoke $r1.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i6);
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        $r3 = virtualinvoke $r2.<org.apache.xml.dtm.ref.DTMStringPool: java.lang.String indexToString(int)>(i4);
+
+        $r4 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String getPrefix(java.lang.String,java.lang.String)>($r3, null);
+
+        return $r4;
+
+     label3:
+        return "";
+    }
+
+    public java.lang.String getPrefix(java.lang.String, java.lang.String)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2, $r3, $r4, $r6, $r7, $r10;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        boolean $z0, $z1, $z2, $z3;
+        java.util.Vector $r5, $r9;
+        java.lang.Object $r8;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        i0 = -1;
+
+        if r2 == null goto label07;
+
+        $i4 = virtualinvoke r2.<java.lang.String: int length()>();
+
+        if $i4 <= 0 goto label07;
+
+     label01:
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        $i5 = i0 + 1;
+
+        i0 = virtualinvoke $r5.<java.util.Vector: int indexOf(java.lang.Object,int)>(r2, $i5);
+
+        $i6 = i0 & 1;
+
+        if $i6 == 0 goto label01;
+
+        if i0 < 0 goto label02;
+
+        $r9 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        $i8 = i0 - 1;
+
+        $r8 = virtualinvoke $r9.<java.util.Vector: java.lang.Object elementAt(int)>($i8);
+
+        $r10 = (java.lang.String) $r8;
+
+        return $r10;
+
+     label02:
+        if r1 == null goto label06;
+
+        i2 = virtualinvoke r1.<java.lang.String: int indexOf(int)>(58);
+
+        $z3 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>("xmlns");
+
+        if $z3 == 0 goto label03;
+
+        return "";
+
+     label03:
+        $z2 = virtualinvoke r1.<java.lang.String: boolean startsWith(java.lang.String)>("xmlns:");
+
+        if $z2 == 0 goto label04;
+
+        $i7 = i2 + 1;
+
+        $r7 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int)>($i7);
+
+        return $r7;
+
+     label04:
+        if i2 <= 0 goto label05;
+
+        $r6 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int,int)>(0, i2);
+
+        return $r6;
+
+     label05:
+        return null;
+
+     label06:
+        return null;
+
+     label07:
+        if r1 == null goto label11;
+
+        i1 = virtualinvoke r1.<java.lang.String: int indexOf(int)>(58);
+
+        if i1 <= 0 goto label09;
+
+        $z1 = virtualinvoke r1.<java.lang.String: boolean startsWith(java.lang.String)>("xmlns:");
+
+        if $z1 == 0 goto label08;
+
+        $i3 = i1 + 1;
+
+        $r4 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int)>($i3);
+
+        return $r4;
+
+     label08:
+        $r3 = virtualinvoke r1.<java.lang.String: java.lang.String substring(int,int)>(0, i1);
+
+        return $r3;
+
+     label09:
+        $z0 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>("xmlns");
+
+        if $z0 == 0 goto label10;
+
+        return "";
+
+     label10:
+        return null;
+
+     label11:
+        return null;
+    }
+
+    public javax.xml.transform.SourceLocator getSourceLocatorFor(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, $i2, $i3;
+        boolean $z0;
+        org.xml.sax.Locator $r1, $r6;
+        java.lang.String $r2, $r4, $r7, $r11;
+        org.apache.xml.dtm.ref.NodeLocator $r3, $r5, $r8;
+        org.apache.xml.utils.StringVector $r9;
+        org.apache.xml.utils.IntVector $r10, $r12;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        $z0 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_useSourceLocationProperty>;
+
+        if $z0 == 0 goto label1;
+
+        i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeIdentity(int)>(i0);
+
+        $r8 = new org.apache.xml.dtm.ref.NodeLocator;
+
+        $r9 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.StringVector m_sourceSystemId>;
+
+        $r11 = virtualinvoke $r9.<org.apache.xml.utils.StringVector: java.lang.String elementAt(int)>(i1);
+
+        $r10 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntVector m_sourceLine>;
+
+        $i2 = virtualinvoke $r10.<org.apache.xml.utils.IntVector: int elementAt(int)>(i1);
+
+        $r12 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntVector m_sourceColumn>;
+
+        $i3 = virtualinvoke $r12.<org.apache.xml.utils.IntVector: int elementAt(int)>(i1);
+
+        specialinvoke $r8.<org.apache.xml.dtm.ref.NodeLocator: void <init>(java.lang.String,java.lang.String,int,int)>(null, $r11, $i2, $i3);
+
+        return $r8;
+
+     label1:
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.xml.sax.Locator m_locator>;
+
+        if $r1 == null goto label2;
+
+        $r5 = new org.apache.xml.dtm.ref.NodeLocator;
+
+        $r6 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.xml.sax.Locator m_locator>;
+
+        $r7 = interfaceinvoke $r6.<org.xml.sax.Locator: java.lang.String getSystemId()>();
+
+        specialinvoke $r5.<org.apache.xml.dtm.ref.NodeLocator: void <init>(java.lang.String,java.lang.String,int,int)>(null, $r7, -1, -1);
+
+        return $r5;
+
+     label2:
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String m_systemId>;
+
+        if $r2 == null goto label3;
+
+        $r3 = new org.apache.xml.dtm.ref.NodeLocator;
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String m_systemId>;
+
+        specialinvoke $r3.<org.apache.xml.dtm.ref.NodeLocator: void <init>(java.lang.String,java.lang.String,int,int)>(null, $r4, -1, -1);
+
+        return $r3;
+
+     label3:
+        return null;
+    }
+
+    public org.apache.xml.utils.XMLString getStringValue(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, $i13, $i15, $i16, $i17, $i18;
+        short s2, $s14;
+        boolean $z0, $z1;
+        org.apache.xml.utils.XMLString $r1, $r6, $r10, $r16;
+        org.apache.xml.utils.XMLStringFactory $r2, $r5, $r9, $r17;
+        org.apache.xml.dtm.ref.DTMStringPool $r3;
+        java.lang.String $r4;
+        org.apache.xml.utils.SuballocatedIntVector $r7, $r11, $r12, $r13, $r15;
+        org.apache.xml.utils.FastStringBuffer $r8, $r14;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeIdentity(int)>(i0);
+
+        if i1 != -1 goto label02;
+
+        s2 = -1;
+
+     label01:
+        $z0 = specialinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean isTextType(int)>(s2);
+
+        if $z0 == 0 goto label03;
+
+        i10 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _dataOrQName(int)>(i1);
+
+        $r13 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        i11 = virtualinvoke $r13.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(i10);
+
+        $r15 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        $i18 = i10 + 1;
+
+        i12 = virtualinvoke $r15.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i18);
+
+        $r17 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.XMLStringFactory m_xstrf>;
+
+        $r14 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        $r16 = virtualinvoke $r17.<org.apache.xml.utils.XMLStringFactory: org.apache.xml.utils.XMLString newstr(org.apache.xml.utils.FastStringBuffer,int,int)>($r14, i11, i12);
+
+        return $r16;
+
+     label02:
+        s2 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: short _type(int)>(i1);
+
+        goto label01;
+
+     label03:
+        i3 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _firstch(int)>(i1);
+
+        if -1 == i3 goto label08;
+
+        i6 = -1;
+
+        i7 = 0;
+
+        i8 = i3;
+
+     label04:
+        $s14 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: short _type(int)>(i8);
+
+        $z1 = specialinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean isTextType(int)>($s14);
+
+        if $z1 == 0 goto label06;
+
+        i9 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _dataOrQName(int)>(i8);
+
+        if -1 != i6 goto label05;
+
+        $r11 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        i6 = virtualinvoke $r11.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(i9);
+
+     label05:
+        $r12 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        $i17 = i9 + 1;
+
+        $i16 = virtualinvoke $r12.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i17);
+
+        i7 = i7 + $i16;
+
+     label06:
+        i8 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int getNextNodeIdentity(int)>(i8);
+
+        if -1 == i8 goto label07;
+
+        $i15 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _parent(int)>(i8);
+
+        if $i15 >= i1 goto label04;
+
+     label07:
+        if i7 <= 0 goto label10;
+
+        $r9 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.XMLStringFactory m_xstrf>;
+
+        $r8 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        $r10 = virtualinvoke $r9.<org.apache.xml.utils.XMLStringFactory: org.apache.xml.utils.XMLString newstr(org.apache.xml.utils.FastStringBuffer,int,int)>($r8, i6, i7);
+
+        return $r10;
+
+     label08:
+        if s2 == 1 goto label10;
+
+        i4 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _dataOrQName(int)>(i1);
+
+        if i4 >= 0 goto label09;
+
+        i5 = neg i4;
+
+        $r7 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        $i13 = i5 + 1;
+
+        i4 = virtualinvoke $r7.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i13);
+
+     label09:
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.XMLStringFactory m_xstrf>;
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        $r4 = virtualinvoke $r3.<org.apache.xml.dtm.ref.DTMStringPool: java.lang.String indexToString(int)>(i4);
+
+        $r6 = virtualinvoke $r5.<org.apache.xml.utils.XMLStringFactory: org.apache.xml.utils.XMLString newstr(java.lang.String)>($r4);
+
+        return $r6;
+
+     label10:
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.XMLStringFactory m_xstrf>;
+
+        $r1 = virtualinvoke $r2.<org.apache.xml.utils.XMLStringFactory: org.apache.xml.utils.XMLString emptystr()>();
+
+        return $r1;
+    }
+
+    public java.lang.String getUnparsedEntityURI(java.lang.String)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2, r3, $r10;
+        int i0, i1, $i2, $i3, $i4, $i5;
+        java.util.Vector $r4, $r5, $r6, $r8, $r12, $r13;
+        java.lang.Object $r7, $r9, $r11, $r14;
+        boolean $z0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = "";
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities>;
+
+        if $r4 != null goto label1;
+
+        return r2;
+
+     label1:
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities>;
+
+        i0 = virtualinvoke $r5.<java.util.Vector: int size()>();
+
+        i1 = 0;
+
+     label2:
+        if i1 >= i0 goto label3;
+
+        $r6 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities>;
+
+        $i2 = i1 + 3;
+
+        $r7 = virtualinvoke $r6.<java.util.Vector: java.lang.Object elementAt(int)>($i2);
+
+        r3 = (java.lang.String) $r7;
+
+        if r3 == null goto label4;
+
+        $z0 = virtualinvoke r3.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z0 == 0 goto label4;
+
+        $r8 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities>;
+
+        $i3 = i1 + 2;
+
+        $r9 = virtualinvoke $r8.<java.util.Vector: java.lang.Object elementAt(int)>($i3);
+
+        $r10 = (java.lang.String) $r9;
+
+        if $r10 == null goto label3;
+
+        $r12 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities>;
+
+        $i4 = i1 + 1;
+
+        $r11 = virtualinvoke $r12.<java.util.Vector: java.lang.Object elementAt(int)>($i4);
+
+        r2 = (java.lang.String) $r11;
+
+        if r2 != null goto label3;
+
+        $r13 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities>;
+
+        $i5 = i1 + 0;
+
+        $r14 = virtualinvoke $r13.<java.util.Vector: java.lang.Object elementAt(int)>($i5);
+
+        r2 = (java.lang.String) $r14;
+
+     label3:
+        return r2;
+
+     label4:
+        i1 = i1 + 4;
+
+        goto label2;
+    }
+
+    public void ignorableWhitespace(char[], int, int) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        char[] r1;
+        int i0, i1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: char[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void characters(char[],int,int)>(r1, i0, i1);
+
+        return;
+    }
+
+    public void internalEntityDecl(java.lang.String, java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        return;
+    }
+
+    public boolean isAttributeSpecified(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        return 1;
+    }
+
+    public boolean isWhitespace(int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, i1, i3, i4, i5, $i6;
+        short s2;
+        boolean $z0, $z1;
+        org.apache.xml.utils.SuballocatedIntVector $r1, $r2;
+        org.apache.xml.utils.FastStringBuffer $r3;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        i0 := @parameter0: int;
+
+        i1 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeIdentity(int)>(i0);
+
+        if i1 != -1 goto label2;
+
+        s2 = -1;
+
+     label1:
+        $z0 = specialinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean isTextType(int)>(s2);
+
+        if $z0 == 0 goto label3;
+
+        i3 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int _dataOrQName(int)>(i1);
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        i4 = virtualinvoke $r1.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>(i3);
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        $i6 = i3 + 1;
+
+        i5 = virtualinvoke $r2.<org.apache.xml.utils.SuballocatedIntVector: int elementAt(int)>($i6);
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.FastStringBuffer m_chars>;
+
+        $z1 = virtualinvoke $r3.<org.apache.xml.utils.FastStringBuffer: boolean isWhitespace(int,int)>(i4, i5);
+
+        return $z1;
+
+     label2:
+        s2 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: short _type(int)>(i1);
+
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    public void migrateTo(org.apache.xml.dtm.DTMManager)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.apache.xml.dtm.DTMManager r1;
+        int i0, i1, i2, i3, $i4;
+        org.apache.xml.utils.SuballocatedIntVector $r2, $r4;
+        org.apache.xml.dtm.ref.DTMManagerDefault $r3, $r5;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: org.apache.xml.dtm.DTMManager;
+
+        specialinvoke r0.<org.apache.xml.dtm.ref.DTMDefaultBaseIterators: void migrateTo(org.apache.xml.dtm.DTMManager)>(r1);
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dtmIdent>;
+
+        i0 = virtualinvoke $r2.<org.apache.xml.utils.SuballocatedIntVector: int size()>();
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMManagerDefault m_mgrDefault>;
+
+        i1 = virtualinvoke $r3.<org.apache.xml.dtm.ref.DTMManagerDefault: int getFirstFreeDTMID()>();
+
+        i2 = 0;
+
+        i3 = 0;
+
+     label1:
+        if i3 >= i0 goto label2;
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_dtmIdent>;
+
+        $i4 = i1 << 16;
+
+        virtualinvoke $r4.<org.apache.xml.utils.SuballocatedIntVector: void setElementAt(int,int)>($i4, i3);
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMManagerDefault m_mgrDefault>;
+
+        virtualinvoke $r5.<org.apache.xml.dtm.ref.DTMManagerDefault: void addDTM(org.apache.xml.dtm.DTM,int,int)>(r0, i1, i2);
+
+        i1 = i1 + 1;
+
+        i2 = i2 + 65536;
+
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    public boolean needsTwoThreads()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.apache.xml.dtm.ref.IncrementalSAXSource $r1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource>;
+
+        if $r1 == null goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    protected boolean nextNode()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.Object r1;
+        org.apache.xml.dtm.ref.IncrementalSAXSource $r2, $r3;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.Boolean $r4;
+        org.apache.xml.utils.WrappedRuntimeException $r5;
+        java.lang.Exception $r6;
+        java.lang.RuntimeException $r7;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource>;
+
+        if $r2 != null goto label1;
+
+        return 0;
+
+     label1:
+        $z0 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_endDocumentOccured>;
+
+        if $z0 == 0 goto label2;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void clearCoRoutine()>();
+
+        return 0;
+
+     label2:
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource>;
+
+        r1 = interfaceinvoke $r3.<org.apache.xml.dtm.ref.IncrementalSAXSource: java.lang.Object deliverMoreNodes(boolean)>(1);
+
+        $z1 = r1 instanceof java.lang.Boolean;
+
+        if $z1 != 0 goto label5;
+
+        $z2 = r1 instanceof java.lang.RuntimeException;
+
+        if $z2 == 0 goto label3;
+
+        $r7 = (java.lang.RuntimeException) r1;
+
+        throw $r7;
+
+     label3:
+        $z3 = r1 instanceof java.lang.Exception;
+
+        if $z3 == 0 goto label4;
+
+        $r5 = new org.apache.xml.utils.WrappedRuntimeException;
+
+        $r6 = (java.lang.Exception) r1;
+
+        specialinvoke $r5.<org.apache.xml.utils.WrappedRuntimeException: void <init>(java.lang.Exception)>($r6);
+
+        throw $r5;
+
+     label4:
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void clearCoRoutine()>();
+
+        return 0;
+
+     label5:
+        $r4 = <java.lang.Boolean: java.lang.Boolean TRUE>;
+
+        if r1 == $r4 goto label6;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void clearCoRoutine()>();
+
+     label6:
+        return 1;
+    }
+
+    public void notationDecl(java.lang.String, java.lang.String, java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2, r3;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: java.lang.String;
+
+        return;
+    }
+
+    public void processingInstruction(java.lang.String, java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2;
+        int i0, i1, $i2, $i3, $i4;
+        org.apache.xml.dtm.ref.ExpandedNameTable $r3;
+        org.apache.xml.dtm.ref.DTMStringPool $r4;
+        org.apache.xml.utils.IntStack $r5;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void charactersFlush()>();
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        i0 = virtualinvoke $r3.<org.apache.xml.dtm.ref.ExpandedNameTable: int getExpandedTypeID(java.lang.String,java.lang.String,int)>(null, r1, 7);
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        i1 = virtualinvoke $r4.<org.apache.xml.dtm.ref.DTMStringPool: int stringToIndex(java.lang.String)>(r2);
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_parents>;
+
+        $i2 = virtualinvoke $r5.<org.apache.xml.utils.IntStack: int peek()>();
+
+        $i3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous>;
+
+        $i4 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int addNode(int,int,int,int,int,boolean)>(7, i0, $i2, $i3, i1, 0);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous> = $i4;
+
+        return;
+    }
+
+    public org.xml.sax.InputSource resolveEntity(java.lang.String, java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        return null;
+    }
+
+    public void setDocumentLocator(org.xml.sax.Locator)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.xml.sax.Locator r1;
+        java.lang.String $r2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: org.xml.sax.Locator;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.xml.sax.Locator m_locator> = r1;
+
+        $r2 = interfaceinvoke r1.<org.xml.sax.Locator: java.lang.String getSystemId()>();
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String m_systemId> = $r2;
+
+        return;
+    }
+
+    public void setIDAttribute(java.lang.String, int)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1;
+        int i0;
+        java.lang.Integer $r2;
+        java.util.Hashtable $r3;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Hashtable m_idAttributes>;
+
+        $r2 = new java.lang.Integer;
+
+        specialinvoke $r2.<java.lang.Integer: void <init>(int)>(i0);
+
+        virtualinvoke $r3.<java.util.Hashtable: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, $r2);
+
+        return;
+    }
+
+    public void setIncrementalSAXSource(org.apache.xml.dtm.ref.IncrementalSAXSource)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.apache.xml.dtm.ref.IncrementalSAXSource r1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: org.apache.xml.dtm.ref.IncrementalSAXSource;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.IncrementalSAXSource m_incrementalSAXSource> = r1;
+
+        interfaceinvoke r1.<org.apache.xml.dtm.ref.IncrementalSAXSource: void setContentHandler(org.xml.sax.ContentHandler)>(r0);
+
+        interfaceinvoke r1.<org.apache.xml.dtm.ref.IncrementalSAXSource: void setLexicalHandler(org.xml.sax.ext.LexicalHandler)>(r0);
+
+        interfaceinvoke r1.<org.apache.xml.dtm.ref.IncrementalSAXSource: void setDTDHandler(org.xml.sax.DTDHandler)>(r0);
+
+        return;
+    }
+
+    public void setProperty(java.lang.String, java.lang.Object)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1;
+        java.lang.Object r2;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.Object;
+
+        return;
+    }
+
+    protected void setSourceLocation()
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, $r4;
+        org.xml.sax.Locator $r2, $r5, $r7;
+        org.apache.xml.utils.StringVector $r3, $r9, $r13;
+        org.apache.xml.utils.IntVector $r6, $r8;
+        int $i0, $i1, $i2, $i3, $i4, $i5;
+        java.lang.StringBuilder $r10, $r11, $r12, $r14, $r15;
+        java.io.PrintStream $r16;
+        java.lang.RuntimeException $r17;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.StringVector m_sourceSystemId>;
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.xml.sax.Locator m_locator>;
+
+        $r4 = interfaceinvoke $r2.<org.xml.sax.Locator: java.lang.String getSystemId()>();
+
+        virtualinvoke $r3.<org.apache.xml.utils.StringVector: void addElement(java.lang.String)>($r4);
+
+        $r6 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntVector m_sourceLine>;
+
+        $r5 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.xml.sax.Locator m_locator>;
+
+        $i0 = interfaceinvoke $r5.<org.xml.sax.Locator: int getLineNumber()>();
+
+        virtualinvoke $r6.<org.apache.xml.utils.IntVector: void addElement(int)>($i0);
+
+        $r8 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntVector m_sourceColumn>;
+
+        $r7 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.xml.sax.Locator m_locator>;
+
+        $i1 = interfaceinvoke $r7.<org.xml.sax.Locator: int getColumnNumber()>();
+
+        virtualinvoke $r8.<org.apache.xml.utils.IntVector: void addElement(int)>($i1);
+
+        $r9 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.StringVector m_sourceSystemId>;
+
+        $i2 = virtualinvoke $r9.<org.apache.xml.utils.StringVector: int size()>();
+
+        $i3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_size>;
+
+        if $i2 == $i3 goto label1;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("CODING ERROR in Source Location: ");
+
+        $i4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_size>;
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        $r14 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" != ");
+
+        $r13 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.StringVector m_sourceSystemId>;
+
+        $i5 = virtualinvoke $r13.<org.apache.xml.utils.StringVector: int size()>();
+
+        $r15 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        r1 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r16 = <java.lang.System: java.io.PrintStream err>;
+
+        virtualinvoke $r16.<java.io.PrintStream: void println(java.lang.String)>(r1);
+
+        $r17 = new java.lang.RuntimeException;
+
+        specialinvoke $r17.<java.lang.RuntimeException: void <init>(java.lang.String)>(r1);
+
+        throw $r17;
+
+     label1:
+        return;
+    }
+
+    public void setUseSourceLocation(boolean)
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        boolean z0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        z0 := @parameter0: boolean;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_useSourceLocationProperty> = z0;
+
+        return;
+    }
+
+    public void skippedEntity(java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        return;
+    }
+
+    public void startCDATA() throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_textType> = 4;
+
+        return;
+    }
+
+    public void startDTD(java.lang.String, java.lang.String, java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2, r3;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: java.lang.String;
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_insideDTD> = 1;
+
+        return;
+    }
+
+    public void startDocument() throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        int i0, $i1, $i3;
+        org.apache.xml.dtm.ref.ExpandedNameTable $r1;
+        org.apache.xml.utils.IntStack $r2, $r4;
+        java.util.Vector $r3;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        $r1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $i1 = virtualinvoke $r1.<org.apache.xml.dtm.ref.ExpandedNameTable: int getExpandedTypeID(int)>(9);
+
+        i0 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int addNode(int,int,int,int,int,boolean)>(9, $i1, -1, -1, 0, 1);
+
+        $r2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_parents>;
+
+        virtualinvoke $r2.<org.apache.xml.utils.IntStack: int push(int)>(i0);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous> = -1;
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_contextIndexes>;
+
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        $i3 = virtualinvoke $r3.<java.util.Vector: int size()>();
+
+        virtualinvoke $r4.<org.apache.xml.utils.IntStack: int push(int)>($i3);
+
+        return;
+    }
+
+    public void startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2, r3, r5, r6, r7, r8, r9, r10, r12, $r13, $r24;
+        org.xml.sax.Attributes r4;
+        int i0, i1, i2, i3, i4, i5, i6, i7, i8, i11, i12, i13, $i14, $i15, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i25;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6;
+        short s9;
+        byte b10;
+        org.apache.xml.dtm.ref.ExpandedNameTable $r11, $r27, $r35, $r37;
+        org.apache.xml.utils.IntStack $r14, $r15, $r17, $r21;
+        java.util.Vector $r16, $r19, $r28, $r34;
+        org.apache.xml.dtm.DTMWSFilter $r18, $r20;
+        org.apache.xml.utils.SuballocatedIntVector $r22, $r26, $r30, $r31;
+        org.apache.xml.dtm.ref.DTMStringPool $r23, $r25, $r32, $r36, $r38;
+        java.lang.Object $r29, $r33;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: java.lang.String;
+
+        r4 := @parameter3: org.xml.sax.Attributes;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void charactersFlush()>();
+
+        $r11 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        i0 = virtualinvoke $r11.<org.apache.xml.dtm.ref.ExpandedNameTable: int getExpandedTypeID(java.lang.String,java.lang.String,int)>(r1, r2, 1);
+
+        $r13 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String getPrefix(java.lang.String,java.lang.String)>(r3, r1);
+
+        if $r13 == null goto label06;
+
+        $r36 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        i1 = virtualinvoke $r36.<org.apache.xml.dtm.ref.DTMStringPool: int stringToIndex(java.lang.String)>(r3);
+
+     label01:
+        $r14 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_parents>;
+
+        $i14 = virtualinvoke $r14.<org.apache.xml.utils.IntStack: int peek()>();
+
+        $i15 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous>;
+
+        i2 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int addNode(int,int,int,int,int,boolean)>(1, i0, $i14, $i15, i1, 1);
+
+        $z1 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_indexing>;
+
+        if $z1 == 0 goto label02;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void indexNode(int,int)>(i0, i2);
+
+     label02:
+        $r15 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_parents>;
+
+        virtualinvoke $r15.<org.apache.xml.utils.IntStack: int push(int)>(i2);
+
+        $r17 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_contextIndexes>;
+
+        i3 = virtualinvoke $r17.<org.apache.xml.utils.IntStack: int peek()>();
+
+        $r16 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        i4 = virtualinvoke $r16.<java.util.Vector: int size()>();
+
+        i5 = -1;
+
+        $z2 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_pastFirstElement>;
+
+        if $z2 != 0 goto label03;
+
+        $r37 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $i25 = virtualinvoke $r37.<org.apache.xml.dtm.ref.ExpandedNameTable: int getExpandedTypeID(java.lang.String,java.lang.String,int)>(null, "xml", 13);
+
+        $r38 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        $i24 = virtualinvoke $r38.<org.apache.xml.dtm.ref.DTMStringPool: int stringToIndex(java.lang.String)>("http://www.w3.org/XML/1998/namespace");
+
+        i5 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int addNode(int,int,int,int,int,boolean)>(13, $i25, i2, i5, $i24, 0);
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean m_pastFirstElement> = 1;
+
+     label03:
+        i6 = i3;
+
+     label04:
+        if i6 >= i4 goto label08;
+
+        $r28 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        $r29 = virtualinvoke $r28.<java.util.Vector: java.lang.Object elementAt(int)>(i6);
+
+        r10 = (java.lang.String) $r29;
+
+        if r10 != null goto label07;
+
+     label05:
+        i6 = i6 + 2;
+
+        goto label04;
+
+     label06:
+        i1 = 0;
+
+        goto label01;
+
+     label07:
+        $r34 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        $i21 = i6 + 1;
+
+        $r33 = virtualinvoke $r34.<java.util.Vector: java.lang.Object elementAt(int)>($i21);
+
+        r12 = (java.lang.String) $r33;
+
+        $r35 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $i22 = virtualinvoke $r35.<org.apache.xml.dtm.ref.ExpandedNameTable: int getExpandedTypeID(java.lang.String,java.lang.String,int)>(null, r10, 13);
+
+        $r32 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        $i23 = virtualinvoke $r32.<org.apache.xml.dtm.ref.DTMStringPool: int stringToIndex(java.lang.String)>(r12);
+
+        i5 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int addNode(int,int,int,int,int,boolean)>(13, $i22, i2, i5, $i23, 0);
+
+        goto label05;
+
+     label08:
+        i7 = interfaceinvoke r4.<org.xml.sax.Attributes: int getLength()>();
+
+        i8 = 0;
+
+     label09:
+        if i8 >= i7 goto label17;
+
+        r6 = interfaceinvoke r4.<org.xml.sax.Attributes: java.lang.String getURI(int)>(i8);
+
+        r5 = interfaceinvoke r4.<org.xml.sax.Attributes: java.lang.String getQName(int)>(i8);
+
+        r8 = interfaceinvoke r4.<org.xml.sax.Attributes: java.lang.String getValue(int)>(i8);
+
+        r7 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String getPrefix(java.lang.String,java.lang.String)>(r5, r6);
+
+        r9 = interfaceinvoke r4.<org.xml.sax.Attributes: java.lang.String getLocalName(int)>(i8);
+
+        if r5 == null goto label16;
+
+        $z5 = virtualinvoke r5.<java.lang.String: boolean equals(java.lang.Object)>("xmlns");
+
+        if $z5 != 0 goto label10;
+
+        $z4 = virtualinvoke r5.<java.lang.String: boolean startsWith(java.lang.String)>("xmlns:");
+
+        if $z4 == 0 goto label16;
+
+     label10:
+        $z6 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean declAlreadyDeclared(java.lang.String)>(r7);
+
+        if $z6 == 0 goto label12;
+
+     label11:
+        i8 = i8 + 1;
+
+        goto label09;
+
+     label12:
+        b10 = 13;
+
+     label13:
+        if r8 != null goto label14;
+
+        r8 = "";
+
+     label14:
+        $r23 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        i12 = virtualinvoke $r23.<org.apache.xml.dtm.ref.DTMStringPool: int stringToIndex(java.lang.String)>(r8);
+
+        if r7 == null goto label15;
+
+        $r25 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.DTMStringPool m_valuesOrPrefixes>;
+
+        i11 = virtualinvoke $r25.<org.apache.xml.dtm.ref.DTMStringPool: int stringToIndex(java.lang.String)>(r5);
+
+        $r26 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        i13 = virtualinvoke $r26.<org.apache.xml.utils.SuballocatedIntVector: int size()>();
+
+        $r30 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        virtualinvoke $r30.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>(i11);
+
+        $r31 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_data>;
+
+        virtualinvoke $r31.<org.apache.xml.utils.SuballocatedIntVector: void addElement(int)>(i12);
+
+        i12 = neg i13;
+
+     label15:
+        $r27 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.ref.ExpandedNameTable m_expandedNameTable>;
+
+        $i20 = virtualinvoke $r27.<org.apache.xml.dtm.ref.ExpandedNameTable: int getExpandedTypeID(java.lang.String,java.lang.String,int)>(r6, r9, b10);
+
+        i5 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int addNode(int,int,int,int,int,boolean)>(b10, $i20, i2, i5, i12, 0);
+
+        goto label11;
+
+     label16:
+        b10 = 2;
+
+        $r24 = interfaceinvoke r4.<org.xml.sax.Attributes: java.lang.String getType(int)>(i8);
+
+        $z3 = virtualinvoke $r24.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("ID");
+
+        if $z3 == 0 goto label13;
+
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void setIDAttribute(java.lang.String,int)>(r8, i2);
+
+        goto label13;
+
+     label17:
+        if -1 == i5 goto label18;
+
+        $r22 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.SuballocatedIntVector m_nextsib>;
+
+        virtualinvoke $r22.<org.apache.xml.utils.SuballocatedIntVector: void setElementAt(int,int)>(-1, i5);
+
+     label18:
+        $r18 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.DTMWSFilter m_wsfilter>;
+
+        if $r18 == null goto label20;
+
+        $r20 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.dtm.DTMWSFilter m_wsfilter>;
+
+        $i19 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int makeNodeHandle(int)>(i2);
+
+        s9 = interfaceinvoke $r20.<org.apache.xml.dtm.DTMWSFilter: short getShouldStripSpace(int,org.apache.xml.dtm.DTM)>($i19, r0);
+
+        if 3 != s9 goto label21;
+
+        z0 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: boolean getShouldStripWhitespace()>();
+
+     label19:
+        virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: void pushShouldStripWhitespace(boolean)>(z0);
+
+     label20:
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: int m_previous> = -1;
+
+        $r21 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: org.apache.xml.utils.IntStack m_contextIndexes>;
+
+        $r19 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        $i18 = virtualinvoke $r19.<java.util.Vector: int size()>();
+
+        virtualinvoke $r21.<org.apache.xml.utils.IntStack: int push(int)>($i18);
+
+        return;
+
+     label21:
+        if 2 != s9 goto label22;
+
+        z0 = 1;
+
+        goto label19;
+
+     label22:
+        z0 = 0;
+
+        goto label19;
+    }
+
+    public void startEntity(java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        return;
+    }
+
+    public void startPrefixMapping(java.lang.String, java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2;
+        java.util.Vector $r3, $r4;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        if r1 != null goto label1;
+
+        r1 = "";
+
+     label1:
+        $r3 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        virtualinvoke $r3.<java.util.Vector: void addElement(java.lang.Object)>(r1);
+
+        $r4 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_prefixMappings>;
+
+        virtualinvoke $r4.<java.util.Vector: void addElement(java.lang.Object)>(r2);
+
+        return;
+    }
+
+    public void unparsedEntityDecl(java.lang.String, java.lang.String, java.lang.String, java.lang.String) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        java.lang.String r1, r2, r3, r4, r6, $r8;
+        java.lang.Exception r5, $r14;
+        java.util.Vector $r7, $r9, $r10, $r11, $r12, $r13;
+        org.xml.sax.SAXException $r15;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: java.lang.String;
+
+        r4 := @parameter3: java.lang.String;
+
+        $r7 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities>;
+
+        if $r7 != null goto label1;
+
+        $r13 = new java.util.Vector;
+
+        specialinvoke $r13.<java.util.Vector: void <init>()>();
+
+        r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities> = $r13;
+
+     label1:
+        $r8 = virtualinvoke r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.lang.String getDocumentBaseURI()>();
+
+        r6 = staticinvoke <org.apache.xml.utils.SystemIDResolver: java.lang.String getAbsoluteURI(java.lang.String,java.lang.String)>(r3, $r8);
+
+     label2:
+        $r9 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities>;
+
+        virtualinvoke $r9.<java.util.Vector: void addElement(java.lang.Object)>(r2);
+
+        $r10 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities>;
+
+        virtualinvoke $r10.<java.util.Vector: void addElement(java.lang.Object)>(r6);
+
+        $r11 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities>;
+
+        virtualinvoke $r11.<java.util.Vector: void addElement(java.lang.Object)>(r4);
+
+        $r12 = r0.<org.apache.xml.dtm.ref.sax2dtm.SAX2DTM: java.util.Vector m_entities>;
+
+        virtualinvoke $r12.<java.util.Vector: void addElement(java.lang.Object)>(r1);
+
+        return;
+
+     label3:
+        $r14 := @caughtexception;
+
+        r5 = $r14;
+
+        $r15 = new org.xml.sax.SAXException;
+
+        specialinvoke $r15.<org.xml.sax.SAXException: void <init>(java.lang.Exception)>(r5);
+
+        throw $r15;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void warning(org.xml.sax.SAXParseException) throws org.xml.sax.SAXException
+    {
+        org.apache.xml.dtm.ref.sax2dtm.SAX2DTM r0;
+        org.xml.sax.SAXParseException r1;
+        java.io.PrintStream $r2;
+        java.lang.String $r3;
+
+        r0 := @this: org.apache.xml.dtm.ref.sax2dtm.SAX2DTM;
+
+        r1 := @parameter0: org.xml.sax.SAXParseException;
+
+        $r2 = <java.lang.System: java.io.PrintStream err>;
+
+        $r3 = virtualinvoke r1.<org.xml.sax.SAXParseException: java.lang.String getMessage()>();
+
+        virtualinvoke $r2.<java.io.PrintStream: void println(java.lang.String)>($r3);
+
+        return;
+    }
+}

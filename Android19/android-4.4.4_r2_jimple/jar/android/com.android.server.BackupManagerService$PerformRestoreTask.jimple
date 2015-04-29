@@ -1,0 +1,1837 @@
+class com.android.server.BackupManagerService$PerformRestoreTask extends java.lang.Object implements com.android.server.BackupManagerService$BackupRestoreTask
+{
+    private java.util.List mAgentPackages;
+    private android.os.ParcelFileDescriptor mBackupData;
+    private java.io.File mBackupDataName;
+    private int mCount;
+    private android.content.pm.PackageInfo mCurrentPackage;
+    private com.android.server.BackupManagerService$RestoreState mCurrentState;
+    private java.util.HashSet mFilterSet;
+    private boolean mFinished;
+    private boolean mNeedFullBackup;
+    private android.os.ParcelFileDescriptor mNewState;
+    private java.io.File mNewStateName;
+    private android.app.backup.IRestoreObserver mObserver;
+    private com.android.server.PackageManagerBackupAgent mPmAgent;
+    private int mPmToken;
+    private java.util.ArrayList mRestorePackages;
+    private java.io.File mSavedStateName;
+    private long mStartRealtime;
+    private java.io.File mStateDir;
+    private int mStatus;
+    private android.content.pm.PackageInfo mTargetPackage;
+    private long mToken;
+    private com.android.internal.backup.IBackupTransport mTransport;
+    final com.android.server.BackupManagerService this$0;
+
+    void <init>(com.android.server.BackupManagerService, com.android.internal.backup.IBackupTransport, java.lang.String, android.app.backup.IRestoreObserver, long, android.content.pm.PackageInfo, int, boolean, java.lang.String[])
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        com.android.server.BackupManagerService r1;
+        com.android.internal.backup.IBackupTransport r2;
+        java.lang.String r3, r7;
+        android.app.backup.IRestoreObserver r4;
+        long l0;
+        android.content.pm.PackageInfo r5;
+        int i1, i2, i3;
+        boolean z0;
+        java.lang.String[] r6;
+        com.android.server.BackupManagerService$RestoreState $r8;
+        java.io.File $r9, $r11;
+        java.util.HashSet $r10, $r12;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+        r1 := @parameter0: com.android.server.BackupManagerService;
+
+        r2 := @parameter1: com.android.internal.backup.IBackupTransport;
+
+        r3 := @parameter2: java.lang.String;
+
+        r4 := @parameter3: android.app.backup.IRestoreObserver;
+
+        l0 := @parameter4: long;
+
+        r5 := @parameter5: android.content.pm.PackageInfo;
+
+        i1 := @parameter6: int;
+
+        z0 := @parameter7: boolean;
+
+        r6 := @parameter8: java.lang.String[];
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0> = r1;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r8 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState INITIAL>;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService$RestoreState mCurrentState> = $r8;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: boolean mFinished> = 0;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.PackageManagerBackupAgent mPmAgent> = null;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.internal.backup.IBackupTransport mTransport> = r2;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.app.backup.IRestoreObserver mObserver> = r4;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: long mToken> = l0;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mTargetPackage> = r5;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mPmToken> = i1;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: boolean mNeedFullBackup> = z0;
+
+        if r6 == null goto label2;
+
+        $r10 = new java.util.HashSet;
+
+        specialinvoke $r10.<java.util.HashSet: void <init>()>();
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.HashSet mFilterSet> = $r10;
+
+        i2 = lengthof r6;
+
+        i3 = 0;
+
+     label1:
+        if i3 >= i2 goto label3;
+
+        r7 = r6[i3];
+
+        $r12 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.HashSet mFilterSet>;
+
+        virtualinvoke $r12.<java.util.HashSet: boolean add(java.lang.Object)>(r7);
+
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label2:
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.HashSet mFilterSet> = null;
+
+     label3:
+        $r9 = new java.io.File;
+
+        $r11 = r1.<com.android.server.BackupManagerService: java.io.File mBaseStateDir>;
+
+        specialinvoke $r9.<java.io.File: void <init>(java.io.File,java.lang.String)>($r11, r3);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mStateDir> = $r9;
+
+        return;
+    }
+
+    void agentCleanup()
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        java.lang.Object r3;
+        java.lang.Throwable r4, $r43;
+        java.io.File $r6, $r9;
+        android.os.ParcelFileDescriptor $r7, $r8, $r38, $r39;
+        android.content.pm.PackageInfo $r10, $r18, $r20, $r23, $r25, $r32, $r36;
+        android.content.pm.ApplicationInfo $r11, $r21, $r22, $r29, $r34, $r35;
+        com.android.server.BackupManagerService$BackupHandler $r12;
+        com.android.server.BackupManagerService $r13, $r14, $r16, $r17, $r33;
+        android.util.SparseArray $r15;
+        android.app.IActivityManager $r19, $r31;
+        int $i0, $i1, $i3;
+        java.lang.StringBuilder $r24, $r26, $r27;
+        java.lang.String $r28, $r30, $r40;
+        java.io.IOException $r37, $r42;
+        android.os.RemoteException $r41;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+        $r6 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mBackupDataName>;
+
+        virtualinvoke $r6.<java.io.File: boolean delete()>();
+
+     label01:
+        $r7 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mBackupData>;
+
+        if $r7 == null goto label02;
+
+        $r38 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mBackupData>;
+
+        virtualinvoke $r38.<android.os.ParcelFileDescriptor: void close()>();
+
+     label02:
+        $r8 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mNewState>;
+
+        if $r8 == null goto label03;
+
+        $r39 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mNewState>;
+
+        virtualinvoke $r39.<android.os.ParcelFileDescriptor: void close()>();
+
+     label03:
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mNewState> = null;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mBackupData> = null;
+
+        $r9 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mNewStateName>;
+
+        virtualinvoke $r9.<java.io.File: boolean delete()>();
+
+        $r10 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r11 = $r10.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        if $r11 == null goto label05;
+
+     label04:
+        $r17 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r19 = staticinvoke <com.android.server.BackupManagerService: android.app.IActivityManager access$800(com.android.server.BackupManagerService)>($r17);
+
+        $r18 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r21 = $r18.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        interfaceinvoke $r19.<android.app.IActivityManager: void unbindBackupAgent(android.content.pm.ApplicationInfo)>($r21);
+
+        $r20 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mTargetPackage>;
+
+        if $r20 != null goto label05;
+
+        $r23 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r22 = $r23.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i1 = $r22.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i0 = 65536 & $i1;
+
+        if $i0 == 0 goto label05;
+
+        $r26 = new java.lang.StringBuilder;
+
+        specialinvoke $r26.<java.lang.StringBuilder: void <init>()>();
+
+        $r24 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Restore complete, killing host process of ");
+
+        $r25 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r29 = $r25.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r30 = $r29.<android.content.pm.ApplicationInfo: java.lang.String processName>;
+
+        $r27 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r30);
+
+        $r28 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BackupManagerService", $r28);
+
+        $r33 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r31 = staticinvoke <com.android.server.BackupManagerService: android.app.IActivityManager access$800(com.android.server.BackupManagerService)>($r33);
+
+        $r32 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r35 = $r32.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r40 = $r35.<android.content.pm.ApplicationInfo: java.lang.String processName>;
+
+        $r36 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r34 = $r36.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i3 = $r34.<android.content.pm.ApplicationInfo: int uid>;
+
+        interfaceinvoke $r31.<android.app.IActivityManager: void killApplicationProcess(java.lang.String,int)>($r40, $i3);
+
+     label05:
+        $r13 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r12 = $r13.<com.android.server.BackupManagerService: com.android.server.BackupManagerService$BackupHandler mBackupHandler>;
+
+        virtualinvoke $r12.<com.android.server.BackupManagerService$BackupHandler: void removeMessages(int,java.lang.Object)>(7, r0);
+
+        $r14 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        r3 = $r14.<com.android.server.BackupManagerService: java.lang.Object mCurrentOpLock>;
+
+        entermonitor r3;
+
+     label06:
+        $r16 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r15 = $r16.<com.android.server.BackupManagerService: android.util.SparseArray mCurrentOperations>;
+
+        virtualinvoke $r15.<android.util.SparseArray: void clear()>();
+
+        exitmonitor r3;
+
+     label07:
+        return;
+
+     label08:
+        $r43 := @caughtexception;
+
+        r4 = $r43;
+
+     label09:
+        exitmonitor r3;
+
+     label10:
+        throw r4;
+
+     label11:
+        $r41 := @caughtexception;
+
+        goto label05;
+
+     label12:
+        $r37 := @caughtexception;
+
+        goto label03;
+
+     label13:
+        $r42 := @caughtexception;
+
+        goto label02;
+
+        catch java.io.IOException from label01 to label02 with label13;
+        catch java.io.IOException from label02 to label03 with label12;
+        catch android.os.RemoteException from label04 to label05 with label11;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    void agentErrorCleanup()
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        android.content.pm.PackageInfo $r1;
+        java.lang.String $r2;
+        com.android.server.BackupManagerService $r3;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+        $r3 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r1 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r2 = $r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        virtualinvoke $r3.<com.android.server.BackupManagerService: void clearApplicationDataSynchronous(java.lang.String)>($r2);
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void agentCleanup()>();
+
+        return;
+    }
+
+    void beginRestore()
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        java.lang.Object[] r2;
+        android.content.pm.PackageInfo r3, r6, $r14, $r16, $r19;
+        android.app.backup.IRestoreObserver r4, $r21;
+        int i0, $i3, $i4;
+        com.android.server.BackupManagerService $r7, $r15;
+        com.android.server.BackupManagerService$BackupHandler $r8;
+        com.android.internal.backup.IBackupTransport $r9;
+        long $l1;
+        java.lang.String $r10, $r27;
+        java.lang.Long $r11;
+        java.util.ArrayList $r12, $r13, $r18, $r20, $r24;
+        java.util.List $r17, $r23, $r26, $r29, $r33;
+        com.android.server.BackupManagerService$RestoreState $r22, $r35;
+        java.util.HashSet $r25, $r28;
+        java.lang.Object $r30;
+        android.os.RemoteException $r31, $r34;
+        boolean $z3;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+        $r7 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r8 = $r7.<com.android.server.BackupManagerService: com.android.server.BackupManagerService$BackupHandler mBackupHandler>;
+
+        virtualinvoke $r8.<com.android.server.BackupManagerService$BackupHandler: void removeMessages(int)>(8);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mStatus> = 1;
+
+     label01:
+        r2 = newarray (java.lang.Object)[2];
+
+        $r9 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.internal.backup.IBackupTransport mTransport>;
+
+        $r10 = interfaceinvoke $r9.<com.android.internal.backup.IBackupTransport: java.lang.String transportDirName()>();
+
+        r2[0] = $r10;
+
+        $l1 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: long mToken>;
+
+        $r11 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l1);
+
+        r2[1] = $r11;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2830, r2);
+
+        $r12 = new java.util.ArrayList;
+
+        specialinvoke $r12.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.ArrayList mRestorePackages> = $r12;
+
+        $r14 = new android.content.pm.PackageInfo;
+
+        specialinvoke $r14.<android.content.pm.PackageInfo: void <init>()>();
+
+        r3 = $r14;
+
+        r3.<android.content.pm.PackageInfo: java.lang.String packageName> = "@pm@";
+
+        $r13 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.ArrayList mRestorePackages>;
+
+        virtualinvoke $r13.<java.util.ArrayList: boolean add(java.lang.Object)>(r3);
+
+        $r15 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r17 = virtualinvoke $r15.<com.android.server.BackupManagerService: java.util.List allAgentPackages()>();
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.List mAgentPackages> = $r17;
+
+        $r16 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mTargetPackage>;
+
+        if $r16 != null goto label10;
+
+        $r25 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.HashSet mFilterSet>;
+
+        if $r25 == null goto label05;
+
+        $r26 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.List mAgentPackages>;
+
+        $i4 = interfaceinvoke $r26.<java.util.List: int size()>();
+
+        i0 = -1 + $i4;
+
+     label02:
+        if i0 < 0 goto label05;
+
+     label03:
+        $r29 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.List mAgentPackages>;
+
+        $r30 = interfaceinvoke $r29.<java.util.List: java.lang.Object get(int)>(i0);
+
+        r6 = (android.content.pm.PackageInfo) $r30;
+
+        $r28 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.HashSet mFilterSet>;
+
+        $r27 = r6.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $z3 = virtualinvoke $r28.<java.util.HashSet: boolean contains(java.lang.Object)>($r27);
+
+        if $z3 != 0 goto label16;
+
+        $r33 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.List mAgentPackages>;
+
+        interfaceinvoke $r33.<java.util.List: java.lang.Object remove(int)>(i0);
+
+     label04:
+        goto label16;
+
+     label05:
+        $r24 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.ArrayList mRestorePackages>;
+
+        $r23 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.List mAgentPackages>;
+
+        virtualinvoke $r24.<java.util.ArrayList: boolean addAll(java.util.Collection)>($r23);
+
+     label06:
+        r4 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.app.backup.IRestoreObserver mObserver>;
+
+     label07:
+        if r4 == null goto label09;
+
+     label08:
+        $r21 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.app.backup.IRestoreObserver mObserver>;
+
+        $r20 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.ArrayList mRestorePackages>;
+
+        $i3 = virtualinvoke $r20.<java.util.ArrayList: int size()>();
+
+        interfaceinvoke $r21.<android.app.backup.IRestoreObserver: void restoreStarting(int)>($i3);
+
+     label09:
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mStatus> = 0;
+
+        $r22 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState DOWNLOAD_DATA>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r22);
+
+        return;
+
+     label10:
+        $r18 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.ArrayList mRestorePackages>;
+
+        $r19 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mTargetPackage>;
+
+        virtualinvoke $r18.<java.util.ArrayList: boolean add(java.lang.Object)>($r19);
+
+     label11:
+        goto label06;
+
+     label12:
+        $r31 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", "Error communicating with transport for restore");
+
+        $r35 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r35);
+
+        return;
+
+     label13:
+        $r34 := @caughtexception;
+
+     label14:
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BackupManagerService", "Restore observer died at restoreStarting");
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.app.backup.IRestoreObserver mObserver> = null;
+
+     label15:
+        goto label09;
+
+     label16:
+        i0 = i0 + -1;
+
+        goto label02;
+
+        catch android.os.RemoteException from label01 to label02 with label12;
+        catch android.os.RemoteException from label03 to label04 with label12;
+        catch android.os.RemoteException from label05 to label06 with label12;
+        catch android.os.RemoteException from label06 to label07 with label12;
+        catch android.os.RemoteException from label08 to label09 with label13;
+        catch android.os.RemoteException from label10 to label11 with label12;
+        catch android.os.RemoteException from label14 to label15 with label12;
+    }
+
+    void downloadRestoreData()
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        android.content.pm.PackageInfo[] $r2, $r6;
+        java.util.ArrayList $r3;
+        com.android.internal.backup.IBackupTransport $r4;
+        long $l0;
+        java.lang.Object[] $r5, $r8, $r11;
+        int $i1, $i2;
+        com.android.server.BackupManagerService$RestoreState $r7, $r9, $r12;
+        android.os.RemoteException $r10;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+     label1:
+        $r4 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.internal.backup.IBackupTransport mTransport>;
+
+        $l0 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: long mToken>;
+
+        $r3 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.ArrayList mRestorePackages>;
+
+        $r2 = newarray (android.content.pm.PackageInfo)[0];
+
+        $r5 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object[] toArray(java.lang.Object[])>($r2);
+
+        $r6 = (android.content.pm.PackageInfo[]) $r5;
+
+        $i1 = interfaceinvoke $r4.<com.android.internal.backup.IBackupTransport: int startRestore(long,android.content.pm.PackageInfo[])>($l0, $r6);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mStatus> = $i1;
+
+        $i2 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mStatus>;
+
+        if $i2 == 0 goto label4;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", "Error starting restore operation");
+
+        $r8 = newarray (java.lang.Object)[0];
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2831, $r8);
+
+        $r9 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r9);
+
+     label2:
+        return;
+
+     label3:
+        $r10 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", "Error communicating with transport for restore");
+
+        $r11 = newarray (java.lang.Object)[0];
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2831, $r11);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mStatus> = 1;
+
+        $r12 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r12);
+
+        return;
+
+     label4:
+        $r7 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState PM_METADATA>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r7);
+
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    public void execute()
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        com.android.server.BackupManagerService$RestoreState $r1;
+        int[] $r2;
+        int $i0, $i1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+        $r2 = <com.android.server.BackupManagerService$3: int[] $SwitchMap$com$android$server$BackupManagerService$RestoreState>;
+
+        $r1 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService$RestoreState mCurrentState>;
+
+        $i0 = virtualinvoke $r1.<com.android.server.BackupManagerService$RestoreState: int ordinal()>();
+
+        $i1 = $r2[$i0];
+
+        tableswitch($i1)
+        {
+            case 1: goto label2;
+            case 2: goto label3;
+            case 3: goto label4;
+            case 4: goto label5;
+            case 5: goto label6;
+            default: goto label1;
+        };
+
+     label1:
+        return;
+
+     label2:
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void beginRestore()>();
+
+        return;
+
+     label3:
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void downloadRestoreData()>();
+
+        return;
+
+     label4:
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void restorePmMetadata()>();
+
+        return;
+
+     label5:
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void restoreNextAgent()>();
+
+        return;
+
+     label6:
+        $z0 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: boolean mFinished>;
+
+        if $z0 != 0 goto label8;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void finalizeRestore()>();
+
+     label7:
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: boolean mFinished> = 1;
+
+        return;
+
+     label8:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", "Duplicate finish");
+
+        goto label7;
+    }
+
+    void executeNextState(com.android.server.BackupManagerService$RestoreState)
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        com.android.server.BackupManagerService$RestoreState r1;
+        android.os.Message r2;
+        com.android.server.BackupManagerService $r3, $r5;
+        com.android.server.BackupManagerService$BackupHandler $r4, $r6;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+        r1 := @parameter0: com.android.server.BackupManagerService$RestoreState;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService$RestoreState mCurrentState> = r1;
+
+        $r3 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r4 = $r3.<com.android.server.BackupManagerService: com.android.server.BackupManagerService$BackupHandler mBackupHandler>;
+
+        r2 = virtualinvoke $r4.<com.android.server.BackupManagerService$BackupHandler: android.os.Message obtainMessage(int,java.lang.Object)>(20, r0);
+
+        $r5 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r6 = $r5.<com.android.server.BackupManagerService: com.android.server.BackupManagerService$BackupHandler mBackupHandler>;
+
+        virtualinvoke $r6.<com.android.server.BackupManagerService$BackupHandler: boolean sendMessage(android.os.Message)>(r2);
+
+        return;
+    }
+
+    void finalizeRestore()
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        android.os.RemoteException r1, $r21, $r23, $r24;
+        com.android.internal.backup.IBackupTransport $r4;
+        android.app.backup.IRestoreObserver $r5, $r22;
+        android.content.pm.PackageInfo $r6;
+        int $i0, $i2, $i4;
+        com.android.server.BackupManagerService $r7, $r9, $r11, $r12, $r18, $r19, $r20;
+        com.android.server.BackupManagerService$BackupHandler $r8, $r10;
+        android.os.PowerManager$WakeLock $r13;
+        android.content.pm.IPackageManager $r14;
+        com.android.server.PackageManagerBackupAgent $r15, $r16;
+        java.util.Set $r17;
+        long $l3;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+     label01:
+        $r4 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.internal.backup.IBackupTransport mTransport>;
+
+        interfaceinvoke $r4.<com.android.internal.backup.IBackupTransport: void finishRestore()>();
+
+     label02:
+        $r5 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.app.backup.IRestoreObserver mObserver>;
+
+        if $r5 == null goto label04;
+
+     label03:
+        $r22 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.app.backup.IRestoreObserver mObserver>;
+
+        $i4 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mStatus>;
+
+        interfaceinvoke $r22.<android.app.backup.IRestoreObserver: void restoreFinished(int)>($i4);
+
+     label04:
+        $r6 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mTargetPackage>;
+
+        if $r6 != null goto label05;
+
+        $r16 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.PackageManagerBackupAgent mPmAgent>;
+
+        if $r16 == null goto label05;
+
+        $r18 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r15 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.PackageManagerBackupAgent mPmAgent>;
+
+        $r17 = virtualinvoke $r15.<com.android.server.PackageManagerBackupAgent: java.util.Set getRestoredPackages()>();
+
+        $r18.<com.android.server.BackupManagerService: java.util.Set mAncestralPackages> = $r17;
+
+        $r19 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $l3 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: long mToken>;
+
+        $r19.<com.android.server.BackupManagerService: long mAncestralToken> = $l3;
+
+        $r20 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        virtualinvoke $r20.<com.android.server.BackupManagerService: void writeRestoreTokens()>();
+
+     label05:
+        $i0 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mPmToken>;
+
+        if $i0 <= 0 goto label07;
+
+     label06:
+        $r12 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r14 = $r12.<com.android.server.BackupManagerService: android.content.pm.IPackageManager mPackageManagerBinder>;
+
+        $i2 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mPmToken>;
+
+        interfaceinvoke $r14.<android.content.pm.IPackageManager: void finishPackageInstall(int)>($i2);
+
+     label07:
+        $r7 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r8 = $r7.<com.android.server.BackupManagerService: com.android.server.BackupManagerService$BackupHandler mBackupHandler>;
+
+        virtualinvoke $r8.<com.android.server.BackupManagerService$BackupHandler: void removeMessages(int)>(8);
+
+        $r9 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r10 = $r9.<com.android.server.BackupManagerService: com.android.server.BackupManagerService$BackupHandler mBackupHandler>;
+
+        virtualinvoke $r10.<com.android.server.BackupManagerService$BackupHandler: boolean sendEmptyMessageDelayed(int,long)>(8, 60000L);
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", "Restore complete.");
+
+        $r11 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r13 = $r11.<com.android.server.BackupManagerService: android.os.PowerManager$WakeLock mWakelock>;
+
+        virtualinvoke $r13.<android.os.PowerManager$WakeLock: void release()>();
+
+        return;
+
+     label08:
+        $r21 := @caughtexception;
+
+        r1 = $r21;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BackupManagerService", "Error finishing restore", r1);
+
+        goto label02;
+
+     label09:
+        $r24 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BackupManagerService", "Restore observer died at restoreFinished");
+
+        goto label04;
+
+     label10:
+        $r23 := @caughtexception;
+
+        goto label07;
+
+        catch android.os.RemoteException from label01 to label02 with label08;
+        catch android.os.RemoteException from label03 to label04 with label09;
+        catch android.os.RemoteException from label06 to label07 with label10;
+    }
+
+    public void handleTimeout()
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        java.lang.Object[] r1;
+        java.lang.StringBuilder $r2, $r3, $r6;
+        android.content.pm.PackageInfo $r4, $r8;
+        java.lang.String $r5, $r7, $r9;
+        com.android.server.BackupManagerService$RestoreState $r10;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Timeout restoring application ");
+
+        $r4 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r5 = $r4.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", $r7);
+
+        r1 = newarray (java.lang.Object)[2];
+
+        $r8 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r9 = $r8.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        r1[0] = $r9;
+
+        r1[1] = "restore timeout";
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2832, r1);
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void agentErrorCleanup()>();
+
+        $r10 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState RUNNING_QUEUE>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r10);
+
+        return;
+    }
+
+    void initiateOneRestore(android.content.pm.PackageInfo, int, android.app.IBackupAgent, boolean)
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        android.content.pm.PackageInfo r1;
+        int i0, i1, $i3;
+        android.app.IBackupAgent r2;
+        boolean z0, $z1;
+        java.lang.String r3, $r9, $r15, $r21, $r42, $r50, $r56, $r59;
+        java.lang.Exception r4, $r51;
+        java.lang.Object[] r5, $r46;
+        java.lang.StringBuilder $r6, $r7, $r8, $r11, $r13, $r16, $r17, $r19, $r22, $r38, $r43, $r44, $r47, $r52, $r53, $r55, $r57, $r58;
+        java.io.File $r10, $r14, $r18, $r20, $r23, $r24, $r25, $r30, $r31, $r36, $r49, $r54;
+        com.android.server.BackupManagerService $r12, $r27, $r34, $r35;
+        android.os.ParcelFileDescriptor $r26, $r28, $r32, $r33, $r37, $r39, $r40, $r45;
+        com.android.internal.backup.IBackupTransport $r29;
+        android.app.backup.IBackupManager $r41;
+        com.android.server.BackupManagerService$RestoreState $r48, $r60;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+        r1 := @parameter0: android.content.pm.PackageInfo;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: android.app.IBackupAgent;
+
+        z0 := @parameter3: boolean;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mCurrentPackage> = r1;
+
+        r3 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("initiateOneRestore packageName=");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BackupManagerService", $r9);
+
+        $r10 = new java.io.File;
+
+        $r12 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r14 = $r12.<com.android.server.BackupManagerService: java.io.File mDataDir>;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".restore");
+
+        $r15 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r10.<java.io.File: void <init>(java.io.File,java.lang.String)>($r14, $r15);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mBackupDataName> = $r10;
+
+        $r18 = new java.io.File;
+
+        $r20 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mStateDir>;
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        $r19 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r22 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".new");
+
+        $r21 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r18.<java.io.File: void <init>(java.io.File,java.lang.String)>($r20, $r21);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mNewStateName> = $r18;
+
+        $r24 = new java.io.File;
+
+        $r23 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mStateDir>;
+
+        specialinvoke $r24.<java.io.File: void <init>(java.io.File,java.lang.String)>($r23, r3);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mSavedStateName> = $r24;
+
+        $r27 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        i1 = virtualinvoke $r27.<com.android.server.BackupManagerService: int generateToken()>();
+
+     label1:
+        $r25 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mBackupDataName>;
+
+        $r26 = staticinvoke <android.os.ParcelFileDescriptor: android.os.ParcelFileDescriptor open(java.io.File,int)>($r25, 1006632960);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mBackupData> = $r26;
+
+        $r30 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mBackupDataName>;
+
+        $z1 = staticinvoke <android.os.SELinux: boolean restorecon(java.io.File)>($r30);
+
+        if $z1 != 0 goto label2;
+
+        $r47 = new java.lang.StringBuilder;
+
+        specialinvoke $r47.<java.lang.StringBuilder: void <init>()>();
+
+        $r53 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("SElinux restorecon failed for ");
+
+        $r54 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mBackupDataName>;
+
+        $r55 = virtualinvoke $r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r54);
+
+        $r50 = virtualinvoke $r55.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", $r50);
+
+     label2:
+        $r29 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.internal.backup.IBackupTransport mTransport>;
+
+        $r28 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mBackupData>;
+
+        $i3 = interfaceinvoke $r29.<com.android.internal.backup.IBackupTransport: int getRestoreData(android.os.ParcelFileDescriptor)>($r28);
+
+        if $i3 == 0 goto label4;
+
+        $r38 = new java.lang.StringBuilder;
+
+        specialinvoke $r38.<java.lang.StringBuilder: void <init>()>();
+
+        $r44 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error getting restore data for ");
+
+        $r43 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r42 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", $r42);
+
+        $r46 = newarray (java.lang.Object)[0];
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2831, $r46);
+
+        $r45 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mBackupData>;
+
+        virtualinvoke $r45.<android.os.ParcelFileDescriptor: void close()>();
+
+        $r49 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mBackupDataName>;
+
+        virtualinvoke $r49.<java.io.File: boolean delete()>();
+
+        $r48 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r48);
+
+     label3:
+        return;
+
+     label4:
+        $r33 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mBackupData>;
+
+        virtualinvoke $r33.<android.os.ParcelFileDescriptor: void close()>();
+
+        $r31 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mBackupDataName>;
+
+        $r32 = staticinvoke <android.os.ParcelFileDescriptor: android.os.ParcelFileDescriptor open(java.io.File,int)>($r31, 268435456);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mBackupData> = $r32;
+
+        $r36 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mNewStateName>;
+
+        $r37 = staticinvoke <android.os.ParcelFileDescriptor: android.os.ParcelFileDescriptor open(java.io.File,int)>($r36, 1006632960);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mNewState> = $r37;
+
+        $r34 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        virtualinvoke $r34.<com.android.server.BackupManagerService: void prepareOperationTimeout(int,long,com.android.server.BackupManagerService$BackupRestoreTask)>(i1, 60000L, r0);
+
+        $r39 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mBackupData>;
+
+        $r40 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.os.ParcelFileDescriptor mNewState>;
+
+        $r35 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r41 = $r35.<com.android.server.BackupManagerService: android.app.backup.IBackupManager mBackupManagerBinder>;
+
+        interfaceinvoke r2.<android.app.IBackupAgent: void doRestore(android.os.ParcelFileDescriptor,int,android.os.ParcelFileDescriptor,int,android.app.backup.IBackupManager)>($r39, i0, $r40, i1, $r41);
+
+     label5:
+        return;
+
+     label6:
+        $r51 := @caughtexception;
+
+        r4 = $r51;
+
+        $r52 = new java.lang.StringBuilder;
+
+        specialinvoke $r52.<java.lang.StringBuilder: void <init>()>();
+
+        $r57 = virtualinvoke $r52.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to call app for restore: ");
+
+        $r58 = virtualinvoke $r57.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r59 = virtualinvoke $r58.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BackupManagerService", $r59, r4);
+
+        r5 = newarray (java.lang.Object)[2];
+
+        r5[0] = r3;
+
+        $r56 = virtualinvoke r4.<java.lang.Exception: java.lang.String toString()>();
+
+        r5[1] = $r56;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2832, r5);
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void agentErrorCleanup()>();
+
+        $r60 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState RUNNING_QUEUE>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r60);
+
+        return;
+
+        catch java.lang.Exception from label1 to label2 with label6;
+        catch java.lang.Exception from label2 to label3 with label6;
+        catch java.lang.Exception from label4 to label5 with label6;
+    }
+
+    public void operationComplete()
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        int i0;
+        java.lang.Object[] r1;
+        java.io.File $r2;
+        long $l1;
+        android.content.pm.PackageInfo $r3;
+        java.lang.String $r4;
+        java.lang.Integer $r5;
+        com.android.server.BackupManagerService$RestoreState $r6;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+        $r2 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.io.File mBackupDataName>;
+
+        $l1 = virtualinvoke $r2.<java.io.File: long length()>();
+
+        i0 = (int) $l1;
+
+        r1 = newarray (java.lang.Object)[2];
+
+        $r3 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r4 = $r3.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        r1[0] = $r4;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        r1[1] = $r5;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2833, r1);
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void agentCleanup()>();
+
+        $r6 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState RUNNING_QUEUE>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r6);
+
+        return;
+    }
+
+    void restoreNextAgent()
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        java.lang.String r2, r9, $r16, $r23, $r24, $r25, $r39, $r43, $r46, $r64, $r71, $r76, $r89, $r96;
+        android.app.backup.IRestoreObserver r3, $r75;
+        com.android.server.PackageManagerBackupAgent$Metadata r4;
+        android.content.pm.PackageManager$NameNotFoundException r5, $r87;
+        android.content.pm.PackageInfo r6;
+        android.app.IBackupAgent r7;
+        java.lang.Exception r8, $r93;
+        int i0, $i3, $i4, $i5, $i6, $i7, $i10, $i11, $i13, $i14, $i17, $i18, $i19, $i20, $i24, $i34;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.Object[] r11, $r22, $r48, $r54, $r73, $r77, $r83, $r91;
+        com.android.internal.backup.IBackupTransport $r12;
+        com.android.server.BackupManagerService $r13, $r30, $r37;
+        android.content.pm.PackageManager $r14;
+        com.android.server.PackageManagerBackupAgent $r15;
+        java.lang.StringBuilder $r17, $r19, $r20, $r21, $r29, $r31, $r32, $r33, $r34, $r35, $r36, $r38, $r41, $r42, $r44, $r45, $r47, $r49, $r51, $r55, $r56, $r57, $r58, $r59, $r60, $r61, $r62, $r63, $r65, $r66, $r67, $r68, $r69, $r70, $r72, $r78, $r80, $r92, $r95, $r97;
+        android.content.pm.ApplicationInfo $r18, $r26, $r40, $r52;
+        com.android.server.BackupManagerService$RestoreState $r27, $r50, $r53, $r74, $r79, $r82, $r84, $r88, $r90, $r94;
+        android.content.pm.Signature[] $r28;
+        java.lang.Integer $r81, $r86;
+        android.os.RemoteException $r85, $r98;
+        long $l31, $l32, $l33;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+     label01:
+        $r12 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.internal.backup.IBackupTransport mTransport>;
+
+        r2 = interfaceinvoke $r12.<com.android.internal.backup.IBackupTransport: java.lang.String nextRestorePackage()>();
+
+     label02:
+        if r2 != null goto label05;
+
+     label03:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", "Error getting next restore package");
+
+        $r83 = newarray (java.lang.Object)[0];
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2831, $r83);
+
+        $r84 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r84);
+
+     label04:
+        return;
+
+     label05:
+        $z0 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>("");
+
+        if $z0 == 0 goto label08;
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("BackupManagerService", "No next package, finishing restore");
+
+        $l31 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l32 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: long mStartRealtime>;
+
+        $l33 = $l31 - $l32;
+
+        i0 = (int) $l33;
+
+        r11 = newarray (java.lang.Object)[2];
+
+        $i34 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mCount>;
+
+        $r86 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i34);
+
+        r11[0] = $r86;
+
+        $r81 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        r11[1] = $r81;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2834, r11);
+
+        $r82 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r82);
+
+     label06:
+        return;
+
+     label07:
+        $r85 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", "Unable to fetch restore data from transport");
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mStatus> = 1;
+
+        $r94 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r94);
+
+        return;
+
+     label08:
+        r3 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.app.backup.IRestoreObserver mObserver>;
+
+     label09:
+        if r3 == null goto label11;
+
+     label10:
+        $r75 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.app.backup.IRestoreObserver mObserver>;
+
+        $i24 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mCount>;
+
+        interfaceinvoke $r75.<android.app.backup.IRestoreObserver: void onUpdate(int,java.lang.String)>($i24, r2);
+
+     label11:
+        $r15 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.PackageManagerBackupAgent mPmAgent>;
+
+        r4 = virtualinvoke $r15.<com.android.server.PackageManagerBackupAgent: com.android.server.PackageManagerBackupAgent$Metadata getRestoredMetadata(java.lang.String)>(r2);
+
+     label12:
+        if r4 != null goto label18;
+
+     label13:
+        $r78 = new java.lang.StringBuilder;
+
+        specialinvoke $r78.<java.lang.StringBuilder: void <init>()>();
+
+        $r80 = virtualinvoke $r78.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Missing metadata for ");
+
+        $r72 = virtualinvoke $r80.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r71 = virtualinvoke $r72.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", $r71);
+
+        $r73 = newarray (java.lang.Object)[2];
+
+        $r73[0] = r2;
+
+        $r73[1] = "Package metadata missing";
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2832, $r73);
+
+        $r74 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState RUNNING_QUEUE>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r74);
+
+     label14:
+        return;
+
+     label15:
+        $r98 := @caughtexception;
+
+     label16:
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BackupManagerService", "Restore observer died in onUpdate");
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: android.app.backup.IRestoreObserver mObserver> = null;
+
+     label17:
+        goto label11;
+
+     label18:
+        $r13 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r14 = staticinvoke <com.android.server.BackupManagerService: android.content.pm.PackageManager access$600(com.android.server.BackupManagerService)>($r13);
+
+        r6 = virtualinvoke $r14.<android.content.pm.PackageManager: android.content.pm.PackageInfo getPackageInfo(java.lang.String,int)>(r2, 64);
+
+     label19:
+        $r18 = r6.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r16 = $r18.<android.content.pm.ApplicationInfo: java.lang.String backupAgentName>;
+
+        if $r16 == null goto label20;
+
+        $r24 = "";
+
+        $r26 = r6.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r25 = $r26.<android.content.pm.ApplicationInfo: java.lang.String backupAgentName>;
+
+        $z1 = virtualinvoke $r24.<java.lang.String: boolean equals(java.lang.Object)>($r25);
+
+        if $z1 == 0 goto label25;
+
+     label20:
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        $r21 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Data exists for package ");
+
+        $r19 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r20 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" but app has no agent; skipping");
+
+        $r23 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r23);
+
+        $r22 = newarray (java.lang.Object)[2];
+
+        $r22[0] = r2;
+
+        $r22[1] = "Package has no agent";
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2832, $r22);
+
+        $r27 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState RUNNING_QUEUE>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r27);
+
+     label21:
+        return;
+
+     label22:
+        $r87 := @caughtexception;
+
+        r5 = $r87;
+
+     label23:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BackupManagerService", "Invalid package restoring data", r5);
+
+        $r91 = newarray (java.lang.Object)[2];
+
+        $r91[0] = r2;
+
+        $r91[1] = "Package missing on device";
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2832, $r91);
+
+        $r90 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState RUNNING_QUEUE>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r90);
+
+     label24:
+        return;
+
+     label25:
+        $i3 = r4.<com.android.server.PackageManagerBackupAgent$Metadata: int versionCode>;
+
+        $i4 = r6.<android.content.pm.PackageInfo: int versionCode>;
+
+        if $i3 <= $i4 goto label28;
+
+        $r52 = r6.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i14 = $r52.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i13 = 131072 & $i14;
+
+        if $i13 != 0 goto label27;
+
+        $r63 = new java.lang.StringBuilder;
+
+        specialinvoke $r63.<java.lang.StringBuilder: void <init>()>();
+
+        $r62 = virtualinvoke $r63.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Version ");
+
+        $i20 = r4.<com.android.server.PackageManagerBackupAgent$Metadata: int versionCode>;
+
+        $r61 = virtualinvoke $r62.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i20);
+
+        $r60 = virtualinvoke $r61.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" > installed version ");
+
+        $i19 = r6.<android.content.pm.PackageInfo: int versionCode>;
+
+        $r70 = virtualinvoke $r60.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i19);
+
+        r9 = virtualinvoke $r70.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r69 = new java.lang.StringBuilder;
+
+        specialinvoke $r69.<java.lang.StringBuilder: void <init>()>();
+
+        $r68 = virtualinvoke $r69.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Package ");
+
+        $r67 = virtualinvoke $r68.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r66 = virtualinvoke $r67.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        $r65 = virtualinvoke $r66.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r9);
+
+        $r76 = virtualinvoke $r65.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", $r76);
+
+        $r77 = newarray (java.lang.Object)[2];
+
+        $r77[0] = r2;
+
+        $r77[1] = r9;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2832, $r77);
+
+        $r79 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState RUNNING_QUEUE>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r79);
+
+     label26:
+        return;
+
+     label27:
+        $r51 = new java.lang.StringBuilder;
+
+        specialinvoke $r51.<java.lang.StringBuilder: void <init>()>();
+
+        $r59 = virtualinvoke $r51.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Version ");
+
+        $i18 = r4.<com.android.server.PackageManagerBackupAgent$Metadata: int versionCode>;
+
+        $r58 = virtualinvoke $r59.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i18);
+
+        $r57 = virtualinvoke $r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" > installed ");
+
+        $i17 = r6.<android.content.pm.PackageInfo: int versionCode>;
+
+        $r55 = virtualinvoke $r57.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i17);
+
+        $r56 = virtualinvoke $r55.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" but restoreAnyVersion");
+
+        $r64 = virtualinvoke $r56.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("BackupManagerService", $r64);
+
+     label28:
+        $r30 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r28 = r4.<com.android.server.PackageManagerBackupAgent$Metadata: android.content.pm.Signature[] signatures>;
+
+        $z2 = staticinvoke <com.android.server.BackupManagerService: boolean access$2000(com.android.server.BackupManagerService,android.content.pm.Signature[],android.content.pm.PackageInfo)>($r30, $r28, r6);
+
+        if $z2 != 0 goto label30;
+
+        $r49 = new java.lang.StringBuilder;
+
+        specialinvoke $r49.<java.lang.StringBuilder: void <init>()>();
+
+        $r45 = virtualinvoke $r49.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Signature mismatch restoring ");
+
+        $r47 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r46 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", $r46);
+
+        $r54 = newarray (java.lang.Object)[2];
+
+        $r54[0] = r2;
+
+        $r54[1] = "Signature mismatch";
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2832, $r54);
+
+        $r53 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState RUNNING_QUEUE>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r53);
+
+     label29:
+        return;
+
+     label30:
+        $r29 = new java.lang.StringBuilder;
+
+        specialinvoke $r29.<java.lang.StringBuilder: void <init>()>();
+
+        $r34 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Package ");
+
+        $r35 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r36 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" restore version [");
+
+        $i6 = r4.<com.android.server.PackageManagerBackupAgent$Metadata: int versionCode>;
+
+        $r31 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i6);
+
+        $r32 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("] is compatible with installed version [");
+
+        $i5 = r6.<android.content.pm.PackageInfo: int versionCode>;
+
+        $r33 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        $r38 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r39 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("BackupManagerService", $r39);
+
+        $r37 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r40 = r6.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        r7 = virtualinvoke $r37.<com.android.server.BackupManagerService: android.app.IBackupAgent bindToAgentSynchronous(android.content.pm.ApplicationInfo,int)>($r40, 0);
+
+     label31:
+        if r7 != null goto label34;
+
+     label32:
+        $r44 = new java.lang.StringBuilder;
+
+        specialinvoke $r44.<java.lang.StringBuilder: void <init>()>();
+
+        $r42 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t find backup agent for ");
+
+        $r41 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r43 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", $r43);
+
+        $r48 = newarray (java.lang.Object)[2];
+
+        $r48[0] = r2;
+
+        $r48[1] = "Restore agent missing";
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2832, $r48);
+
+        $r50 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState RUNNING_QUEUE>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r50);
+
+     label33:
+        return;
+
+     label34:
+        $i7 = r4.<com.android.server.PackageManagerBackupAgent$Metadata: int versionCode>;
+
+        $z3 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: boolean mNeedFullBackup>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void initiateOneRestore(android.content.pm.PackageInfo,int,android.app.IBackupAgent,boolean)>(r6, $i7, r7, $z3);
+
+        $i11 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mCount>;
+
+        $i10 = 1 + $i11;
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mCount> = $i10;
+
+     label35:
+        return;
+
+     label36:
+        $r93 := @caughtexception;
+
+        r8 = $r93;
+
+     label37:
+        $r92 = new java.lang.StringBuilder;
+
+        specialinvoke $r92.<java.lang.StringBuilder: void <init>()>();
+
+        $r97 = virtualinvoke $r92.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error when attempting restore: ");
+
+        $r96 = virtualinvoke r8.<java.lang.Exception: java.lang.String toString()>();
+
+        $r95 = virtualinvoke $r97.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r96);
+
+        $r89 = virtualinvoke $r95.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", $r89);
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void agentErrorCleanup()>();
+
+        $r88 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState RUNNING_QUEUE>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r88);
+
+     label38:
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label07;
+        catch android.os.RemoteException from label03 to label04 with label07;
+        catch android.os.RemoteException from label05 to label06 with label07;
+        catch android.os.RemoteException from label08 to label09 with label07;
+        catch android.os.RemoteException from label10 to label11 with label15;
+        catch android.os.RemoteException from label11 to label12 with label07;
+        catch android.os.RemoteException from label13 to label14 with label07;
+        catch android.os.RemoteException from label16 to label17 with label07;
+        catch android.content.pm.PackageManager$NameNotFoundException from label18 to label19 with label22;
+        catch android.os.RemoteException from label18 to label19 with label07;
+        catch android.os.RemoteException from label19 to label20 with label07;
+        catch android.os.RemoteException from label20 to label21 with label07;
+        catch android.os.RemoteException from label23 to label24 with label07;
+        catch android.os.RemoteException from label25 to label26 with label07;
+        catch android.os.RemoteException from label27 to label28 with label07;
+        catch android.os.RemoteException from label28 to label29 with label07;
+        catch android.os.RemoteException from label30 to label31 with label07;
+        catch android.os.RemoteException from label32 to label33 with label07;
+        catch java.lang.Exception from label34 to label35 with label36;
+        catch android.os.RemoteException from label34 to label35 with label07;
+        catch android.os.RemoteException from label37 to label38 with label07;
+    }
+
+    void restorePmMetadata()
+    {
+        com.android.server.BackupManagerService$PerformRestoreTask r0;
+        java.lang.String r2, $r21;
+        android.content.pm.PackageInfo r3, $r6;
+        int i0;
+        java.lang.Object[] r4, $r17, $r25, $r28, $r30;
+        com.android.internal.backup.IBackupTransport $r5;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.server.BackupManagerService $r7, $r15, $r33;
+        com.android.server.PackageManagerBackupAgent $r8, $r11, $r14;
+        java.util.List $r9;
+        android.content.pm.PackageManager $r10;
+        android.app.IBackupAgent $r12;
+        android.os.IBinder $r13;
+        com.android.server.BackupManagerService$BackupHandler $r16, $r34;
+        java.lang.StringBuilder $r18, $r20, $r22, $r23;
+        com.android.server.BackupManagerService$RestoreState $r19, $r24, $r29, $r32, $r35;
+        long $l6, $l7, $l8;
+        java.lang.Integer $r26, $r27;
+        android.os.RemoteException $r31;
+
+        r0 := @this: com.android.server.BackupManagerService$PerformRestoreTask;
+
+     label01:
+        $r5 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.internal.backup.IBackupTransport mTransport>;
+
+        r2 = interfaceinvoke $r5.<com.android.internal.backup.IBackupTransport: java.lang.String nextRestorePackage()>();
+
+     label02:
+        if r2 != null goto label05;
+
+     label03:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", "Error getting first restore package");
+
+        $r28 = newarray (java.lang.Object)[0];
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2831, $r28);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mStatus> = 1;
+
+        $r32 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r32);
+
+     label04:
+        return;
+
+     label05:
+        $z0 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>("");
+
+        if $z0 == 0 goto label08;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", "No restore data available");
+
+        $l8 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l7 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: long mStartRealtime>;
+
+        $l6 = $l8 - $l7;
+
+        i0 = (int) $l6;
+
+        r4 = newarray (java.lang.Object)[2];
+
+        $r27 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(0);
+
+        r4[0] = $r27;
+
+        $r26 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        r4[1] = $r26;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2834, r4);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mStatus> = 0;
+
+        $r29 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r29);
+
+     label06:
+        return;
+
+     label07:
+        $r31 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", "Error communicating with transport for restore");
+
+        $r30 = newarray (java.lang.Object)[0];
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2831, $r30);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mStatus> = 1;
+
+        $r33 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r34 = $r33.<com.android.server.BackupManagerService: com.android.server.BackupManagerService$BackupHandler mBackupHandler>;
+
+        virtualinvoke $r34.<com.android.server.BackupManagerService$BackupHandler: void removeMessages(int,java.lang.Object)>(20, r0);
+
+        $r35 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r35);
+
+        return;
+
+     label08:
+        $z1 = virtualinvoke r2.<java.lang.String: boolean equals(java.lang.Object)>("@pm@");
+
+        if $z1 != 0 goto label10;
+
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        $r18 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Expected restore data for \"@pm@\", found only \"");
+
+        $r22 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r23 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\"");
+
+        $r21 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", $r21);
+
+        $r25 = newarray (java.lang.Object)[2];
+
+        $r25[0] = "@pm@";
+
+        $r25[1] = "Package manager data missing";
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2832, $r25);
+
+        $r24 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r24);
+
+     label09:
+        return;
+
+     label10:
+        $r6 = new android.content.pm.PackageInfo;
+
+        specialinvoke $r6.<android.content.pm.PackageInfo: void <init>()>();
+
+        r3 = $r6;
+
+        r3.<android.content.pm.PackageInfo: java.lang.String packageName> = "@pm@";
+
+        $r8 = new com.android.server.PackageManagerBackupAgent;
+
+        $r7 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r10 = staticinvoke <com.android.server.BackupManagerService: android.content.pm.PackageManager access$600(com.android.server.BackupManagerService)>($r7);
+
+        $r9 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: java.util.List mAgentPackages>;
+
+        specialinvoke $r8.<com.android.server.PackageManagerBackupAgent: void <init>(android.content.pm.PackageManager,java.util.List)>($r10, $r9);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.PackageManagerBackupAgent mPmAgent> = $r8;
+
+        $r11 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.PackageManagerBackupAgent mPmAgent>;
+
+        $r13 = virtualinvoke $r11.<com.android.server.PackageManagerBackupAgent: android.os.IBinder onBind()>();
+
+        $r12 = staticinvoke <android.app.IBackupAgent$Stub: android.app.IBackupAgent asInterface(android.os.IBinder)>($r13);
+
+        $z2 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: boolean mNeedFullBackup>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void initiateOneRestore(android.content.pm.PackageInfo,int,android.app.IBackupAgent,boolean)>(r3, 0, $r12, $z2);
+
+        $r14 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.PackageManagerBackupAgent mPmAgent>;
+
+        $z3 = virtualinvoke $r14.<com.android.server.PackageManagerBackupAgent: boolean hasMetadata()>();
+
+        if $z3 != 0 goto label11;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", "No restore metadata available, so not restoring settings");
+
+        $r17 = newarray (java.lang.Object)[2];
+
+        $r17[0] = "@pm@";
+
+        $r17[1] = "Package manager restore metadata missing";
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2832, $r17);
+
+        r0.<com.android.server.BackupManagerService$PerformRestoreTask: int mStatus> = 1;
+
+        $r15 = r0.<com.android.server.BackupManagerService$PerformRestoreTask: com.android.server.BackupManagerService this$0>;
+
+        $r16 = $r15.<com.android.server.BackupManagerService: com.android.server.BackupManagerService$BackupHandler mBackupHandler>;
+
+        virtualinvoke $r16.<com.android.server.BackupManagerService$BackupHandler: void removeMessages(int,java.lang.Object)>(20, r0);
+
+        $r19 = <com.android.server.BackupManagerService$RestoreState: com.android.server.BackupManagerService$RestoreState FINAL>;
+
+        virtualinvoke r0.<com.android.server.BackupManagerService$PerformRestoreTask: void executeNextState(com.android.server.BackupManagerService$RestoreState)>($r19);
+
+     label11:
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label07;
+        catch android.os.RemoteException from label03 to label04 with label07;
+        catch android.os.RemoteException from label05 to label06 with label07;
+        catch android.os.RemoteException from label08 to label09 with label07;
+        catch android.os.RemoteException from label10 to label11 with label07;
+    }
+}

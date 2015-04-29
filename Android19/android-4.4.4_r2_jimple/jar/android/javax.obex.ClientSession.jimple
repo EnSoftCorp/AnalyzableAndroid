@@ -1,0 +1,1138 @@
+public final class javax.obex.ClientSession extends javax.obex.ObexSession
+{
+    private byte[] mConnectionId;
+    private final java.io.InputStream mInput;
+    private boolean mObexConnected;
+    private boolean mOpen;
+    private final java.io.OutputStream mOutput;
+    private boolean mRequestActive;
+    private int maxPacketSize;
+
+    public void <init>(javax.obex.ObexTransport) throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        javax.obex.ObexTransport r1;
+        java.io.InputStream $r2;
+        java.io.OutputStream $r3;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        r1 := @parameter0: javax.obex.ObexTransport;
+
+        specialinvoke r0.<javax.obex.ObexSession: void <init>()>();
+
+        r0.<javax.obex.ClientSession: byte[] mConnectionId> = null;
+
+        r0.<javax.obex.ClientSession: int maxPacketSize> = 256;
+
+        $r2 = interfaceinvoke r1.<javax.obex.ObexTransport: java.io.InputStream openInputStream()>();
+
+        r0.<javax.obex.ClientSession: java.io.InputStream mInput> = $r2;
+
+        $r3 = interfaceinvoke r1.<javax.obex.ObexTransport: java.io.OutputStream openOutputStream()>();
+
+        r0.<javax.obex.ClientSession: java.io.OutputStream mOutput> = $r3;
+
+        r0.<javax.obex.ClientSession: boolean mOpen> = 1;
+
+        r0.<javax.obex.ClientSession: boolean mRequestActive> = 0;
+
+        return;
+    }
+
+    private void setRequestActive() throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        java.lang.Throwable r1, $r3;
+        boolean $z0;
+        java.io.IOException $r2;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        entermonitor r0;
+
+     label1:
+        $z0 = r0.<javax.obex.ClientSession: boolean mRequestActive>;
+
+        if $z0 == 0 goto label3;
+
+        $r2 = new java.io.IOException;
+
+        specialinvoke $r2.<java.io.IOException: void <init>(java.lang.String)>("OBEX request is already being performed");
+
+        throw $r2;
+
+     label2:
+        $r3 := @caughtexception;
+
+        r1 = $r3;
+
+        exitmonitor r0;
+
+        throw r1;
+
+     label3:
+        r0.<javax.obex.ClientSession: boolean mRequestActive> = 1;
+
+     label4:
+        exitmonitor r0;
+
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label2;
+        catch java.lang.Throwable from label3 to label4 with label2;
+    }
+
+    public void close() throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        java.io.InputStream $r1;
+        java.io.OutputStream $r2;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        r0.<javax.obex.ClientSession: boolean mOpen> = 0;
+
+        $r1 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        virtualinvoke $r1.<java.io.InputStream: void close()>();
+
+        $r2 = r0.<javax.obex.ClientSession: java.io.OutputStream mOutput>;
+
+        virtualinvoke $r2.<java.io.OutputStream: void close()>();
+
+        return;
+    }
+
+    public javax.obex.HeaderSet connect(javax.obex.HeaderSet) throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        javax.obex.HeaderSet r1, r4, $r5;
+        int i0, $i1, $i2, $i3, $i4, $i5;
+        byte[] r2, r3, $r7, $r8, $r9, $r10;
+        boolean $z0;
+        java.io.IOException $r6, $r11;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        r1 := @parameter0: javax.obex.HeaderSet;
+
+        virtualinvoke r0.<javax.obex.ClientSession: void ensureOpen()>();
+
+        $z0 = r0.<javax.obex.ClientSession: boolean mObexConnected>;
+
+        if $z0 == 0 goto label1;
+
+        $r11 = new java.io.IOException;
+
+        specialinvoke $r11.<java.io.IOException: void <init>(java.lang.String)>("Already connected to server");
+
+        throw $r11;
+
+     label1:
+        specialinvoke r0.<javax.obex.ClientSession: void setRequestActive()>();
+
+        i0 = 4;
+
+        r2 = null;
+
+        if r1 == null goto label3;
+
+        $r7 = r1.<javax.obex.HeaderSet: byte[] nonce>;
+
+        if $r7 == null goto label2;
+
+        $r8 = newarray (byte)[16];
+
+        r0.<javax.obex.ClientSession: byte[] mChallengeDigest> = $r8;
+
+        $r9 = r1.<javax.obex.HeaderSet: byte[] nonce>;
+
+        $r10 = r0.<javax.obex.ClientSession: byte[] mChallengeDigest>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r9, 0, $r10, 0, 16);
+
+     label2:
+        r2 = staticinvoke <javax.obex.ObexHelper: byte[] createHeader(javax.obex.HeaderSet,boolean)>(r1, 0);
+
+        $i5 = lengthof r2;
+
+        i0 = i0 + $i5;
+
+     label3:
+        r3 = newarray (byte)[i0];
+
+        r3[0] = 16;
+
+        r3[1] = 0;
+
+        r3[2] = -1;
+
+        r3[3] = -2;
+
+        if r2 == null goto label4;
+
+        $i4 = lengthof r2;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>(r2, 0, r3, 4, $i4);
+
+     label4:
+        $i1 = lengthof r3;
+
+        $i2 = 3 + $i1;
+
+        if $i2 <= 65534 goto label5;
+
+        $r6 = new java.io.IOException;
+
+        specialinvoke $r6.<java.io.IOException: void <init>(java.lang.String)>("Packet size exceeds max packet size");
+
+        throw $r6;
+
+     label5:
+        $r5 = new javax.obex.HeaderSet;
+
+        specialinvoke $r5.<javax.obex.HeaderSet: void <init>()>();
+
+        r4 = $r5;
+
+        virtualinvoke r0.<javax.obex.ClientSession: boolean sendRequest(int,byte[],javax.obex.HeaderSet,javax.obex.PrivateInputStream)>(128, r3, r4, null);
+
+        $i3 = r4.<javax.obex.HeaderSet: int responseCode>;
+
+        if $i3 != 160 goto label6;
+
+        r0.<javax.obex.ClientSession: boolean mObexConnected> = 1;
+
+     label6:
+        virtualinvoke r0.<javax.obex.ClientSession: void setRequestInactive()>();
+
+        return r4;
+    }
+
+    public javax.obex.HeaderSet delete(javax.obex.HeaderSet) throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        javax.obex.HeaderSet r1, r3;
+        javax.obex.Operation r2;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        r1 := @parameter0: javax.obex.HeaderSet;
+
+        r2 = virtualinvoke r0.<javax.obex.ClientSession: javax.obex.Operation put(javax.obex.HeaderSet)>(r1);
+
+        interfaceinvoke r2.<javax.obex.Operation: int getResponseCode()>();
+
+        r3 = interfaceinvoke r2.<javax.obex.Operation: javax.obex.HeaderSet getReceivedHeader()>();
+
+        interfaceinvoke r2.<javax.obex.Operation: void close()>();
+
+        return r3;
+    }
+
+    public javax.obex.HeaderSet disconnect(javax.obex.HeaderSet) throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        javax.obex.HeaderSet r1, r4, $r6;
+        byte[] r2, r3, $r7, $r8, $r9, $r11, $r12, $r13, $r14, $r15, $r16;
+        java.lang.Throwable r5, $r17;
+        boolean $z0;
+        int $i0, $i1, $i2;
+        java.io.IOException $r10, $r18;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        r1 := @parameter0: javax.obex.HeaderSet;
+
+        $z0 = r0.<javax.obex.ClientSession: boolean mObexConnected>;
+
+        if $z0 != 0 goto label01;
+
+        $r18 = new java.io.IOException;
+
+        specialinvoke $r18.<java.io.IOException: void <init>(java.lang.String)>("Not connected to the server");
+
+        throw $r18;
+
+     label01:
+        specialinvoke r0.<javax.obex.ClientSession: void setRequestActive()>();
+
+        virtualinvoke r0.<javax.obex.ClientSession: void ensureOpen()>();
+
+        if r1 == null goto label04;
+
+        $r8 = r1.<javax.obex.HeaderSet: byte[] nonce>;
+
+        if $r8 == null goto label02;
+
+        $r13 = newarray (byte)[16];
+
+        r0.<javax.obex.ClientSession: byte[] mChallengeDigest> = $r13;
+
+        $r15 = r1.<javax.obex.HeaderSet: byte[] nonce>;
+
+        $r16 = r0.<javax.obex.ClientSession: byte[] mChallengeDigest>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r15, 0, $r16, 0, 16);
+
+     label02:
+        $r9 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        if $r9 == null goto label03;
+
+        $r12 = newarray (byte)[4];
+
+        r1.<javax.obex.HeaderSet: byte[] mConnectionID> = $r12;
+
+        $r14 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        $r11 = r1.<javax.obex.HeaderSet: byte[] mConnectionID>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r14, 0, $r11, 0, 4);
+
+     label03:
+        r3 = staticinvoke <javax.obex.ObexHelper: byte[] createHeader(javax.obex.HeaderSet,boolean)>(r1, 0);
+
+        $i1 = lengthof r3;
+
+        $i2 = 3 + $i1;
+
+        $i0 = r0.<javax.obex.ClientSession: int maxPacketSize>;
+
+        if $i2 <= $i0 goto label05;
+
+        $r10 = new java.io.IOException;
+
+        specialinvoke $r10.<java.io.IOException: void <init>(java.lang.String)>("Packet size exceeds max packet size");
+
+        throw $r10;
+
+     label04:
+        r2 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        r3 = null;
+
+        if r2 == null goto label05;
+
+        r3 = newarray (byte)[5];
+
+        r3[0] = -53;
+
+        $r7 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r7, 0, r3, 1, 4);
+
+     label05:
+        $r6 = new javax.obex.HeaderSet;
+
+        specialinvoke $r6.<javax.obex.HeaderSet: void <init>()>();
+
+        r4 = $r6;
+
+        virtualinvoke r0.<javax.obex.ClientSession: boolean sendRequest(int,byte[],javax.obex.HeaderSet,javax.obex.PrivateInputStream)>(129, r3, r4, null);
+
+        entermonitor r0;
+
+     label06:
+        r0.<javax.obex.ClientSession: boolean mObexConnected> = 0;
+
+        virtualinvoke r0.<javax.obex.ClientSession: void setRequestInactive()>();
+
+        exitmonitor r0;
+
+     label07:
+        return r4;
+
+     label08:
+        $r17 := @caughtexception;
+
+        r5 = $r17;
+
+     label09:
+        exitmonitor r0;
+
+     label10:
+        throw r5;
+
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public void ensureOpen() throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        java.lang.Throwable r1, $r3;
+        boolean $z0;
+        java.io.IOException $r2;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        entermonitor r0;
+
+     label1:
+        $z0 = r0.<javax.obex.ClientSession: boolean mOpen>;
+
+        if $z0 != 0 goto label3;
+
+        $r2 = new java.io.IOException;
+
+        specialinvoke $r2.<java.io.IOException: void <init>(java.lang.String)>("Connection closed");
+
+        throw $r2;
+
+     label2:
+        $r3 := @caughtexception;
+
+        r1 = $r3;
+
+        exitmonitor r0;
+
+        throw r1;
+
+     label3:
+        exitmonitor r0;
+
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label2;
+    }
+
+    public javax.obex.Operation get(javax.obex.HeaderSet) throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        javax.obex.HeaderSet r1, r2, $r12;
+        boolean $z0;
+        byte[] $r3, $r4, $r6, $r7, $r8, $r9, $r10, $r11;
+        javax.obex.ClientOperation $r5;
+        int $i0;
+        java.io.IOException $r13;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        r1 := @parameter0: javax.obex.HeaderSet;
+
+        $z0 = r0.<javax.obex.ClientSession: boolean mObexConnected>;
+
+        if $z0 != 0 goto label1;
+
+        $r13 = new java.io.IOException;
+
+        specialinvoke $r13.<java.io.IOException: void <init>(java.lang.String)>("Not connected to the server");
+
+        throw $r13;
+
+     label1:
+        specialinvoke r0.<javax.obex.ClientSession: void setRequestActive()>();
+
+        virtualinvoke r0.<javax.obex.ClientSession: void ensureOpen()>();
+
+        if r1 != null goto label4;
+
+        $r12 = new javax.obex.HeaderSet;
+
+        specialinvoke $r12.<javax.obex.HeaderSet: void <init>()>();
+
+        r2 = $r12;
+
+     label2:
+        $r4 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        if $r4 == null goto label3;
+
+        $r6 = newarray (byte)[4];
+
+        r2.<javax.obex.HeaderSet: byte[] mConnectionID> = $r6;
+
+        $r8 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        $r7 = r2.<javax.obex.HeaderSet: byte[] mConnectionID>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r8, 0, $r7, 0, 4);
+
+     label3:
+        $r5 = new javax.obex.ClientOperation;
+
+        $i0 = r0.<javax.obex.ClientSession: int maxPacketSize>;
+
+        specialinvoke $r5.<javax.obex.ClientOperation: void <init>(int,javax.obex.ClientSession,javax.obex.HeaderSet,boolean)>($i0, r0, r2, 1);
+
+        return $r5;
+
+     label4:
+        r2 = r1;
+
+        $r3 = r2.<javax.obex.HeaderSet: byte[] nonce>;
+
+        if $r3 == null goto label2;
+
+        $r9 = newarray (byte)[16];
+
+        r0.<javax.obex.ClientSession: byte[] mChallengeDigest> = $r9;
+
+        $r11 = r2.<javax.obex.HeaderSet: byte[] nonce>;
+
+        $r10 = r0.<javax.obex.ClientSession: byte[] mChallengeDigest>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r11, 0, $r10, 0, 16);
+
+        goto label2;
+    }
+
+    public long getConnectionID()
+    {
+        javax.obex.ClientSession r0;
+        byte[] $r1, $r2;
+        long $l0;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        $r1 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        if $r1 != null goto label1;
+
+        return -1L;
+
+     label1:
+        $r2 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        $l0 = staticinvoke <javax.obex.ObexHelper: long convertToLong(byte[])>($r2);
+
+        return $l0;
+    }
+
+    public javax.obex.Operation put(javax.obex.HeaderSet) throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        javax.obex.HeaderSet r1, r2, $r12;
+        boolean $z0;
+        byte[] $r3, $r4, $r6, $r7, $r8, $r9, $r10, $r11;
+        javax.obex.ClientOperation $r5;
+        int $i0;
+        java.io.IOException $r13;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        r1 := @parameter0: javax.obex.HeaderSet;
+
+        $z0 = r0.<javax.obex.ClientSession: boolean mObexConnected>;
+
+        if $z0 != 0 goto label1;
+
+        $r13 = new java.io.IOException;
+
+        specialinvoke $r13.<java.io.IOException: void <init>(java.lang.String)>("Not connected to the server");
+
+        throw $r13;
+
+     label1:
+        specialinvoke r0.<javax.obex.ClientSession: void setRequestActive()>();
+
+        virtualinvoke r0.<javax.obex.ClientSession: void ensureOpen()>();
+
+        if r1 != null goto label4;
+
+        $r12 = new javax.obex.HeaderSet;
+
+        specialinvoke $r12.<javax.obex.HeaderSet: void <init>()>();
+
+        r2 = $r12;
+
+     label2:
+        $r4 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        if $r4 == null goto label3;
+
+        $r6 = newarray (byte)[4];
+
+        r2.<javax.obex.HeaderSet: byte[] mConnectionID> = $r6;
+
+        $r8 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        $r7 = r2.<javax.obex.HeaderSet: byte[] mConnectionID>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r8, 0, $r7, 0, 4);
+
+     label3:
+        $r5 = new javax.obex.ClientOperation;
+
+        $i0 = r0.<javax.obex.ClientSession: int maxPacketSize>;
+
+        specialinvoke $r5.<javax.obex.ClientOperation: void <init>(int,javax.obex.ClientSession,javax.obex.HeaderSet,boolean)>($i0, r0, r2, 0);
+
+        return $r5;
+
+     label4:
+        r2 = r1;
+
+        $r3 = r2.<javax.obex.HeaderSet: byte[] nonce>;
+
+        if $r3 == null goto label2;
+
+        $r9 = newarray (byte)[16];
+
+        r0.<javax.obex.ClientSession: byte[] mChallengeDigest> = $r9;
+
+        $r11 = r2.<javax.obex.HeaderSet: byte[] nonce>;
+
+        $r10 = r0.<javax.obex.ClientSession: byte[] mChallengeDigest>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r11, 0, $r10, 0, 16);
+
+        goto label2;
+    }
+
+    public boolean sendRequest(int, byte[], javax.obex.HeaderSet, javax.obex.PrivateInputStream) throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        int i0, i1, i2, i3, $i5, $i6, $i8, $i9, $i10, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i21, $i22, $i24, $i25, $i26, $i27, $i28, $i29, $i31, $i32, $i33, $i34, $i35, $i36, $i38, $i39, $i40, $i41, $i42, $i43, $i44, $i45;
+        byte[] r1, r5, r6, r7, $r11, $r16, $r17, $r18, $r19, $r20, $r21, $r22, $r23, $r24, $r25, $r29;
+        javax.obex.HeaderSet r2;
+        javax.obex.PrivateInputStream r3;
+        java.io.ByteArrayOutputStream r4, $r8;
+        byte $b4, $b7, $b11, $b20, $b23;
+        java.io.OutputStream $r9, $r10;
+        java.io.InputStream $r12, $r13, $r14, $r15, $r27, $r28, $r30, $r31, $r32, $r33, $r34;
+        boolean $z0, $z1, $z2;
+        java.io.IOException $r26, $r35, $r36;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: byte[];
+
+        r2 := @parameter2: javax.obex.HeaderSet;
+
+        r3 := @parameter3: javax.obex.PrivateInputStream;
+
+        if r1 == null goto label01;
+
+        $i44 = lengthof r1;
+
+        $i45 = 3 + $i44;
+
+        if $i45 <= 65534 goto label01;
+
+        $r36 = new java.io.IOException;
+
+        specialinvoke $r36.<java.io.IOException: void <init>(java.lang.String)>("header too large ");
+
+        throw $r36;
+
+     label01:
+        $r8 = new java.io.ByteArrayOutputStream;
+
+        specialinvoke $r8.<java.io.ByteArrayOutputStream: void <init>()>();
+
+        r4 = $r8;
+
+        $b4 = (byte) i0;
+
+        virtualinvoke r4.<java.io.ByteArrayOutputStream: void write(int)>($b4);
+
+        if r1 != null goto label03;
+
+        virtualinvoke r4.<java.io.ByteArrayOutputStream: void write(int)>(0);
+
+        virtualinvoke r4.<java.io.ByteArrayOutputStream: void write(int)>(3);
+
+     label02:
+        $r9 = r0.<javax.obex.ClientSession: java.io.OutputStream mOutput>;
+
+        $r11 = virtualinvoke r4.<java.io.ByteArrayOutputStream: byte[] toByteArray()>();
+
+        virtualinvoke $r9.<java.io.OutputStream: void write(byte[])>($r11);
+
+        $r10 = r0.<javax.obex.ClientSession: java.io.OutputStream mOutput>;
+
+        virtualinvoke $r10.<java.io.OutputStream: void flush()>();
+
+        $r12 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        $i12 = virtualinvoke $r12.<java.io.InputStream: int read()>();
+
+        r2.<javax.obex.HeaderSet: int responseCode> = $i12;
+
+        $r13 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        $i13 = virtualinvoke $r13.<java.io.InputStream: int read()>();
+
+        $i14 = $i13 << 8;
+
+        $r14 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        $i15 = virtualinvoke $r14.<java.io.InputStream: int read()>();
+
+        i1 = $i14 | $i15;
+
+        if i1 <= 65534 goto label04;
+
+        $r35 = new java.io.IOException;
+
+        specialinvoke $r35.<java.io.IOException: void <init>(java.lang.String)>("Packet received exceeds packet size limit");
+
+        throw $r35;
+
+     label03:
+        $i6 = lengthof r1;
+
+        $i5 = 3 + $i6;
+
+        $i8 = $i5 >> 8;
+
+        $b7 = (byte) $i8;
+
+        virtualinvoke r4.<java.io.ByteArrayOutputStream: void write(int)>($b7);
+
+        $i10 = lengthof r1;
+
+        $i9 = 3 + $i10;
+
+        $b11 = (byte) $i9;
+
+        virtualinvoke r4.<java.io.ByteArrayOutputStream: void write(int)>($b11);
+
+        virtualinvoke r4.<java.io.ByteArrayOutputStream: void write(byte[])>(r1);
+
+        goto label02;
+
+     label04:
+        if i1 <= 3 goto label15;
+
+        if i0 != 128 goto label08;
+
+        $r27 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        virtualinvoke $r27.<java.io.InputStream: int read()>();
+
+        $r28 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        virtualinvoke $r28.<java.io.InputStream: int read()>();
+
+        $r31 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        $i38 = virtualinvoke $r31.<java.io.InputStream: int read()>();
+
+        $i33 = $i38 << 8;
+
+        $r32 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        $i34 = virtualinvoke $r32.<java.io.InputStream: int read()>();
+
+        $i35 = $i33 + $i34;
+
+        r0.<javax.obex.ClientSession: int maxPacketSize> = $i35;
+
+        $i36 = r0.<javax.obex.ClientSession: int maxPacketSize>;
+
+        if $i36 <= 64512 goto label05;
+
+        r0.<javax.obex.ClientSession: int maxPacketSize> = 64512;
+
+     label05:
+        if i1 <= 7 goto label07;
+
+        $i42 = i1 - 7;
+
+        r5 = newarray (byte)[$i42];
+
+        $r34 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        i3 = virtualinvoke $r34.<java.io.InputStream: int read(byte[])>(r5);
+
+     label06:
+        $i43 = i1 - 7;
+
+        if i3 == $i43 goto label11;
+
+        $r33 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        $i40 = lengthof r5;
+
+        $i39 = $i40 - i3;
+
+        $i41 = virtualinvoke $r33.<java.io.InputStream: int read(byte[],int,int)>(r5, i3, $i39);
+
+        i3 = i3 + $i41;
+
+        goto label06;
+
+     label07:
+        return 1;
+
+     label08:
+        $i16 = i1 - 3;
+
+        r5 = newarray (byte)[$i16];
+
+        $r15 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        i2 = virtualinvoke $r15.<java.io.InputStream: int read(byte[])>(r5);
+
+     label09:
+        $i17 = i1 - 3;
+
+        if i2 == $i17 goto label10;
+
+        $r30 = r0.<javax.obex.ClientSession: java.io.InputStream mInput>;
+
+        $i31 = lengthof r5;
+
+        $i32 = $i31 - i2;
+
+        $i29 = virtualinvoke $r30.<java.io.InputStream: int read(byte[],int,int)>(r5, i2, $i32);
+
+        i2 = i2 + $i29;
+
+        goto label09;
+
+     label10:
+        if i0 != 255 goto label11;
+
+        return 1;
+
+     label11:
+        r6 = staticinvoke <javax.obex.ObexHelper: byte[] updateHeaderSet(javax.obex.HeaderSet,byte[])>(r2, r5);
+
+        if r3 == null goto label12;
+
+        if r6 == null goto label12;
+
+        virtualinvoke r3.<javax.obex.PrivateInputStream: void writeBytes(byte[],int)>(r6, 1);
+
+     label12:
+        $r16 = r2.<javax.obex.HeaderSet: byte[] mConnectionID>;
+
+        if $r16 == null goto label13;
+
+        $r25 = newarray (byte)[4];
+
+        r0.<javax.obex.ClientSession: byte[] mConnectionId> = $r25;
+
+        $r29 = r2.<javax.obex.HeaderSet: byte[] mConnectionID>;
+
+        $r24 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r29, 0, $r24, 0, 4);
+
+     label13:
+        $r17 = r2.<javax.obex.HeaderSet: byte[] mAuthResp>;
+
+        if $r17 == null goto label14;
+
+        $r22 = r2.<javax.obex.HeaderSet: byte[] mAuthResp>;
+
+        $z2 = virtualinvoke r0.<javax.obex.ClientSession: boolean handleAuthResp(byte[])>($r22);
+
+        if $z2 != 0 goto label14;
+
+        virtualinvoke r0.<javax.obex.ClientSession: void setRequestInactive()>();
+
+        $r26 = new java.io.IOException;
+
+        specialinvoke $r26.<java.io.IOException: void <init>(java.lang.String)>("Authentication Failed");
+
+        throw $r26;
+
+     label14:
+        $i18 = r2.<javax.obex.HeaderSet: int responseCode>;
+
+        if $i18 != 193 goto label15;
+
+        $r19 = r2.<javax.obex.HeaderSet: byte[] mAuthChall>;
+
+        if $r19 == null goto label15;
+
+        $z0 = virtualinvoke r0.<javax.obex.ClientSession: boolean handleAuthChall(javax.obex.HeaderSet)>(r2);
+
+        if $z0 == 0 goto label15;
+
+        virtualinvoke r4.<java.io.ByteArrayOutputStream: void write(int)>(78);
+
+        $r18 = r2.<javax.obex.HeaderSet: byte[] mAuthResp>;
+
+        $i21 = lengthof $r18;
+
+        $i22 = 3 + $i21;
+
+        $i19 = $i22 >> 8;
+
+        $b20 = (byte) $i19;
+
+        virtualinvoke r4.<java.io.ByteArrayOutputStream: void write(int)>($b20);
+
+        $r20 = r2.<javax.obex.HeaderSet: byte[] mAuthResp>;
+
+        $i25 = lengthof $r20;
+
+        $i24 = 3 + $i25;
+
+        $b23 = (byte) $i24;
+
+        virtualinvoke r4.<java.io.ByteArrayOutputStream: void write(int)>($b23);
+
+        $r21 = r2.<javax.obex.HeaderSet: byte[] mAuthResp>;
+
+        virtualinvoke r4.<java.io.ByteArrayOutputStream: void write(byte[])>($r21);
+
+        r2.<javax.obex.HeaderSet: byte[] mAuthChall> = null;
+
+        r2.<javax.obex.HeaderSet: byte[] mAuthResp> = null;
+
+        $i27 = virtualinvoke r4.<java.io.ByteArrayOutputStream: int size()>();
+
+        $i26 = -3 + $i27;
+
+        r7 = newarray (byte)[$i26];
+
+        $r23 = virtualinvoke r4.<java.io.ByteArrayOutputStream: byte[] toByteArray()>();
+
+        $i28 = lengthof r7;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r23, 3, r7, 0, $i28);
+
+        $z1 = virtualinvoke r0.<javax.obex.ClientSession: boolean sendRequest(int,byte[],javax.obex.HeaderSet,javax.obex.PrivateInputStream)>(i0, r7, r2, r3);
+
+        return $z1;
+
+     label15:
+        return 1;
+    }
+
+    public void setAuthenticator(javax.obex.Authenticator) throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        javax.obex.Authenticator r1;
+        java.io.IOException $r2;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        r1 := @parameter0: javax.obex.Authenticator;
+
+        if r1 != null goto label1;
+
+        $r2 = new java.io.IOException;
+
+        specialinvoke $r2.<java.io.IOException: void <init>(java.lang.String)>("Authenticator may not be null");
+
+        throw $r2;
+
+     label1:
+        r0.<javax.obex.ClientSession: javax.obex.Authenticator mAuthenticator> = r1;
+
+        return;
+    }
+
+    public void setConnectionID(long)
+    {
+        javax.obex.ClientSession r0;
+        long l0;
+        byte $b1, $b2;
+        java.lang.IllegalArgumentException $r1;
+        byte[] $r2;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        l0 := @parameter0: long;
+
+        $b1 = l0 cmp 0L;
+
+        if $b1 < 0 goto label1;
+
+        $b2 = l0 cmp 4294967295L;
+
+        if $b2 <= 0 goto label2;
+
+     label1:
+        $r1 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r1.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Connection ID is not in a valid range");
+
+        throw $r1;
+
+     label2:
+        $r2 = staticinvoke <javax.obex.ObexHelper: byte[] convertToByteArray(long)>(l0);
+
+        r0.<javax.obex.ClientSession: byte[] mConnectionId> = $r2;
+
+        return;
+    }
+
+    public javax.obex.HeaderSet setPath(javax.obex.HeaderSet, boolean, boolean) throws java.io.IOException
+    {
+        javax.obex.ClientSession r0;
+        javax.obex.HeaderSet r1, r2, r5, $r9, $r19;
+        boolean z0, z1, $z2;
+        byte[] r3, r4, $r6, $r7, $r8, $r11, $r12, $r13, $r14, $r15, $r16, $r17, $r18, $r20;
+        int i0, i1, $i2, $i4, $i5;
+        byte $b3;
+        java.io.IOException $r10, $r21;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        r1 := @parameter0: javax.obex.HeaderSet;
+
+        z0 := @parameter1: boolean;
+
+        z1 := @parameter2: boolean;
+
+        $z2 = r0.<javax.obex.ClientSession: boolean mObexConnected>;
+
+        if $z2 != 0 goto label1;
+
+        $r21 = new java.io.IOException;
+
+        specialinvoke $r21.<java.io.IOException: void <init>(java.lang.String)>("Not connected to the server");
+
+        throw $r21;
+
+     label1:
+        specialinvoke r0.<javax.obex.ClientSession: void setRequestActive()>();
+
+        virtualinvoke r0.<javax.obex.ClientSession: void ensureOpen()>();
+
+        if r1 != null goto label5;
+
+        $r19 = new javax.obex.HeaderSet;
+
+        specialinvoke $r19.<javax.obex.HeaderSet: void <init>()>();
+
+        r2 = $r19;
+
+     label2:
+        $r7 = r2.<javax.obex.HeaderSet: byte[] nonce>;
+
+        if $r7 == null goto label3;
+
+        $r13 = newarray (byte)[16];
+
+        r0.<javax.obex.ClientSession: byte[] mChallengeDigest> = $r13;
+
+        $r15 = r2.<javax.obex.HeaderSet: byte[] nonce>;
+
+        $r16 = r0.<javax.obex.ClientSession: byte[] mChallengeDigest>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r15, 0, $r16, 0, 16);
+
+     label3:
+        $r8 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        if $r8 == null goto label4;
+
+        $r12 = newarray (byte)[4];
+
+        r2.<javax.obex.HeaderSet: byte[] mConnectionID> = $r12;
+
+        $r14 = r0.<javax.obex.ClientSession: byte[] mConnectionId>;
+
+        $r11 = r2.<javax.obex.HeaderSet: byte[] mConnectionID>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r14, 0, $r11, 0, 4);
+
+     label4:
+        r3 = staticinvoke <javax.obex.ObexHelper: byte[] createHeader(javax.obex.HeaderSet,boolean)>(r2, 0);
+
+        $i2 = lengthof r3;
+
+        i0 = 2 + $i2;
+
+        $i4 = r0.<javax.obex.ClientSession: int maxPacketSize>;
+
+        if i0 <= $i4 goto label6;
+
+        $r10 = new java.io.IOException;
+
+        specialinvoke $r10.<java.io.IOException: void <init>(java.lang.String)>("Packet size exceeds max packet size");
+
+        throw $r10;
+
+     label5:
+        r2 = r1;
+
+        $r6 = r2.<javax.obex.HeaderSet: byte[] nonce>;
+
+        if $r6 == null goto label2;
+
+        $r18 = newarray (byte)[16];
+
+        r0.<javax.obex.ClientSession: byte[] mChallengeDigest> = $r18;
+
+        $r20 = r2.<javax.obex.HeaderSet: byte[] nonce>;
+
+        $r17 = r0.<javax.obex.ClientSession: byte[] mChallengeDigest>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>($r20, 0, $r17, 0, 16);
+
+        goto label2;
+
+     label6:
+        i1 = 0;
+
+        if z0 == 0 goto label7;
+
+        i1 = 0 + 1;
+
+     label7:
+        if z1 != 0 goto label8;
+
+        i1 = i1 | 2;
+
+     label8:
+        r4 = newarray (byte)[i0];
+
+        $b3 = (byte) i1;
+
+        r4[0] = $b3;
+
+        r4[1] = 0;
+
+        if r2 == null goto label9;
+
+        $i5 = lengthof r3;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>(r3, 0, r4, 2, $i5);
+
+     label9:
+        $r9 = new javax.obex.HeaderSet;
+
+        specialinvoke $r9.<javax.obex.HeaderSet: void <init>()>();
+
+        r5 = $r9;
+
+        virtualinvoke r0.<javax.obex.ClientSession: boolean sendRequest(int,byte[],javax.obex.HeaderSet,javax.obex.PrivateInputStream)>(133, r4, r5, null);
+
+        virtualinvoke r0.<javax.obex.ClientSession: void setRequestInactive()>();
+
+        return r5;
+    }
+
+    void setRequestInactive()
+    {
+        javax.obex.ClientSession r0;
+        java.lang.Throwable r1, $r2;
+
+        r0 := @this: javax.obex.ClientSession;
+
+        entermonitor r0;
+
+     label1:
+        r0.<javax.obex.ClientSession: boolean mRequestActive> = 0;
+
+     label2:
+        exitmonitor r0;
+
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        r1 = $r2;
+
+        exitmonitor r0;
+
+        throw r1;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+}

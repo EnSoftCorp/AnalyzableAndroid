@@ -1,0 +1,935 @@
+public class com.android.internal.content.PackageHelper extends java.lang.Object
+{
+    public static final int APP_INSTALL_AUTO;
+    public static final int APP_INSTALL_EXTERNAL;
+    public static final int APP_INSTALL_INTERNAL;
+    public static final int RECOMMEND_FAILED_ALREADY_EXISTS;
+    public static final int RECOMMEND_FAILED_INSUFFICIENT_STORAGE;
+    public static final int RECOMMEND_FAILED_INVALID_APK;
+    public static final int RECOMMEND_FAILED_INVALID_LOCATION;
+    public static final int RECOMMEND_FAILED_INVALID_URI;
+    public static final int RECOMMEND_FAILED_VERSION_DOWNGRADE;
+    public static final int RECOMMEND_INSTALL_EXTERNAL;
+    public static final int RECOMMEND_INSTALL_INTERNAL;
+    public static final int RECOMMEND_MEDIA_UNAVAILABLE;
+    private static final java.lang.String TAG;
+    private static final boolean localLOGV;
+
+    public void <init>()
+    {
+        com.android.internal.content.PackageHelper r0;
+
+        r0 := @this: com.android.internal.content.PackageHelper;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        return;
+    }
+
+    private static void copyZipEntry(java.util.zip.ZipEntry, java.util.zip.ZipFile, java.util.zip.ZipOutputStream) throws java.io.IOException
+    {
+        java.util.zip.ZipEntry r0, r4, $r7, $r9;
+        java.util.zip.ZipFile r1;
+        java.util.zip.ZipOutputStream r2;
+        byte[] r3;
+        java.io.InputStream r5;
+        java.lang.Throwable r6, $r10;
+        int i0, $i1;
+        java.lang.String $r8;
+
+        r0 := @parameter0: java.util.zip.ZipEntry;
+
+        r1 := @parameter1: java.util.zip.ZipFile;
+
+        r2 := @parameter2: java.util.zip.ZipOutputStream;
+
+        r3 = newarray (byte)[4096];
+
+        $i1 = virtualinvoke r0.<java.util.zip.ZipEntry: int getMethod()>();
+
+        if $i1 != 0 goto label7;
+
+        $r9 = new java.util.zip.ZipEntry;
+
+        specialinvoke $r9.<java.util.zip.ZipEntry: void <init>(java.util.zip.ZipEntry)>(r0);
+
+        r4 = $r9;
+
+     label1:
+        virtualinvoke r2.<java.util.zip.ZipOutputStream: void putNextEntry(java.util.zip.ZipEntry)>(r4);
+
+        r5 = virtualinvoke r1.<java.util.zip.ZipFile: java.io.InputStream getInputStream(java.util.zip.ZipEntry)>(r0);
+
+     label2:
+        i0 = virtualinvoke r5.<java.io.InputStream: int read(byte[])>(r3);
+
+     label3:
+        if i0 <= 0 goto label8;
+
+     label4:
+        virtualinvoke r2.<java.util.zip.ZipOutputStream: void write(byte[],int,int)>(r3, 0, i0);
+
+     label5:
+        goto label2;
+
+     label6:
+        $r10 := @caughtexception;
+
+        r6 = $r10;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r5);
+
+        throw r6;
+
+     label7:
+        $r7 = new java.util.zip.ZipEntry;
+
+        $r8 = virtualinvoke r0.<java.util.zip.ZipEntry: java.lang.String getName()>();
+
+        specialinvoke $r7.<java.util.zip.ZipEntry: void <init>(java.lang.String)>($r8);
+
+        r4 = $r7;
+
+        goto label1;
+
+     label8:
+        virtualinvoke r2.<java.util.zip.ZipOutputStream: void flush()>();
+
+     label9:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r5);
+
+        return;
+
+        catch java.lang.Throwable from label2 to label3 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label8 to label9 with label6;
+    }
+
+    public static java.lang.String createSdDir(int, java.lang.String, java.lang.String, int, boolean)
+    {
+        int i0, i1, $i2;
+        java.lang.String r0, r1, r4, $r8;
+        boolean z0;
+        android.os.storage.IMountService r3;
+        java.lang.StringBuilder $r5, $r6, $r7;
+        android.os.RemoteException $r9;
+
+        i0 := @parameter0: int;
+
+        r0 := @parameter1: java.lang.String;
+
+        r1 := @parameter2: java.lang.String;
+
+        i1 := @parameter3: int;
+
+        z0 := @parameter4: boolean;
+
+     label1:
+        r3 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        $i2 = interfaceinvoke r3.<android.os.storage.IMountService: int createSecureContainer(java.lang.String,int,java.lang.String,java.lang.String,int,boolean)>(r0, i0, "ext4", r1, i1, z0);
+
+        if $i2 == 0 goto label3;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to create secure container ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", $r8);
+
+     label2:
+        return null;
+
+     label3:
+        r4 = interfaceinvoke r3.<android.os.storage.IMountService: java.lang.String getSecureContainerPath(java.lang.String)>(r0);
+
+     label4:
+        return r4;
+
+     label5:
+        $r9 := @caughtexception;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", "MountService running?");
+
+        return null;
+
+        catch android.os.RemoteException from label1 to label2 with label5;
+        catch android.os.RemoteException from label3 to label4 with label5;
+    }
+
+    public static boolean destroySdDir(java.lang.String)
+    {
+        java.lang.String r0, $r6, $r12;
+        android.os.RemoteException r1, $r7;
+        android.os.storage.IMountService $r2;
+        int $i0;
+        java.lang.StringBuilder $r3, $r4, $r5, $r8, $r9, $r10, $r11, $r13;
+
+        r0 := @parameter0: java.lang.String;
+
+     label1:
+        $r2 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        $i0 = interfaceinvoke $r2.<android.os.storage.IMountService: int destroySecureContainer(java.lang.String,boolean)>(r0, 1);
+
+        if $i0 == 0 goto label3;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to destroy container ");
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("PackageHelper", $r6);
+
+     label2:
+        return 0;
+
+     label3:
+        return 1;
+
+     label4:
+        $r7 := @caughtexception;
+
+        r1 = $r7;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to destroy container ");
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" with exception ");
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", $r12);
+
+        return 0;
+
+        catch android.os.RemoteException from label1 to label2 with label4;
+    }
+
+    public static int extractPublicFiles(java.lang.String, java.io.File) throws java.io.IOException
+    {
+        java.lang.String r0, r11, $r17, $r19, $r21;
+        java.io.File r1;
+        java.io.FileOutputStream r2, $r12;
+        java.util.zip.ZipOutputStream r3, $r14;
+        int i0;
+        java.util.zip.ZipFile r4, $r13;
+        java.lang.Throwable r5, r7, $r23, $r24;
+        java.util.Iterator r8;
+        java.util.zip.ZipEntry r10;
+        java.util.ArrayList $r15;
+        java.util.Enumeration $r16;
+        boolean $z0, $z2, $z3, $z4;
+        java.lang.Object $r18;
+        long $l2, $l3, $l4;
+        java.io.IOException $r20, $r22;
+
+        r0 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.io.File;
+
+        if r1 != null goto label13;
+
+        r2 = null;
+
+        r3 = null;
+
+     label01:
+        i0 = 0;
+
+     label02:
+        $r13 = new java.util.zip.ZipFile;
+
+        specialinvoke $r13.<java.util.zip.ZipFile: void <init>(java.lang.String)>(r0);
+
+        r4 = $r13;
+
+     label03:
+        $r16 = virtualinvoke r4.<java.util.zip.ZipFile: java.util.Enumeration entries()>();
+
+        $r15 = staticinvoke <java.util.Collections: java.util.ArrayList list(java.util.Enumeration)>($r16);
+
+        r8 = virtualinvoke $r15.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label04:
+        $z0 = interfaceinvoke r8.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label14;
+
+        $r18 = interfaceinvoke r8.<java.util.Iterator: java.lang.Object next()>();
+
+        r10 = (java.util.zip.ZipEntry) $r18;
+
+        r11 = virtualinvoke r10.<java.util.zip.ZipEntry: java.lang.String getName()>();
+
+        $r19 = "AndroidManifest.xml";
+
+        $z2 = virtualinvoke $r19.<java.lang.String: boolean equals(java.lang.Object)>(r11);
+
+        if $z2 != 0 goto label05;
+
+        $r21 = "resources.arsc";
+
+        $z4 = virtualinvoke $r21.<java.lang.String: boolean equals(java.lang.Object)>(r11);
+
+        if $z4 != 0 goto label05;
+
+        $z3 = virtualinvoke r11.<java.lang.String: boolean startsWith(java.lang.String)>("res/");
+
+        if $z3 == 0 goto label04;
+
+     label05:
+        $l2 = (long) i0;
+
+        $l4 = virtualinvoke r10.<java.util.zip.ZipEntry: long getSize()>();
+
+        $l3 = $l2 + $l4;
+
+        i0 = (int) $l3;
+
+     label06:
+        if r1 == null goto label04;
+
+     label07:
+        staticinvoke <com.android.internal.content.PackageHelper: void copyZipEntry(java.util.zip.ZipEntry,java.util.zip.ZipFile,java.util.zip.ZipOutputStream)>(r10, r4, r3);
+
+     label08:
+        goto label04;
+
+     label09:
+        $r24 := @caughtexception;
+
+        r5 = $r24;
+
+     label10:
+        virtualinvoke r4.<java.util.zip.ZipFile: void close()>();
+
+     label11:
+        throw r5;
+
+     label12:
+        $r23 := @caughtexception;
+
+        r7 = $r23;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r3);
+
+        throw r7;
+
+     label13:
+        $r12 = new java.io.FileOutputStream;
+
+        specialinvoke $r12.<java.io.FileOutputStream: void <init>(java.io.File)>(r1);
+
+        r2 = $r12;
+
+        $r14 = new java.util.zip.ZipOutputStream;
+
+        specialinvoke $r14.<java.util.zip.ZipOutputStream: void <init>(java.io.OutputStream)>(r2);
+
+        r3 = $r14;
+
+        goto label01;
+
+     label14:
+        virtualinvoke r4.<java.util.zip.ZipFile: void close()>();
+
+     label15:
+        if r1 == null goto label17;
+
+     label16:
+        virtualinvoke r3.<java.util.zip.ZipOutputStream: void finish()>();
+
+        virtualinvoke r3.<java.util.zip.ZipOutputStream: void flush()>();
+
+        staticinvoke <android.os.FileUtils: boolean sync(java.io.FileOutputStream)>(r2);
+
+        virtualinvoke r3.<java.util.zip.ZipOutputStream: void close()>();
+
+        $r17 = virtualinvoke r1.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        staticinvoke <android.os.FileUtils: int setPermissions(java.lang.String,int,int,int)>($r17, 420, -1, -1);
+
+     label17:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r3);
+
+        return i0;
+
+     label18:
+        $r20 := @caughtexception;
+
+        goto label15;
+
+     label19:
+        $r22 := @caughtexception;
+
+        goto label11;
+
+        catch java.lang.Throwable from label02 to label03 with label12;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label05 to label06 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.io.IOException from label10 to label11 with label19;
+        catch java.lang.Throwable from label10 to label11 with label12;
+        catch java.lang.Throwable from label11 to label12 with label12;
+        catch java.io.IOException from label14 to label15 with label18;
+        catch java.lang.Throwable from label14 to label15 with label12;
+        catch java.lang.Throwable from label16 to label17 with label12;
+    }
+
+    public static boolean finalizeSdDir(java.lang.String)
+    {
+        java.lang.String r0, $r6, $r12;
+        android.os.RemoteException r1, $r7;
+        android.os.storage.IMountService $r2;
+        int $i0;
+        java.lang.StringBuilder $r3, $r4, $r5, $r8, $r9, $r10, $r11, $r13;
+
+        r0 := @parameter0: java.lang.String;
+
+     label1:
+        $r2 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        $i0 = interfaceinvoke $r2.<android.os.storage.IMountService: int finalizeSecureContainer(java.lang.String)>(r0);
+
+        if $i0 == 0 goto label3;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to finalize container ");
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("PackageHelper", $r6);
+
+     label2:
+        return 0;
+
+     label3:
+        return 1;
+
+     label4:
+        $r7 := @caughtexception;
+
+        r1 = $r7;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to finalize container ");
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" with exception ");
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r12 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", $r12);
+
+        return 0;
+
+        catch android.os.RemoteException from label1 to label2 with label4;
+    }
+
+    public static boolean fixSdPermissions(java.lang.String, int, java.lang.String)
+    {
+        java.lang.String r0, r1, $r7, $r13;
+        int i0, $i1;
+        android.os.RemoteException r2, $r8;
+        android.os.storage.IMountService $r3;
+        java.lang.StringBuilder $r4, $r5, $r6, $r9, $r10, $r11, $r12, $r14;
+
+        r0 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+     label1:
+        $r3 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        $i1 = interfaceinvoke $r3.<android.os.storage.IMountService: int fixPermissionsSecureContainer(java.lang.String,int,java.lang.String)>(r0, i0, r1);
+
+        if $i1 == 0 goto label3;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to fixperms container ");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("PackageHelper", $r7);
+
+     label2:
+        return 0;
+
+     label3:
+        return 1;
+
+     label4:
+        $r8 := @caughtexception;
+
+        r2 = $r8;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to fixperms container ");
+
+        $r12 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r11 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" with exception ");
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r13 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", $r13);
+
+        return 0;
+
+        catch android.os.RemoteException from label1 to label2 with label4;
+    }
+
+    public static android.os.storage.IMountService getMountService() throws android.os.RemoteException
+    {
+        android.os.IBinder r0;
+        android.os.RemoteException $r1;
+        android.os.storage.IMountService $r2;
+
+        r0 = staticinvoke <android.os.ServiceManager: android.os.IBinder getService(java.lang.String)>("mount");
+
+        if r0 == null goto label1;
+
+        $r2 = staticinvoke <android.os.storage.IMountService$Stub: android.os.storage.IMountService asInterface(android.os.IBinder)>(r0);
+
+        return $r2;
+
+     label1:
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", "Can\'t get mount service");
+
+        $r1 = new android.os.RemoteException;
+
+        specialinvoke $r1.<android.os.RemoteException: void <init>(java.lang.String)>("Could not contact mount service");
+
+        throw $r1;
+    }
+
+    public static java.lang.String getSdDir(java.lang.String)
+    {
+        java.lang.String r0, r2, $r10;
+        android.os.RemoteException r1, $r4;
+        android.os.storage.IMountService $r3;
+        java.lang.StringBuilder $r5, $r6, $r7, $r8, $r9;
+
+        r0 := @parameter0: java.lang.String;
+
+     label1:
+        $r3 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        r2 = interfaceinvoke $r3.<android.os.storage.IMountService: java.lang.String getSecureContainerPath(java.lang.String)>(r0);
+
+     label2:
+        return r2;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to get container path for ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" with exception ");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", $r10);
+
+        return null;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    public static java.lang.String getSdFilesystem(java.lang.String)
+    {
+        java.lang.String r0, r2, $r10;
+        android.os.RemoteException r1, $r4;
+        android.os.storage.IMountService $r3;
+        java.lang.StringBuilder $r5, $r6, $r7, $r8, $r9;
+
+        r0 := @parameter0: java.lang.String;
+
+     label1:
+        $r3 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        r2 = interfaceinvoke $r3.<android.os.storage.IMountService: java.lang.String getSecureContainerFilesystemPath(java.lang.String)>(r0);
+
+     label2:
+        return r2;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r1 = $r4;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to get container path for ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" with exception ");
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", $r10);
+
+        return null;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    public static java.lang.String[] getSecureContainerList()
+    {
+        android.os.RemoteException r0, $r3;
+        java.lang.String[] r1;
+        android.os.storage.IMountService $r2;
+        java.lang.StringBuilder $r4, $r5, $r6;
+        java.lang.String $r7;
+
+     label1:
+        $r2 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        r1 = interfaceinvoke $r2.<android.os.storage.IMountService: java.lang.String[] getSecureContainerList()>();
+
+     label2:
+        return r1;
+
+     label3:
+        $r3 := @caughtexception;
+
+        r0 = $r3;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to get secure container list with exception");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r0);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", $r7);
+
+        return null;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    public static boolean isContainerMounted(java.lang.String)
+    {
+        java.lang.String r0, $r8;
+        boolean z0;
+        android.os.storage.IMountService $r2;
+        android.os.RemoteException $r3;
+        java.lang.StringBuilder $r4, $r5, $r6, $r7;
+
+        r0 := @parameter0: java.lang.String;
+
+     label1:
+        $r2 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        z0 = interfaceinvoke $r2.<android.os.storage.IMountService: boolean isSecureContainerMounted(java.lang.String)>(r0);
+
+     label2:
+        return z0;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to find out if container ");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mounted");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", $r8);
+
+        return 0;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    public static java.lang.String mountSdDir(java.lang.String, java.lang.String, int)
+    {
+        java.lang.String r0, r1, r3, $r11;
+        int i0, i1;
+        android.os.storage.IMountService $r4, $r5;
+        java.lang.StringBuilder $r6, $r7, $r8, $r9, $r10;
+        android.os.RemoteException $r12;
+
+        r0 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+     label1:
+        $r4 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        i1 = interfaceinvoke $r4.<android.os.storage.IMountService: int mountSecureContainer(java.lang.String,java.lang.String,int)>(r0, r1, i0);
+
+     label2:
+        if i1 == 0 goto label5;
+
+     label3:
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to mount container ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" rc : ");
+
+        $r9 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r11 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("PackageHelper", $r11);
+
+     label4:
+        return null;
+
+     label5:
+        $r5 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        r3 = interfaceinvoke $r5.<android.os.storage.IMountService: java.lang.String getSecureContainerPath(java.lang.String)>(r0);
+
+     label6:
+        return r3;
+
+     label7:
+        $r12 := @caughtexception;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", "MountService running?");
+
+        return null;
+
+        catch android.os.RemoteException from label1 to label2 with label7;
+        catch android.os.RemoteException from label3 to label4 with label7;
+        catch android.os.RemoteException from label5 to label6 with label7;
+    }
+
+    public static boolean renameSdDir(java.lang.String, java.lang.String)
+    {
+        java.lang.String r0, r1, $r11, $r20;
+        android.os.RemoteException r2, $r12;
+        int i0;
+        android.os.storage.IMountService $r3;
+        java.lang.StringBuilder $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r13, $r14, $r15, $r16, $r17, $r18, $r19;
+
+        r0 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+     label1:
+        $r3 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        i0 = interfaceinvoke $r3.<android.os.storage.IMountService: int renameSecureContainer(java.lang.String,java.lang.String)>(r0, r1);
+
+     label2:
+        if i0 == 0 goto label5;
+
+     label3:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to rename ");
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to ");
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r9 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("with rc ");
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", $r11);
+
+     label4:
+        return 0;
+
+     label5:
+        return 1;
+
+     label6:
+        $r12 := @caughtexception;
+
+        r2 = $r12;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r15 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed ot rename  ");
+
+        $r14 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r17 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to ");
+
+        $r16 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r19 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" with exception : ");
+
+        $r18 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r20 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("PackageHelper", $r20);
+
+        return 0;
+
+        catch android.os.RemoteException from label1 to label2 with label6;
+        catch android.os.RemoteException from label3 to label4 with label6;
+    }
+
+    public static boolean unMountSdDir(java.lang.String)
+    {
+        java.lang.String r0, $r8;
+        int i0;
+        android.os.storage.IMountService $r2;
+        java.lang.StringBuilder $r3, $r4, $r5, $r6, $r7;
+        android.os.RemoteException $r9;
+
+        r0 := @parameter0: java.lang.String;
+
+     label1:
+        $r2 = staticinvoke <com.android.internal.content.PackageHelper: android.os.storage.IMountService getMountService()>();
+
+        i0 = interfaceinvoke $r2.<android.os.storage.IMountService: int unmountSecureContainer(java.lang.String,boolean)>(r0, 1);
+
+     label2:
+        if i0 == 0 goto label5;
+
+     label3:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to unmount ");
+
+        $r5 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" with rc ");
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", $r8);
+
+     label4:
+        return 0;
+
+     label5:
+        return 1;
+
+     label6:
+        $r9 := @caughtexception;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("PackageHelper", "MountService running?");
+
+        return 0;
+
+        catch android.os.RemoteException from label1 to label2 with label6;
+        catch android.os.RemoteException from label3 to label4 with label6;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.internal.content.PackageHelper: java.lang.String TAG> = "PackageHelper";
+
+        <com.android.internal.content.PackageHelper: int RECOMMEND_MEDIA_UNAVAILABLE> = -5;
+
+        <com.android.internal.content.PackageHelper: int RECOMMEND_INSTALL_INTERNAL> = 1;
+
+        <com.android.internal.content.PackageHelper: int RECOMMEND_INSTALL_EXTERNAL> = 2;
+
+        <com.android.internal.content.PackageHelper: int RECOMMEND_FAILED_VERSION_DOWNGRADE> = -7;
+
+        <com.android.internal.content.PackageHelper: int RECOMMEND_FAILED_INVALID_URI> = -6;
+
+        <com.android.internal.content.PackageHelper: int RECOMMEND_FAILED_INVALID_LOCATION> = -3;
+
+        <com.android.internal.content.PackageHelper: int RECOMMEND_FAILED_INVALID_APK> = -2;
+
+        <com.android.internal.content.PackageHelper: int RECOMMEND_FAILED_INSUFFICIENT_STORAGE> = -1;
+
+        <com.android.internal.content.PackageHelper: int RECOMMEND_FAILED_ALREADY_EXISTS> = -4;
+
+        <com.android.internal.content.PackageHelper: int APP_INSTALL_INTERNAL> = 1;
+
+        <com.android.internal.content.PackageHelper: int APP_INSTALL_EXTERNAL> = 2;
+
+        <com.android.internal.content.PackageHelper: int APP_INSTALL_AUTO> = 0;
+
+        return;
+    }
+}

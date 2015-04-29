@@ -1,0 +1,1538 @@
+public final class com.android.server.accessibility.ScreenMagnifier extends android.view.IMagnificationCallbacks$Stub implements com.android.server.accessibility.EventStreamTransformation
+{
+    private static final boolean DEBUG_DETECTING;
+    private static final boolean DEBUG_MAGNIFICATION_CONTROLLER;
+    private static final boolean DEBUG_PANNING;
+    private static final boolean DEBUG_SCALING;
+    private static final boolean DEBUG_SET_MAGNIFICATION_SPEC;
+    private static final boolean DEBUG_STATE_TRANSITIONS;
+    private static final float DEFAULT_MAGNIFICATION_SCALE;
+    private static final int DEFAULT_SCREEN_MAGNIFICATION_AUTO_UPDATE;
+    private static final java.lang.String LOG_TAG;
+    private static final int MESSAGE_ON_MAGNIFIED_BOUNDS_CHANGED;
+    private static final int MESSAGE_ON_RECTANGLE_ON_SCREEN_REQUESTED;
+    private static final int MESSAGE_ON_ROTATION_CHANGED;
+    private static final int MESSAGE_ON_USER_CONTEXT_CHANGED;
+    private static final int MULTI_TAP_TIME_SLOP_ADJUSTMENT;
+    private static final int MY_PID;
+    private static final int STATE_DELEGATING;
+    private static final int STATE_DETECTING;
+    private static final int STATE_MAGNIFIED_INTERACTION;
+    private static final int STATE_VIEWPORT_DRAGGING;
+    private final com.android.server.accessibility.AccessibilityManagerService mAms;
+    private final android.content.Context mContext;
+    private int mCurrentState;
+    private long mDelegatingStateDownTime;
+    private final com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler mDetectingStateHandler;
+    private final android.os.Handler mHandler;
+    private final long mLongAnimationDuration;
+    private final com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController;
+    private final android.graphics.Region mMagnifiedBounds;
+    private final com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler mMagnifiedContentInteractonStateHandler;
+    private final int mMultiTapDistanceSlop;
+    private final int mMultiTapTimeSlop;
+    private com.android.server.accessibility.EventStreamTransformation mNext;
+    private int mPreviousState;
+    private final com.android.server.accessibility.ScreenMagnifier$ScreenStateObserver mScreenStateObserver;
+    private final com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler mStateViewportDraggingHandler;
+    private final int mTapDistanceSlop;
+    private final int mTapTimeSlop;
+    private android.view.MotionEvent$PointerCoords[] mTempPointerCoords;
+    private android.view.MotionEvent$PointerProperties[] mTempPointerProperties;
+    private final android.graphics.Rect mTempRect;
+    private final android.graphics.Rect mTempRect1;
+    private boolean mTranslationEnabledBeforePan;
+    private boolean mUpdateMagnificationSpecOnNextBoundsChange;
+    private final android.view.IWindowManager mWindowManager;
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+        int $i0;
+
+        <com.android.server.accessibility.ScreenMagnifier: int STATE_VIEWPORT_DRAGGING> = 3;
+
+        <com.android.server.accessibility.ScreenMagnifier: int STATE_MAGNIFIED_INTERACTION> = 4;
+
+        <com.android.server.accessibility.ScreenMagnifier: int STATE_DETECTING> = 2;
+
+        <com.android.server.accessibility.ScreenMagnifier: int STATE_DELEGATING> = 1;
+
+        <com.android.server.accessibility.ScreenMagnifier: int MULTI_TAP_TIME_SLOP_ADJUSTMENT> = 50;
+
+        <com.android.server.accessibility.ScreenMagnifier: int MESSAGE_ON_USER_CONTEXT_CHANGED> = 3;
+
+        <com.android.server.accessibility.ScreenMagnifier: int MESSAGE_ON_ROTATION_CHANGED> = 4;
+
+        <com.android.server.accessibility.ScreenMagnifier: int MESSAGE_ON_RECTANGLE_ON_SCREEN_REQUESTED> = 2;
+
+        <com.android.server.accessibility.ScreenMagnifier: int MESSAGE_ON_MAGNIFIED_BOUNDS_CHANGED> = 1;
+
+        <com.android.server.accessibility.ScreenMagnifier: int DEFAULT_SCREEN_MAGNIFICATION_AUTO_UPDATE> = 1;
+
+        <com.android.server.accessibility.ScreenMagnifier: float DEFAULT_MAGNIFICATION_SCALE> = 2.0F;
+
+        <com.android.server.accessibility.ScreenMagnifier: boolean DEBUG_STATE_TRANSITIONS> = 0;
+
+        <com.android.server.accessibility.ScreenMagnifier: boolean DEBUG_SET_MAGNIFICATION_SPEC> = 0;
+
+        <com.android.server.accessibility.ScreenMagnifier: boolean DEBUG_SCALING> = 0;
+
+        <com.android.server.accessibility.ScreenMagnifier: boolean DEBUG_PANNING> = 0;
+
+        <com.android.server.accessibility.ScreenMagnifier: boolean DEBUG_MAGNIFICATION_CONTROLLER> = 0;
+
+        <com.android.server.accessibility.ScreenMagnifier: boolean DEBUG_DETECTING> = 0;
+
+        $r0 = class "com/android/server/accessibility/ScreenMagnifier";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.server.accessibility.ScreenMagnifier: java.lang.String LOG_TAG> = $r1;
+
+        $i0 = staticinvoke <android.os.Process: int myPid()>();
+
+        <com.android.server.accessibility.ScreenMagnifier: int MY_PID> = $i0;
+
+        return;
+    }
+
+    public void <init>(android.content.Context, int, com.android.server.accessibility.AccessibilityManagerService)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.content.Context r1;
+        int i0, $i1, $i2, $i3, $i5, $i6, $i7;
+        com.android.server.accessibility.AccessibilityManagerService r2;
+        android.graphics.Rect $r4, $r5;
+        android.graphics.Region $r6;
+        com.android.server.accessibility.ScreenMagnifier$1 $r7;
+        android.os.IBinder $r8;
+        android.view.IWindowManager $r9, $r18;
+        android.content.res.Resources $r10;
+        long $l4, $l8;
+        android.view.ViewConfiguration $r11, $r12;
+        com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler $r13;
+        com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler $r14;
+        com.android.server.accessibility.ScreenMagnifier$MagnificationController $r15, $r19;
+        com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler $r16;
+        com.android.server.accessibility.ScreenMagnifier$ScreenStateObserver $r17;
+        android.os.RemoteException $r20;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        r1 := @parameter0: android.content.Context;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: com.android.server.accessibility.AccessibilityManagerService;
+
+        specialinvoke r0.<android.view.IMagnificationCallbacks$Stub: void <init>()>();
+
+        $r4 = new android.graphics.Rect;
+
+        specialinvoke $r4.<android.graphics.Rect: void <init>()>();
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Rect mTempRect> = $r4;
+
+        $r5 = new android.graphics.Rect;
+
+        specialinvoke $r5.<android.graphics.Rect: void <init>()>();
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Rect mTempRect1> = $r5;
+
+        $i1 = staticinvoke <android.view.ViewConfiguration: int getTapTimeout()>();
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: int mTapTimeSlop> = $i1;
+
+        $i2 = staticinvoke <android.view.ViewConfiguration: int getDoubleTapTimeout()>();
+
+        $i3 = -50 + $i2;
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: int mMultiTapTimeSlop> = $i3;
+
+        $r6 = new android.graphics.Region;
+
+        specialinvoke $r6.<android.graphics.Region: void <init>()>();
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Region mMagnifiedBounds> = $r6;
+
+        $r7 = new com.android.server.accessibility.ScreenMagnifier$1;
+
+        specialinvoke $r7.<com.android.server.accessibility.ScreenMagnifier$1: void <init>(com.android.server.accessibility.ScreenMagnifier)>(r0);
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: android.os.Handler mHandler> = $r7;
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: android.content.Context mContext> = r1;
+
+        $r8 = staticinvoke <android.os.ServiceManager: android.os.IBinder getService(java.lang.String)>("window");
+
+        $r9 = staticinvoke <android.view.IWindowManager$Stub: android.view.IWindowManager asInterface(android.os.IBinder)>($r8);
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: android.view.IWindowManager mWindowManager> = $r9;
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.AccessibilityManagerService mAms> = r2;
+
+        $r10 = virtualinvoke r1.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i5 = virtualinvoke $r10.<android.content.res.Resources: int getInteger(int)>(17694722);
+
+        $l4 = (long) $i5;
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: long mLongAnimationDuration> = $l4;
+
+        $r11 = staticinvoke <android.view.ViewConfiguration: android.view.ViewConfiguration get(android.content.Context)>(r1);
+
+        $i6 = virtualinvoke $r11.<android.view.ViewConfiguration: int getScaledTouchSlop()>();
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: int mTapDistanceSlop> = $i6;
+
+        $r12 = staticinvoke <android.view.ViewConfiguration: android.view.ViewConfiguration get(android.content.Context)>(r1);
+
+        $i7 = virtualinvoke $r12.<android.view.ViewConfiguration: int getScaledDoubleTapSlop()>();
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: int mMultiTapDistanceSlop> = $i7;
+
+        $r14 = new com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler;
+
+        specialinvoke $r14.<com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler: void <init>(com.android.server.accessibility.ScreenMagnifier,com.android.server.accessibility.ScreenMagnifier$1)>(r0, null);
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler mDetectingStateHandler> = $r14;
+
+        $r13 = new com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler;
+
+        specialinvoke $r13.<com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler: void <init>(com.android.server.accessibility.ScreenMagnifier,com.android.server.accessibility.ScreenMagnifier$1)>(r0, null);
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler mStateViewportDraggingHandler> = $r13;
+
+        $r16 = new com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler;
+
+        specialinvoke $r16.<com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler: void <init>(com.android.server.accessibility.ScreenMagnifier,android.content.Context)>(r0, r1);
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler mMagnifiedContentInteractonStateHandler> = $r16;
+
+        $r15 = new com.android.server.accessibility.ScreenMagnifier$MagnificationController;
+
+        $l8 = r0.<com.android.server.accessibility.ScreenMagnifier: long mLongAnimationDuration>;
+
+        specialinvoke $r15.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: void <init>(com.android.server.accessibility.ScreenMagnifier,long)>(r0, $l8);
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController> = $r15;
+
+        $r17 = new com.android.server.accessibility.ScreenMagnifier$ScreenStateObserver;
+
+        $r19 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        specialinvoke $r17.<com.android.server.accessibility.ScreenMagnifier$ScreenStateObserver: void <init>(com.android.server.accessibility.ScreenMagnifier,android.content.Context,com.android.server.accessibility.ScreenMagnifier$MagnificationController)>(r0, r1, $r19);
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$ScreenStateObserver mScreenStateObserver> = $r17;
+
+     label1:
+        $r18 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.IWindowManager mWindowManager>;
+
+        interfaceinvoke $r18.<android.view.IWindowManager: void setMagnificationCallbacks(android.view.IMagnificationCallbacks)>(r0);
+
+     label2:
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void transitionToState(int)>(2);
+
+        return;
+
+     label3:
+        $r20 := @caughtexception;
+
+        goto label2;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    static void access$000(com.android.server.accessibility.ScreenMagnifier, android.graphics.Region)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.graphics.Region r1;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        r1 := @parameter1: android.graphics.Region;
+
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void handleOnMagnifiedBoundsChanged(android.graphics.Region)>(r1);
+
+        return;
+    }
+
+    static void access$100(com.android.server.accessibility.ScreenMagnifier, int, int, int, int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0, i1, i2, i3;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        i3 := @parameter4: int;
+
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void handleOnRectangleOnScreenRequested(int,int,int,int)>(i0, i1, i2, i3);
+
+        return;
+    }
+
+    static com.android.server.accessibility.ScreenMagnifier$MagnificationController access$1000(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        com.android.server.accessibility.ScreenMagnifier$MagnificationController $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $r1 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        return $r1;
+    }
+
+    static float access$1100(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        float $f0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $f0 = specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: float getPersistedScale()>();
+
+        return $f0;
+    }
+
+    static void access$1200(com.android.server.accessibility.ScreenMagnifier, float)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        float f0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        f0 := @parameter1: float;
+
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void persistScale(float)>(f0);
+
+        return;
+    }
+
+    static int access$1300(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $i0 = r0.<com.android.server.accessibility.ScreenMagnifier: int mPreviousState>;
+
+        return $i0;
+    }
+
+    static void access$1400(com.android.server.accessibility.ScreenMagnifier, int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void transitionToState(int)>(i0);
+
+        return;
+    }
+
+    static android.graphics.Region access$1500(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.graphics.Region $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $r1 = r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Region mMagnifiedBounds>;
+
+        return $r1;
+    }
+
+    static boolean access$1600(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $z0 = r0.<com.android.server.accessibility.ScreenMagnifier: boolean mTranslationEnabledBeforePan>;
+
+        return $z0;
+    }
+
+    static boolean access$1602(com.android.server.accessibility.ScreenMagnifier, boolean)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: boolean mTranslationEnabledBeforePan> = z0;
+
+        return z0;
+    }
+
+    static int access$1900(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $i0 = r0.<com.android.server.accessibility.ScreenMagnifier: int mMultiTapTimeSlop>;
+
+        return $i0;
+    }
+
+    static void access$200(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void handleOnUserContextChanged()>();
+
+        return;
+    }
+
+    static int access$2000(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $i0 = r0.<com.android.server.accessibility.ScreenMagnifier: int mMultiTapDistanceSlop>;
+
+        return $i0;
+    }
+
+    static int access$2100(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $i0 = r0.<com.android.server.accessibility.ScreenMagnifier: int mTapDistanceSlop>;
+
+        return $i0;
+    }
+
+    static int access$2200(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $i0 = r0.<com.android.server.accessibility.ScreenMagnifier: int mTapTimeSlop>;
+
+        return $i0;
+    }
+
+    static android.view.MotionEvent$PointerCoords[] access$2400(com.android.server.accessibility.ScreenMagnifier, int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0;
+        android.view.MotionEvent$PointerCoords[] $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter1: int;
+
+        $r1 = specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerCoords[] getTempPointerCoordsWithMinSize(int)>(i0);
+
+        return $r1;
+    }
+
+    static android.view.MotionEvent$PointerProperties[] access$2500(com.android.server.accessibility.ScreenMagnifier, int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0;
+        android.view.MotionEvent$PointerProperties[] $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter1: int;
+
+        $r1 = specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerProperties[] getTempPointerPropertiesWithMinSize(int)>(i0);
+
+        return $r1;
+    }
+
+    static android.content.Context access$2600(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $r1 = r0.<com.android.server.accessibility.ScreenMagnifier: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static com.android.server.accessibility.AccessibilityManagerService access$2700(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        com.android.server.accessibility.AccessibilityManagerService $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $r1 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        return $r1;
+    }
+
+    static android.view.IWindowManager access$2800(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.view.IWindowManager $r1;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $r1 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.IWindowManager mWindowManager>;
+
+        return $r1;
+    }
+
+    static void access$300(com.android.server.accessibility.ScreenMagnifier, int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void handleOnRotationChanged(int)>(i0);
+
+        return;
+    }
+
+    static boolean access$3000(android.content.Context)
+    {
+        android.content.Context r0;
+        boolean $z0;
+
+        r0 := @parameter0: android.content.Context;
+
+        $z0 = staticinvoke <com.android.server.accessibility.ScreenMagnifier: boolean isScreenMagnificationAutoUpdateEnabled(android.content.Context)>(r0);
+
+        return $z0;
+    }
+
+    static int access$900(com.android.server.accessibility.ScreenMagnifier)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.accessibility.ScreenMagnifier;
+
+        $i0 = r0.<com.android.server.accessibility.ScreenMagnifier: int mCurrentState>;
+
+        return $i0;
+    }
+
+    private void getMagnifiedFrameInContentCoords(android.graphics.Rect)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.graphics.Rect r1;
+        android.view.MagnificationSpec r2;
+        com.android.server.accessibility.ScreenMagnifier$MagnificationController $r3;
+        android.graphics.Region $r4;
+        float $f0, $f1, $f2, $f3, $f4, $f5;
+        int $i0, $i1;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        r1 := @parameter0: android.graphics.Rect;
+
+        $r3 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        r2 = virtualinvoke $r3.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: android.view.MagnificationSpec getMagnificationSpec()>();
+
+        $r4 = r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Region mMagnifiedBounds>;
+
+        virtualinvoke $r4.<android.graphics.Region: boolean getBounds(android.graphics.Rect)>(r1);
+
+        $f0 = r2.<android.view.MagnificationSpec: float offsetX>;
+
+        $f1 = neg $f0;
+
+        $i1 = (int) $f1;
+
+        $f2 = r2.<android.view.MagnificationSpec: float offsetY>;
+
+        $f3 = neg $f2;
+
+        $i0 = (int) $f3;
+
+        virtualinvoke r1.<android.graphics.Rect: void offset(int,int)>($i1, $i0);
+
+        $f4 = r2.<android.view.MagnificationSpec: float scale>;
+
+        $f5 = 1.0F / $f4;
+
+        virtualinvoke r1.<android.graphics.Rect: void scale(float)>($f5);
+
+        return;
+    }
+
+    private float getPersistedScale()
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.content.Context $r1;
+        android.content.ContentResolver $r2;
+        float $f0;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        $r1 = r0.<com.android.server.accessibility.ScreenMagnifier: android.content.Context mContext>;
+
+        $r2 = virtualinvoke $r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $f0 = staticinvoke <android.provider.Settings$Secure: float getFloat(android.content.ContentResolver,java.lang.String,float)>($r2, "accessibility_display_magnification_scale", 2.0F);
+
+        return $f0;
+    }
+
+    private android.view.MotionEvent$PointerCoords[] getTempPointerCoordsWithMinSize(int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0, i1, i2;
+        android.view.MotionEvent$PointerCoords[] r1, $r2, $r3, $r5, $r6, $r7, $r8;
+        android.view.MotionEvent$PointerCoords $r4;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerCoords[] mTempPointerCoords>;
+
+        if $r2 == null goto label4;
+
+        $r8 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerCoords[] mTempPointerCoords>;
+
+        i1 = lengthof $r8;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        r1 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerCoords[] mTempPointerCoords>;
+
+        $r6 = newarray (android.view.MotionEvent$PointerCoords)[i0];
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerCoords[] mTempPointerCoords> = $r6;
+
+        if r1 == null goto label2;
+
+        $r7 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerCoords[] mTempPointerCoords>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>(r1, 0, $r7, 0, i1);
+
+     label2:
+        i2 = i1;
+
+     label3:
+        if i2 >= i0 goto label5;
+
+        $r5 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerCoords[] mTempPointerCoords>;
+
+        $r4 = new android.view.MotionEvent$PointerCoords;
+
+        specialinvoke $r4.<android.view.MotionEvent$PointerCoords: void <init>()>();
+
+        $r5[i2] = $r4;
+
+        i2 = i2 + 1;
+
+        goto label3;
+
+     label4:
+        i1 = 0;
+
+        goto label1;
+
+     label5:
+        $r3 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerCoords[] mTempPointerCoords>;
+
+        return $r3;
+    }
+
+    private android.view.MotionEvent$PointerProperties[] getTempPointerPropertiesWithMinSize(int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0, i1, i2;
+        android.view.MotionEvent$PointerProperties[] r1, $r2, $r3, $r5, $r6, $r7, $r8;
+        android.view.MotionEvent$PointerProperties $r4;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerProperties[] mTempPointerProperties>;
+
+        if $r2 == null goto label4;
+
+        $r8 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerProperties[] mTempPointerProperties>;
+
+        i1 = lengthof $r8;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        r1 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerProperties[] mTempPointerProperties>;
+
+        $r6 = newarray (android.view.MotionEvent$PointerProperties)[i0];
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerProperties[] mTempPointerProperties> = $r6;
+
+        if r1 == null goto label2;
+
+        $r7 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerProperties[] mTempPointerProperties>;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>(r1, 0, $r7, 0, i1);
+
+     label2:
+        i2 = i1;
+
+     label3:
+        if i2 >= i0 goto label5;
+
+        $r5 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerProperties[] mTempPointerProperties>;
+
+        $r4 = new android.view.MotionEvent$PointerProperties;
+
+        specialinvoke $r4.<android.view.MotionEvent$PointerProperties: void <init>()>();
+
+        $r5[i2] = $r4;
+
+        i2 = i2 + 1;
+
+        goto label3;
+
+     label4:
+        i1 = 0;
+
+        goto label1;
+
+     label5:
+        $r3 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerProperties[] mTempPointerProperties>;
+
+        return $r3;
+    }
+
+    private void handleMotionEventStateDelegating(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.view.MotionEvent r1, r2;
+        int i0, i2, i3, $i4, $i5, $i6, $i8, $i10, $i11, $i12;
+        float f0, f1, f2, f3, f4, $f5, $f6, $f7, $f8, $f9, $f10;
+        long l1, $l7, $l9, $l13;
+        android.view.MotionEvent$PointerCoords[] r3;
+        android.view.MotionEvent$PointerProperties[] r4;
+        android.view.MotionEvent$PointerCoords r5, $r14, $r15, $r16, $r18;
+        android.view.MotionEvent$PointerProperties r6;
+        com.android.server.accessibility.EventStreamTransformation $r7, $r9;
+        com.android.server.accessibility.ScreenMagnifier$MagnificationController $r8, $r11, $r12, $r13;
+        boolean $z0, $z1;
+        android.graphics.Region $r10;
+        com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler $r17;
+        com.android.server.accessibility.ScreenMagnifier$MotionEventInfo $r19;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        $i4 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        tableswitch($i4)
+        {
+            case 0: goto label3;
+            case 1: goto label4;
+            default: goto label1;
+        };
+
+     label1:
+        $r7 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        if $r7 == null goto label7;
+
+        f0 = virtualinvoke r1.<android.view.MotionEvent: float getX()>();
+
+        f1 = virtualinvoke r1.<android.view.MotionEvent: float getY()>();
+
+        $r8 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        $z0 = virtualinvoke $r8.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: boolean isMagnifying()>();
+
+        if $z0 == 0 goto label6;
+
+        $r10 = r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Region mMagnifiedBounds>;
+
+        $i5 = (int) f0;
+
+        $i6 = (int) f1;
+
+        $z1 = virtualinvoke $r10.<android.graphics.Region: boolean contains(int,int)>($i5, $i6);
+
+        if $z1 == 0 goto label6;
+
+        $r11 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        f2 = virtualinvoke $r11.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: float getScale()>();
+
+        $r12 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        f3 = virtualinvoke $r12.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: float getOffsetX()>();
+
+        $r13 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        f4 = virtualinvoke $r13.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: float getOffsetY()>();
+
+        i2 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        r3 = specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerCoords[] getTempPointerCoordsWithMinSize(int)>(i2);
+
+        r4 = specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: android.view.MotionEvent$PointerProperties[] getTempPointerPropertiesWithMinSize(int)>(i2);
+
+        i3 = 0;
+
+     label2:
+        if i3 >= i2 goto label5;
+
+        r5 = r3[i3];
+
+        virtualinvoke r1.<android.view.MotionEvent: void getPointerCoords(int,android.view.MotionEvent$PointerCoords)>(i3, r5);
+
+        $r16 = r3[i3];
+
+        $r14 = r3[i3];
+
+        $f6 = $r14.<android.view.MotionEvent$PointerCoords: float x>;
+
+        $f5 = $f6 - f3;
+
+        $f8 = $f5 / f2;
+
+        $r16.<android.view.MotionEvent$PointerCoords: float x> = $f8;
+
+        $r18 = r3[i3];
+
+        $r15 = r3[i3];
+
+        $f7 = $r15.<android.view.MotionEvent$PointerCoords: float y>;
+
+        $f10 = $f7 - f4;
+
+        $f9 = $f10 / f2;
+
+        $r18.<android.view.MotionEvent$PointerCoords: float y> = $f9;
+
+        r6 = r4[i3];
+
+        virtualinvoke r1.<android.view.MotionEvent: void getPointerProperties(int,android.view.MotionEvent$PointerProperties)>(i3, r6);
+
+        i3 = i3 + 1;
+
+        goto label2;
+
+     label3:
+        $l13 = virtualinvoke r1.<android.view.MotionEvent: long getDownTime()>();
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: long mDelegatingStateDownTime> = $l13;
+
+        goto label1;
+
+     label4:
+        $r17 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler mDetectingStateHandler>;
+
+        $r19 = staticinvoke <com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler: com.android.server.accessibility.ScreenMagnifier$MotionEventInfo access$800(com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler)>($r17);
+
+        if $r19 != null goto label1;
+
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void transitionToState(int)>(2);
+
+        goto label1;
+
+     label5:
+        $l9 = virtualinvoke r1.<android.view.MotionEvent: long getDownTime()>();
+
+        $l7 = virtualinvoke r1.<android.view.MotionEvent: long getEventTime()>();
+
+        $i8 = virtualinvoke r1.<android.view.MotionEvent: int getAction()>();
+
+        $i12 = virtualinvoke r1.<android.view.MotionEvent: int getDeviceId()>();
+
+        $i10 = virtualinvoke r1.<android.view.MotionEvent: int getSource()>();
+
+        $i11 = virtualinvoke r1.<android.view.MotionEvent: int getFlags()>();
+
+        r1 = staticinvoke <android.view.MotionEvent: android.view.MotionEvent obtain(long,long,int,int,android.view.MotionEvent$PointerProperties[],android.view.MotionEvent$PointerCoords[],int,int,float,float,int,int,int,int)>($l9, $l7, $i8, i2, r4, r3, 0, 0, 1.0F, 1.0F, $i12, 0, $i10, $i11);
+
+     label6:
+        l1 = r0.<com.android.server.accessibility.ScreenMagnifier: long mDelegatingStateDownTime>;
+
+        virtualinvoke r1.<android.view.MotionEvent: void setDownTime(long)>(l1);
+
+        $r9 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        interfaceinvoke $r9.<com.android.server.accessibility.EventStreamTransformation: void onMotionEvent(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+     label7:
+        return;
+    }
+
+    private void handleOnMagnifiedBoundsChanged(android.graphics.Region)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.graphics.Region r1, $r4, $r7;
+        android.view.MagnificationSpec r2;
+        android.graphics.Rect r3;
+        float f0, f1, f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10;
+        boolean $z0;
+        com.android.server.accessibility.AccessibilityManagerService $r5;
+        com.android.server.accessibility.ScreenMagnifier$MagnificationController $r6, $r8;
+        int $i0, $i1, $i2, $i3;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        r1 := @parameter0: android.graphics.Region;
+
+        $z0 = r0.<com.android.server.accessibility.ScreenMagnifier: boolean mUpdateMagnificationSpecOnNextBoundsChange>;
+
+        if $z0 == 0 goto label1;
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: boolean mUpdateMagnificationSpecOnNextBoundsChange> = 0;
+
+        $r6 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        r2 = virtualinvoke $r6.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: android.view.MagnificationSpec getMagnificationSpec()>();
+
+        r3 = r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Rect mTempRect>;
+
+        $r7 = r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Region mMagnifiedBounds>;
+
+        virtualinvoke $r7.<android.graphics.Region: boolean getBounds(android.graphics.Rect)>(r3);
+
+        f0 = r2.<android.view.MagnificationSpec: float scale>;
+
+        $f3 = r2.<android.view.MagnificationSpec: float offsetX>;
+
+        $f4 = neg $f3;
+
+        $i0 = virtualinvoke r3.<android.graphics.Rect: int width()>();
+
+        $i1 = $i0 / 2;
+
+        $f5 = (float) $i1;
+
+        $f7 = $f4 + $f5;
+
+        f1 = $f7 / f0;
+
+        $f6 = r2.<android.view.MagnificationSpec: float offsetY>;
+
+        $f8 = neg $f6;
+
+        $i2 = virtualinvoke r3.<android.graphics.Rect: int height()>();
+
+        $i3 = $i2 / 2;
+
+        $f9 = (float) $i3;
+
+        $f10 = $f8 + $f9;
+
+        f2 = $f10 / f0;
+
+        $r8 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        virtualinvoke $r8.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: void setScaleAndMagnifiedRegionCenter(float,float,float,boolean)>(f0, f1, f2, 0);
+
+     label1:
+        $r4 = r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Region mMagnifiedBounds>;
+
+        virtualinvoke $r4.<android.graphics.Region: boolean set(android.graphics.Region)>(r1);
+
+        $r5 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.AccessibilityManagerService mAms>;
+
+        virtualinvoke $r5.<com.android.server.accessibility.AccessibilityManagerService: void onMagnificationStateChanged()>();
+
+        return;
+    }
+
+    private void handleOnRectangleOnScreenRequested(int, int, int, int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0, i1, i2, i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i25, $i26;
+        android.graphics.Rect r1, r2;
+        float f0, f1, f2, $f3, $f4;
+        android.graphics.Region $r3;
+        boolean $z1;
+        com.android.server.accessibility.ScreenMagnifier$MagnificationController $r4, $r5;
+        java.util.Locale $r6;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        i3 := @parameter3: int;
+
+        r1 = r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Rect mTempRect>;
+
+        $r3 = r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Region mMagnifiedBounds>;
+
+        virtualinvoke $r3.<android.graphics.Region: boolean getBounds(android.graphics.Rect)>(r1);
+
+        $z1 = virtualinvoke r1.<android.graphics.Rect: boolean intersects(int,int,int,int)>(i0, i1, i2, i3);
+
+        if $z1 != 0 goto label01;
+
+        return;
+
+     label01:
+        r2 = r0.<com.android.server.accessibility.ScreenMagnifier: android.graphics.Rect mTempRect1>;
+
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void getMagnifiedFrameInContentCoords(android.graphics.Rect)>(r2);
+
+        $i4 = i2 - i0;
+
+        $i5 = virtualinvoke r2.<android.graphics.Rect: int width()>();
+
+        if $i4 <= $i5 goto label05;
+
+        $r6 = staticinvoke <java.util.Locale: java.util.Locale getDefault()>();
+
+        $i21 = staticinvoke <android.text.TextUtils: int getLayoutDirectionFromLocale(java.util.Locale)>($r6);
+
+        if $i21 != 0 goto label04;
+
+        $i26 = r2.<android.graphics.Rect: int left>;
+
+        $i24 = i0 - $i26;
+
+        f0 = (float) $i24;
+
+     label02:
+        $i9 = i3 - i1;
+
+        $i8 = virtualinvoke r2.<android.graphics.Rect: int height()>();
+
+        if $i9 <= $i8 goto label08;
+
+        $i15 = r2.<android.graphics.Rect: int top>;
+
+        $i19 = i1 - $i15;
+
+        f1 = (float) $i19;
+
+     label03:
+        $r4 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        f2 = virtualinvoke $r4.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: float getScale()>();
+
+        $r5 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        $f3 = f0 * f2;
+
+        $f4 = f1 * f2;
+
+        virtualinvoke $r5.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: void offsetMagnifiedRegionCenter(float,float)>($f3, $f4);
+
+        return;
+
+     label04:
+        $i22 = r2.<android.graphics.Rect: int right>;
+
+        $i25 = i2 - $i22;
+
+        f0 = (float) $i25;
+
+        goto label02;
+
+     label05:
+        $i7 = r2.<android.graphics.Rect: int left>;
+
+        if i0 >= $i7 goto label06;
+
+        $i18 = r2.<android.graphics.Rect: int left>;
+
+        $i23 = i0 - $i18;
+
+        f0 = (float) $i23;
+
+        goto label02;
+
+     label06:
+        $i6 = r2.<android.graphics.Rect: int right>;
+
+        if i2 <= $i6 goto label07;
+
+        $i20 = r2.<android.graphics.Rect: int right>;
+
+        $i17 = i2 - $i20;
+
+        f0 = (float) $i17;
+
+        goto label02;
+
+     label07:
+        f0 = 0.0F;
+
+        goto label02;
+
+     label08:
+        $i11 = r2.<android.graphics.Rect: int top>;
+
+        if i1 >= $i11 goto label09;
+
+        $i13 = r2.<android.graphics.Rect: int top>;
+
+        $i16 = i1 - $i13;
+
+        f1 = (float) $i16;
+
+        goto label03;
+
+     label09:
+        $i10 = r2.<android.graphics.Rect: int bottom>;
+
+        if i3 <= $i10 goto label10;
+
+        $i12 = r2.<android.graphics.Rect: int bottom>;
+
+        $i14 = i3 - $i12;
+
+        f1 = (float) $i14;
+
+        goto label03;
+
+     label10:
+        f1 = 0.0F;
+
+        goto label03;
+    }
+
+    private void handleOnRotationChanged(int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0;
+        com.android.server.accessibility.ScreenMagnifier$MagnificationController $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void resetMagnificationIfNeeded()>();
+
+        $r1 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        $z0 = virtualinvoke $r1.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: boolean isMagnifying()>();
+
+        if $z0 == 0 goto label1;
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: boolean mUpdateMagnificationSpecOnNextBoundsChange> = 1;
+
+     label1:
+        return;
+    }
+
+    private void handleOnUserContextChanged()
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void resetMagnificationIfNeeded()>();
+
+        return;
+    }
+
+    private static boolean isScreenMagnificationAutoUpdateEnabled(android.content.Context)
+    {
+        android.content.Context r0;
+        android.content.ContentResolver $r1;
+        int $i0;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r1 = virtualinvoke r0.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i0 = staticinvoke <android.provider.Settings$Secure: int getInt(android.content.ContentResolver,java.lang.String,int)>($r1, "accessibility_display_magnification_auto_update", 1);
+
+        if $i0 != 1 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private void persistScale(float)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        float f0;
+        com.android.server.accessibility.ScreenMagnifier$2 $r1;
+        java.lang.Void[] $r2;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        f0 := @parameter0: float;
+
+        $r1 = new com.android.server.accessibility.ScreenMagnifier$2;
+
+        specialinvoke $r1.<com.android.server.accessibility.ScreenMagnifier$2: void <init>(com.android.server.accessibility.ScreenMagnifier,float)>(r0, f0);
+
+        $r2 = newarray (java.lang.Void)[0];
+
+        virtualinvoke $r1.<com.android.server.accessibility.ScreenMagnifier$2: android.os.AsyncTask execute(java.lang.Object[])>($r2);
+
+        return;
+    }
+
+    private void resetMagnificationIfNeeded()
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        com.android.server.accessibility.ScreenMagnifier$MagnificationController $r1, $r3;
+        boolean $z0, $z1;
+        android.content.Context $r2;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        $r1 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        $z0 = virtualinvoke $r1.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: boolean isMagnifying()>();
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<com.android.server.accessibility.ScreenMagnifier: android.content.Context mContext>;
+
+        $z1 = staticinvoke <com.android.server.accessibility.ScreenMagnifier: boolean isScreenMagnificationAutoUpdateEnabled(android.content.Context)>($r2);
+
+        if $z1 == 0 goto label1;
+
+        $r3 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnificationController mMagnificationController>;
+
+        virtualinvoke $r3.<com.android.server.accessibility.ScreenMagnifier$MagnificationController: void reset(boolean)>(1);
+
+     label1:
+        return;
+    }
+
+    private void transitionToState(int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0, $i1;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter0: int;
+
+        $i1 = r0.<com.android.server.accessibility.ScreenMagnifier: int mCurrentState>;
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: int mPreviousState> = $i1;
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: int mCurrentState> = i0;
+
+        return;
+    }
+
+    public void clear()
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler $r1;
+        com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler $r2;
+        com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler $r3;
+        com.android.server.accessibility.EventStreamTransformation $r4, $r5;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: int mCurrentState> = 2;
+
+        $r1 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler mDetectingStateHandler>;
+
+        virtualinvoke $r1.<com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler: void clear()>();
+
+        $r2 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler mStateViewportDraggingHandler>;
+
+        virtualinvoke $r2.<com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler: void clear()>();
+
+        $r3 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler mMagnifiedContentInteractonStateHandler>;
+
+        staticinvoke <com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler: void access$700(com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler)>($r3);
+
+        $r4 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        if $r4 == null goto label1;
+
+        $r5 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        interfaceinvoke $r5.<com.android.server.accessibility.EventStreamTransformation: void clear()>();
+
+     label1:
+        return;
+    }
+
+    public void onAccessibilityEvent(android.view.accessibility.AccessibilityEvent)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.view.accessibility.AccessibilityEvent r1;
+        com.android.server.accessibility.EventStreamTransformation $r2, $r3;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        r1 := @parameter0: android.view.accessibility.AccessibilityEvent;
+
+        $r2 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        if $r2 == null goto label1;
+
+        $r3 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.EventStreamTransformation mNext>;
+
+        interfaceinvoke $r3.<com.android.server.accessibility.EventStreamTransformation: void onAccessibilityEvent(android.view.accessibility.AccessibilityEvent)>(r1);
+
+     label1:
+        return;
+    }
+
+    public void onDestroy()
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        com.android.server.accessibility.ScreenMagnifier$ScreenStateObserver $r2;
+        android.view.IWindowManager $r3;
+        android.os.RemoteException $r4;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        $r2 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$ScreenStateObserver mScreenStateObserver>;
+
+        virtualinvoke $r2.<com.android.server.accessibility.ScreenMagnifier$ScreenStateObserver: void destroy()>();
+
+     label1:
+        $r3 = r0.<com.android.server.accessibility.ScreenMagnifier: android.view.IWindowManager mWindowManager>;
+
+        interfaceinvoke $r3.<android.view.IWindowManager: void setMagnificationCallbacks(android.view.IMagnificationCallbacks)>(null);
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    public void onMagnifedBoundsChanged(android.graphics.Region)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.graphics.Region r1, r2;
+        android.os.Handler $r3;
+        android.os.Message $r4;
+        int $i0, $i1;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        r1 := @parameter0: android.graphics.Region;
+
+        r2 = staticinvoke <android.graphics.Region: android.graphics.Region obtain(android.graphics.Region)>(r1);
+
+        $r3 = r0.<com.android.server.accessibility.ScreenMagnifier: android.os.Handler mHandler>;
+
+        $r4 = virtualinvoke $r3.<android.os.Handler: android.os.Message obtainMessage(int,java.lang.Object)>(1, r2);
+
+        virtualinvoke $r4.<android.os.Message: void sendToTarget()>();
+
+        $i0 = <com.android.server.accessibility.ScreenMagnifier: int MY_PID>;
+
+        $i1 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        if $i0 == $i1 goto label1;
+
+        virtualinvoke r1.<android.graphics.Region: void recycle()>();
+
+     label1:
+        return;
+    }
+
+    public void onMotionEvent(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.view.MotionEvent r1, r2;
+        int i0, $i1, $i2;
+        com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler $r3;
+        java.lang.IllegalStateException $r4;
+        java.lang.StringBuilder $r5, $r6, $r7;
+        java.lang.String $r8;
+        com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler $r9;
+        com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler $r10;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        $r3 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler mMagnifiedContentInteractonStateHandler>;
+
+        virtualinvoke $r3.<com.android.server.accessibility.ScreenMagnifier$MagnifiedContentInteractonStateHandler: void onMotionEvent(android.view.MotionEvent)>(r1);
+
+        $i1 = r0.<com.android.server.accessibility.ScreenMagnifier: int mCurrentState>;
+
+        tableswitch($i1)
+        {
+            case 1: goto label2;
+            case 2: goto label4;
+            case 3: goto label5;
+            case 4: goto label3;
+            default: goto label1;
+        };
+
+     label1:
+        $r4 = new java.lang.IllegalStateException;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown state: ");
+
+        $i2 = r0.<com.android.server.accessibility.ScreenMagnifier: int mCurrentState>;
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r8 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r8);
+
+        throw $r4;
+
+     label2:
+        specialinvoke r0.<com.android.server.accessibility.ScreenMagnifier: void handleMotionEventStateDelegating(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+     label3:
+        return;
+
+     label4:
+        $r10 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler mDetectingStateHandler>;
+
+        virtualinvoke $r10.<com.android.server.accessibility.ScreenMagnifier$DetectingStateHandler: void onMotionEvent(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label5:
+        $r9 = r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler mStateViewportDraggingHandler>;
+
+        staticinvoke <com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler: void access$600(com.android.server.accessibility.ScreenMagnifier$StateViewportDraggingHandler,android.view.MotionEvent,int)>($r9, r1, i0);
+
+        return;
+    }
+
+    public void onRectangleOnScreenRequested(int, int, int, int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0, i1, i2, i3;
+        com.android.internal.os.SomeArgs r1;
+        android.os.Handler $r2;
+        android.os.Message $r3;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        i3 := @parameter3: int;
+
+        r1 = staticinvoke <com.android.internal.os.SomeArgs: com.android.internal.os.SomeArgs obtain()>();
+
+        r1.<com.android.internal.os.SomeArgs: int argi1> = i0;
+
+        r1.<com.android.internal.os.SomeArgs: int argi2> = i1;
+
+        r1.<com.android.internal.os.SomeArgs: int argi3> = i2;
+
+        r1.<com.android.internal.os.SomeArgs: int argi4> = i3;
+
+        $r2 = r0.<com.android.server.accessibility.ScreenMagnifier: android.os.Handler mHandler>;
+
+        $r3 = virtualinvoke $r2.<android.os.Handler: android.os.Message obtainMessage(int,java.lang.Object)>(2, r1);
+
+        virtualinvoke $r3.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void onRotationChanged(int)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        int i0;
+        android.os.Handler $r1;
+        android.os.Message $r2;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.accessibility.ScreenMagnifier: android.os.Handler mHandler>;
+
+        $r2 = virtualinvoke $r1.<android.os.Handler: android.os.Message obtainMessage(int,int,int)>(4, i0, 0);
+
+        virtualinvoke $r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void onUserContextChanged()
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        android.os.Handler $r1;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        $r1 = r0.<com.android.server.accessibility.ScreenMagnifier: android.os.Handler mHandler>;
+
+        virtualinvoke $r1.<android.os.Handler: boolean sendEmptyMessage(int)>(3);
+
+        return;
+    }
+
+    public void setNext(com.android.server.accessibility.EventStreamTransformation)
+    {
+        com.android.server.accessibility.ScreenMagnifier r0;
+        com.android.server.accessibility.EventStreamTransformation r1;
+
+        r0 := @this: com.android.server.accessibility.ScreenMagnifier;
+
+        r1 := @parameter0: com.android.server.accessibility.EventStreamTransformation;
+
+        r0.<com.android.server.accessibility.ScreenMagnifier: com.android.server.accessibility.EventStreamTransformation mNext> = r1;
+
+        return;
+    }
+}

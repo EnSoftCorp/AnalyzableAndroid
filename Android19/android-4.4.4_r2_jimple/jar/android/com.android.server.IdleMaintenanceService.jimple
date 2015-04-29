@@ -1,0 +1,826 @@
+public class com.android.server.IdleMaintenanceService extends android.content.BroadcastReceiver
+{
+    private static final java.lang.String ACTION_FORCE_IDLE_MAINTENANCE;
+    private static final java.lang.String ACTION_UPDATE_IDLE_MAINTENANCE_STATE;
+    private static final boolean DEBUG;
+    private static final int LAST_USER_ACTIVITY_TIME_INVALID;
+    private static final java.lang.String LOG_TAG;
+    private static final long MAX_IDLE_MAINTENANCE_DURATION;
+    private static final int MIN_BATTERY_LEVEL_IDLE_MAINTENANCE_RUNNING;
+    private static final int MIN_BATTERY_LEVEL_IDLE_MAINTENANCE_START_CHARGING;
+    private static final int MIN_BATTERY_LEVEL_IDLE_MAINTENANCE_START_NOT_CHARGING;
+    private static final long MIN_IDLE_MAINTENANCE_INTERVAL_MILLIS;
+    private static final long MIN_USER_INACTIVITY_IDLE_MAINTENANCE_START;
+    private static final android.content.Intent sIdleMaintenanceEndIntent;
+    private static final android.content.Intent sIdleMaintenanceStartIntent;
+    private final android.app.AlarmManager mAlarmService;
+    private final com.android.server.BatteryService mBatteryService;
+    private final android.content.Context mContext;
+    private final android.os.Handler mHandler;
+    private boolean mIdleMaintenanceStarted;
+    private long mLastIdleMaintenanceStartTimeMillis;
+    private long mLastUserActivityElapsedTimeMillis;
+    private final android.app.PendingIntent mUpdateIdleMaintenanceStatePendingIntent;
+    private final android.os.PowerManager$WakeLock mWakeLock;
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+        android.content.Intent $r2, $r3, $r5, $r6;
+
+        <com.android.server.IdleMaintenanceService: long MIN_USER_INACTIVITY_IDLE_MAINTENANCE_START> = 4260000L;
+
+        <com.android.server.IdleMaintenanceService: long MIN_IDLE_MAINTENANCE_INTERVAL_MILLIS> = 86400000L;
+
+        <com.android.server.IdleMaintenanceService: int MIN_BATTERY_LEVEL_IDLE_MAINTENANCE_START_NOT_CHARGING> = 80;
+
+        <com.android.server.IdleMaintenanceService: int MIN_BATTERY_LEVEL_IDLE_MAINTENANCE_START_CHARGING> = 30;
+
+        <com.android.server.IdleMaintenanceService: int MIN_BATTERY_LEVEL_IDLE_MAINTENANCE_RUNNING> = 20;
+
+        <com.android.server.IdleMaintenanceService: long MAX_IDLE_MAINTENANCE_DURATION> = 4260000L;
+
+        <com.android.server.IdleMaintenanceService: int LAST_USER_ACTIVITY_TIME_INVALID> = -1;
+
+        <com.android.server.IdleMaintenanceService: boolean DEBUG> = 0;
+
+        <com.android.server.IdleMaintenanceService: java.lang.String ACTION_UPDATE_IDLE_MAINTENANCE_STATE> = "com.android.server.IdleMaintenanceService.action.UPDATE_IDLE_MAINTENANCE_STATE";
+
+        <com.android.server.IdleMaintenanceService: java.lang.String ACTION_FORCE_IDLE_MAINTENANCE> = "com.android.server.IdleMaintenanceService.action.FORCE_IDLE_MAINTENANCE";
+
+        $r0 = class "com/android/server/IdleMaintenanceService";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.server.IdleMaintenanceService: java.lang.String LOG_TAG> = $r1;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.ACTION_IDLE_MAINTENANCE_START");
+
+        <com.android.server.IdleMaintenanceService: android.content.Intent sIdleMaintenanceStartIntent> = $r2;
+
+        $r3 = <com.android.server.IdleMaintenanceService: android.content.Intent sIdleMaintenanceStartIntent>;
+
+        virtualinvoke $r3.<android.content.Intent: android.content.Intent setFlags(int)>(1073741824);
+
+        $r5 = new android.content.Intent;
+
+        specialinvoke $r5.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.ACTION_IDLE_MAINTENANCE_END");
+
+        <com.android.server.IdleMaintenanceService: android.content.Intent sIdleMaintenanceEndIntent> = $r5;
+
+        $r6 = <com.android.server.IdleMaintenanceService: android.content.Intent sIdleMaintenanceEndIntent>;
+
+        virtualinvoke $r6.<android.content.Intent: android.content.Intent setFlags(int)>(1073741824);
+
+        return;
+    }
+
+    public void <init>(android.content.Context, com.android.server.BatteryService)
+    {
+        com.android.server.IdleMaintenanceService r0;
+        android.content.Context r1, $r11, $r15;
+        com.android.server.BatteryService r2;
+        android.content.Intent r3, $r13;
+        java.lang.Object $r4, $r6;
+        android.app.AlarmManager $r5;
+        java.lang.String $r7;
+        android.os.PowerManager $r8;
+        android.os.PowerManager$WakeLock $r9;
+        android.os.Handler $r10, $r16;
+        android.os.Looper $r12;
+        android.app.PendingIntent $r17;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.server.BatteryService;
+
+        specialinvoke r0.<android.content.BroadcastReceiver: void <init>()>();
+
+        r0.<com.android.server.IdleMaintenanceService: long mLastUserActivityElapsedTimeMillis> = -1L;
+
+        r0.<com.android.server.IdleMaintenanceService: android.content.Context mContext> = r1;
+
+        r0.<com.android.server.IdleMaintenanceService: com.android.server.BatteryService mBatteryService> = r2;
+
+        $r4 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("alarm");
+
+        $r5 = (android.app.AlarmManager) $r4;
+
+        r0.<com.android.server.IdleMaintenanceService: android.app.AlarmManager mAlarmService> = $r5;
+
+        $r6 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r8 = (android.os.PowerManager) $r6;
+
+        $r7 = <com.android.server.IdleMaintenanceService: java.lang.String LOG_TAG>;
+
+        $r9 = virtualinvoke $r8.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, $r7);
+
+        r0.<com.android.server.IdleMaintenanceService: android.os.PowerManager$WakeLock mWakeLock> = $r9;
+
+        $r10 = new android.os.Handler;
+
+        $r11 = r0.<com.android.server.IdleMaintenanceService: android.content.Context mContext>;
+
+        $r12 = virtualinvoke $r11.<android.content.Context: android.os.Looper getMainLooper()>();
+
+        specialinvoke $r10.<android.os.Handler: void <init>(android.os.Looper)>($r12);
+
+        r0.<com.android.server.IdleMaintenanceService: android.os.Handler mHandler> = $r10;
+
+        $r13 = new android.content.Intent;
+
+        specialinvoke $r13.<android.content.Intent: void <init>(java.lang.String)>("com.android.server.IdleMaintenanceService.action.UPDATE_IDLE_MAINTENANCE_STATE");
+
+        r3 = $r13;
+
+        virtualinvoke r3.<android.content.Intent: android.content.Intent setFlags(int)>(1073741824);
+
+        $r15 = r0.<com.android.server.IdleMaintenanceService: android.content.Context mContext>;
+
+        $r17 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getBroadcast(android.content.Context,int,android.content.Intent,int)>($r15, 0, r3, 134217728);
+
+        r0.<com.android.server.IdleMaintenanceService: android.app.PendingIntent mUpdateIdleMaintenanceStatePendingIntent> = $r17;
+
+        $r16 = r0.<com.android.server.IdleMaintenanceService: android.os.Handler mHandler>;
+
+        virtualinvoke r0.<com.android.server.IdleMaintenanceService: void register(android.os.Handler)>($r16);
+
+        return;
+    }
+
+    private boolean batteryLevelAndMaintenanceTimeoutPermitsIdleMaintenanceRunning()
+    {
+        com.android.server.IdleMaintenanceService r0;
+        com.android.server.BatteryService $r1;
+        int $i0;
+        long $l1, $l2, $l3;
+        byte $b4;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        $r1 = r0.<com.android.server.IdleMaintenanceService: com.android.server.BatteryService mBatteryService>;
+
+        $i0 = virtualinvoke $r1.<com.android.server.BatteryService: int getBatteryLevel()>();
+
+        if $i0 <= 20 goto label1;
+
+        $l1 = r0.<com.android.server.IdleMaintenanceService: long mLastIdleMaintenanceStartTimeMillis>;
+
+        $l2 = 4260000L + $l1;
+
+        $l3 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $b4 = $l2 cmp $l3;
+
+        if $b4 <= 0 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private boolean deviceStatePermitsIdleMaintenanceStart(boolean)
+    {
+        com.android.server.IdleMaintenanceService r0;
+        boolean z0, z1, $z2;
+        byte b0, $b2;
+        long $l1;
+        com.android.server.BatteryService $r1;
+        int $i4;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        z0 := @parameter0: boolean;
+
+        $z2 = specialinvoke r0.<com.android.server.IdleMaintenanceService: boolean isBatteryCharging()>();
+
+        if $z2 == 0 goto label4;
+
+        b0 = 30;
+
+     label1:
+        $l1 = r0.<com.android.server.IdleMaintenanceService: long mLastUserActivityElapsedTimeMillis>;
+
+        $b2 = $l1 cmp -1L;
+
+        if $b2 == 0 goto label5;
+
+        $r1 = r0.<com.android.server.IdleMaintenanceService: com.android.server.BatteryService mBatteryService>;
+
+        $i4 = virtualinvoke $r1.<com.android.server.BatteryService: int getBatteryLevel()>();
+
+        if $i4 <= b0 goto label5;
+
+        z1 = 1;
+
+     label2:
+        if z1 != 0 goto label3;
+
+        if z0 == 0 goto label3;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("IdleMaintenance", "Idle maintenance not allowed due to power");
+
+     label3:
+        return z1;
+
+     label4:
+        b0 = 80;
+
+        goto label1;
+
+     label5:
+        z1 = 0;
+
+        goto label2;
+    }
+
+    private long getNextIdleMaintenanceIntervalStartFromNow()
+    {
+        com.android.server.IdleMaintenanceService r0;
+        long $l0, $l1, $l2, $l3;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        $l0 = r0.<com.android.server.IdleMaintenanceService: long mLastIdleMaintenanceStartTimeMillis>;
+
+        $l1 = 86400000L + $l0;
+
+        $l2 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l3 = $l1 - $l2;
+
+        return $l3;
+    }
+
+    private boolean isBatteryCharging()
+    {
+        com.android.server.IdleMaintenanceService r0;
+        com.android.server.BatteryService $r1, $r2;
+        int $i0, $i1;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        $r1 = r0.<com.android.server.IdleMaintenanceService: com.android.server.BatteryService mBatteryService>;
+
+        $i0 = virtualinvoke $r1.<com.android.server.BatteryService: int getPlugType()>();
+
+        if $i0 <= 0 goto label1;
+
+        $r2 = r0.<com.android.server.IdleMaintenanceService: com.android.server.BatteryService mBatteryService>;
+
+        $i1 = virtualinvoke $r2.<com.android.server.BatteryService: int getInvalidCharger()>();
+
+        if $i1 != 0 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private boolean lastRunPermitsIdleMaintenanceStart(boolean)
+    {
+        com.android.server.IdleMaintenanceService r0;
+        boolean z0, z1;
+        long $l0, $l1, $l2;
+        byte $b3;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        z0 := @parameter0: boolean;
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l1 = r0.<com.android.server.IdleMaintenanceService: long mLastIdleMaintenanceStartTimeMillis>;
+
+        $l2 = $l0 - $l1;
+
+        $b3 = $l2 cmp 86400000L;
+
+        if $b3 <= 0 goto label3;
+
+        z1 = 1;
+
+     label1:
+        if z1 != 0 goto label2;
+
+        if z0 == 0 goto label2;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("IdleMaintenance", "Idle maintenance not allowed due time since last");
+
+     label2:
+        return z1;
+
+     label3:
+        z1 = 0;
+
+        goto label1;
+    }
+
+    private boolean lastUserActivityPermitsIdleMaintenanceRunning()
+    {
+        com.android.server.IdleMaintenanceService r0;
+        long $l0;
+        byte $b1;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        $l0 = r0.<com.android.server.IdleMaintenanceService: long mLastUserActivityElapsedTimeMillis>;
+
+        $b1 = $l0 cmp -1L;
+
+        if $b1 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private boolean lastUserActivityPermitsIdleMaintenanceStart(boolean)
+    {
+        com.android.server.IdleMaintenanceService r0;
+        boolean z0, z1;
+        long $l0, $l3, $l4, $l5;
+        byte $b1, $b6;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        z0 := @parameter0: boolean;
+
+        $l0 = r0.<com.android.server.IdleMaintenanceService: long mLastUserActivityElapsedTimeMillis>;
+
+        $b1 = $l0 cmp -1L;
+
+        if $b1 == 0 goto label3;
+
+        $l3 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l4 = r0.<com.android.server.IdleMaintenanceService: long mLastUserActivityElapsedTimeMillis>;
+
+        $l5 = $l3 - $l4;
+
+        $b6 = $l5 cmp 4260000L;
+
+        if $b6 <= 0 goto label3;
+
+        z1 = 1;
+
+     label1:
+        if z1 != 0 goto label2;
+
+        if z0 == 0 goto label2;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("IdleMaintenance", "Idle maintenance not allowed due to last user activity");
+
+     label2:
+        return z1;
+
+     label3:
+        z1 = 0;
+
+        goto label1;
+    }
+
+    private void scheduleUpdateIdleMaintenanceState(long)
+    {
+        com.android.server.IdleMaintenanceService r0;
+        long l0, l1, $l2;
+        android.app.PendingIntent $r1;
+        android.app.AlarmManager $r2;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        l0 := @parameter0: long;
+
+        $l2 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        l1 = l0 + $l2;
+
+        $r2 = r0.<com.android.server.IdleMaintenanceService: android.app.AlarmManager mAlarmService>;
+
+        $r1 = r0.<com.android.server.IdleMaintenanceService: android.app.PendingIntent mUpdateIdleMaintenanceStatePendingIntent>;
+
+        virtualinvoke $r2.<android.app.AlarmManager: void set(int,long,android.app.PendingIntent)>(2, l1, $r1);
+
+        return;
+    }
+
+    private void sendIdleMaintenanceEndIntent()
+    {
+        com.android.server.IdleMaintenanceService r0;
+        android.os.PowerManager$WakeLock $r1;
+        android.os.Handler $r2;
+        android.os.UserHandle $r3;
+        android.content.Intent $r4;
+        android.content.Context $r5;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        $r1 = r0.<com.android.server.IdleMaintenanceService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r1.<android.os.PowerManager$WakeLock: void acquire()>();
+
+        $r5 = r0.<com.android.server.IdleMaintenanceService: android.content.Context mContext>;
+
+        $r4 = <com.android.server.IdleMaintenanceService: android.content.Intent sIdleMaintenanceEndIntent>;
+
+        $r3 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        $r2 = r0.<com.android.server.IdleMaintenanceService: android.os.Handler mHandler>;
+
+        virtualinvoke $r5.<android.content.Context: void sendOrderedBroadcastAsUser(android.content.Intent,android.os.UserHandle,java.lang.String,android.content.BroadcastReceiver,android.os.Handler,int,java.lang.String,android.os.Bundle)>($r4, $r3, null, r0, $r2, -1, null, null);
+
+        return;
+    }
+
+    private void sendIdleMaintenanceStartIntent()
+    {
+        com.android.server.IdleMaintenanceService r0;
+        android.os.PowerManager$WakeLock $r2;
+        android.app.IActivityManager $r3;
+        android.os.Handler $r4;
+        android.os.UserHandle $r5;
+        android.content.Intent $r6;
+        android.content.Context $r7;
+        android.os.RemoteException $r8;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        $r2 = r0.<com.android.server.IdleMaintenanceService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r2.<android.os.PowerManager$WakeLock: void acquire()>();
+
+     label1:
+        $r3 = staticinvoke <android.app.ActivityManagerNative: android.app.IActivityManager getDefault()>();
+
+        interfaceinvoke $r3.<android.app.IActivityManager: void performIdleMaintenance()>();
+
+     label2:
+        $r7 = r0.<com.android.server.IdleMaintenanceService: android.content.Context mContext>;
+
+        $r6 = <com.android.server.IdleMaintenanceService: android.content.Intent sIdleMaintenanceStartIntent>;
+
+        $r5 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        $r4 = r0.<com.android.server.IdleMaintenanceService: android.os.Handler mHandler>;
+
+        virtualinvoke $r7.<android.content.Context: void sendOrderedBroadcastAsUser(android.content.Intent,android.os.UserHandle,java.lang.String,android.content.BroadcastReceiver,android.os.Handler,int,java.lang.String,android.os.Bundle)>($r6, $r5, null, r0, $r4, -1, null, null);
+
+        return;
+
+     label3:
+        $r8 := @caughtexception;
+
+        goto label2;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private void unscheduleUpdateIdleMaintenanceState()
+    {
+        com.android.server.IdleMaintenanceService r0;
+        android.app.PendingIntent $r1;
+        android.app.AlarmManager $r2;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        $r2 = r0.<com.android.server.IdleMaintenanceService: android.app.AlarmManager mAlarmService>;
+
+        $r1 = r0.<com.android.server.IdleMaintenanceService: android.app.PendingIntent mUpdateIdleMaintenanceStatePendingIntent>;
+
+        virtualinvoke $r2.<android.app.AlarmManager: void cancel(android.app.PendingIntent)>($r1);
+
+        return;
+    }
+
+    private void updateIdleMaintenanceState(boolean)
+    {
+        com.android.server.IdleMaintenanceService r0;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12;
+        long l0, l1, l3, l4, $l6, $l7, $l8;
+        int i2, i5, i9, i10;
+        com.android.server.BatteryService $r1, $r2;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        z0 := @parameter0: boolean;
+
+        z1 = 1;
+
+        $z2 = r0.<com.android.server.IdleMaintenanceService: boolean mIdleMaintenanceStarted>;
+
+        if $z2 == 0 goto label5;
+
+        $z9 = specialinvoke r0.<com.android.server.IdleMaintenanceService: boolean lastUserActivityPermitsIdleMaintenanceRunning()>();
+
+        if $z9 == 0 goto label1;
+
+        $z12 = specialinvoke r0.<com.android.server.IdleMaintenanceService: boolean batteryLevelAndMaintenanceTimeoutPermitsIdleMaintenanceRunning()>();
+
+        if $z12 != 0 goto label3;
+
+     label1:
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void unscheduleUpdateIdleMaintenanceState()>();
+
+        r0.<com.android.server.IdleMaintenanceService: boolean mIdleMaintenanceStarted> = 0;
+
+        l3 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        l4 = r0.<com.android.server.IdleMaintenanceService: long mLastUserActivityElapsedTimeMillis>;
+
+        $r2 = r0.<com.android.server.IdleMaintenanceService: com.android.server.BatteryService mBatteryService>;
+
+        i5 = virtualinvoke $r2.<com.android.server.BatteryService: int getBatteryLevel()>();
+
+        $z10 = specialinvoke r0.<com.android.server.IdleMaintenanceService: boolean isBatteryCharging()>();
+
+        if $z10 == 0 goto label4;
+
+     label2:
+        i9 = (int) z1;
+
+        staticinvoke <com.android.server.EventLogTags: void writeIdleMaintenanceWindowFinish(long,long,int,int)>(l3, l4, i5, i9);
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void sendIdleMaintenanceEndIntent()>();
+
+        $z11 = specialinvoke r0.<com.android.server.IdleMaintenanceService: boolean batteryLevelAndMaintenanceTimeoutPermitsIdleMaintenanceRunning()>();
+
+        if $z11 != 0 goto label3;
+
+        $l8 = specialinvoke r0.<com.android.server.IdleMaintenanceService: long getNextIdleMaintenanceIntervalStartFromNow()>();
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void scheduleUpdateIdleMaintenanceState(long)>($l8);
+
+     label3:
+        return;
+
+     label4:
+        z1 = 0;
+
+        goto label2;
+
+     label5:
+        $z3 = specialinvoke r0.<com.android.server.IdleMaintenanceService: boolean deviceStatePermitsIdleMaintenanceStart(boolean)>(z0);
+
+        if $z3 == 0 goto label8;
+
+        $z7 = specialinvoke r0.<com.android.server.IdleMaintenanceService: boolean lastUserActivityPermitsIdleMaintenanceStart(boolean)>(z0);
+
+        if $z7 == 0 goto label8;
+
+        $z6 = specialinvoke r0.<com.android.server.IdleMaintenanceService: boolean lastRunPermitsIdleMaintenanceStart(boolean)>(z0);
+
+        if $z6 == 0 goto label8;
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void scheduleUpdateIdleMaintenanceState(long)>(4260000L);
+
+        r0.<com.android.server.IdleMaintenanceService: boolean mIdleMaintenanceStarted> = z1;
+
+        l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        l1 = r0.<com.android.server.IdleMaintenanceService: long mLastUserActivityElapsedTimeMillis>;
+
+        $r1 = r0.<com.android.server.IdleMaintenanceService: com.android.server.BatteryService mBatteryService>;
+
+        i2 = virtualinvoke $r1.<com.android.server.BatteryService: int getBatteryLevel()>();
+
+        $z8 = specialinvoke r0.<com.android.server.IdleMaintenanceService: boolean isBatteryCharging()>();
+
+        if $z8 == 0 goto label7;
+
+     label6:
+        i10 = (int) z1;
+
+        staticinvoke <com.android.server.EventLogTags: void writeIdleMaintenanceWindowStart(long,long,int,int)>(l0, l1, i2, i10);
+
+        $l7 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        r0.<com.android.server.IdleMaintenanceService: long mLastIdleMaintenanceStartTimeMillis> = $l7;
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void sendIdleMaintenanceStartIntent()>();
+
+        return;
+
+     label7:
+        z1 = 0;
+
+        goto label6;
+
+     label8:
+        $z4 = specialinvoke r0.<com.android.server.IdleMaintenanceService: boolean lastUserActivityPermitsIdleMaintenanceStart(boolean)>(z0);
+
+        if $z4 == 0 goto label3;
+
+        $z5 = specialinvoke r0.<com.android.server.IdleMaintenanceService: boolean lastRunPermitsIdleMaintenanceStart(boolean)>(z0);
+
+        if $z5 == 0 goto label9;
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void scheduleUpdateIdleMaintenanceState(long)>(4260000L);
+
+        return;
+
+     label9:
+        $l6 = specialinvoke r0.<com.android.server.IdleMaintenanceService: long getNextIdleMaintenanceIntervalStartFromNow()>();
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void scheduleUpdateIdleMaintenanceState(long)>($l6);
+
+        return;
+    }
+
+    public void onReceive(android.content.Context, android.content.Intent)
+    {
+        com.android.server.IdleMaintenanceService r0;
+        android.content.Context r1;
+        android.content.Intent r2;
+        java.lang.String r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r11, $r12;
+        long l0, $l1, $l2, $l3, $l4;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9;
+        android.os.PowerManager$WakeLock $r13;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.content.Intent;
+
+        r3 = virtualinvoke r2.<android.content.Intent: java.lang.String getAction()>();
+
+        $r4 = "android.intent.action.BATTERY_CHANGED";
+
+        $z0 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z0 == 0 goto label2;
+
+        $z9 = r0.<com.android.server.IdleMaintenanceService: boolean mIdleMaintenanceStarted>;
+
+        if $z9 == 0 goto label1;
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void updateIdleMaintenanceState(boolean)>(0);
+
+     label1:
+        return;
+
+     label2:
+        $r5 = "android.intent.action.SCREEN_ON";
+
+        $z1 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z1 != 0 goto label3;
+
+        $r6 = "android.intent.action.DREAMING_STOPPED";
+
+        $z2 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z2 == 0 goto label4;
+
+     label3:
+        r0.<com.android.server.IdleMaintenanceService: long mLastUserActivityElapsedTimeMillis> = -1L;
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void unscheduleUpdateIdleMaintenanceState()>();
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void updateIdleMaintenanceState(boolean)>(0);
+
+        return;
+
+     label4:
+        $r7 = "android.intent.action.SCREEN_OFF";
+
+        $z3 = virtualinvoke $r7.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z3 != 0 goto label5;
+
+        $r8 = "android.intent.action.DREAMING_STARTED";
+
+        $z4 = virtualinvoke $r8.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z4 == 0 goto label6;
+
+     label5:
+        $l1 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        r0.<com.android.server.IdleMaintenanceService: long mLastUserActivityElapsedTimeMillis> = $l1;
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void scheduleUpdateIdleMaintenanceState(long)>(4260000L);
+
+        return;
+
+     label6:
+        $r9 = "com.android.server.IdleMaintenanceService.action.UPDATE_IDLE_MAINTENANCE_STATE";
+
+        $z5 = virtualinvoke $r9.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z5 == 0 goto label7;
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void updateIdleMaintenanceState(boolean)>(0);
+
+        return;
+
+     label7:
+        $r10 = "com.android.server.IdleMaintenanceService.action.FORCE_IDLE_MAINTENANCE";
+
+        $z6 = virtualinvoke $r10.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z6 == 0 goto label8;
+
+        $l2 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        l0 = $l2 - 1L;
+
+        $l4 = l0 - 4260000L;
+
+        r0.<com.android.server.IdleMaintenanceService: long mLastUserActivityElapsedTimeMillis> = $l4;
+
+        $l3 = l0 - 86400000L;
+
+        r0.<com.android.server.IdleMaintenanceService: long mLastIdleMaintenanceStartTimeMillis> = $l3;
+
+        specialinvoke r0.<com.android.server.IdleMaintenanceService: void updateIdleMaintenanceState(boolean)>(1);
+
+        return;
+
+     label8:
+        $r11 = "android.intent.action.ACTION_IDLE_MAINTENANCE_START";
+
+        $z7 = virtualinvoke $r11.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z7 != 0 goto label9;
+
+        $r12 = "android.intent.action.ACTION_IDLE_MAINTENANCE_END";
+
+        $z8 = virtualinvoke $r12.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z8 == 0 goto label1;
+
+     label9:
+        $r13 = r0.<com.android.server.IdleMaintenanceService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r13.<android.os.PowerManager$WakeLock: void release()>();
+
+        return;
+    }
+
+    public void register(android.os.Handler)
+    {
+        com.android.server.IdleMaintenanceService r0;
+        android.os.Handler r1, $r5, $r10;
+        android.content.IntentFilter r2, r3, $r4, $r9;
+        android.os.UserHandle $r6, $r11;
+        android.content.Context $r7, $r12;
+
+        r0 := @this: com.android.server.IdleMaintenanceService;
+
+        r1 := @parameter0: android.os.Handler;
+
+        $r4 = new android.content.IntentFilter;
+
+        specialinvoke $r4.<android.content.IntentFilter: void <init>()>();
+
+        r2 = $r4;
+
+        virtualinvoke r2.<android.content.IntentFilter: void addAction(java.lang.String)>("com.android.server.IdleMaintenanceService.action.UPDATE_IDLE_MAINTENANCE_STATE");
+
+        virtualinvoke r2.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.BATTERY_CHANGED");
+
+        virtualinvoke r2.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.SCREEN_ON");
+
+        virtualinvoke r2.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.SCREEN_OFF");
+
+        virtualinvoke r2.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.DREAMING_STARTED");
+
+        virtualinvoke r2.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.DREAMING_STOPPED");
+
+        $r7 = r0.<com.android.server.IdleMaintenanceService: android.content.Context mContext>;
+
+        $r6 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        $r5 = r0.<com.android.server.IdleMaintenanceService: android.os.Handler mHandler>;
+
+        virtualinvoke $r7.<android.content.Context: android.content.Intent registerReceiverAsUser(android.content.BroadcastReceiver,android.os.UserHandle,android.content.IntentFilter,java.lang.String,android.os.Handler)>(r0, $r6, r2, null, $r5);
+
+        $r9 = new android.content.IntentFilter;
+
+        specialinvoke $r9.<android.content.IntentFilter: void <init>()>();
+
+        r3 = $r9;
+
+        virtualinvoke r3.<android.content.IntentFilter: void addAction(java.lang.String)>("com.android.server.IdleMaintenanceService.action.FORCE_IDLE_MAINTENANCE");
+
+        $r12 = r0.<com.android.server.IdleMaintenanceService: android.content.Context mContext>;
+
+        $r11 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        $r10 = r0.<com.android.server.IdleMaintenanceService: android.os.Handler mHandler>;
+
+        virtualinvoke $r12.<android.content.Context: android.content.Intent registerReceiverAsUser(android.content.BroadcastReceiver,android.os.UserHandle,android.content.IntentFilter,java.lang.String,android.os.Handler)>(r0, $r11, r3, "android.permission.SET_ACTIVITY_WATCHER", $r10);
+
+        return;
+    }
+}
