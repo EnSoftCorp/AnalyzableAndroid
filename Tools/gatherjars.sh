@@ -27,7 +27,7 @@ NAME=${DEX_JAR##*/}
 unzip -p $DEX_JAR "classes.dex" >"$DEX_DIR/$NAME.dex"
 
 # Convert to JAR of class files
-sh $DEX2JAR "$DEX_DIR/$NAME.dex" -f -o "$CLASS_DIR/$NAME.jar"
+sh $DEX2JAR "$DEX_DIR/$NAME.dex" -f -o "$CLASS_DIR/$NAME"
 
 done
 
@@ -42,4 +42,4 @@ jar -xvf $CLASS_JAR
 done
 
 cd $CLASS_DIR
-jar -cvf combined.jar -C tmp .
+jar -cvf android.jar -C tmp .
