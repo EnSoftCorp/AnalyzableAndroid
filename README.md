@@ -33,7 +33,7 @@ Put important scripts on the path
 
 Configure for target device (may be different for your release, but `-user` option should be used if possible)
 
-`lunch full_mako-user`
+`lunch aosp_arm-user`
 
 3) Create a fake javac binary and put it on the path to spy on the build process. The big picture: look at what sources the build is asking to compile, copy them over into a separate spy directory, then allow the real javac to actually compile source.
 
