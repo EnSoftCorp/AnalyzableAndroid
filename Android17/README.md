@@ -66,7 +66,7 @@ See [https://source.android.com/source/downloading.html#verifying-git-tags](http
 
 `source build/envsetup.sh`
 
-`lunch aosp_arm-user`
+`lunch full-user`
 
 ## 6) Install fake javac
 
