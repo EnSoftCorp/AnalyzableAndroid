@@ -26,8 +26,13 @@ $INSTALLED="$BUILD_OUTPUT_DIRECTORY/product/generic/installed-files.txt";
 $SYSTEM_APPS_DIRECTORY="$BUILD_OUTPUT_DIRECTORY/common/obj/APPS";
 $JAVA_LIBRARIES_DIRECTORY="$BUILD_OUTPUT_DIRECTORY/common/obj/JAVA_LIBRARIES";
 
-system("mkdir -p $JAR_OUTPUT_DIRECTORY/APPS");
-system("mkdir -p $JAR_OUTPUT_DIRECTORY/JAVA_LIBRARIES");
+unless(-e "$JAR_OUTPUT_DIRECTORY/APPS" or mkdir "$JAR_OUTPUT_DIRECTORY/APPS") {
+  die "Unable to create directory $JAR_OUTPUT_DIRECTORY/APPS";
+}
+
+unless(-e "$JAR_OUTPUT_DIRECTORY/JAVA_LIBRARIES" or mkdir "$JAR_OUTPUT_DIRECTORY/JAVA_LIBRARIES") {
+  die "Unable to create directory $JAR_OUTPUT_DIRECTORY/JAVA_LIBRARIES";
+}
 
 open FILE, "<$INSTALLED" or die $!;
 while (<FILE>) {
