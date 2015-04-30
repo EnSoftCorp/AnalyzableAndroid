@@ -4,7 +4,7 @@
 $USER =  $ENV{'USER'};
 
 # YOU PROBABLY NEED TO UPDATE THIS PATH!
-$SOURCE_DIRECTORY="/home/$USER/Desktop/WORKING_DIRECTORY";
+$SOURCE_DIRECTORY="/home/tdeering/android/working";
 unless(-e $SOURCE_DIRECTORY) {
   die "Unable to find Android Source directory $SOURCE_DIRECTORY";
 }
@@ -16,7 +16,7 @@ unless(-e $JAR_OUTPUT_DIRECTORY or mkdir $JAR_OUTPUT_DIRECTORY) {
 }
 
 # YOU MAY NEED TO UPDATE THIS PATH IF YOU CHANGED THE DEFAULT ANDROID BUILD CONFIGURATION!
-$BUILD_OUTPUT_DIRECTORY="$SOURCE_DIRECTORY/out/target";
+$BUILD_OUTPUT_DIRECTORY="/home/tdeering/android/out/working/target";
 unless(-e $BUILD_OUTPUT_DIRECTORY) {
   die "Unable to find Android build output directory $BUILD_OUTPUT_DIRECTORY, did you remember to build Android?";
 }
