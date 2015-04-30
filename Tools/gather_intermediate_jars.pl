@@ -26,6 +26,9 @@ $INSTALLED="$BUILD_OUTPUT_DIRECTORY/product/generic/installed-files.txt";
 $SYSTEM_APPS_DIRECTORY="$BUILD_OUTPUT_DIRECTORY/common/obj/APPS";
 $JAVA_LIBRARIES_DIRECTORY="$BUILD_OUTPUT_DIRECTORY/common/obj/JAVA_LIBRARIES";
 
+system("mkdir -p $JAR_OUTPUT_DIRECTORY/APPS");
+system("mkdir -p $JAR_OUTPUT_DIRECTORY/JAVA_LIBRARIES");
+
 open FILE, "<$INSTALLED" or die $!;
 while (<FILE>) {
 	chomp($_);
@@ -33,17 +36,17 @@ while (<FILE>) {
 	if ($_ =~ m/  \/system\/app\/(.*).apk/) {
 		$APP = $1; # file path like "Calendar/Calendar"
 		if (-e "$SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar") {
-			system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar $JAR_OUTPUT_DIRECTORY/$APP.jar");
+			system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar $JAR_OUTPUT_DIRECTORY/APPS/$APP.jar");
 		} elsif (-e "$SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes-full-debug.jar") {
-			system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes-full-debug.jar $JAR_OUTPUT_DIRECTORY/$APP.jar");
+			system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes-full-debug.jar $JAR_OUTPUT_DIRECTORY/APPS/$APP.jar");
 		} else {
 			# newer Android builds removed the subdirectory
 			@APP_PARTS = split m%/%, $APP; # splits on /
                 	$APP = shift @APP_PARTS; # grabs first array element, ie "Calendar"
 			if (-e "$SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar") {
-				system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar $JAR_OUTPUT_DIRECTORY/$APP.jar");
+				system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar $JAR_OUTPUT_DIRECTORY/APPS/$APP.jar");
 			} elsif (-e "$SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes-full-debug.jar") {
-				system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes-full-debug.jar $JAR_OUTPUT_DIRECTORY/$APP.jar");
+				system("cp $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes-full-debug.jar $JAR_OUTPUT_DIRECTORY/APPS/$APP.jar");
 			} else {
 				print "Could not find compiled classes for $SYSTEM_APPS_DIRECTORY/$APP"."_intermediates/classes.jar!\n";
 			}
@@ -53,9 +56,9 @@ while (<FILE>) {
         if ($_ =~ m/  \/system\/framework\/(.*).jar/) {
 		$JAR = $1;
 		if (-e "$JAVA_LIBRARIES_DIRECTORY/$JAR"."_intermediates/classes.jar") {
-			system("cp $JAVA_LIBRARIES_DIRECTORY/$JAR"."_intermediates/classes.jar $JAR_OUTPUT_DIRECTORY/$JAR.jar");
+			system("cp $JAVA_LIBRARIES_DIRECTORY/$JAR"."_intermediates/classes.jar $JAR_OUTPUT_DIRECTORY/JAVA_LIBRARIES/$JAR.jar");
 		} elsif (-e "$JAVA_LIBRARIES_DIRECTORY/$JAR"."_intermediates/classes-full-debug.jar") {
-			system("cp $JAVA_LIBRARIES_DIRECTORY/$JAR"."_intermediates/classes-full-debug.jar $JAR_OUTPUT_DIRECTORY/$JAR.jar");
+			system("cp $JAVA_LIBRARIES_DIRECTORY/$JAR"."_intermediates/classes-full-debug.jar $JAR_OUTPUT_DIRECTORY/JAVA_LIBRARIES/$JAR.jar");
 		} else {
 			print "Could not find compiled classes for $JAR!\n";
 		}
